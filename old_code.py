@@ -39,3 +39,36 @@
                 element.hitbox.pos[(width_index+1)%2] = size[(width_index+1)%2]-(element.hitbox.size[(width_index+1)%2]*space_between_elements)
             #element.update_hitbox() #Readjust the hitbox size and position
         #Aaaaand it is done. They still need to be drawed tho
+
+        '''#Pos size transition
+        aux = self.timer_option
+        if aux > fps: #To create the bounding color effect
+            aux = fps-(aux-fps)
+        dif = (aux/fps)/3
+        print(dif)
+        size = tuple([int(x*(1+dif)) for x in element.hitbox.size])'''
+
+            '''#Return the position of the 4 corners of a circle (45º, 135º, 225º, 315º).
+    #Returns a list with 4 tuples of position
+    def corners_circle (self, circle_radius, circle_pos):
+        circles = []
+        step = 360/8
+        angle = step
+        while angle < 360:
+            x_pos = circle_pos[0]+circle_radius*math.cos(angle)
+            y_pos = circle_pos[1]+circle_radius*math.sin(angle)
+            circles.append((x_pos, y_pos))
+            angle += step*2
+        return circles'''
+
+            def draw_element(self, surface, element_surf, pos):
+        pass
+        '''for circle in self.circles:
+        #rect = pygame.draw.circle(self.screen, circle.color, circle.pos, circle.radius) #Drawing small circles
+        #self.fill_gradient(self.screen, (255, 255, 255), (0, 0, 0), rect=rect)
+
+        #surf = gradients.radial(circle.radius*3, (0, 0, 0, 255), (255, 255, 255, 100))
+        #self.screen.blit(surf, circle.pos)
+        pygame.draw.circle(self.screen, (0,0,0,255), circle.pos, int(circle.radius*small_circles_size)+1) #Black circle under red circle, otherwise, if only the border is drawn, there are some empty pixels
+        ptext.draw("Color gradient", (540, 170), color="red", gcolor="purple")
+        #gradients.draw_gradient_text(self.screen, "Rabo", 60, (250, 250), (255, 255, 0), (0, 255, 100))'''

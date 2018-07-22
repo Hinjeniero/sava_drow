@@ -311,13 +311,6 @@ class Menu:
                 position = tuple(pos)
 
                 size = element.hitbox.size
-                '''#Pos size transition
-                aux = self.timer_option
-                if aux > fps: #To create the bounding color effect
-                    aux = fps-(aux-fps)
-                dif = (aux/fps)/3
-                print(dif)
-                size = tuple([int(x*(1+dif)) for x in element.hitbox.size])'''
 
             border_rect = tuple([x+(border_width*2) for x in size])
             option_surf = pygame.Surface(border_rect)
@@ -361,8 +354,8 @@ class Menu:
                     self.change_setting(self.elements[self.active_option_index].id, inc_index=+1)
                 elif mouse_buttons_clicked[2]: #right button
                     self.change_setting(self.elements[self.active_option_index].id, inc_index=-1)
-            if mouse_movement:
-                self.change_active_option(self.mouse_collider(mouse_pos))
+        if mouse_movement:
+            self.change_active_option(self.mouse_collider(mouse_pos))
         return True
 
     def test(self):

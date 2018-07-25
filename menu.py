@@ -15,23 +15,12 @@ half_fps = fps/2
 screen = pygame.display.set_mode(resolution)
 menus = {}
 
-class Setting:
-    def __init__(self, options=[], index=0):
-        self.options=options
-        self.index=index
-
-    #For the sake of writing short code
-    def current(self):
-        return self.options[self.index]
-
-class UI_Element:
+class UI_Element: 
     def __init__(self, id, surface, rect):
         self.surface = surface
         self.surface_position = (0, 0)
         self.id = id
         self.hitbox = rect #Contains the position and the size
-        self.options = [] #Contains the possibilities
-        self.options_active_index = 0
 
     #Resizing the surface to fit in the hitbox preserving the ratio, instead of fuckin it up
     def surface_resize(self):

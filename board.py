@@ -29,8 +29,9 @@ class Board:
         self.circles_per_lvl = circles_per_lvl
         self.lvl_inception = lvls
 
-        self.board = Rectangle(resolution[0]*0.05, resolution[1]*0.05, resolution[0]*0.75, resolution[1]*0.9, color=(0, 255, 0)) 
-        self.board_texture = pygame.transform.scale(pygame.image.load('wood.png'), self.board.size)
+        self.board = Rectangle(resolution[0]*0.05, resolution[1]*0.05, resolution[0]*0.75, resolution[1]*0.95, color=(0, 255, 0)) 
+        self.board_texture = pygame.transform.scale(pygame.image.load('penguin.png').convert_alpha(), self.board.size)
+
         self.platform = Circle(self.board.pos[0]+self.board.size[0]/2, self.board.pos[1]+self.board.size[1]/2, resolution[0]/2.5 , color=(0,0,0), width=2) 
         self.active_circle = (0, 0)
 
@@ -79,12 +80,12 @@ class Board:
         if background_path is None:
             bg_surf = gradients.vertical(size, (255, 255, 255, 255), (50, 50, 50, 255)) #Gradient from white to grey-ish
         else:
-            bg_surf = pygame.transform.scale(pygame.image.load(background_path), size)
+            bg_surf = pygame.transform.scale(pygame.image.load(background_path).convert_alpha(), size)
         return bg_surf
 
     def draw(self, surface):
         surface.blit(self.background, (0, 0))
-        pygame.draw.rect(surface, self.board.color, (self.board.pos, self.board.size), self.board.width)
+        #pygame.draw.rect(surface, self.board.color, (self.board.pos, self.board.size), self.board.width)
         surface.blit(self.board_texture, self.board.pos)
         ratio = self.platform.radius/(self.lvl_inception+1)
         radius = 2*ratio
@@ -100,12 +101,14 @@ class Board:
                         pass
                     else:
                         surface.blit(circle.surface, circle.surface_pos)
-                    #x = circle.surface.get_size()
-                    #rect = pygame.Rect(circle.pos+x)
-                    #pygame.draw.rect(surface, (255, 0, 0), rect, 2)
                 index+=1
         pygame.display.update() #We could use flip too since in here we are not specifying any part of the screen
     
+    def draw_hitbox(self, surface, circle, color=(255, 0, 0)):
+        size = circle.surface.get_size()
+        rect = pygame.Rect(circle.pos+size)
+        pygame.draw.rect(surface, color, rect, 2)
+
     #Does all the shit related to the mouse hovering an option
     def mouse_collider(self, mouse_position):
         for lvl, list_of_circles in self.elements.items():

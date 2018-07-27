@@ -46,6 +46,9 @@ class UI_Element:
 class Menu:
     def __init__(self, id, options, settings, background_path=None, logo_path=None, theme_path=None, option_sound_path=None,\
     logo_size=0.20, title_text="Game", title_size=0.15, font=None, max_font=200):
+        self.static_elements = None #Things without interaction
+        self.dynamic_elements = None #Things with interaction, like buttons and such
+        self.active_elements = None #Selected from dynamic_elements, only one at the same time
         #Basic info saved
         self.id = id
         self.font = font

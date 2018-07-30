@@ -1,91 +1,118 @@
 import pygame, gradients
-from polygons import Rectangle, Circle
+from polygons import *
 from resizer import Resizer
+from pygame_test import Pygame_suite
 
 #Graphical element, automatic creation of a menu's elements
-class UI_Element(pygame.sprite.Sprite): 
-    def __init__(self, size, abs_position, color=(255, 0, 0), border=True, border_size=2, border_color=(255, 255, 255),\
-    gradient=True, startcolor=(200, 200, 200, 255), endcolor=(100, 100, 100, 255), gradient_type=0, image=None):
-        #Staaaaaartiiiiiiiiiing
-        #self.init_values = locals() #Just in case, not sure if it can be used as this. Want to save the args and kwargs
-        super.__init__(self)
-        self.hitbox = self.create_surface(size, color, border, gradient, startcolor, endcolor, gradient_type, image, border_size, border_color)
-        self.image = self.hitbox.copy()
-        self.rect = pygame.Rect(absolute_position, self.image.get_size()) #Position + size
+class UI_Element(pygame.sprite.Sprite):
+    """Superclass UI_Element. Subclasses are Button and Slider.
+    This class consists of a basic pygame polygon that inherits from 
+    pygame.Sprite that has a surface associated.
 
-    #THIS ONLY CREATES THE BASIC HITBOX, WITHOUT SLIDER NOR TEXT!
-    def create_surface(self, size, color, border, gradient, startcolor, endcolor, gradient_type, image, border_size, border_color):
-        if image:
-            surf = pygame.transform.scale(pygame.image.load(image).convert_alpha(), size)
-            if border:
-                border = pygame.mask.from_surface(surf, 200) #Not using it right now TODO
-        else:
-            surf = pygame.Surface(size)
-            if gradient:
-                if gradient_type is 0: #vertical
-                    surf = gradients.vertical(size, startcolor, endcolor)
-                else: #horizontal
-                    surf = gradients.horizontal(size, startcolor, endcolor)
-            else:
-                surf.fill(color)
-            if border and border_size is not 0: #Dont want no existant borders
-                pygame.draw.rect(surf, border_color, size+(0,0), border_size) #Drawing the border in the surface
-        #In this point, the only thing left is the text
-        return surf
-
+    The strength of this class relies on the automatic generation and extensive flexibility
+    due to all the optional parameters in the generation of the element.
+    The basic generate_surface of the superclass generates a rectangle. Any other polygon
+    should have that method overloaded.
+    All colors have a format of a tuple of 4 values of the RGBA form.
+    Attributes:
+        position: Position that this surface will have on the destination surface if it's drawed.
+        size: Size of the surface containing the polygon, is a tuple (width, height).
+        surf_color: Background color of the polygon if gradient and image are false. Default is solid red.
+        surf_image: Texture to use in the surface. It's a loaded image. Default is None.
+        border: True if the polygon has a border. Default is True.
+        border_size: Width of the border in pixels. Default is 2 pixels.
+        border_color: Color of the border. Default is solid white.
+        use_gradient: True if the polygon color is a gradient. Default is True.
+        start_color: Starting color of the gradient. Default is gray.
+        end_color: Ending color of the gradient. Default is dark gray.
+        gradient_type: Orientation of the gradient, 0 for vertical, 1 or whatever for horizontal. Default is 0 (Vertical)
+    """
+    def __init__(self, element_position, element_size,\
+                surf_image=None, element_color=(255, 0, 0),\
+                border=True, border_size=2, border_color=(255, 255, 255),\
+                use_gradient=True, start_color=(200, 200, 200, 255), end_color=(100, 100, 100, 255), gradient_type=0):
+        #Hierarchy from sprite
+        super().__init__()
+        self.hitbox = Rectangle.generate_surface(element_size, surf_image, element_color,\
+                                use_gradient, start_color, end_color, gradient_type,\
+                                border, border_size, border_color)
+        self.image = self.hitbox.copy() 
+        self.rect = pygame.Rect(element_position, self.image.get_size()) #Position + size
+    
+    def draw_text(self, surface, text, text_color, text_alignment, font, font_size):
+        font = pygame.font.Font(font, font_size)
+        text_surf = font.render(text, True, text_color)
+        y_pos = (self.rect.height//2)-(text_surf.get_height()//2)
+        #1 is left, 2 is right, 0 is centered
+        x_pos = self.rect.width*0.02 if text_alignment is 1 else self.rect.width-text_surf.get_width() if text_alignment is 2 else (self.rect.width//2)-(text_surf.get_width()//2)
+        surface.blit(text_surf, (x_pos, y_pos))
+        return text_surf
+        
     def draw(self, surface):
         pass
 
-class Slider (UI_Element):
-    def __init__(self, text, font, max_font_size, size, abs_position, text_position=0, color=(255, 0, 0), border=True, border_size=2, border_color=(255, 255, 255),\ 
-    gradient=True, startcolor=(200, 200, 200, 255), endcolor=(100, 100, 100, 255), gradient_type=0, image=None, text_color=(255, 255, 255), shows_value=True):
-        #Staaaaaartiiiiiiiiiing
-        super().__init__(hsize, absolute_position, color, border, border_size, border_color, gradient, startcolor, endcolor, gradient_type, mage)
-        self.add_text(self.image, text, text_color, text_position, font, max_font_size, shows_value)
-
-    def add_text(self, surface, text, text_color, text_position, font, max_font_size, shows_value):
-        size = Resizer.max_font_size(text, self.rect.size, font, max_font_size)
-        font = pygame.font.Font(font, size)
-        text_surf = font.render(text, True, text_color)
-        y_pos = (self.rect.height/2)-(text_surf.get_height()/2)
-        if text_position is 1: #Aligned left
-            surface.blit(text_surf, (0, y_pos))
-        elif text_position is 2: #Aligned at the right
-            surface.blit(text_surf, (self.rect.width - text_surf.get_width(), y_pos))
-        else: #Case 0 (centered), and all the other ones, in case the user is trying to fuck us
-            surface.blit(text_surf, ((self.rect.width/2) - (text_surf.get_width()/2), y_pos))
-
 class Button (UI_Element):
-    def __init__(self, text, font, max_font_size, size, abs_position, color=(255, 0, 0), border=True, border_size=2, border_color=(255, 255, 255),\ 
-    gradient=True, startcolor=(200, 200, 200, 255), endcolor=(100, 100, 100, 255), gradient_type=0, image=None, text_color=(255, 255, 255), shows_value=True,\
-    slider_type=0, slider_color=(0, 255, 0), slider_gradient=False, slider_startcolor=(0, 0, 0, 255), slider_endcolor=(255, 255, 255, 255), slider_border=True,\ slider_border_color=(0,0,0), slider_border_size=2):
-        #Staaaaaartiiiiiiiiiing
-        super().__init__(size, absolute_position, color, border, border_size, border_color, gradient, startcolor, endcolor, gradient_type, image)
-        self.add_text(self.image, text, text_color, text_position, font, max_font_size, shows_value)
-        self.add_slider(self.image, slider_color, slider_gradient, slider_startcolor, slider_endcolor, slider_border, slider_border_color, slider_border_size)
+    def __init__(self, element_position, element_size, text, font_text, max_font_size,\
+                surf_image=None, element_color=(255, 0, 0), text_alignment=0, text_color=(255, 255, 255),\
+                border=True, border_size=2, border_color=(255, 255, 255),\
+                use_gradient=True, start_color=(200, 200, 200, 255), end_color=(100, 100, 100, 255), gradient_type=0,\
+                shows_value=True):
+        #Initializing super class
+        super().__init__(element_position, element_size, surf_image, element_color,\
+                        border, border_size, border_color, use_gradient, start_color, end_color, gradient_type)
+        fnt_size = Resizer.max_font_size(text, self.rect.size, max_font_size, font_text)
+        self.text_surface = self.draw_text(self.image, text, text_color, text_alignment, font_text, fnt_size)
 
-    def add_text (self, surface, text, text_color, text_position, font, font_size, shows_value):
-        size = Resizer.max_font_size(text, self.rect.size, font, font_size)//2
-        font = pygame.font.Font(font, size)
-        text_surf = font.render(text, True, text_color)
-        y_pos = (self.rect.height/2)-(text_surf.get_height()/2)
-        if text_position is 1: #Aligned left
-            surface.blit(text_surf, (0, y_pos))
-        elif text_position is 2: #Aligned at the right
-            surface.blit(text_surf, (self.rect.width - text_surf.get_width(), y_pos))
-        else: #Case 0 (centered), and all the other ones, in case the user is trying to fuck us
-            surface.blit(text_surf, ((self.rect.width/2) - (text_surf.get_width()/2), y_pos))
+class Slider (UI_Element):
+    def __init__(self, element_position, element_size, text, font_text, max_font_size,\
+                surf_image=None, element_color=(255, 0, 0), text_alignment=1, text_color=(255, 255, 255),\
+                border=True, border_size=2, border_color=(255, 255, 255),\
+                use_gradient=True, start_color=(200, 200, 200, 255), end_color=(100, 100, 100, 255), gradient_type=0,\
+                shows_value=True, slider_color=(0, 255, 0), slider_gradient=True, slider_startcolor=(255, 50, 50, 255), slider_endcolor=(200, 100, 100, 255),\
+                slider_border=True, slider_border_color=(0,0,0), slider_border_size=2, slider_type=1):
+        #Initializing super class
+        super().__init__(element_position, element_size, surf_image, element_color,\
+                        border, border_size, border_color, use_gradient, start_color, end_color, gradient_type)
+        fnt_size = Resizer.max_font_size(text, self.rect.size, max_font_size, font_text)//2
+        self.text_surface = self.draw_text(self.image, text, text_color, text_alignment, font_text, fnt_size)
+        self.slider_surface = self.draw_slider(self.image, slider_color, slider_gradient, slider_startcolor, slider_endcolor, slider_border,\
+                                            slider_border_color, slider_border_size, slider_type)
 
-    def add_slider (self, surface, slider_color, slider_gradient, startcolor, endcolor, slider_border, slider_border_color, slider_border_size):
-        radius=self.rect.get_height//2
-        center_position = tuple()
-        if slider_gradient:
-            slider_surf = gradients.radial(radius, startcolor, endcolor)
-        else:
-            slider_surf = pygame.Surface(radius, radius)
-            pygame.draw.circle(slider_surf, slider_color, (0,0), radius, 0)
-        if slider_border:
-            pygame.draw.circle(slider_surf, slider_border_color, ,radius, slider_border_size)
+    #Adds the slider to the surface parameter, and returns the slider surface for further purposes
+    def draw_slider (self, surface, slider_color, slider_gradient, start_color, end_color, slider_border, slider_border_color, slider_border_size, slider_type):
+        radius = self.rect.height//2
+        if slider_type < 2:
+            slider_surf = Circle.generate_surface(self.rect.size, radius,\
+                    slider_color, slider_gradient, start_color, end_color,\
+                    slider_border, slider_border_size, slider_border_color)
+            if slider_type is 1: #ellipse instead of circle
+                    slider_size = slider_surf.get_size()
+                    slider_surf = pygame.transform.scale(slider_surf, (slider_size[0]//3, slider_size[1])) #TODO get some type of ratio instead of just a third of the size
+        else: #TODO rectangular one
+            pass
+        center_position = tuple([(self.rect.width-slider_surf.get_width())//2, 0]) #To adjust the offset error due to transforming the surface.
+        surface.blit(slider_surf, tuple(center_position)) #Drawing the slider in the entire image surface
+        return slider_surf
 
+    #Position must be between 0 and 1
+    #When we know in which form will the parameter be passed, we will implement this
     def set_slider_position(self, new_position):
         pass
+
+if __name__ == "__main__":
+    timeout = 20
+    testsuite = Pygame_suite(fps=144)
+    slidie = Slider((50, 50), (100, 25), "test1.5", None, 200)
+    slidou = Slider( (250, 50), (300, 25),"test1.5", None, 200)
+    slede = Slider( (600, 50), (600, 25), "test1.5", None, 200)
+    slada = Slider( (200, 100), (400, 50), "test1.5", None, 200, slider_type=0)
+    buttkun = Button( (200, 200), (800, 50),"Shitty Button", None, 200)
+    baton = Button((200, 300), (800, 400), "SUPER BUTTON", None, 200)
+    #Adding elements
+    testsuite.add_element(slidou.image, slidou.rect)
+    testsuite.add_element(slidie.image, slidie.rect)
+    testsuite.add_element(slada.image, slada.rect)
+    testsuite.add_element(slede.image, slede.rect)
+    testsuite.add_element(buttkun.image, buttkun.rect)
+    testsuite.add_element(baton.image, baton.rect)
+    testsuite.loop(seconds = timeout)

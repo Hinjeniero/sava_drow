@@ -1,6 +1,12 @@
-import pygame, gradients 
+import pygame, gradients, numpy
+from utility_box import UtilityBox
 
+#COLORS = pygame.color.THECOLORS
 __all__ = ["Circle", "Rectangle"]
+WHITE = pygame.Color("white")
+RED = pygame.Color("red")
+DARKGRAY = pygame.Color("darkgray")
+LIGHTGRAY = pygame.Color("lightgray")
 
 class Polygon(pygame.sprite.Sprite):
     """Superclass polygon. Subclasses are Rectangle and Circle.
@@ -12,8 +18,11 @@ class Polygon(pygame.sprite.Sprite):
     The basic generate_surface of the superclass generates a rectangle. Any other polygon
     should have that method overloaded.
     All colors have a format of a tuple of 4 values of the RGBA form.
-    Attributes:
-        position: Position that this surface will have on the destination surface if it's drawed.
+    
+    Class attributes:
+        euclidean_distances: LUT that contains the possible euclidean distances according to 2 position axis.
+    Instance attributes:
+        position: Position that this surface will have on the destination surface if it's drawn.
         size: Size of the surface containing the polygon, is a tuple (width, height).
         surf_color: Background color of the polygon if gradient and image are false. Default is solid red.
         surf_image: Texture to use in the surface. It's a loaded image. Default is None.
@@ -25,28 +34,76 @@ class Polygon(pygame.sprite.Sprite):
         end_color: Ending color of the gradient. Default is dark gray.
         gradient_type: Orientation of the gradient, 0 for vertical, 1 or whatever for horizontal. Default is 0 (Vertical)
     """
+
+    euclidean_distances = UtilityBox.euclidean_generator() #LUT to store the euclidean distances. Useful in the circles hitbox checking
     def __init__(self, position, size,\
-                surf_image=None, surf_color=(255, 0, 0, 255),\
-                border=True, border_size=2, border_color=(255, 255, 255, 255),\
-                use_gradient=True, start_color=(200, 200, 200, 255), end_color=(100, 100, 100, 255), gradient_type=0):
+                surf_image=None, surf_color=RED,\
+                border=True, border_size=2, border_color=WHITE,\
+                use_gradient=True, start_color=LIGHTGRAY, end_color=DARKGRAY, gradient_type=0):
+        super().__init__()
         self.image=None
         self.rect=None
 
 class Circle(Polygon):
+    
     def __init__(self, position, size,\
-                surf_image=None, surf_color=(255, 0, 0),\
-                border=True, border_size=2, border_color=(255,255,255),\
-                use_gradient=True, start_color=(200, 200, 200, 255), end_color=(100, 100, 100, 255), gradient_type=0):
+                surf_image=None, surf_color=RED,\
+                border=True, border_size=2, border_color=WHITE,\
+                use_gradient=True, start_color=LIGHTGRAY, end_color=DARKGRAY, gradient_type=0):
         #Hierarchy from sprite
         super().__init__(position, size, surf_color, surf_image, border, border_size, border_color, use_gradient, start_color, end_color, gradient_type)
 
-        self.radius = size//2
+        self.radius = size[0]//2 if type(size) is tuple else size//2
         self.center_position = tuple([x+self.radius for x in position]) #Under the assumption that it's a square
-        self.image = Circle.generate_surface(size, surf_image, surf_color, use_gradient, start_color, end_color, gradient_type, border, border_size, border_color)
+        self.image = Circle.generate_surface(size, self.radius, surf_color, use_gradient, start_color, end_color, border, border_size, border_color)
         self.rect = pygame.Rect(position, self.image.get_size()) #Position + size
     
+    def collision(self, rect):
+        """Returns if a collision has ocurred.
+        Detects the collision getting the euclidean distance using
+        the Polygon LUT table, and comparing with the radius.
+        
+        Args:
+            rect: Position of the object that could be colliding with this sprite.
+                Can be a pygame.Rect or a tuple of 2 elements (position x,y)
+        
+        Returns:
+            True if the rect object collides with the sprite (distance < radius).
+            False otherwise.
+        
+        Raises:
+            TypeError: The parameter rect format is not correct. Use a tuple or 
+                    pygame.Rect instead.
+        """
+        try:
+            if type(rect) is pygame.Rect: 
+                distance = tuple([abs(x-y) for x,y in zip(self.rect.size, rect.size)]) 
+            elif type(rect) is tuple: 
+                distance = tuple([abs(x-y) for x,y in zip(self.rect.size, rect)])
+            else:
+                raise TypeError("Should be a tuple w/ the position or a rect.")
+            return Polygon.euclidean_distances[distance[0]][distance[1]] <= self.radius
+        except IndexError:  #The distance was too big anyway, no collision.
+            return False
+
     @staticmethod
     def generate_surface (surf_size, radius, surf_color, use_gradient, start_color, end_color, border, border_size, border_color):
+        """Generates a transparent surface with a circle drawn in it (According to parameters).
+        
+        Args:
+            surf_size: Rect or tuple containing the dimensions of the surface (width, height)
+            radius: Radius of the drawn circle
+            surf_color: Solid color of the circle. 
+            use_gradient: True if we want a circle w/ a gradient. Priority over solid colors.
+            start_color: Starting color of the gradient. Only if gradient is True.
+            end_color: Ending color of the gradient. Only if gradient is True.
+            border: True if the circle has a border.
+            border_size: Size of the border in pixels.
+            border_color: Color of the border. RGBA/RGB format.
+        
+        Returns:
+            A surface containing the circle.
+        """
         surf = pygame.Surface(surf_size)
         if use_gradient: surf = gradients.radial(radius, start_color, end_color) 
         else: pygame.draw.circle(surf, surf_color, (radius, radius), radius, 0)
@@ -55,9 +112,9 @@ class Circle(Polygon):
 
 class Rectangle(Polygon):
     def __init__(self, position, size,\
-                surf_image=None, surf_color=(255, 0, 0),\
-                border=True, border_size=2, border_color=(255,255,255),\
-                use_gradient=True, start_color=(200, 200, 200, 255), end_color=(100, 100, 100, 255), gradient_type=0):
+                surf_image=None, surf_color=RED,\
+                border=True, border_size=2, border_color=WHITE,\
+                use_gradient=True, start_color=LIGHTGRAY, end_color=DARKGRAY, gradient_type=0):
         #Hierarchy from polygon
         super().__init__(position, size, surf_color, surf_image, border, border_size, border_color, use_gradient, start_color, end_color, gradient_type)
 
@@ -66,9 +123,26 @@ class Rectangle(Polygon):
 
     @staticmethod
     def generate_surface(surf_size, image, surf_color, use_gradient, start_color, end_color, gradient_type, border, border_size, border_color):
-        if image: #Texture checking
+        """Generates a transparent surface with a rectangle drawn in it (According to parameters).
+        The rectangle will leave no transparent pixels, taking up all the surface space.
+
+        Args:
+            surf_size: Rect or tuple containing the dimensions of the surface (width, height)
+            image: Texture to draw in the surface. Priority over solid colors and gradients.
+            surf_color: Solid color of the circle. Only if use_gradient is False.
+            use_gradient: True if we want a circle w/ a gradient. 
+            start_color: Starting color of the gradient. Only if gradient is True.
+            end_color: Ending color of the gradient. Only if gradient is True.
+            border: True if the circle has a border.
+            border_size: Size of the border in pixels.
+            border_color: Color of the border. RGBA/RGB format.
+        
+        Returns:
+            A surface containing the Rectangle.
+        """
+        if image:
             surf = pygame.transform.scale(pygame.image.load(image).convert_alpha(), surf_size)
-            if border: border = pygame.mask.from_surface(surf, 200) #IF image needs a border, mask. Not using it right now TODO
+            if border: border = pygame.mask.from_surface(surf, 200)         #If image needs a border, mask. Not using it right now TODO
         else:
             surf = pygame.Surface(surf_size)
             if use_gradient: surf = gradients.vertical(surf_size, start_color, end_color) if gradient_type == 0 else gradients.horizontal(surf_size, start_color, end_color) #Checking if gradient and type of gradient

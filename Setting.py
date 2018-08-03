@@ -1,8 +1,9 @@
 from UI_Element import Slider, Button
 
-class Setting:
-    def __init__(self, user_event, UI_Element=None, **kwargs):
-        self.graphics = UI_Element #Not really an ui element, a subclass of this one
+class Setting (object):
+    """Overlay for uielement. Adds funcionality."""
+    def __init__(self, user_event, ui_element=None):
+        self.graphics = ui_element #Not really an ui element, a subclass of this one
         self.event = user_event #Event triggered when this element is clicked
 
     def get_surface(self):
@@ -12,6 +13,7 @@ class Setting:
         pass
         
 class Options (Setting):
+    """Subclass of Setting, specifies a set of options"""
     def __init__(self, UI_Element=None, set_of_values=[]):
         super().__init__(UI_Element)
         self.values = set_of_values
@@ -32,6 +34,7 @@ class Options (Setting):
         self.index -= 1 if self.index > 0 else len(self.values)-1
 
 class Value (Setting):
+    """Subclass of Setting, specifies an associated float value"""
     def __init__(self, UI_Element=None, value=1):
         super().__init__(UI_Element)
         self.value = value

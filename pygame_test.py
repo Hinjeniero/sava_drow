@@ -1,11 +1,11 @@
 import pygame, time
 
-class Pygame_suite:
+class PygameSuite:
     def __init__(self, resolution=(1280, 720), background=(0,0,0), fps=60, mouse=True):
         self.background = background
         self.fps = fps
         self.clock, self.screen = self.initiate_suite(resolution, background, fps, mouse)
-        self.elements = [] #Tuples of (surface, rect)
+        self.elements = pygame.sprite.Group()
 
     def initiate_suite(self, resolution=(1280, 720), background=(0,0,0), fps=60, mouse=True):
         pygame.mixer.pre_init(44100, -16, 1, 512)
@@ -15,11 +15,16 @@ class Pygame_suite:
         screen = pygame.display.set_mode(resolution)
         return clock, screen
     
-    def add_element(self, element_surf, element_rect):
-        self.elements.append((element_surf, element_rect))
-
-    def draw(self, surface, element_to_draw, element_rect):
-        surface.blit(element_to_draw, element_rect)
+    def add_elements(self, *elements):
+        for sprite in elements:
+            if type(sprite) is list:
+                for subsprite in sprite:
+                    self.elements.add(subsprite)
+            elif type(sprite) is dict:
+                for subsprite in sprite.values():
+                    self.elements.add(subsprite)
+            else:
+                self.elements.add(sprite)
 
     def loop(self, seconds=5, show_fps=True):
         start = time.time()
@@ -28,9 +33,8 @@ class Pygame_suite:
             self.clock.tick(self.fps)
             if (time.time()-start) > seconds:
                 break
-            self.screen.fill(self.background) #Drawing mackground
-            for element in self.elements: #Drawing test elements
-                self.draw(self.screen, element[0], element[1])
+            self.screen.fill(self.background) #Drawing background
+            self.elements.draw(self.screen) #Drawing the sprite group
             if show_fps: #Showing fps in screen
                 fnt = pygame.font.Font(None, 60)
                 frames = fnt.render(str(int(self.clock.get_fps())), True, pygame.Color('white'))

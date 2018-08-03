@@ -1,10 +1,17 @@
-import pygame 
+import pygame
+import os
 from pygame.locals import *
 from pygame.key import *
 from board import Board
 from menu import Menu
+from setting import Setting
+
 
 class game():
+    game_folder = os.path.dirname(__file__)
+    img_folder = os.path.join(game_folder, 'img')
+    sounds_folder = os.path.join(game_folder, 'sounds')
+
     def __init__(self, mouse_visible=True, fps=60, title="Game", ):
         self.init_pygame_modules(mouse_visible, title)
         self.screen = pygame.display.set_mode((1280, 720))

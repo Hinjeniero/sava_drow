@@ -35,21 +35,6 @@ class Board:
         self.platform = Circle(self.board.pos[0]+self.board.size[0]/2, self.board.pos[1]+self.board.size[1]/2, resolution[0]/2.5 , color=(0,0,0), width=2) 
         self.active_circle = (0, 0)
 
-        dim = int((self.platform.radius*math.pi)/circles_per_lvl)+1
-        self.distance_table = self.create_distances_table(dim) #LUT to store the euclidean distances. Useful in the circles hitbox checking
-
-    def create_distances_table(self, dimensions):
-        matrix = numpy.empty([dimensions+1, dimensions+1])
-        x = 0
-        for i in range (0, dimensions+1):
-            for j in range (x, dimensions+1):
-                euclidean = math.sqrt(i*i + j*j)
-                matrix[i][j] = euclidean
-                matrix[j][i] = euclidean
-            x+=1
-        return matrix
-
-
     def calculate_circles(self, radius_mult=0.3):
         double_pi = 2*math.pi
         step = (double_pi)/self.circles_per_lvl

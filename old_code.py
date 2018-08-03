@@ -223,3 +223,23 @@ class UI_Element:
         elif inc_index is not None:
             self.settings[id].index += inc_index
         self.update_settings()
+
+    #Does all the shit related to the mouse hovering an option
+    def mouse_collider(self, mouse_position):
+        index = 0
+        for ui_element in self.elements: #Mouse_position is a two component tuple
+            if mouse_position[0] > ui_element.hitbox.pos[0] and mouse_position[0] < ui_element.hitbox.pos[0]+ui_element.hitbox.size[0] \
+            and mouse_position[1] > ui_element.hitbox.pos[1] and mouse_position[1] < ui_element.hitbox.pos[1]+ui_element.hitbox.size[1]:
+                return index
+            index+=1
+        return self.active_option_index #No option is selected, we leave whatever was active
+
+    def test(self):
+        loop = True
+        while loop:
+            clock.tick(fps)
+            self.draw()
+            if pygame.mouse.get_rel() != (0,0): #If there is mouse movement
+                loop = self.event_handler(pygame.event.get(), pygame.key.get_pressed(), mouse_movement=True, mouse_pos=pygame.mouse.get_pos())
+            else:
+                loop = self.event_handler(pygame.event.get(), pygame.key.get_pressed())

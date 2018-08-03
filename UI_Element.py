@@ -1,13 +1,20 @@
 import pygame, gradients
 from polygons import *
 from resizer import Resizer
-from pygame_test import Pygame_suite
+from pygame_test import PygameSuite
+
+BLACK = pygame.Color("black")
+WHITE = pygame.Color("white")
+RED = pygame.Color("red")
+GREEN = pygame.Color("green")
+BLUE = pygame.Color("blue")
+DARKGRAY = pygame.Color("darkgray")
+LIGHTGRAY = pygame.Color("lightgray")
 
 #Graphical element, automatic creation of a menu's elements
-class UI_Element(pygame.sprite.Sprite):
+class UiElement(pygame.sprite.Sprite):
     """Superclass UI_Element. Subclasses are Button and Slider.
-    This class consists of a basic pygame polygon that inherits from 
-    pygame.Sprite that has a surface associated.
+    This class consists of a set of basic polygons like circles or rectangles.
 
     The strength of this class relies on the automatic generation and extensive flexibility
     due to all the optional parameters in the generation of the element.
@@ -28,9 +35,9 @@ class UI_Element(pygame.sprite.Sprite):
         gradient_type: Orientation of the gradient, 0 for vertical, 1 or whatever for horizontal. Default is 0 (Vertical)
     """
     def __init__(self, element_position, element_size,\
-                surf_image=None, element_color=(255, 0, 0),\
-                border=True, border_size=2, border_color=(255, 255, 255),\
-                use_gradient=True, start_color=(200, 200, 200, 255), end_color=(100, 100, 100, 255), gradient_type=0):
+                surf_image=None, element_color=RED,\
+                border=True, border_size=2, border_color=WHITE,\
+                use_gradient=True, start_color=LIGHTGRAY, end_color=DARKGRAY, gradient_type=0):
         #Hierarchy from sprite
         super().__init__()
         self.hitbox = Rectangle.generate_surface(element_size, surf_image, element_color,\
@@ -51,25 +58,40 @@ class UI_Element(pygame.sprite.Sprite):
     def draw(self, surface):
         pass
 
-class Button (UI_Element):
+class Button (UiElement):
     def __init__(self, element_position, element_size, text, font_text, max_font_size,\
-                surf_image=None, element_color=(255, 0, 0), text_alignment=0, text_color=(255, 255, 255),\
-                border=True, border_size=2, border_color=(255, 255, 255),\
-                use_gradient=True, start_color=(200, 200, 200, 255), end_color=(100, 100, 100, 255), gradient_type=0,\
+                surf_image=None, element_color=RED, text_alignment=0, text_color=WHITE,\
+                border=True, border_size=2, border_color=WHITE,\
+                use_gradient=True, start_color=LIGHTGRAY, end_color=DARKGRAY, gradient_type=0,\
                 shows_value=True):
         #Initializing super class
         super().__init__(element_position, element_size, surf_image, element_color,\
                         border, border_size, border_color, use_gradient, start_color, end_color, gradient_type)
         fnt_size = Resizer.max_font_size(text, self.rect.size, max_font_size, font_text)
         self.text_surface = self.draw_text(self.image, text, text_color, text_alignment, font_text, fnt_size)
+        self.speed = 5
+        self.mask_color = WHITE
+        self.transparency = 0
+        self.transparency_speed = 15
 
-class Slider (UI_Element):
+    def update(self):
+        self.rect.x += self.speed
+        if self.rect.x < self.speed:    self.speed = -self.speed
+
+        self.transparency += self.transparency_speed
+        if self.transparency >= 255:    self.transparency_speed = -self.transparency_speed 
+
+    def return_active_surface(self):
+        overlay = pygame.Surface(self.rect.size).fill(self.mask_color)
+        return self.image.copy().blit(overlay, (0,0))
+
+class Slider (UiElement):
     def __init__(self, element_position, element_size, text, font_text, max_font_size,\
-                surf_image=None, element_color=(255, 0, 0), text_alignment=1, text_color=(255, 255, 255),\
-                border=True, border_size=2, border_color=(255, 255, 255),\
-                use_gradient=True, start_color=(200, 200, 200, 255), end_color=(100, 100, 100, 255), gradient_type=0,\
-                shows_value=True, slider_color=(0, 255, 0), slider_gradient=True, slider_startcolor=(255, 50, 50, 255), slider_endcolor=(200, 100, 100, 255),\
-                slider_border=True, slider_border_color=(0,0,0), slider_border_size=2, slider_type=1):
+                surf_image=None, element_color=RED, text_alignment=1, text_color=WHITE,\
+                border=True, border_size=2, border_color=WHITE,\
+                use_gradient=True, start_color=LIGHTGRAY, end_color=DARKGRAY, gradient_type=0,\
+                shows_value=True, slider_color=GREEN, slider_gradient=True, slider_startcolor=(255, 50, 50, 255), slider_endcolor=(100, 50, 50, 255),\
+                slider_border=True, slider_border_color=BLACK, slider_border_size=2, slider_type=1):
         #Initializing super class
         super().__init__(element_position, element_size, surf_image, element_color,\
                         border, border_size, border_color, use_gradient, start_color, end_color, gradient_type)
@@ -83,11 +105,11 @@ class Slider (UI_Element):
         radius = self.rect.height//2
         if slider_type < 2:
             slider_surf = Circle.generate_surface(self.rect.size, radius,\
-                    slider_color, slider_gradient, start_color, end_color,\
-                    slider_border, slider_border_size, slider_border_color)
+                                                slider_color, slider_gradient, start_color, end_color,\
+                                                slider_border, slider_border_size, slider_border_color)
             if slider_type is 1: #ellipse instead of circle
-                    slider_size = slider_surf.get_size()
-                    slider_surf = pygame.transform.scale(slider_surf, (slider_size[0]//3, slider_size[1])) #TODO get some type of ratio instead of just a third of the size
+                slider_size = slider_surf.get_size()
+                slider_surf = pygame.transform.scale(slider_surf, (slider_size[0]//3, slider_size[1])) #TODO get some type of ratio instead of just a third of the size
         else: #TODO rectangular one
             pass
         center_position = tuple([(self.rect.width-slider_surf.get_width())//2, 0]) #To adjust the offset error due to transforming the surface.
@@ -101,18 +123,15 @@ class Slider (UI_Element):
 
 if __name__ == "__main__":
     timeout = 20
-    testsuite = Pygame_suite(fps=144)
+    testsuite = PygameSuite(fps=144)
     slidie = Slider((50, 50), (100, 25), "test1.5", None, 200)
     slidou = Slider( (250, 50), (300, 25),"test1.5", None, 200)
     slede = Slider( (600, 50), (600, 25), "test1.5", None, 200)
     slada = Slider( (200, 100), (400, 50), "test1.5", None, 200, slider_type=0)
     buttkun = Button( (200, 200), (800, 50),"Shitty Button", None, 200)
     baton = Button((200, 300), (800, 400), "SUPER BUTTON", None, 200)
+    print(type(baton))
+    print(issubclass(type(baton), UiElement))
     #Adding elements
-    testsuite.add_element(slidou.image, slidou.rect)
-    testsuite.add_element(slidie.image, slidie.rect)
-    testsuite.add_element(slada.image, slada.rect)
-    testsuite.add_element(slede.image, slede.rect)
-    testsuite.add_element(buttkun.image, buttkun.rect)
-    testsuite.add_element(baton.image, baton.rect)
+    testsuite.add_elements(slidou, slidie, slede, slada, buttkun, baton)
     testsuite.loop(seconds = timeout)

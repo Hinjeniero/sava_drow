@@ -3,60 +3,62 @@ from pygame.locals import *
 import gradients #Gradients in polygons
 import ptext #Gradients in text
 from polygons import Circle, Rectangle
+from pygame_test import PygameSuite
 
-pygame.mixer.pre_init(44100, -16, 1, 512)
-pygame.init()
-resolution = (800, 600)
-max_font = 200
-pygame.mouse.set_visible(True)
-clock = pygame.time.Clock()
-fps = 60
-half_fps = fps/2
-screen = pygame.display.set_mode(resolution)
-menus = {}
+class Menu (object):
+    game_folder = os.path.dirname(__file__)
+    img_folder = os.path.join(game_folder, 'img')
+    sounds_folder = os.path.join(game_folder, 'sounds')
+    default_config = {'background_path': None,
+                        'logo_path': None,
+                        'logo_size': 0.20,
+                        'title_menu': '',
+                        'title_text_size': 0.15,
+                        'soundtheme_path': Menu.sounds_folder+'maintheme.mp3',
+                        'soundeffect_path': Menu.sounds_folder+'/option.ogg',
+                        'font': None,
+                        'max_font':200
+    }
 
-class Menu:
-    def __init__(self, id, options, settings, background_path=None, logo_path=None, theme_path=None, option_sound_path=None,\
-    logo_size=0.20, title_text="Game", title_size=0.15, font=None, max_font=200):
-        self.static_elements = None #Things without interaction
-        self.dynamic_elements = None #Things with interaction, like buttons and such
-        self.active_elements = None #Selected from dynamic_elements, only one at the same time
+    def __init__(self, id, **config_params):
         #Basic info saved
         self.id = id
-        self.font = font
-        self.bgpath = background_path
-        self.logo_path = logo_path
-        self.logo_size = logo_size
-        self.title = title_text
-        self.title_size = title_size
-        self.options = options
-        self.max_font = max_font
+        self.config = Menu.default_config.copy().update(**config_params)
         
-        #Music & sounds
-        self.main_theme = pygame.mixer.music.load("maintheme.mp3")
-        pygame.mixer.music.play()
-        pygame.mixer.music.set_volume(0.15)
-        self.option_sound = pygame.mixer.Sound(file="option.ogg")
-        self.option_sound.set_volume(2)
-
-        self.timer_option = 0 #This takes care of the graphical effects of the selected option
-        self.top_elements = [] #The non-clickable elements (could be a logo, a drawing, a title...)
-        self.elements = [] #The graphical elements that compose the menus
-        self.settings = settings #The logical part of the menus, changing parameters like resolution and shit
-        self.active_option_index = 0
-
-        res = self.settings["resolution"].current()
-        self.last_resolution = res #In case we want to implement the low_cost resize of the resolution
-
-        self.font_size_table = self.fill_font_size_table()
-        self.create_menu(logo_path=logo_path, logo_size=(res[0]*logo_size, res[1]*logo_size), title_text=title_text, \
-         title_size=(res[0]*title_size, res[1]*title_size), options_list=options)
+        #Graphic elements
+        self.static_sprites = pygame.sprite.Group() #Things without interaction
+        self.dynamic_sprites = pygame.sprite.Group() #Things with interaction, like buttons and such
+        self.active_sprites = pygame.sprite.GroupSingle(_use_update=True) #Selected from dynamic_elements, only one at the same time
         self.background = self.load_background(self.settings["resolution"].current(), self.bgpath)
         
-    #The id is the string that will identify the setting to change
-    def add_setting(self, id_setting, options = []):
-       setting = Setting(options=options)
-       self.settings[id_setting.lower()] = setting
+
+        #Music & sounds
+        self.main_theme = pygame.mixer.music.load(self.config['soundtheme_path'])
+        self.option_sound = pygame.mixer.Sound(file=self.config['soundeffect_path'])
+        #self.option_sound.set_volume(1)
+
+        self.create_menu(logo_path=logo_path, logo_size=(res[0]*logo_size, res[1]*logo_size), title_text=title_text, \
+         title_size=(res[0]*title_size, res[1]*title_size), options_list=options)
+
+        pygame.mixer.music.play()
+
+    def add_elements(self, *elements):
+        for element in elements:
+            if type(element) is list:
+                for subelement in element:
+                    self.__add_element(subelement)
+            elif type(element) is dict:
+                for subelement in element.values():
+                    self.__add_element(subelement)
+            else:
+                self.__add_element(element)
+
+    def __add_element(self, element):
+        if type(element) is UiElement or issubclass(type(element), UiElement):
+            self.dynamic_sprites.add(element)
+        else:
+            self.static_sprites.add(element)
+
 
     def update_settings(self):
         global screen
@@ -68,6 +70,9 @@ class Menu:
         self.create_menu(logo_path=self.logo_path, logo_size=(res[0]*self.logo_size, res[1]*self.logo_size), title_text=self.title,\
          title_size=(res[0]*self.title_size, res[1]*self.title_size), options_list=self.options)
         self.background = self.load_background(self.settings["resolution"].current(), self.bgpath)
+
+    def update_menu(self):
+        pass+
 
     #centering --> 0 = centered, 1 = left, 2 = right
     def create_menu(self, logo_path = None, logo_size = (0, 0), title_text = None, title_size = (0, 0), options_list=[], centering = 0, text_color = (255, 255, 255), margin = 0.05):
@@ -180,16 +185,6 @@ class Menu:
             surface.blit(frames, (50, 150))
         pygame.display.update() #We could use flip too since in here we are not specifying any part of the surface #TODO delete
 
-    #Does all the shit related to the mouse hovering an option
-    def mouse_collider(self, mouse_position):
-        index = 0
-        for ui_element in self.elements: #Mouse_position is a two component tuple
-            if mouse_position[0] > ui_element.hitbox.pos[0] and mouse_position[0] < ui_element.hitbox.pos[0]+ui_element.hitbox.size[0] \
-            and mouse_position[1] > ui_element.hitbox.pos[1] and mouse_position[1] < ui_element.hitbox.pos[1]+ui_element.hitbox.size[1]:
-                return index
-            index+=1
-        return self.active_option_index #No option is selected, we leave whatever was active
-
     def event_handler(self, events, keys_pressed, mouse_movement=False, mouse_pos=(0, 0)):
         for event in events:
             if event.type == pygame.QUIT:
@@ -213,19 +208,11 @@ class Menu:
             self.change_active_option(self.mouse_collider(mouse_pos))
         return True
 
-    def test(self):
-        loop = True
-        while loop:
-            clock.tick(fps)
-            self.draw()
-            if pygame.mouse.get_rel() != (0,0): #If there is mouse movement
-                loop = self.event_handler(pygame.event.get(), pygame.key.get_pressed(), mouse_movement=True, mouse_pos=pygame.mouse.get_pos())
-            else:
-                loop = self.event_handler(pygame.event.get(), pygame.key.get_pressed())
-
 #List of (ids, text)
 if __name__ == "__main__":
-    resolutions = Setting(options=[(800, 600), (1024, 768), (1280, 720), (1366, 768), (160, 120), (320, 240), (640, 480)])
+    timeout = 20
+    testsuite = PygameSuite(fps=144)
+
     menu = Menu("main_menu", [("start_game", "Start game"), ("resolution", "Resolution"), ("flaity", "Flaity"), ("tio", "Tio"),\
     ("joder", "Joder"), ("loco", "Loco")], {"resolution" : resolutions}, background_path='background.jpg', logo_path="logo.jpg")
-    menu.test()
+    testsuite.loop()

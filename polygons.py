@@ -34,8 +34,8 @@ class Polygon(pygame.sprite.Sprite):
         end_color: Ending color of the gradient. Default is dark gray.
         gradient_type: Orientation of the gradient, 0 for vertical, 1 or whatever for horizontal. Default is 0 (Vertical)
     """
-
     euclidean_distances = UtilityBox.euclidean_generator() #LUT to store the euclidean distances. Useful in the circles hitbox checking
+    
     def __init__(self, position, size,\
                 surf_image=None, surf_color=RED,\
                 border=True, border_size=2, border_color=WHITE,\
@@ -43,6 +43,29 @@ class Polygon(pygame.sprite.Sprite):
         super().__init__()
         self.image=None
         self.rect=None
+
+    def collidepoint(self, point):
+        '''Overlay of rect.collidepoint of the sprite. The main use of this function
+        is to be overwritten in the case that we want more specific collision with the
+        different possible subclasses.
+        
+        Args:
+            point: Position of the point that could be colliding with this sprite.
+                Can be a pygame.Rect or a tuple of 2 elements (position x,y)
+        
+        Returns:
+            True if the point collides with the sprite.
+            False otherwise.
+        
+        Raises:
+            TypeError: The parameter point format is not correct. Use a tuple or 
+                    pygame.Rect instead.'''
+        if type(point) is pygame.Rect:
+            return self.rect.collidepoint((point.x, point,y))
+        elif type(point) is tuple:
+            return self.rect.collidepoint(point)
+        else:
+            raise TypeError("CollidePoint must receive a pygame.Rect or a tuple containing the point coordinates.")
 
 class Circle(Polygon):
     
@@ -54,9 +77,9 @@ class Circle(Polygon):
         super().__init__(position, size, surf_color, surf_image, border, border_size, border_color, use_gradient, start_color, end_color, gradient_type)
 
         self.radius = size[0]//2 if type(size) is tuple else size//2
-        self.center_position = tuple([x+self.radius for x in position]) #Under the assumption that it's a square
         self.image = Circle.generate_surface(size, self.radius, surf_color, use_gradient, start_color, end_color, border, border_size, border_color)
         self.rect = pygame.Rect(position, self.image.get_size()) #Position + size
+        self.center = self.rect.center
     
     def collision(self, rect):
         """Returns if a collision has ocurred.
@@ -85,6 +108,9 @@ class Circle(Polygon):
             return Polygon.euclidean_distances[distance[0]][distance[1]] <= self.radius
         except IndexError:  #The distance was too big anyway, no collision.
             return False
+
+    def collidepoint(self, point):
+        pass
 
     @staticmethod
     def generate_surface (surf_size, radius, surf_color, use_gradient, start_color, end_color, border, border_size, border_color):

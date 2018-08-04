@@ -1,16 +1,24 @@
 from UI_Element import Slider, Button
+import pygame
 
 class Setting (object):
     """Overlay for uielement. Adds funcionality."""
-    def __init__(self, user_event, ui_element=None):
+    def __init__(self, user_event_id, ui_element=None):
         self.graphics = ui_element #Not really an ui element, a subclass of this one
-        self.event = user_event #Event triggered when this element is clicked
+        self.__event_id = user_event_id #Event triggered when this element is clicked
 
     def get_surface(self):
         return self.graphics.image, self.graphics.rect
 
+    def get_value(self):
+        pass
+
     def hitbox_action(self, mouse_buttons, mouse_pos):
         pass
+
+    def send_event(self):
+        my_event = pygame.event.Event(self.__event_id, value=self.get_value())
+        pygame.event.post(my_event)
         
 class Options (Setting):
     """Subclass of Setting, specifies a set of options"""

@@ -3,6 +3,7 @@ from pygame.locals import *
 import gradients #Gradients in polygons
 import ptext #Gradients in text
 from polygons import Circle, Rectangle
+from Setting import setting
 from pygame_test import PygameSuite
 
 class Menu (object):
@@ -54,11 +55,18 @@ class Menu (object):
                 self.__add_element(element)
 
     def __add_element(self, element):
+        '''Decides whether to add the element to the static or the dynamic elements
+        based on the type of the element. Afterwards addes it to the chosen one.
+        
+        Args: 
+            element: element to add'''
         if type(element) is UiElement or issubclass(type(element), UiElement):
             self.dynamic_sprites.add(element)
         else:
             self.static_sprites.add(element)
 
+    def create_settings(self):
+        pass
 
     def update_settings(self):
         global screen
@@ -72,7 +80,7 @@ class Menu (object):
         self.background = self.load_background(self.settings["resolution"].current(), self.bgpath)
 
     def update_menu(self):
-        pass+
+        pass
 
     #centering --> 0 = centered, 1 = left, 2 = right
     def create_menu(self, logo_path = None, logo_size = (0, 0), title_text = None, title_size = (0, 0), options_list=[], centering = 0, text_color = (255, 255, 255), margin = 0.05):

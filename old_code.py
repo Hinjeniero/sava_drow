@@ -243,3 +243,16 @@ class UI_Element:
                 loop = self.event_handler(pygame.event.get(), pygame.key.get_pressed(), mouse_movement=True, mouse_pos=pygame.mouse.get_pos())
             else:
                 loop = self.event_handler(pygame.event.get(), pygame.key.get_pressed())
+
+    '''def create_settings(self, *elements):
+        all_settings = []
+        for element in elements:
+            if type (element) is (list or tuple):
+                for subelement in element:
+                    all_settings.append(self.__create_setting(subelement))
+            elif type(element) is dict:
+                for subelement in element.values():
+                    all_settings.append(self.__create_setting(subelement))
+            else:
+                all_settings.append(self.__create_setting(subelement))
+        return all_settings'''

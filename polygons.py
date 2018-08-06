@@ -61,14 +61,14 @@ class Polygon(pygame.sprite.Sprite):
             TypeError: The parameter point format is not correct. Use a tuple or 
                     pygame.Rect instead.'''
         if type(point) is pygame.Rect:
-            return self.rect.collidepoint((point.x, point,y))
+            return self.rect.collidepoint((point.x, point.y))
         elif type(point) is tuple:
             return self.rect.collidepoint(point)
         else:
             raise TypeError("CollidePoint must receive a pygame.Rect or a tuple containing the point coordinates.")
 
 class Circle(Polygon):
-    
+    '''ou shit'''
     def __init__(self, position, size,\
                 surf_image=None, surf_color=RED,\
                 border=True, border_size=2, border_color=WHITE,\
@@ -77,7 +77,7 @@ class Circle(Polygon):
         super().__init__(position, size, surf_color, surf_image, border, border_size, border_color, use_gradient, start_color, end_color, gradient_type)
 
         self.radius = size[0]//2 if type(size) is tuple else size//2
-        self.image = Circle.generate_surface(size, self.radius, surf_color, use_gradient, start_color, end_color, border, border_size, border_color)
+        self.image = Circle.generate_surface(size, self.radius, surf_color, use_gradient, start_color, end_color, border, border_size, border_color)[0]
         self.rect = pygame.Rect(position, self.image.get_size()) #Position + size
         self.center = self.rect.center
     
@@ -134,7 +134,10 @@ class Circle(Polygon):
         if use_gradient: surf = gradients.radial(radius, start_color, end_color) 
         else: pygame.draw.circle(surf, surf_color, (radius, radius), radius, 0)
         if border: pygame.draw.circle(surf, border_color,(radius, radius), radius, border_size)
-        return surf
+        if type(surf_size) is pygame.Rect:
+            return surf, pygame.Rect(surf_size)
+        else:       #We need a coordinate to create a Rect, so if the size is a tuple, 0,0 will it be.
+            return surf, pygame.Rect(0, 0, surf_size)
 
 class Rectangle(Polygon):
     def __init__(self, position, size,\
@@ -144,7 +147,7 @@ class Rectangle(Polygon):
         #Hierarchy from polygon
         super().__init__(position, size, surf_color, surf_image, border, border_size, border_color, use_gradient, start_color, end_color, gradient_type)
 
-        self.image = Rectangle.generate_surface(size, surf_image, surf_color, use_gradient, start_color, end_color, gradient_type, border, border_size, border_color)
+        self.image = Rectangle.generate_surface(size, surf_image, surf_color, use_gradient, start_color, end_color, gradient_type, border, border_size, border_color)[0]
         self.rect = pygame.Rect(position, self.image.get_size()) #Position + size
 
     @staticmethod
@@ -174,4 +177,7 @@ class Rectangle(Polygon):
             if use_gradient: surf = gradients.vertical(surf_size, start_color, end_color) if gradient_type == 0 else gradients.horizontal(surf_size, start_color, end_color) #Checking if gradient and type of gradient
             else: surf.fill(surf_color)
             if border and border_size is not 0: pygame.draw.rect(surf, border_color,(0,0)+surf_size, border_size) #Drawing the border in the surface, dont want no existant borders
-        return surf
+        if type(surf_size) is pygame.Rect:
+            return surf, pygame.Rect(surf_size)
+        else:       #We need a coordinate to create a Rect, so if the size is a tuple, 0,0 will it be.
+            return surf, pygame.Rect(0, 0, surf_size)

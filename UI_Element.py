@@ -11,6 +11,11 @@ BLUE = pygame.Color("blue")
 DARKGRAY = pygame.Color("darkgray")
 LIGHTGRAY = pygame.Color("lightgray")
 
+class TextSprite(pygame.sprite.Sprite):
+    def __init__(self, font_surface, position=(0,0)):
+        self.image = font_surface
+        self.rect = pygame.Rect(position,self.image.get_size())
+
 #Graphical element, automatic creation of a menu's elements
 class UiElement(pygame.sprite.Sprite):
     """Superclass UI_Element. Subclasses are Button and Slider.
@@ -40,22 +45,38 @@ class UiElement(pygame.sprite.Sprite):
                 use_gradient=True, start_color=LIGHTGRAY, end_color=DARKGRAY, gradient_type=0):
         #Hierarchy from sprite
         super().__init__()
-        self.hitbox = Rectangle.generate_surface(element_size, surf_image, element_color,\
-                                use_gradient, start_color, end_color, gradient_type,\
-                                border, border_size, border_color)
-        self.image = self.hitbox.copy() 
-        self.rect = pygame.Rect(element_position, self.image.get_size()) #Position + size
+        self.rect = pygame.Rect(element_position, element_size) 
+        self.pieces = pygame.sprite.OrderedUpdates()
+        self.pieces.add(Rectangle(element_position, surf_image, element_color,\
+                                border, border_size, border_color,\
+                                use_gradient, start_color, end_color, gradient_type))
+        self.image = self.generate_image()
     
-    def draw_text(self, surface, text, text_color, text_alignment, font, font_size):
+    def generate_text(self, text, text_color, text_alignment, font, font_size):
         font = pygame.font.Font(font, font_size)
         text_surf = font.render(text, True, text_color)
         y_pos = (self.rect.height//2)-(text_surf.get_height()//2)
         #1 is left, 2 is right, 0 is centered
         x_pos = self.rect.width*0.02 if text_alignment is 1 else self.rect.width-text_surf.get_width() if text_alignment is 2 else (self.rect.width//2)-(text_surf.get_width()//2)
-        surface.blit(text_surf, (x_pos, y_pos))
-        return text_surf
-        
+        return TextSprite(text_surf, (x_pos, y_pos))
+        #surface.blit(text_surf, (x_pos, y_pos))
+        #return text_surf, pygame.Rect(x_pos, y_pos, text_surf.get_size())
+    
+    def generate_image(self):
+        try:
+            sprites = self.pieces.sprites().copy()
+            base_surf = sprites.image.copy()
+            del sprites[0]
+            for sprite in sprites:
+                base_surf.blit(sprite.image, sprite.rect.topleft)
+            return base_surf
+        except IndexError:
+            print("To generate an image you need at least one sprite in the list of sprites")
+
     def draw(self, surface):
+        pass
+
+    def resize(self, new_size):
         pass
 
 class Button (UiElement):
@@ -68,7 +89,9 @@ class Button (UiElement):
         super().__init__(element_position, element_size, surf_image, element_color,\
                         border, border_size, border_color, use_gradient, start_color, end_color, gradient_type)
         fnt_size = Resizer.max_font_size(text, self.rect.size, max_font_size, font_text)
-        self.text_surface = self.draw_text(self.image, text, text_color, text_alignment, font_text, fnt_size)
+        self.pieces.add(self.generate_text(text, text_color, text_alignment, font_text, fnt_size))    
+        self.image = self.generate_image(self)
+    
         self.speed = 5
         self.mask_color = WHITE
         self.transparency = 0
@@ -80,6 +103,11 @@ class Button (UiElement):
 
         self.transparency += self.transparency_speed
         if self.transparency >= 255:    self.transparency_speed = -self.transparency_speed 
+
+    def resize(self, new_size):
+        new_surf = Resizer.surface_resize(self.image, new_size)
+        ratio = new_surf.get_size()/self.rect.size      #Ratio going from 0 to 1 
+        #for hitbox_pos, text_pos in zip(self.rect.topleft, self.text_rect.topleft)
 
     def return_active_surface(self):
         overlay = pygame.Surface(self.rect.size).fill(self.mask_color)
@@ -96,25 +124,30 @@ class Slider (UiElement):
         super().__init__(element_position, element_size, surf_image, element_color,\
                         border, border_size, border_color, use_gradient, start_color, end_color, gradient_type)
         fnt_size = Resizer.max_font_size(text, self.rect.size, max_font_size, font_text)//2
-        self.text_surface = self.draw_text(self.image, text, text_color, text_alignment, font_text, fnt_size)
-        self.slider_surface = self.draw_slider(self.image, slider_color, slider_gradient, slider_startcolor, slider_endcolor, slider_border,\
-                                            slider_border_color, slider_border_size, slider_type)
+        self.pieces.add(self.generate_text(text, text_color, text_alignment, font_text, fnt_size))
+        self.pieces.add(self.generate_slider(slider_color, slider_gradient, slider_startcolor, slider_endcolor,\
+                                            slider_border, slider_border_color, slider_border_size, slider_type))    
+        self.image = self.generate_image(self)    
 
-    #Adds the slider to the surface parameter, and returns the slider surface for further purposes
-    def draw_slider (self, surface, slider_color, slider_gradient, start_color, end_color, slider_border, slider_border_color, slider_border_size, slider_type):
-        radius = self.rect.height//2
-        if slider_type < 2:
-            slider_surf = Circle.generate_surface(self.rect.size, radius,\
-                                                slider_color, slider_gradient, start_color, end_color,\
-                                                slider_border, slider_border_size, slider_border_color)
-            if slider_type is 1: #ellipse instead of circle
-                slider_size = slider_surf.get_size()
-                slider_surf = pygame.transform.scale(slider_surf, (slider_size[0]//3, slider_size[1])) #TODO get some type of ratio instead of just a third of the size
-        else: #TODO rectangular one
-            pass
-        center_position = tuple([(self.rect.width-slider_surf.get_width())//2, 0]) #To adjust the offset error due to transforming the surface.
-        surface.blit(slider_surf, tuple(center_position)) #Drawing the slider in the entire image surface
-        return slider_surf
+    def generate_slider (self, slider_color, slider_gradient, start_color, end_color, slider_border, slider_border_color, slider_border_size, slider_type):
+        '''Adds the slider to the surface parameter, and returns the slider surface for further purposes'''
+        ratio = 3
+        size = (self.rect.height, self.rect.height)
+        #radius = self.rect.height//2
+        if slider_type < 2:         #Circle
+            slider = Circle((0,0), size, None, slider_color,\
+                            slider_border, slider_border_size, slider_border_color,\
+                            slider_gradient, start_color, end_color)
+            if slider_type is 1:    #ellipse instead of circle, done by simply resizing the circle
+                slider.rect.width //= ratio
+                slider.image = pygame.transform.scale(slider.image, (slider.rect.width, slider.rect.height))
+        else:                       #Rectangular one
+            slider = Rectangle((0,0), tuple(size[0]//ratio, size[1]), None, slider_color,\
+                                slider_border, slider_border_size, slider_border_color,\
+                                slider_gradient, start_color, end_color)
+        
+        slider.rect.x = self.rect.width-(slider.rect.width//2)     #To adjust the offset error due to transforming the surface.
+        return slider
 
     #Position must be between 0 and 1
     #When we know in which form will the parameter be passed, we will implement this

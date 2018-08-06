@@ -3,14 +3,14 @@ from pygame.locals import *
 import gradients #Gradients in polygons
 import ptext #Gradients in text
 from polygons import Circle, Rectangle
-from Setting import setting
+from Setting import *
 from pygame_test import PygameSuite
 
-class Menu (object):
+class Menu (object):``
     game_folder = os.path.dirname(__file__)
     img_folder = os.path.join(game_folder, 'img')
     sounds_folder = os.path.join(game_folder, 'sounds')
-    default_config = {'background_path': None,
+    __default_config = {'background_path': None,
                         'logo_path': None,
                         'logo_size': 0.20,
                         'title_menu': '',
@@ -24,14 +24,15 @@ class Menu (object):
     def __init__(self, id, **config_params):
         #Basic info saved
         self.id = id
-        self.config = Menu.default_config.copy().update(**config_params)
-        
+        self.config = Menu.__default_config.copy().update(**config_params)
+        #TODO, if we pass some sliders and some shit, take it and process it
+
         #Graphic elements
         self.static_sprites = pygame.sprite.Group() #Things without interaction
         self.dynamic_sprites = pygame.sprite.Group() #Things with interaction, like buttons and such
         self.active_sprites = pygame.sprite.GroupSingle(_use_update=True) #Selected from dynamic_elements, only one at the same time
         self.background = self.load_background(self.settings["resolution"].current(), self.bgpath)
-        
+        self.settings = []
 
         #Music & sounds
         self.main_theme = pygame.mixer.music.load(self.config['soundtheme_path'])
@@ -60,15 +61,26 @@ class Menu (object):
         
         Args: 
             element: element to add'''
-        if type(element) is UiElement or issubclass(type(element), UiElement):
-            self.dynamic_sprites.add(element)
+        if type(element) is tuple:      #UiElement or issubclass(type(element), UiElement), its a (uielement, default_Values) tuple
+            try:
+                self.settings.append(self.__create_setting(element))
+                self.dynamic_sprites.add(element[0])
+            except TypeError:
+                print("An element couldn't be added, due to being a tuple, but not an ui_element subclass.")
         else:
-            self.static_sprites.add(element)
+            if type(element) is pygame.Surface:
+                self.static_sprites.add(element)
+            else:
+                raise TypeError("Elements should be a pygame.Surface, or an ui_element subclass.") 
 
-    def create_settings(self):
-        pass
+    def __create_setting(self, element):
+        graphic_element, default_value = element[0], element[1]
+        if issubclass(type(graphic_element), Setting):
+            if type(graphic_element) is (Slider or Button):
+                return Setting.factory(pygame.USEREVENT+Menu.__event_id_counter, graphic_element, default_value)
+        raise TypeError("Creating Setting subclasses are only compatible with Buttons and Sliders")
 
-    def update_settings(self):
+    def update_settings(self):#TODO redefine
         global screen
         screen = pygame.display.set_mode(self.settings["resolution"].current())
         
@@ -79,10 +91,7 @@ class Menu (object):
          title_size=(res[0]*self.title_size, res[1]*self.title_size), options_list=self.options)
         self.background = self.load_background(self.settings["resolution"].current(), self.bgpath)
 
-    def update_menu(self):
-        pass
-
-    #centering --> 0 = centered, 1 = left, 2 = right
+    #centering --> 0 = centered, 1 = left, 2 = right   3TODO add accept button and  array of booleans 
     def create_menu(self, logo_path = None, logo_size = (0, 0), title_text = None, title_size = (0, 0), options_list=[], centering = 0, text_color = (255, 255, 255), margin = 0.05):
         res = self.settings["resolution"].current()
         margin = (res[0]*margin, res[1]*margin) #tuple containing the margin

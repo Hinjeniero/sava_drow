@@ -1,9 +1,32 @@
-from UI_Element import Slider, Button
+from ui_element import Slider, Button
 import pygame
+__all__ = ["Options", "Value"]
 
 class Setting (object):
     """Overlay for uielement. Adds funcionality."""
-    def __init__(self, user_event_id, ui_element=None):
+
+    @staticmethod
+    def factory(user_event_id, ui_element, default_values):
+        '''Method to decide what subclass to create according to the default values.
+        If it's a number, a Value. If its a list of shit, Options.
+        Factory pattern method.
+
+        Args:
+            user_event_id:
+            ui_element:
+            default_values:
+        
+        Raise:
+            AttributeError:
+        '''
+        if type(default_values) is (list or tuple):
+            return Options(user_event_id, ui_element, tuple(default_values))
+        elif type(default_values) is (int or float):
+            return Value(user_event_id, ui_element, float(default_values))
+        else:
+            return AttributeError("The provided set of default values does not follow any of the existing objects logic.")
+
+    def __init__(self, user_event_id, ui_element):
         self.graphics = ui_element #Not really an ui element, a subclass of this one
         self.__event_id = user_event_id #Event triggered when this element is clicked
 
@@ -22,8 +45,8 @@ class Setting (object):
         
 class Options (Setting):
     """Subclass of Setting, specifies a set of options"""
-    def __init__(self, UI_Element=None, set_of_values=[]):
-        super().__init__(UI_Element)
+    def __init__(self, user_event_id, ui_element, set_of_values):
+        super().__init__(user_event_id, ui_element)
         self.values = set_of_values
         self.index = 0
 
@@ -43,8 +66,8 @@ class Options (Setting):
 
 class Value (Setting):
     """Subclass of Setting, specifies an associated float value"""
-    def __init__(self, UI_Element=None, value=1):
-        super().__init__(UI_Element)
+    def __init__(self, user_event_id, ui_element, value):
+        super().__init__(user_event_id, ui_element)
         self.value = value
 
     def get_value(self):

@@ -8,6 +8,7 @@ from setting import Setting
 
 
 class game():
+    __event_id_counter = 1
     game_folder = os.path.dirname(__file__)
     img_folder = os.path.join(game_folder, 'img')
     sounds_folder = os.path.join(game_folder, 'sounds')

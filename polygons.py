@@ -135,9 +135,9 @@ class Circle(Polygon):
         else: pygame.draw.circle(surf, surf_color, (radius, radius), radius, 0)
         if border: pygame.draw.circle(surf, border_color,(radius, radius), radius, border_size)
         if type(surf_size) is pygame.Rect:
-            return surf, pygame.Rect(surf_size)
+            return surf, surf_size
         else:       #We need a coordinate to create a Rect, so if the size is a tuple, 0,0 will it be.
-            return surf, pygame.Rect(0, 0, surf_size)
+            return surf, pygame.Rect((0,0)+surf_size)
 
 class Rectangle(Polygon):
     def __init__(self, position, size,\
@@ -170,6 +170,7 @@ class Rectangle(Polygon):
             A surface containing the Rectangle.
         """
         if image:
+            print(image)
             surf = pygame.transform.scale(pygame.image.load(image).convert_alpha(), surf_size)
             if border: border = pygame.mask.from_surface(surf, 200)         #If image needs a border, mask. Not using it right now TODO
         else:
@@ -178,6 +179,6 @@ class Rectangle(Polygon):
             else: surf.fill(surf_color)
             if border and border_size is not 0: pygame.draw.rect(surf, border_color,(0,0)+surf_size, border_size) #Drawing the border in the surface, dont want no existant borders
         if type(surf_size) is pygame.Rect:
-            return surf, pygame.Rect(surf_size)
+            return surf, surf_size
         else:       #We need a coordinate to create a Rect, so if the size is a tuple, 0,0 will it be.
-            return surf, pygame.Rect(0, 0, surf_size)
+            return surf, pygame.Rect((0,0)+surf_size)

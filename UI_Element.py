@@ -13,6 +13,7 @@ LIGHTGRAY = pygame.Color("lightgray")
 
 class TextSprite(pygame.sprite.Sprite):
     def __init__(self, font_surface, position=(0,0)):
+        super().__init__()
         self.image = font_surface
         self.rect = pygame.Rect(position,self.image.get_size())
 
@@ -45,13 +46,28 @@ class UiElement(pygame.sprite.Sprite):
                 use_gradient=True, start_color=LIGHTGRAY, end_color=DARKGRAY, gradient_type=0):
         #Hierarchy from sprite
         super().__init__()
+        self.params =   {'position': element_position,
+                        'size': element_size,
+                        'texture': surf_image,
+                        'color': element_color,
+                        'border': border,
+                        'border_width': border_size,
+                        'border_color': border_color,
+                        'gradient': use_gradient,
+                        'start_gradient': start_color,
+                        'end_gradient': end_color,
+                        'gradient_type': gradient_type}
+        
         self.rect = pygame.Rect(element_position, element_size) 
         self.pieces = pygame.sprite.OrderedUpdates()
-        self.pieces.add(Rectangle(element_position, surf_image, element_color,\
+        self.pieces.add(Rectangle(element_position, element_size, surf_image, element_color,\
                                 border, border_size, border_color,\
                                 use_gradient, start_color, end_color, gradient_type))
         self.image = self.generate_image()
     
+    def generate_sprites(self):
+        pass
+
     def generate_text(self, text, text_color, text_alignment, font, font_size):
         font = pygame.font.Font(font, font_size)
         text_surf = font.render(text, True, text_color)
@@ -65,7 +81,7 @@ class UiElement(pygame.sprite.Sprite):
     def generate_image(self):
         try:
             sprites = self.pieces.sprites().copy()
-            base_surf = sprites.image.copy()
+            base_surf = sprites[0].image.copy()
             del sprites[0]
             for sprite in sprites:
                 base_surf.blit(sprite.image, sprite.rect.topleft)
@@ -77,7 +93,10 @@ class UiElement(pygame.sprite.Sprite):
         pass
 
     def resize(self, new_size):
-        pass
+        sprites = self.pieces.sprites()
+        
+        for sprite in sprites:
+            Resizer.sprite_resize()
 
 class Button (UiElement):
     def __init__(self, element_position, element_size, text, font_text, max_font_size,\
@@ -90,7 +109,7 @@ class Button (UiElement):
                         border, border_size, border_color, use_gradient, start_color, end_color, gradient_type)
         fnt_size = Resizer.max_font_size(text, self.rect.size, max_font_size, font_text)
         self.pieces.add(self.generate_text(text, text_color, text_alignment, font_text, fnt_size))    
-        self.image = self.generate_image(self)
+        self.image = self.generate_image()
     
         self.speed = 5
         self.mask_color = WHITE
@@ -127,7 +146,7 @@ class Slider (UiElement):
         self.pieces.add(self.generate_text(text, text_color, text_alignment, font_text, fnt_size))
         self.pieces.add(self.generate_slider(slider_color, slider_gradient, slider_startcolor, slider_endcolor,\
                                             slider_border, slider_border_color, slider_border_size, slider_type))    
-        self.image = self.generate_image(self)    
+        self.image = self.generate_image()    
 
     def generate_slider (self, slider_color, slider_gradient, start_color, end_color, slider_border, slider_border_color, slider_border_size, slider_type):
         '''Adds the slider to the surface parameter, and returns the slider surface for further purposes'''
@@ -146,7 +165,7 @@ class Slider (UiElement):
                                 slider_border, slider_border_size, slider_border_color,\
                                 slider_gradient, start_color, end_color)
         
-        slider.rect.x = self.rect.width-(slider.rect.width//2)     #To adjust the offset error due to transforming the surface.
+        slider.rect.x = (self.rect.width-slider.rect.width)//2     #To adjust the offset error due to transforming the surface.
         return slider
 
     #Position must be between 0 and 1
@@ -165,6 +184,7 @@ if __name__ == "__main__":
     baton = Button((200, 300), (800, 400), "SUPER BUTTON", None, 200)
     print(type(baton))
     print(issubclass(type(baton), UiElement))
+    print(type(slidie))
     #Adding elements
     testsuite.add_elements(slidou, slidie, slede, slada, buttkun, baton)
     testsuite.loop(seconds = timeout)

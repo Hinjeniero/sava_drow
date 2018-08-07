@@ -25,11 +25,27 @@ class Resizer (object):
     def surface_resize(surface, new_size):
         old_size = surface.get_size()
         for new_axis, old_axis in zip(new_size, old_size):
-            if old_axis > new_axis:
-                ratio = (new_axis/old_axis)
-                for i in range (0, len(new_size)): #This way it modifies the list, the normal iterator doesn't work that way, assigning names and shit
-                    new_size[i] = int(new_size[i]*ratio)
+            ratio = (new_axis/old_axis)
+            for i in range (0, len(new_size)): #This way it modifies the list, the normal iterator doesn't work that way, assigning names and shit
+                new_size[i] = int(new_size[i]*ratio)
         return pygame.transform.scale(surface, tuple(new_size)) #Resizing the surface
+    
+    @staticmethod
+    def sprite_resize(sprite, new_size):
+        old_size = sprite.image.get_size()
+        old_position = sprite.rect.topleft
+        new_position = list(sprite.rect.topleft)
+        ratios = []
+        for new_axis, old_axis in zip(new_size, old_size):
+            ratio = (new_axis/old_axis)
+            for i in range (0, len(new_size)): #This way it modifies the list, the normal iterator doesn't work that way, assigning names and shit
+                new_size[i] = int(new_size[i]*ratio)
+                new_position[i] = int(old_position[i]*ratio)
+            ratios.append(ratio)
+        sprite.rect.topleft = tuple(new_position)                               #Scaling the rect, pos and size
+        sprite.rect.size = tuple(new_size)
+        sprite.image = pygame.transform.scale(sprite.image, sprite.rect.size)    #Scaling the surface and size
+        return ratios
 
     '''@staticmethod
     def draw_hitbox(surface, surface_rect, hitbox_color=(255, 0, 0)):

@@ -3,6 +3,7 @@ from polygons import *
 from resizer import Resizer
 from pygame_test import PygameSuite
 
+#Global names assigned to pygame default colors. For the sake of code, really.
 BLACK = pygame.Color("black")
 WHITE = pygame.Color("white")
 RED = pygame.Color("red")
@@ -12,6 +13,11 @@ DARKGRAY = pygame.Color("darkgray")
 LIGHTGRAY = pygame.Color("lightgray")
 
 class TextSprite(pygame.sprite.Sprite):
+    '''Class TextSprite. Inherits from pygame.sprite, and the main surface is a text, from pygame.font.render.
+    Attributes:
+        image: Surface that contains the text
+        rect: pygame.Rect containing the position and size of the text sprite.
+    '''
     def __init__(self, font_surface, position=(0,0)):
         super().__init__()
         self.image = font_surface
@@ -22,12 +28,21 @@ class UiElement(pygame.sprite.Sprite):
     """Superclass UI_Element. Subclasses are Button and Slider.
     This class consists of a set of basic polygons like circles or rectangles.
 
+    Shared Class attributes:
+        __default_config: Default parameters that will be assigned to each instance of the UiElement class.
+
     The strength of this class relies on the automatic generation and extensive flexibility
     due to all the optional parameters in the generation of the element.
     The basic generate_surface of the superclass generates a rectangle. Any other polygon
     should have that method overloaded.
     All colors have a format of a tuple of 4 values of the RGBA form.
     Attributes:
+        params:     Dict containing all of the generation parameters. Can be used to generate again the image.
+        image:      Surface of the sprite.
+        rect:       pygame.Rect with the size and the position of the UiElement.
+        pieces:     List of individual sprites that compose the big UiElement.    
+        __event_id: Id of the event that is linked to this element. Triggered with a value when needed.
+    Params dict attributes:
         position: Position that this surface will have on the destination surface if it's drawed.
         size: Size of the surface containing the polygon, is a tuple (width, height).
         surf_color: Background color of the polygon if gradient and image are false. Default is solid red.
@@ -61,12 +76,16 @@ class UiElement(pygame.sprite.Sprite):
         Factory pattern method.
 
         Args:
-            user_event_id:
-            ui_element:
-            default_values:
-        
+            user_event_id:  Id of the user defined event that this element will trigger on collision
+            position:       Position of the sprite of this element.
+            size:           Size of the sprit of this element.
+            default_values: Set of values that the element will use. Could be a set of predefined ones, or a float.
+            params:         Named parameters that will be passed in the creation of an UiElement subclass.
+        Returns:
+            A Button object (If set of predefined values) or a Slider object (If numerical value)
         Raise:
-            AttributeError:
+            AttributeError: In case of values mismatch. Need to be a set of values, or a numerical one.
+
         '''
         if type(default_values) is (list or tuple):
             return Button(user_event_id, position, size, tuple(default_values), params)
@@ -76,7 +95,7 @@ class UiElement(pygame.sprite.Sprite):
             return AttributeError("The provided set of default values does not follow any of the existing objects logic.")
     
     def __init__(self, user_event_id, position, size, **params):
-        #Hierarchy from sprite
+        '''Constructor of the UiElement class.'''
         super().__init__()
         self.params =  UiElement.__default_config.copy().update(**params)
         self.params["position"] = position
@@ -87,21 +106,40 @@ class UiElement(pygame.sprite.Sprite):
         self.__event_id = user_event_id
         self.image = None           #Will be assigned a good object in the next line
         self.generate_object()      #Generate the first sprite and the self.image attribute
-    
-    def dict_update(self, new_dict):
-        pass
 
     def generate_text(self, text, text_color, text_alignment, font, font_size):
+        '''Generates a sprite-based text object following the input parameters.
+        Args:
+            text:           String object, is the text itself.
+            text_color:     Color of the text.
+            text_alignment: Decides which type of centering the text follows. 0-center, 1-left, 2-right.
+            font:           Type of font that the text will have. Default value of pygame: None.
+            font_size:      Size of the font (height in pixels).
+        Returns:
+            TextSprite object, rendered after reading the input parameters.
+        Old code of method:
+            #surface.blit(text_surf, (x_pos, y_pos))
+            #return text_surf, pygame.Rect(x_pos, y_pos, text_surf.get_size())
+        '''
         font = pygame.font.Font(font, font_size)
         text_surf = font.render(text, True, text_color)
         y_pos = (self.rect.height//2)-(text_surf.get_height()//2)
         #1 is left, 2 is right, 0 is centered
         x_pos = self.rect.width*0.02 if text_alignment is 1 else self.rect.width-text_surf.get_width() if text_alignment is 2 else (self.rect.width//2)-(text_surf.get_width()//2)
         return TextSprite(text_surf, (x_pos, y_pos))
-        #surface.blit(text_surf, (x_pos, y_pos))
-        #return text_surf, pygame.Rect(x_pos, y_pos, text_surf.get_size())
     
     def generate_image(self):
+        '''Generates the self.image surface, adding and drawing all the pieces that form part of the sprite.
+        The rect attribute of the pieces after the first one are the relative position over the first sprite (piece).
+        Args:       
+            None
+        Use:
+            self.pieces    
+        Returns:
+            base_surf:  Complex surface containing all the individual sprites in self.pieces. 
+        Raise:
+            IndexError: Error if the self.pieces list is empty.
+        '''
         try:
             sprites = self.pieces.sprites().copy()
             base_surf = sprites[0].image.copy()
@@ -113,6 +151,17 @@ class UiElement(pygame.sprite.Sprite):
             print("To generate an image you need at least one sprite in the list of sprites")
 
     def generate_object(self, rect=None, generate_image=True):
+        '''Generates or regenerates the object, using the input rect, or the default self.rect.
+        Empty the pieces list, and generate and add the pieces using the self.params values.
+        This method can be overriden by subclasses, generating and adding different or more sprites.
+        Lastly, the generate_image method is called again, and assigned to the self.image attribute.
+        Can be used as a fancy and heavy resizer.
+        Args:
+            rect:           Rect containing the new size and position of the Element. Defaults to None and uses sef.rect.
+            generate_image: Flag. If true, self.image is generated again using generate_image().
+        Returns:
+            Nothing.
+        '''
         if rect is not None:        self.rect = rect
         self.params["position"] =   self.rect.topleft
         self.params["size"] =       self.rect.size
@@ -122,10 +171,9 @@ class UiElement(pygame.sprite.Sprite):
                                 self.params['gradient'], self.params['start_gradient'], self.params['end_gradient'], self.params['gradient_type']))
         if generate_image:    self.image = self.generate_image()
 
-    def draw(self, surface):
-        pass
-
     def send_event(self):
+        '''Post the event associated with this element, along with the current value.
+        Posts it in the pygame.event queue. Can be retrieved with pygame.event.get()'''
         my_event = pygame.event.Event(self.__event_id, value=self.get_value())
         pygame.event.post(my_event)
 
@@ -140,20 +188,17 @@ class Button (UiElement):
     }
 
     def __init__(self, user_event_id, element_position, element_size, set_of_values, **params):
-        #Initializing super class
-        super().__init__(element_position, element_size, params)
-
-        for key in Button.__default_config.keys(): #Can't do it like in the superclass
+        super().__init__(element_position, element_size, params)    #Initializing super class
+        #After adding things in the superclass initializing, we only want the attributes that we still dont have
+        for key in Button.__default_config.keys(): 
             key = key.lower().replace(" ", "_")
             if self.params.has_key(key):
                 self.params[key] = Button.__default_config[key]
 
-        self.generate_object()      #Generate the first sprite and the self.image attribute
-        
+        self.generate_object()
         #Regarding funcionality
         self.values = set_of_values
         self.index = 0
-
         #Regarding animation
         self.speed = 5
         self.mask_color = WHITE
@@ -161,6 +206,10 @@ class Button (UiElement):
         self.transparency_speed = 15
 
     def update(self):
+        '''Update method, will process attributes to simulate animation
+        Args, Returns:
+            None, Nothing
+        '''
         self.rect.x += self.speed
         if self.rect.x < self.speed:    self.speed = -self.speed
 
@@ -173,29 +222,39 @@ class Button (UiElement):
         self.pieces.add(self.generate_text(self.params['text'], self.params['text_color'], self.params['text_centering'], self.params['font'], fnt_size)) 
         if generate_image:    self.image = self.generate_image()
 
-    def resize(self, new_size):
-        new_surf = Resizer.surface_resize(self.image, new_size)
-        ratio = new_surf.get_size()/self.rect.size      #Ratio going from 0 to 1 
-        #for hitbox_pos, text_pos in zip(self.rect.topleft, self.text_rect.topleft)
-
     def return_active_surface(self):
         overlay = pygame.Surface(self.rect.size).fill(self.mask_color)
         return self.image.copy().blit(overlay, (0,0))
 
     #For the sake of writing short code
     def get_value(self):
+        '''Returns the current value of the element.
+        Returns:    Current value.
+        '''
         return self.values[self.index]
 
     def hitbox_action(self, command, value=-1):
+        ''' Decrement or increment the index of the predefined action, actively
+        changing the current value of the value. After that, posts an event using send_event().
+        Args:   
+            command:    String. Decrement or increment the index if it contains 
+                        the following substrings:
+                            dec, min, left -> decrement index.
+                            inc, add, right-> increment index.
+            value:      Value is not used in the Button subclass
+        Returns:
+            Nothing.
+        '''
         if 'dec' in command or 'min' in command or 'left' in command:   self.dec_index()
         elif 'inc' in command or 'add' in command or 'right' in command:  self.inc_index()
         self.send_event()
 
-
     def inc_index(self):
+        '''Increment the index in a circular fassion (If over the len, goes back to the start, 0).'''
         self.index += 1 if self.index < len(self.values) else 0
 
     def dec_index(self):
+        '''Decrements the index in a circular fassion (If undex 0, goes back to the max index).'''
         self.index -= 1 if self.index > 0 else len(self.values)-1
 
 class Slider (UiElement):

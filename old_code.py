@@ -338,3 +338,8 @@ class UI_Element:
         self.resize_and_place_elements(ui_list, vertical_offset=vertical_offset) #Repositioning and scaling the elements
         for element in ui_list:
             self.elements.append(element)'''        
+
+   def resize(self, new_size):
+        new_surf = Resizer.surface_resize(self.image, new_size)
+        ratio = new_surf.get_size()/self.rect.size      #Ratio going from 0 to 1 
+        #for hitbox_pos, text_pos in zip(self.rect.topleft, self.text_rect.topleft)

@@ -256,3 +256,85 @@ class UI_Element:
             else:
                 all_settings.append(self.__create_setting(subelement))
         return all_settings'''
+
+    '''#All this follow a scheme that goes like: (horizontal_axis_pos, vertical_axis_pos), (horizontal_axis_size, vertical_axis_size)
+    #0 - centered, 1 - left sided, 2 - right sided
+    def resize_and_place_elements(self, elements_list, space_between_elements = 0.10, vertical_offset = 0.00, horizontal_offset = 0.00,\
+    alignment_mode = 0):
+        size = list(screen.get_size()) #Multiplying the entire tuple by a scalar       
+        size[1] -= vertical_offset
+        total = 0
+        for element in elements_list:
+            total += element.hitbox.size[1]*(1+space_between_elements) #Adding the size of the height (Since the width will always be the same) and the size of the inter-hitbox space  
+        
+        if total > size[1]: #Getting the proportion needed to make everything fit within the window
+            resize_relation = size[1]/total #The relation is totalsize/myactualsize. totalsize = screen width
+            for element in elements_list: #Actual resizing and reescaling
+                element_size = list([int(resize_relation*x) for x in element.hitbox.size]) #Multiplying the entire tuple 
+                element.hitbox.size = tuple(element_size)
+                element.surface_resize()
+
+        #Now, the placing (Position)
+        last_y_position = vertical_offset
+        for element in elements_list:
+            position = list(element.hitbox.pos)
+            position[1] = last_y_position
+            last_y_position += element.hitbox.size[1]*(1+space_between_elements)
+            if alignment_mode is 0:
+                position[0] = size[0]/2 - element.hitbox.size[0]/2 + size[0]*horizontal_offset  #The other component of the tuple
+            elif alignment_mode is 1:
+                position[0] = element.hitbox.size[0] + size[0]*horizontal_offset
+            elif alignment_mode is 2:
+                position[0] = size[0] - element.hitbox.size[0] - size[0]*horizontal_offset
+            element.hitbox.pos = tuple(position)
+            element.set_surface_pos()'''
+
+    '''#centering --> 0 = centered, 1 = left, 2 = right   3TODO add accept button and  array of booleans 
+    def create_menu(self, logo_path = None, logo_size = (0, 0), title_text = None, title_size = (0, 0), options_list=[], centering = 0, text_color = (255, 255, 255), margin = 0.05):
+        res = self.settings["resolution"].current()
+        margin = (res[0]*margin, res[1]*margin) #tuple containing the margin
+        
+        #Establishing the offsets to draw all the components of the menu
+        if centering is 0: #Centered
+            horizontal_offset = res[0]/2
+        elif centering is 1: #Left
+            horizontal_offset = margin[0]
+        elif centering is 2: #Right
+            horizontal_offset = res[0] - margin[0]
+        vertical_offset = margin[1]
+        
+        #Creating logo, with his texture and position at the top
+        if logo_path is not None:
+            horizontal_offset = res[0]/2 - logo_size[0]/2
+            logo_rect = Rectangle(horizontal_offset, vertical_offset, logo_size[0], logo_size[1]) 
+            logo_texture = pygame.transform.scale(pygame.image.load(logo_path), logo_rect.size)
+            logo = UI_Element('logo', logo_texture, logo_rect)
+            self.top_elements.append(logo) #Adding to menu
+            vertical_offset = logo.hitbox.pos[1] + logo.hitbox.size[1] + margin[1] #Getting the next free space to draw element
+
+        #Creating title, with the rendered text and his position under the logo
+        if title_text is not None:
+            if centering is 0: #Centered
+                horizontal_offset = res[0]/2 - title_size[0]/2
+            #Centering 1 and 2 are already done up there
+            title_rect = Rectangle(horizontal_offset, vertical_offset, title_size[0], title_size[1]) #Hitbox of the title text
+            size_font = self.max_size_text(title_text, self.max_font, title_rect.size)
+            font = pygame.font.Font(self.font, size_font)
+            title_surf = font.render(title_text, True, text_color) #This returns a surface. Text will be a surface.
+            title_rect.size = (title_rect.size[0], title_surf.get_height())
+            title = UI_Element('title_text', title_surf, title_rect)
+            self.top_elements.append(title) #Adding to menu
+            vertical_offset = title.hitbox.pos[1] + title.hitbox.size[1] + margin[1] #Getting the next free space to draw element
+
+        ui_list = []
+        for option in options_list:
+            opt_rect = Rectangle(0, 0, res[0]-margin[0]*2, title_size[1]) #Hitbox of the text
+            size_font = self.max_size_text(option[1], self.max_font, opt_rect.size) #Using same specs as the title. 
+            font = pygame.font.Font(self.font, size_font)
+            opt_surf = font.render(option[1], True, text_color) #This returns a surface. Text will be a surface.
+            opt_element = UI_Element(option[0], opt_surf, opt_rect)
+            ui_list.append(opt_element)
+
+        self.resize_and_place_elements(ui_list, vertical_offset=vertical_offset) #Repositioning and scaling the elements
+        for element in ui_list:
+            self.elements.append(element)'''        

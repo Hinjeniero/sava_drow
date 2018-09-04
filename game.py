@@ -51,21 +51,33 @@ class game():
         elif self.desk is 1:
             self.showing_board.draw()
 
-    def event_handler(self, events, keys_pressed, mouse_movement=False, mouse_pos=(0, 0)):
-        if self.desk is 0:
-            self.showing_menu.event_handler(events, keys_pressed, mouse_movement=mouse_movement, mouse_pos=mouse_pos)
-        elif self.desk is 1:
-            self.showing_menu.event_handler(events, keys_pressed, mouse_movement=mouse_movement, mouse_pos=mouse_pos)
+    def event_handler(self, events):
+        all_keys =          pygame.key.get_pressed()        #Get all the pressed keyboard keys
+        all_mouse_buttons = pygame.mouse.get_pressed()      #Get all the pressed mouse buttons
+        mouse_pos=pygame.mouse.get_pos()                    #Get the current mouse position
+        mouse_mvnt = (pygame.mouse.get_rel() != (0,0))      #True if get_rel returns non zero vaalues
+
+        for event in events:
+            if event.type == pygame.QUIT:
+                return False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    return False
+                else:
+                    if self.desk is 0:
+                        self.showing_menu.event_handler(event, all_keys, all_mouse_buttons, mouse_movement=mouse_mvnt, mouse_pos=mouse_pos)
+                    elif self.desk is 1:
+                        self.showing_menu.event_handler(event, all_keys, all_mouse_buttons, mouse_movement=mouse_mvnt, mouse_pos=mouse_pos)
             
+    def user_event_handler(self, event):
+        pass
+
     def start(self):
         loop = True
         while loop:
             self.clock.tick(self.fps)
             self.draw()
-            if pygame.mouse.get_rel() != (0,0): #If there is mouse movement
-                loop = self.event_handler(pygame.event.get(), pygame.key.get_pressed(), mouse_movement=True, mouse_pos=pygame.mouse.get_pos())
-            else:
-                loop = self.event_handler(pygame.event.get(), pygame.key.get_pressed())
+            loop = self.event_handler(pygame.event.get())
 
 #List of (ids, text)
 if __name__ == "__main__":

@@ -27,11 +27,11 @@ class Setting (object):
             return AttributeError("The provided set of default values does not follow any of the existing objects logic.")
 
     def __init__(self, user_event_id, ui_element):
-        self.graphics = ui_element #Not really an ui element, a subclass of this one
+        self.sprite = ui_element #Not really an ui element, a subclass of this one
         self.__event_id = user_event_id #Event triggered when this element is clicked
 
     def get_surface(self):
-        return self.graphics.image, self.graphics.rect
+        return self.sprite.image, self.sprite.rect
 
     def get_value(self):
         pass
@@ -74,5 +74,12 @@ class Value (Setting):
         return self.value
 
     def hitbox_action(self, mouse_buttons, mouse_pos):
-        pass
-        #TODO check slider and values of the mouse and shit
+        if type(mouse_pos) is tuple:
+            mouse_x = mouse_pos[0]
+        elif type(mouse_pos) is pygame.Rect:
+            mouse_x = mouse_pos.x
+        else:
+            raise TypeError("Type of mouse_position must be a Rect or a tuple with the coordinates.")
+        self.value = (mouse_x-self.sprite.rect.x) / self.sprite.rect.width
+        #TODO redraw the fuckin sprite
+        self.sprite.set_slider_position()

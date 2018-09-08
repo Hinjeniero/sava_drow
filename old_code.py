@@ -343,3 +343,32 @@ class UI_Element:
         new_surf = Resizer.surface_resize(self.image, new_size)
         ratio = new_surf.get_size()/self.rect.size      #Ratio going from 0 to 1 
         #for hitbox_pos, text_pos in zip(self.rect.topleft, self.text_rect.topleft)
+
+    def __adjust_elements(self, resolution):
+        total_pixels =  [0, 0]
+        total_spaces =  [0, 0]
+        last_y =        [0, 0]
+
+        #We want only shallow copies, that way we will modify the sprites directly
+        total_sprites = self.static_sprites.sprites().copy()
+        total_sprites.extend(self.dynamic_sprites.sprites()) 
+        
+        #Counting, adding the pixels and comparing to the resolution
+        for sprite in total_sprites:
+            total_pixels = [sum(x) for x in zip(total_pixels, sprite.rect.size)] 
+            total_spaces = [x-y for x,y in zip(sprite.rect.topleft, last_y)]
+
+        total = total_spaces#total = [sum(x) for x in zip(total_pixels, total_spaces)]
+        #TODO JUST ASSIGN THE NUMBER OF PIXELS THAT ARE LEFT TO THE POSITIONS.
+        print(len(total_sprites))
+        print(total_sprites[0].rect.size)
+        print(total_pixels)
+        print(total)
+        #Getting the ratios between total elements and native resolution
+        ratios = [x/y for x, y in zip(resolution, total)]
+
+        if any(ratio < 1 for ratio in ratios):                                                          #If any axis needs resizing
+            for sprite in total_sprites:#TODO calculate position too, amd make a rect
+                position = tuple([x*y for x,y in zip(ratios, sprite.rect.topleft) if x<1])
+                size =     tuple([x*y for x,y in zip(ratios, sprite.rect.size) if x<1])
+                sprite.generate_object(rect=pygame.Rect(position, size))                #Adjusting size

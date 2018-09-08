@@ -3,6 +3,7 @@ from polygons import *
 from resizer import Resizer
 from pygame_test import PygameSuite
 
+__all__ = ["UiElement", "Button", "Slider"]
 #Global names assigned to pygame default colors. For the sake of code, really.
 BLACK = pygame.Color("black")
 WHITE = pygame.Color("white")
@@ -87,17 +88,19 @@ class UiElement(pygame.sprite.Sprite):
             AttributeError: In case of values mismatch. Need to be a set of values, or a numerical one.
 
         '''
-        if type(default_values) is (list or tuple):
-            return Button(user_event_id, position, size, tuple(default_values), params)
-        elif type(default_values) is (int or float):
-            return Slider(user_event_id, position, size, float(default_values), params)
+        if type(default_values) is list or type(default_values) is tuple:
+            return Button(user_event_id, position, size, tuple(default_values), **params)
+        elif type(default_values) is int or type(default_values) is float:
+            return Slider(user_event_id, position, size, float(default_values), **params)
         else:
-            return AttributeError("The provided set of default values does not follow any of the existing objects logic.")
+            raise AttributeError("The provided set of default values does not follow any of the existing objects logic.")
     
     def __init__(self, user_event_id, position, size, **params):
         '''Constructor of the UiElement class.'''
         super().__init__()
-        self.params =  UiElement.__default_config.copy().update(**params)
+        self.params =  UiElement.__default_config.copy()
+        self.params.update(params)
+
         self.params["position"] = position
         self.params["size"] = size
 
@@ -188,14 +191,7 @@ class Button (UiElement):
     }
 
     def __init__(self, user_event_id, element_position, element_size, set_of_values, **params):
-        super().__init__(element_position, element_size, params)    #Initializing super class
-        #After adding things in the superclass initializing, we only want the attributes that we still dont have
-        for key in Button.__default_config.keys(): 
-            key = key.lower().replace(" ", "_")
-            if self.params.has_key(key):
-                self.params[key] = Button.__default_config[key]
-
-        self.generate_object()
+        super().__init__(user_event_id, element_position, element_size, **params)    #Initializing super class
         #Regarding funcionality
         self.values = set_of_values
         self.index = 0
@@ -206,7 +202,7 @@ class Button (UiElement):
         self.transparency_speed = 15
 
     def update(self):
-        '''Update method, will process attributes to simulate animation
+        '''Update method, will process and change image attributes to simulate animation when drawing
         Args, Returns:
             None, Nothing
         '''
@@ -218,6 +214,13 @@ class Button (UiElement):
 
     def generate_object(self, rect=None, generate_image=True):
         super().generate_object(rect=rect, generate_image=False)
+        
+        #After adding things in the superclass initializing, we only want the attributes that we still dont have
+        for key in Button.__default_config.keys(): 
+            key = key.lower().replace(" ", "_")
+            if not key in self.params:
+                self.params[key] = Button.__default_config[key]
+
         fnt_size = Resizer.max_font_size(self.params['text'], self.rect.size, self.params['max_font_size'], self.params['font'])
         self.pieces.add(self.generate_text(self.params['text'], self.params['text_color'], self.params['text_centering'], self.params['font'], fnt_size)) 
         if generate_image:    self.image = self.generate_image()
@@ -259,7 +262,7 @@ class Button (UiElement):
 
 class Slider (UiElement):
     #The default config of a subclass contains only those parameters that the superclass does not mention
-    __default_config = {'text': 'null',
+    __default_config = {'text': 'default',
                         'font': None,
                         'max_font_size': 50,
                         'text_centering': 1,
@@ -277,22 +280,20 @@ class Slider (UiElement):
 
     def __init__(self, user_event_id, element_position, element_size, default_value, **params):
         #Initializing super class
-        super().__init__(element_position, element_size, params)
-
-        for key in Button.__default_config.keys():  #Can't do it like in the superclass
-            key = key.lower().replace(" ", "_")
-            if not self.params.has_key(key):        #If with the superclass update, we dont have this key (The user did not input it)
-                self.params[key] = Button.__default_config[key]
-        
-        self.generate_object()  
-        
+        super().__init__(user_event_id, element_position, element_size, **params) 
         #Regarding funcionality 
         self.value = default_value
 
     def generate_object(self, rect=None, generate_image=True):
         super().generate_object(rect=rect, generate_image=False)
+        
+        for key in Slider.__default_config.keys():  #Can't do it like in the superclass
+            key = key.lower().replace(" ", "_")
+            if not key in self.params:        #If with the superclass update, we dont have this key (The user did not input it)
+                self.params[key] = Slider.__default_config[key]
+
         fnt_size = Resizer.max_font_size(self.params['text'], self.rect.size, self.params['max_font_size'], self.params['font'])
-        self.pieces.add(self.generate_text(self.params['text'], self.params['text_color'], self.params['text_centering'], self.params['font_text'], fnt_size//2))    
+        self.pieces.add(self.generate_text(self.params['text'], self.params['text_color'], self.params['text_centering'], self.params['font'], fnt_size//2))    
         self.pieces.add(self.generate_slider(self.params['slider_color'], self.params['slider_gradient'], self.params['slider_start_color'],\
                                             self.params['slider_end_color'], self.params['slider_border'], self.params['slider_border_color'],\
                                             self.params['slider_border_size'], self.params['slider_type']))    
@@ -311,7 +312,7 @@ class Slider (UiElement):
                 slider.rect.width //= ratio
                 slider.image = pygame.transform.scale(slider.image, (slider.rect.width, slider.rect.height))
         else:                       #Rectangular one
-            slider = Rectangle((0,0), tuple(size[0]//ratio, size[1]), None, slider_color,\
+            slider = Rectangle((0,0), (size[0]//ratio, size[1]), None, slider_color,\
                                 slider_border, slider_border_size, slider_border_color,\
                                 slider_gradient, start_color, end_color)
         
@@ -349,15 +350,14 @@ class Slider (UiElement):
 if __name__ == "__main__":
     timeout = 20
     testsuite = PygameSuite(fps=144)
-    '''slidie = Slider((50, 50), (100, 25), "test1.5", None, 200)
-    slidou = Slider( (250, 50), (300, 25),"test1.5", None, 200)
-    slede = Slider( (600, 50), (600, 25), "test1.5", None, 200)
-    slada = Slider( (200, 100), (400, 50), "test1.5", None, 200, slider_type=0)
-    buttkun = Button( (200, 200), (800, 50),"Shitty Button", None, 200)
-    baton = Button((200, 300), (800, 400), "SUPER BUTTON", None, 200)
-    print(type(baton))
-    print(issubclass(type(baton), UiElement))
-    print(type(slidie))
-    #Adding elements
-    testsuite.add_elements(slidou, slidie, slede, slada, buttkun, baton)'''
+    #Create elements
+    sli = UiElement.factory(pygame.USEREVENT+1, (10,10), (400, 100), (0.2))
+    but = UiElement.factory(pygame.USEREVENT+2, (10, 210), (400, 100), (30, 40))
+    sli2 = UiElement.factory(pygame.USEREVENT+3, (10, 410), (400, 100), (0.2), text="Slider")
+    but2 = UiElement.factory(pygame.USEREVENT+4, (10, 610), (400, 100), ((30, 40)), text="Button")
+    sli3 = UiElement.factory(pygame.USEREVENT+5, (510, 10), (400, 100), (0.2), text="SuperSlider", slider_type=0, start_gradient = RED, end_gradient=BLACK, slider_start_color = RED, slider_end_color = WHITE)
+    but3 = UiElement.factory(pygame.USEREVENT+6, (510, 210), (400, 100), ((30, 40)), text="SuperButton", start_gradient = GREEN, end_gradient=BLACK)
+    sli4 = UiElement.factory(pygame.USEREVENT+7, (510, 410), (400, 100), (0.2), text="LongTextIsLongSoLongThatIsLongestEver", slider_type=2, start_gradient = RED, end_gradient=BLACK, slider_start_color = RED, slider_end_color = WHITE)
+    but4 = UiElement.factory(pygame.USEREVENT+8, (510, 610), (400, 100), ((30, 40)), text="LongTextIsLongSoLongThatIsLongestEver", start_gradient = GREEN, end_gradient=BLACK)
+    testsuite.add_elements(sli, but, sli2, but2, sli3, but3, sli4, but4)
     testsuite.loop(seconds = timeout)

@@ -106,6 +106,7 @@ class Menu (object):
         sprites.extend(self.dynamic_sprites.sprites()) 
         for sprite in sprites:
             sprite.rect.left = (screen_width-sprite.rect.width)/2
+            sprite.save_state()
 
     def load_background(self, size, background_path=None):
         if background_path is None:
@@ -147,7 +148,7 @@ class Menu (object):
         if index >= size_sprite_list:       self.active_sprite_index = 0
         elif index < 0:                     self.active_sprite_index = size_sprite_list-1
         
-        if self.active_sprite.sprite is not None:   self.active_sprite.sprite.generate_object()     #Change the active back to the original state
+        if self.active_sprite.sprite is not None:   self.active_sprite.sprite.restore()     #Change the active back to the original state
         self.active_sprite.add(self.dynamic_sprites.sprites()[self.active_sprite_index])            #Adding the new active sprite
 
     def get_sprite_index(self, sprite):
@@ -175,11 +176,11 @@ if __name__ == "__main__":
     #Create elements
     sli = UiElement.factory(pygame.USEREVENT+1, (10,10), (800, 100), (0.2))
     but = UiElement.factory(pygame.USEREVENT+2, (10, 160), (800, 100), (30, 40))
-    sli2 = UiElement.factory(pygame.USEREVENT+3, (10, 310), (800, 100), (0.2), text="Slider")
+    sli2 = UiElement.factory(pygame.USEREVENT+3, (10, 310), (800, 100), (0), text="Slider")
     but2 = UiElement.factory(pygame.USEREVENT+4, (10, 460), (800, 100), ((30, 40)), text="Button")
-    sli3 = UiElement.factory(pygame.USEREVENT+5, (10, 960), (800, 100), (0.2), text="SuperSlider", slider_type=0, start_gradient = RED, end_gradient=BLACK, slider_start_color = RED, slider_end_color = WHITE)
+    sli3 = UiElement.factory(pygame.USEREVENT+5, (10, 960), (800, 100), (1), text="SuperSlider", slider_type=0, start_gradient = RED, end_gradient=BLACK, slider_start_color = RED, slider_end_color = WHITE)
     but3 = UiElement.factory(pygame.USEREVENT+6, (10, 1110), (800, 100), ((30, 40)), text="SuperButton", start_gradient = GREEN, end_gradient=BLACK)
-    sli4 = UiElement.factory(pygame.USEREVENT+7, (10, 1260), (800, 100), (0.2), text="LongTextIsLongSoLongThatIsLongestEver", slider_type=2, start_gradient = RED, end_gradient=BLACK, slider_start_color = RED, slider_end_color = WHITE)
+    sli4 = UiElement.factory(pygame.USEREVENT+7, (10, 1260), (800, 100), (0.8), text="LongTextIsLongSoLongThatIsLongestEver", slider_type=2, start_gradient = RED, end_gradient=BLACK, slider_start_color = RED, slider_end_color = WHITE)
     but4 = UiElement.factory(pygame.USEREVENT+8, (10, 1410), (800, 100), ((30, 40)), text="LongTextIsLongSoLongThatIsLongestEver", start_gradient = GREEN, end_gradient=BLACK)
     
     #Create Menu
@@ -188,7 +189,7 @@ if __name__ == "__main__":
     #Start the test
     loop = True
     while loop:
-        clock.tick(60)
+        clock.tick(144)
         menu.animation()
         menu.draw(screen)       #Drawing the sprite group
         fnt = pygame.font.Font(None, 60)

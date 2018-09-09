@@ -372,3 +372,23 @@ class UI_Element:
                 position = tuple([x*y for x,y in zip(ratios, sprite.rect.topleft) if x<1])
                 size =     tuple([x*y for x,y in zip(ratios, sprite.rect.size) if x<1])
                 sprite.generate_object(rect=pygame.Rect(position, size))                #Adjusting size
+
+#UI_Element, button
+
+    def return_active_surface(self):
+        overlay = pygame.Surface(self.rect.size).fill(self.mask_color)
+        return self.image.copy().blit(overlay, (0,0))
+        -
+#attributes
+        #Regarding animation
+        self.speed = 5
+        self.mask_color = WHITE
+        self.transparency = 0
+        self.transparency_speed = 15
+
+    def move(self):    
+        self.rect.x += self.speed
+        if self.rect.x < self.speed:    self.speed = -self.speed
+
+        self.transparency += self.transparency_speed
+        if self.transparency >= 255:    self.transparency_speed = -self.transparency_speed 

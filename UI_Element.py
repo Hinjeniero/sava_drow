@@ -1,4 +1,4 @@
-import pygame, gradients
+import pygame, gradients, random
 from polygons import *
 from resizer import Resizer
 from pygame_test import PygameSuite
@@ -14,6 +14,7 @@ DARKGRAY = pygame.Color("darkgray")
 LIGHTGRAY = pygame.Color("lightgray")
 
 UPDATE_LIMIT = 20
+MAX_TRANSPARENCY = 255
 
 class TextSprite(pygame.sprite.Sprite):
     '''Class TextSprite. Inherits from pygame.sprite, and the main surface is a text, from pygame.font.render.
@@ -102,18 +103,19 @@ class UiElement(pygame.sprite.Sprite):
         super().__init__()
         self.params =  UiElement.__default_config.copy()
         self.params.update(params)
-        self.update_count = 0
-        self.update_limit = UPDATE_LIMIT
+        self.update_total   =   0
+        self.update_counter =   1
 
         self.params["position"] = position
         self.params["size"] = size
 
-        self.rect =             pygame.Rect(position, size) 
-        self.pieces =           pygame.sprite.OrderedUpdates()
-        self.__event_id =       user_event_id
-        self.image =            None        #Will be assigned a good object in the next line
+        self.rect           =   pygame.Rect(position, size) 
+        self.rect_original  =   self.rect.copy()
+        self.pieces         =   pygame.sprite.OrderedUpdates()
+        self.__event_id     =   user_event_id
+        self.image          =   None                            #Will be assigned a good object in the next line
         self.image_original =   None
-        self.generate_object()              #Generate the first sprite and the self.image attribute
+        self.generate_object()                                  #Generate the first sprite and the self.image attribute
 
     def generate_text(self, text, text_color, text_alignment, font, font_size):
         '''Generates a sprite-based text object following the input parameters.
@@ -177,7 +179,17 @@ class UiElement(pygame.sprite.Sprite):
         self.pieces.add(Rectangle(self.params['position'], self.params['size'], self.params['texture'], self.params['color'],\
                                 self.params['border'], self.params['border_width'], self.params['border_color'],\
                                 self.params['gradient'], self.params['start_gradient'], self.params['end_gradient'], self.params['gradient_type']))
-        if generate_image:    self.image = self.generate_image()
+        if generate_image:    
+            self.image          = self.generate_image()  
+            self.save_state()
+
+    def restore(self):
+        self.image  =   self.image_original.copy()
+        self.rect   =   self.rect_original.copy()
+
+    def save_state(self):
+        self.image_original  =   self.image.copy()
+        self.rect_original   =   self.rect.copy()
 
     def send_event(self):
         '''Post the event associated with this element, along with the current value.
@@ -196,26 +208,26 @@ class Button (UiElement):
     }
 
     def __init__(self, user_event_id, element_position, element_size, set_of_values, **params):
-        super().__init__(user_event_id, element_position, element_size, **params)    #Initializing super class
-        #Regarding funcionality
-        self.values = set_of_values
-        self.index = 0
-        #Regarding animation
-        self.speed = 5
-        self.mask_color = WHITE
-        self.transparency = 0
-        self.transparency_speed = 15
+        super().__init__(user_event_id, element_position, element_size, **params)    
+        self.overlay    =   pygame.Surface(self.rect.size)
+        self.overlay.fill(WHITE)
+        self.values     =   set_of_values
+        self.index      =   0
 
     def update(self):
         '''Update method, will process and change image attributes to simulate animation when drawing
         Args, Returns:
             None, Nothing
         '''
-        self.rect.x += self.speed
-        if self.rect.x < self.speed:    self.speed = -self.speed
+        self.update_total  +=  self.update_counter
+        if (self.update_total >= UPDATE_LIMIT or self.update_total < 0): self.update_counter = -self.update_counter
+        self.set_overlay()
 
-        self.transparency += self.transparency_speed
-        if self.transparency >= 255:    self.transparency_speed = -self.transparency_speed 
+    def set_overlay(self):
+        transparency_lvl    =   int((self.update_total/UPDATE_LIMIT) * MAX_TRANSPARENCY)
+        self.overlay.set_alpha(transparency_lvl)
+        self.image          =   self.image_original.copy() 
+        self.image.blit(self.overlay, (0,0))
 
     def generate_object(self, rect=None, generate_image=True):
         super().generate_object(rect=rect, generate_image=False)
@@ -228,11 +240,9 @@ class Button (UiElement):
 
         fnt_size = Resizer.max_font_size(self.params['text'], self.rect.size, self.params['max_font_size'], self.params['font'])
         self.pieces.add(self.generate_text(self.params['text'], self.params['text_color'], self.params['text_centering'], self.params['font'], fnt_size)) 
-        if generate_image:    self.image = self.generate_image()
-
-    def return_active_surface(self):
-        overlay = pygame.Surface(self.rect.size).fill(self.mask_color)
-        return self.image.copy().blit(overlay, (0,0))
+        if generate_image:    
+            self.image = self.generate_image() 
+            self.save_state()
 
     #For the sake of writing short code
     def get_value(self):
@@ -259,11 +269,11 @@ class Button (UiElement):
 
     def inc_index(self):
         '''Increment the index in a circular fassion (If over the len, goes back to the start, 0).'''
-        self.index += 1 if self.index < len(self.values) else 0
+        self.index = self.index+1 if self.index < len(self.values) else 0
 
     def dec_index(self):
         '''Decrements the index in a circular fassion (If undex 0, goes back to the max index).'''
-        self.index -= 1 if self.index > 0 else len(self.values)-1
+        self.index = self.index-1 if self.index > 0 else len(self.values)-1
 
 class Slider (UiElement):
     #The default config of a subclass contains only those parameters that the superclass does not mention
@@ -284,17 +294,19 @@ class Slider (UiElement):
     }
 
     def __init__(self, user_event_id, element_position, element_size, default_value, **params):
-        #Initializing super class
+        self.value          =   default_value
+        self.slider         =   pygame.sprite.Sprite()      #Due to the high access rate to this sprite, it will be on its own
         super().__init__(user_event_id, element_position, element_size, **params) 
-        #Regarding funcionality 
-        self.value = default_value
+        self.overlay        =   pygame.Surface(self.rect.size)
+        self.overlay_color  =   [0, 0, 0]
+        self.color_sum      =   UPDATE_LIMIT   
 
     def generate_object(self, rect=None, generate_image=True):
         super().generate_object(rect=rect, generate_image=False)
         
         for key in Slider.__default_config.keys():  #Can't do it like in the superclass
             key = key.lower().replace(" ", "_")
-            if not key in self.params:        #If with the superclass update, we dont have this key (The user did not input it)
+            if not key in self.params:              #If with the superclass update, we dont have this key (The user did not input it)
                 self.params[key] = Slider.__default_config[key]
 
         fnt_size = Resizer.max_font_size(self.params['text'], self.rect.size, self.params['max_font_size'], self.params['font'])
@@ -302,14 +314,16 @@ class Slider (UiElement):
         self.pieces.add(self.generate_slider(self.params['slider_color'], self.params['slider_gradient'], self.params['slider_start_color'],\
                                             self.params['slider_end_color'], self.params['slider_border'], self.params['slider_border_color'],\
                                             self.params['slider_border_size'], self.params['slider_type']))    
-        if generate_image:    self.image = self.generate_image()
+        if generate_image:    
+            self.image = self.generate_image() 
+            self.save_state()
 
     def generate_slider (self, slider_color, slider_gradient, start_color, end_color, slider_border, slider_border_color, slider_border_size, slider_type):
         '''Adds the slider to the surface parameter, and returns the slider surface for further purposes'''
         ratio = 3
         size = (self.rect.height, self.rect.height)
         #radius = self.rect.height//2
-        if slider_type < 2:         #Circle
+        if slider_type < 2:         #0, Circle
             slider = Circle((0,0), size, None, slider_color,\
                             slider_border, slider_border_size, slider_border_color,\
                             slider_gradient, start_color, end_color)
@@ -321,7 +335,7 @@ class Slider (UiElement):
                                 slider_border, slider_border_size, slider_border_color,\
                                 slider_gradient, start_color, end_color)
         
-        slider.rect.x = (self.rect.width-slider.rect.width)//2     #To adjust the offset error due to transforming the surface.
+        slider.rect.x = self.value *(self.rect.width-slider.rect.width)     #To adjust the offset error due to transforming the surface.
         return slider
 
     #Position must be between 0 and 1
@@ -330,14 +344,19 @@ class Slider (UiElement):
     def set_slider_position(self, new_position):    #TODO test to check if the list works by reference
         sprites = self.pieces.sprites()
         if new_position > 0 and new_position < 1:   #This means its a porcentual ratio
-            sprites[-1].rect.x = self.rect.width*new_position
+            sprites[-1].rect.x =                self.rect.width*new_position
         elif new_position > 1:
-            sprites[-1].rect.x = int(new_position)
+            sprites[-1].rect.x =                int(new_position)
+            if sprites[-1].rect.x > self.rect.width:    sprites[-1].rect.x = self.rect.width-sprites[-1].rect.width
         else:
-            raise AttributeError ("Can't set a negative slider position")
+            sprites[-1].rect.x = 0
+            #raise AttributeError ("Can't set a negative slider position")
 
     def get_value(self):
         return self.value
+
+    def set_value(self, value):
+        self.value = 0 if value < 0 else 1 if value > 1 else value
 
     def hitbox_action(self, command, value=-1):
         if 'dec' in command or 'min' in command or 'left' in command:       self.value -= 0.1 if self.value >= 0.1 else 1
@@ -346,11 +365,36 @@ class Slider (UiElement):
             if type(value) is tuple:            mouse_x = value[0]
             elif type(value) is pygame.Rect:    mouse_x = value.x
             else:                               raise TypeError("Type of value in slider method Hitbox_Action must be Rect or tuple.")
-        pixels = mouse_x-self.sprite.rect.x         #Pixels into the bar, that the slider position has.
-        self.value = (pixels) / self.sprite.rect.width
+        pixels = mouse_x-self.rect.x         #Pixels into the bar, that the slider position has.
+        self.set_value(pixels/self.rect.width) 
         self.set_slider_position(pixels)
+        self.save_state()
         self.image = self.generate_image()          #Regenerate the image with the new slider position
         self.send_event()
+
+    def update(self):
+        '''Update method, will process and change image attributes to simulate animation when drawing
+        Args, Returns:
+            None, Nothing
+        '''
+        index = random.randint(0, len(self.overlay_color)-1)
+        self.overlay_color[index] += self.color_sum
+
+        for i in range (0, len(self.overlay_color)):
+            if self.overlay_color[i] < 0:       self.overlay_color[i] = 0  
+            elif self.overlay_color[i] > 255:   self.overlay_color[i] = 255
+
+        if all(color >= 255 for color in self.overlay_color) or all(color <= 0 for color in self.overlay_color):    self.color_sum = -self.color_sum
+        self.set_overlay()
+
+    def set_overlay(self):
+        topleft         =   (int(self.value*self.rect.width)-self.rect.height//6, 0)
+        center          =   (int(self.value*self.rect.width), self.rect.height//2)
+        overlay_rect    =   pygame.Rect(topleft, (self.rect.height//3, self.rect.height))
+        if self.params['slider_type'] is 0:     pygame.draw.circle(self.image, self.overlay_color, center, self.rect.height//2)
+        elif self.params['slider_type'] is 1:   pygame.draw.ellipse(self.image, self.overlay_color, overlay_rect)
+        else:                                   pygame.draw.rect(self.image, self.overlay_color, overlay_rect)
+
 
 if __name__ == "__main__":
     timeout = 20

@@ -43,7 +43,7 @@ class Menu (object):
 
         if len(elements) > 0: 
             self.add_elements(*elements) 
-            self.generate(self.resolution)
+            self.generate(self.resolution, centering=centering_tuple[0], centering_mode=centering_tuple[1])
         else:   raise IndexError("A menu needs at least one element prior to the generation.")
 
         pygame.mixer.music.play()
@@ -68,37 +68,39 @@ class Menu (object):
         if issubclass(type(element), UiElement):    self.dynamic_sprites.add(element)
         elif type(element) is pygame.Surface:       self.static_sprites.add(element)
         else:                                       raise TypeError("Elements should be a pygame.Surface, or an ui_element subclass.") 
+    
+    def animation(self):
+        self.active_sprite.update()
 
-    def generate(self, resolution):
+    def generate(self, resolution, centering=True, centering_mode=0):
         self.__adjust_elements(resolution)
+        if centering:   self.__center_elements(centering_mode)
+        self.active_sprite.add(self.dynamic_sprites.sprites()[0])
 
-    def __adjust_elements(self, resolution, centering_active=True):
+    def __adjust_elements(self, resolution):
         total_spaces =  [0, 0]
         last_y =        [0, 0]
 
         #We want only shallow copies, that way we will modify the sprites directly
         total_sprites = self.static_sprites.sprites().copy()
         total_sprites.extend(self.dynamic_sprites.sprites()) 
-        
+
         #Counting, adding the pixels and comparing to the resolution
         for sprite in total_sprites:
-            total_spaces = [x-y for x,y in zip(sprite.rect.topleft, last_y)]            #Total spaces between topleft position elements == all sizes+all interelement spaces
-            last_y = list(sprite.rect.topleft)
-            
-        total_spaces = [sum(x) for x in zip(total_spaces, total_sprites[-1].rect.size)] #Adds the last element size to the spaces.               
+            space =         [x-y for x,y in zip(sprite.rect.topleft, last_y)]           #Total spaces between topleft position elements == all sizes+all interelement spaces
+            total_spaces =  [x+y for x,y in zip(total_spaces, space)]
+            last_y =        list(sprite.rect.topleft)     
+        total_spaces = [sum(x) for x in zip(total_spaces, total_sprites[-1].rect.size)] #Adds the last element size to the spaces. 
+
         #Getting the ratios between total elements and native resolution
         ratios = [x/y for x, y in zip(resolution, total_spaces)]
         if any(ratio < 1 for ratio in ratios):                                          #If any axis needs resizing
             for sprite in total_sprites:
-                print("--------------")
-                print(sprite.rect)
                 position = tuple([int(x*y) if x<1 else y for x,y in zip(ratios, sprite.rect.topleft)])
                 size =     tuple([int(x*y) if x<1 else y for x,y in zip(ratios, sprite.rect.size)])
                 sprite.generate_object(rect=pygame.Rect(position, size))                #Adjusting size
-                print(sprite.rect)
-        if centering_active:    self.__center_elements()
 
-    def __center_elements(self):
+    def __center_elements(self, centering_mode):
         screen_width = self.resolution[0]
         sprites = self.static_sprites.sprites().copy()
         sprites.extend(self.dynamic_sprites.sprites()) 
@@ -121,25 +123,22 @@ class Menu (object):
         if event.type == pygame.KEYDOWN:        #Handling regarding keyboard
             if keys_pressed[pygame.K_DOWN]:         self.change_active_sprite(self.active_sprite_index+1)
             if keys_pressed[pygame.K_UP]:           self.change_active_sprite(self.active_sprite_index-1)
-
             if keys_pressed[pygame.K_LEFT]:         self.active_sprite.sprite.hitbox_action('left_arrow', value=mouse_pos)
             if keys_pressed[pygame.K_RIGHT]:        self.active_sprite.sprite.hitbox_action('right_arrow', value=mouse_pos)
-
             if keys_pressed[pygame.K_KP_ENTER]\
                 or keys_pressed[pygame.K_SPACE]:    self.active_sprite.sprite.hitbox_action('add_value', value=mouse_pos)
-
         self.mouse_handler(mouse_buttons_pressed, mouse_movement, mouse_pos)                    #Handling regarding mouse #TODO complete call
 
     def mouse_handler(self, mouse_buttons, mouse_movement, mouse_position):
         #elif event.type == pygame.MOUSEBUTTONDOWN:             #If a mouse button was clicked
-        if mouse_buttons_clicked[0]:    self.active_sprite.sprite.hitbox_action('left_mouse_button', value=mouse_pos)
-        elif mouse_buttons_clicked[2]:  self.active_sprite.sprite.hitbox_action('right_mouse_button', value=mouse_pos)
+        if mouse_buttons[0]:    self.active_sprite.sprite.hitbox_action('left_mouse_button', value=mouse_position)
+        elif mouse_buttons[2]:  self.active_sprite.sprite.hitbox_action('right_mouse_button', value=mouse_position)
         
         if mouse_movement: 
             mouse_hitbox = pygame.sprite.Sprite()
             mouse_hitbox.rect = pygame.Rect(mouse_position, (2,2))
             colliding_sprite = pygame.sprite.spritecollideany(mouse_hitbox, self.dynamic_sprites.sprites())
-            self.change_active_sprite(self.get_sprite_index(colliding_sprite))
+            if colliding_sprite is not None:    self.change_active_sprite(self.get_sprite_index(colliding_sprite))
 
     def change_active_sprite(self, index):
         size_sprite_list =                  len(self.dynamic_sprites.sprites())
@@ -148,8 +147,8 @@ class Menu (object):
         if index >= size_sprite_list:       self.active_sprite_index = 0
         elif index < 0:                     self.active_sprite_index = size_sprite_list-1
         
-        self.active_sprite.sprite.generate_object()                                   #Change the active back to the original state
-        self.active_sprite.add(self.dynamic_sprites.sprites()[self.active_sprite_index])    #Adding the new active sprite
+        if self.active_sprite.sprite is not None:   self.active_sprite.sprite.generate_object()     #Change the active back to the original state
+        self.active_sprite.add(self.dynamic_sprites.sprites()[self.active_sprite_index])            #Adding the new active sprite
 
     def get_sprite_index(self, sprite):
         sprite_list = self.dynamic_sprites.sprites()
@@ -158,6 +157,7 @@ class Menu (object):
 
 #List of (ids, text)
 if __name__ == "__main__":
+    #Variables
     resolution = (1280, 720)
     pygame.init()
     screen = pygame.display.set_mode(resolution)
@@ -171,28 +171,33 @@ if __name__ == "__main__":
     DARKGRAY = pygame.Color("darkgray")
     LIGHTGRAY = pygame.Color("lightgray")
     timeout = 20
+
     #Create elements
     sli = UiElement.factory(pygame.USEREVENT+1, (10,10), (800, 100), (0.2))
-    but = UiElement.factory(pygame.USEREVENT+2, (10, 210), (800, 100), (30, 40))
-    sli2 = UiElement.factory(pygame.USEREVENT+3, (10, 410), (800, 100), (0.2), text="Slider")
-    but2 = UiElement.factory(pygame.USEREVENT+4, (10, 610), (800, 100), ((30, 40)), text="Button")
-    sli3 = UiElement.factory(pygame.USEREVENT+5, (10, 810), (800, 100), (0.2), text="SuperSlider", slider_type=0, start_gradient = RED, end_gradient=BLACK, slider_start_color = RED, slider_end_color = WHITE)
-    but3 = UiElement.factory(pygame.USEREVENT+6, (10, 1010), (800, 100), ((30, 40)), text="SuperButton", start_gradient = GREEN, end_gradient=BLACK)
-    sli4 = UiElement.factory(pygame.USEREVENT+7, (10, 1210), (800, 100), (0.2), text="LongTextIsLongSoLongThatIsLongestEver", slider_type=2, start_gradient = RED, end_gradient=BLACK, slider_start_color = RED, slider_end_color = WHITE)
+    but = UiElement.factory(pygame.USEREVENT+2, (10, 160), (800, 100), (30, 40))
+    sli2 = UiElement.factory(pygame.USEREVENT+3, (10, 310), (800, 100), (0.2), text="Slider")
+    but2 = UiElement.factory(pygame.USEREVENT+4, (10, 460), (800, 100), ((30, 40)), text="Button")
+    sli3 = UiElement.factory(pygame.USEREVENT+5, (10, 960), (800, 100), (0.2), text="SuperSlider", slider_type=0, start_gradient = RED, end_gradient=BLACK, slider_start_color = RED, slider_end_color = WHITE)
+    but3 = UiElement.factory(pygame.USEREVENT+6, (10, 1110), (800, 100), ((30, 40)), text="SuperButton", start_gradient = GREEN, end_gradient=BLACK)
+    sli4 = UiElement.factory(pygame.USEREVENT+7, (10, 1260), (800, 100), (0.2), text="LongTextIsLongSoLongThatIsLongestEver", slider_type=2, start_gradient = RED, end_gradient=BLACK, slider_start_color = RED, slider_end_color = WHITE)
     but4 = UiElement.factory(pygame.USEREVENT+8, (10, 1410), (800, 100), ((30, 40)), text="LongTextIsLongSoLongThatIsLongestEver", start_gradient = GREEN, end_gradient=BLACK)
+    
     #Create Menu
-    menu = Menu("MainMenu", resolution, sli, but, sli2, but2, sli3, but3, sli4, but4)
+    menu = Menu("MainMenu", resolution, (True, 0), sli, but, sli2, but2, sli3, but3, sli4, but4)
+    
+    #Start the test
     loop = True
     while loop:
         clock.tick(60)
-        menu.draw(screen) #Drawing the sprite group
+        menu.animation()
+        menu.draw(screen)       #Drawing the sprite group
         fnt = pygame.font.Font(None, 60)
         frames = fnt.render(str(int(clock.get_fps())), True, pygame.Color('white'))
         screen.blit(frames, (50, 150))
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                loop = False
+            if event.type == pygame.QUIT:       loop = False
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    loop = False
-        pygame.display.update() #Updating the screen
+                if event.key == pygame.K_ESCAPE:    loop = False
+            else:                               menu.event_handler(event, pygame.key.get_pressed(), pygame.mouse.get_pressed(),\
+                                                                    mouse_movement=(pygame.mouse.get_rel() != (0,0)), mouse_pos=pygame.mouse.get_pos())
+        pygame.display.update()  #Updating the screen

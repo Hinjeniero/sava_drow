@@ -13,6 +13,8 @@ BLUE = pygame.Color("blue")
 DARKGRAY = pygame.Color("darkgray")
 LIGHTGRAY = pygame.Color("lightgray")
 
+UPDATE_LIMIT = 20
+
 class TextSprite(pygame.sprite.Sprite):
     '''Class TextSprite. Inherits from pygame.sprite, and the main surface is a text, from pygame.font.render.
     Attributes:
@@ -100,15 +102,18 @@ class UiElement(pygame.sprite.Sprite):
         super().__init__()
         self.params =  UiElement.__default_config.copy()
         self.params.update(params)
+        self.update_count = 0
+        self.update_limit = UPDATE_LIMIT
 
         self.params["position"] = position
         self.params["size"] = size
 
-        self.rect = pygame.Rect(position, size) 
-        self.pieces = pygame.sprite.OrderedUpdates()
-        self.__event_id = user_event_id
-        self.image = None           #Will be assigned a good object in the next line
-        self.generate_object()      #Generate the first sprite and the self.image attribute
+        self.rect =             pygame.Rect(position, size) 
+        self.pieces =           pygame.sprite.OrderedUpdates()
+        self.__event_id =       user_event_id
+        self.image =            None        #Will be assigned a good object in the next line
+        self.image_original =   None
+        self.generate_object()              #Generate the first sprite and the self.image attribute
 
     def generate_text(self, text, text_color, text_alignment, font, font_size):
         '''Generates a sprite-based text object following the input parameters.

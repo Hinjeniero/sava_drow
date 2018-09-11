@@ -183,13 +183,13 @@ class UiElement(pygame.sprite.Sprite):
             self.image          = self.generate_image()  
             self.save_state()
 
+    def save_state(self):
+        self.image_original  =   self.image.copy()
+        self.rect_original   =   self.rect.copy()        
+
     def restore(self):
         self.image  =   self.image_original.copy()
         self.rect   =   self.rect_original.copy()
-
-    def save_state(self):
-        self.image_original  =   self.image.copy()
-        self.rect_original   =   self.rect.copy()
 
     def send_event(self):
         '''Post the event associated with this element, along with the current value.
@@ -295,7 +295,7 @@ class Slider (UiElement):
 
     def __init__(self, user_event_id, element_position, element_size, default_value, **params):
         self.value          =   default_value
-        self.slider         =   pygame.sprite.Sprite()      #Due to the high access rate to this sprite, it will be on its own
+        self.slider         =   None      #Due to the high access rate to this sprite, it will be on its own
         super().__init__(user_event_id, element_position, element_size, **params) 
         self.overlay        =   pygame.Surface(self.rect.size)
         self.overlay_color  =   [0, 0, 0]
@@ -311,12 +311,13 @@ class Slider (UiElement):
 
         fnt_size = Resizer.max_font_size(self.params['text'], self.rect.size, self.params['max_font_size'], self.params['font'])
         self.pieces.add(self.generate_text(self.params['text'], self.params['text_color'], self.params['text_centering'], self.params['font'], fnt_size//2))    
-        self.pieces.add(self.generate_slider(self.params['slider_color'], self.params['slider_gradient'], self.params['slider_start_color'],\
+        self.slider =   self.generate_slider(self.params['slider_color'], self.params['slider_gradient'], self.params['slider_start_color'],\
                                             self.params['slider_end_color'], self.params['slider_border'], self.params['slider_border_color'],\
-                                            self.params['slider_border_size'], self.params['slider_type']))    
+                                            self.params['slider_border_size'], self.params['slider_type'])
         if generate_image:    
             self.image = self.generate_image() 
             self.save_state()
+            self.image.blit(self.slider.image, self.slider.rect)
 
     def generate_slider (self, slider_color, slider_gradient, start_color, end_color, slider_border, slider_border_color, slider_border_size, slider_type):
         '''Adds the slider to the surface parameter, and returns the slider surface for further purposes'''
@@ -335,22 +336,20 @@ class Slider (UiElement):
                                 slider_border, slider_border_size, slider_border_color,\
                                 slider_gradient, start_color, end_color)
         
-        slider.rect.x = self.value *(self.rect.width-slider.rect.width)     #To adjust the offset error due to transforming the surface.
+        slider.rect.x = self.value * (self.rect.width-slider.rect.width)     #To adjust the offset error due to transforming the surface.
         return slider
 
     #Position must be between 0 and 1
     #When we know in which form will the parameter be passed, we will implement this
     #Could be remade into a more generic method called set_piece_pos, that have an index as a parameter, to modify any sprite of the collection
     def set_slider_position(self, new_position):    #TODO test to check if the list works by reference
-        sprites = self.pieces.sprites()
         if new_position > 0 and new_position < 1:   #This means its a porcentual ratio
-            sprites[-1].rect.x =                self.rect.width*new_position
+            self.slider.rect.x =                int(self.rect.width*new_position)
         elif new_position > 1:
-            sprites[-1].rect.x =                int(new_position)
-            if sprites[-1].rect.x > self.rect.width:    sprites[-1].rect.x = self.rect.width-sprites[-1].rect.width
+            self.slider.rect.x =                int(new_position)
+            if self.slider.rect.x > self.rect.width:    self.slider.rect.x = self.rect.width-self.slider.rect.width
         else:
-            sprites[-1].rect.x = 0
-            #raise AttributeError ("Can't set a negative slider position")
+            self.slider.rect.x = 0
 
     def get_value(self):
         return self.value
@@ -366,11 +365,17 @@ class Slider (UiElement):
             elif type(value) is pygame.Rect:    mouse_x = value.x
             else:                               raise TypeError("Type of value in slider method Hitbox_Action must be Rect or tuple.")
         pixels = mouse_x-self.rect.x         #Pixels into the bar, that the slider position has.
-        self.set_value(pixels/self.rect.width) 
-        self.set_slider_position(pixels)
-        self.save_state()
-        self.image = self.generate_image()          #Regenerate the image with the new slider position
-        self.send_event()
+        value = pixels/self.rect.width
+        if value != self.get_value:
+            self.set_value(value) 
+            self.set_slider_position(pixels)
+            self.image = self.generate_image()          #Regenerate the image with the new slider position
+            self.send_event()
+
+    def restore(self):
+        self.image  =   self.image_original.copy()
+        self.image.blit(self.slider.image, self.slider.rect)
+        self.rect   =   self.rect_original.copy()
 
     def update(self):
         '''Update method, will process and change image attributes to simulate animation when drawing

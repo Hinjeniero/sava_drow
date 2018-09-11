@@ -128,12 +128,13 @@ class Menu (object):
             if keys_pressed[pygame.K_RIGHT]:        self.active_sprite.sprite.hitbox_action('right_arrow', value=mouse_pos)
             if keys_pressed[pygame.K_KP_ENTER]\
                 or keys_pressed[pygame.K_SPACE]:    self.active_sprite.sprite.hitbox_action('add_value', value=mouse_pos)
-        self.mouse_handler(mouse_buttons_pressed, mouse_movement, mouse_pos)                    #Handling regarding mouse #TODO complete call
+            
+        self.mouse_handler(event, mouse_buttons_pressed, mouse_movement, mouse_pos)                    #Handling regarding mouse #TODO complete call
 
-    def mouse_handler(self, mouse_buttons, mouse_movement, mouse_position):
-        #elif event.type == pygame.MOUSEBUTTONDOWN:             #If a mouse button was clicked
-        if mouse_buttons[0]:    self.active_sprite.sprite.hitbox_action('left_mouse_button', value=mouse_position)
-        elif mouse_buttons[2]:  self.active_sprite.sprite.hitbox_action('right_mouse_button', value=mouse_position)
+    def mouse_handler(self, event, mouse_buttons, mouse_movement, mouse_position):
+        if event.type == pygame.MOUSEBUTTONDOWN:             #If a mouse button was clicked
+            if mouse_buttons[0]:    self.active_sprite.sprite.hitbox_action('add_mouse_button', value=mouse_position)
+            elif mouse_buttons[2]:  self.active_sprite.sprite.hitbox_action('dec_mouse_button', value=mouse_position)
         
         if mouse_movement: 
             mouse_hitbox = pygame.sprite.Sprite()

@@ -121,35 +121,36 @@ class Menu (object):
         self.dynamic_sprites.draw(surface)
 
     def event_handler(self, event, keys_pressed, mouse_buttons_pressed, mouse_movement=False, mouse_pos=(0, 0)):
-        if event.type == pygame.KEYDOWN:        #Handling regarding keyboard
-            if keys_pressed[pygame.K_DOWN]:         self.change_active_sprite(self.active_sprite_index+1)
-            if keys_pressed[pygame.K_UP]:           self.change_active_sprite(self.active_sprite_index-1)
-            if keys_pressed[pygame.K_LEFT]:         self.active_sprite.sprite.hitbox_action('left_arrow', value=mouse_pos)
-            if keys_pressed[pygame.K_RIGHT]:        self.active_sprite.sprite.hitbox_action('right_arrow', value=mouse_pos)
-            if keys_pressed[pygame.K_KP_ENTER]\
-                or keys_pressed[pygame.K_SPACE]:    self.active_sprite.sprite.hitbox_action('add_value', value=mouse_pos)
-            
-        self.mouse_handler(event, mouse_buttons_pressed, mouse_movement, mouse_pos)                    #Handling regarding mouse #TODO complete call
+        if event.type == pygame.KEYDOWN:                    self.keyboard_handler(keys_pressed)
+        if mouse_movement or any(mouse_buttons_pressed):    self.mouse_handler(event, mouse_buttons_pressed, mouse_movement, mouse_pos)                 
+
+    def keyboard_handler(self, keys_pressed):
+        if keys_pressed[pygame.K_DOWN]:         self.change_active_sprite(self.active_sprite_index+1)
+        if keys_pressed[pygame.K_UP]:           self.change_active_sprite(self.active_sprite_index-1)
+        if keys_pressed[pygame.K_LEFT]:         self.active_sprite.sprite.hitbox_action('left_arrow')
+        if keys_pressed[pygame.K_RIGHT]:        self.active_sprite.sprite.hitbox_action('right_arrow')
+        if keys_pressed[pygame.K_KP_ENTER]\
+            or keys_pressed[pygame.K_SPACE]:    self.active_sprite.sprite.hitbox_action('add_value')
 
     def mouse_handler(self, event, mouse_buttons, mouse_movement, mouse_position):
-        if event.type == pygame.MOUSEBUTTONDOWN:             #If a mouse button was clicked
-            if mouse_buttons[0]:    self.active_sprite.sprite.hitbox_action('add_mouse_button', value=mouse_position)
-            elif mouse_buttons[2]:  self.active_sprite.sprite.hitbox_action('dec_mouse_button', value=mouse_position)
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if mouse_buttons[0]:    self.active_sprite.sprite.hitbox_action('first_mouse_button', value=mouse_position)
+            elif mouse_buttons[2]:  self.active_sprite.sprite.hitbox_action('secondary_mouse_button', value=mouse_position)
         
         if mouse_movement: 
-            mouse_hitbox = pygame.sprite.Sprite()
-            mouse_hitbox.rect = pygame.Rect(mouse_position, (2,2))
+            mouse_hitbox = pygame.sprite.Sprite()                                                                   #Creating a sprite for the mouse
+            mouse_hitbox.rect = pygame.Rect(mouse_position, (2,2))                                                  #Decoy sprite to check collision with mouse
             colliding_sprite = pygame.sprite.spritecollideany(mouse_hitbox, self.dynamic_sprites.sprites())
-            if colliding_sprite is not None:    self.change_active_sprite(self.get_sprite_index(colliding_sprite))
+            if colliding_sprite is not None:    self.change_active_sprite(self.get_sprite_index(colliding_sprite))  #TODO this can be done in a better way
 
     def change_active_sprite(self, index):
         size_sprite_list =                  len(self.dynamic_sprites.sprites())
 
-        self.active_sprite_index =          index
+        self.active_sprite_index =          index   #This all can be compressed in one line
         if index >= size_sprite_list:       self.active_sprite_index = 0
         elif index < 0:                     self.active_sprite_index = size_sprite_list-1
         
-        if self.active_sprite.sprite is not None:   self.active_sprite.sprite.restore()     #Change the active back to the original state
+        if self.active_sprite.sprite is not None:   self.active_sprite.sprite.restore()             #Change the active back to the original state
         self.active_sprite.add(self.dynamic_sprites.sprites()[self.active_sprite_index])            #Adding the new active sprite
 
     def get_sprite_index(self, sprite):
@@ -176,13 +177,13 @@ if __name__ == "__main__":
 
     #Create elements
     sli = UiElement.factory(pygame.USEREVENT+1, (10,10), (800, 100), (0.2))
-    but = UiElement.factory(pygame.USEREVENT+2, (10, 160), (800, 100), (30, 40))
+    but = UiElement.factory(pygame.USEREVENT+2, (10, 160), (800, 100), (0, 10, 20, 30, 40))
     sli2 = UiElement.factory(pygame.USEREVENT+3, (10, 310), (800, 100), (0), text="Slider")
-    but2 = UiElement.factory(pygame.USEREVENT+4, (10, 460), (800, 100), ((30, 40)), text="Button")
+    but2 = UiElement.factory(pygame.USEREVENT+4, (10, 460), (800, 100), ((50, 60, 70, 80)), text="Button")
     sli3 = UiElement.factory(pygame.USEREVENT+5, (10, 960), (800, 100), (1), text="SuperSlider", slider_type=0, start_gradient = RED, end_gradient=BLACK, slider_start_color = RED, slider_end_color = WHITE)
-    but3 = UiElement.factory(pygame.USEREVENT+6, (10, 1110), (800, 100), ((30, 40)), text="SuperButton", start_gradient = GREEN, end_gradient=BLACK)
+    but3 = UiElement.factory(pygame.USEREVENT+6, (10, 1110), (800, 100), ((90, 100, 110)), text="SuperButton", start_gradient = GREEN, end_gradient=BLACK)
     sli4 = UiElement.factory(pygame.USEREVENT+7, (10, 1260), (800, 100), (0.8), text="LongTextIsLongSoLongThatIsLongestEver", slider_type=2, start_gradient = RED, end_gradient=BLACK, slider_start_color = RED, slider_end_color = WHITE)
-    but4 = UiElement.factory(pygame.USEREVENT+8, (10, 1410), (800, 100), ((30, 40)), text="LongTextIsLongSoLongThatIsLongestEver", start_gradient = GREEN, end_gradient=BLACK)
+    but4 = UiElement.factory(pygame.USEREVENT+0, (10, 1410), (800, 100), (("platano", "naranja", "orange", "ouranch")), text="LongTextIsLongSoLongThatIsLongestEver", start_gradient = GREEN, end_gradient=BLACK)
     
     #Create Menu
     menu = Menu("MainMenu", resolution, (True, 0), sli, but, sli2, but2, sli3, but3, sli4, but4)
@@ -200,6 +201,9 @@ if __name__ == "__main__":
             if event.type == pygame.QUIT:       loop = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:    loop = False
-            else:                               menu.event_handler(event, pygame.key.get_pressed(), pygame.mouse.get_pressed(),\
-                                                                    mouse_movement=(pygame.mouse.get_rel() != (0,0)), mouse_pos=pygame.mouse.get_pos())
-        pygame.display.update()  #Updating the screen
+            elif event.type >= pygame.USEREVENT:
+                print("Received event number "+str(event.type)+", with value "+str(event.value))
+            if loop:            #If not exit yet                        
+                menu.event_handler(event, pygame.key.get_pressed(), pygame.mouse.get_pressed(),\
+                                    mouse_movement=(pygame.mouse.get_rel() != (0,0)), mouse_pos=pygame.mouse.get_pos())
+        pygame.display.update() #Updating the screen

@@ -202,6 +202,7 @@ class Button (UiElement):
     __default_config = {'text': 'default',
                         'font': None,
                         'max_font_size': 50,
+                        'font_size': 0,
                         'text_centering': 0,
                         'text_color': WHITE,
                         'shows_value': False
@@ -228,7 +229,7 @@ class Button (UiElement):
         self.overlay.set_alpha(transparency_lvl)
         self.image          =   self.image_original.copy() 
         self.image.blit(self.overlay, (0,0))
-
+  
     def generate_object(self, rect=None, generate_image=True):
         super().generate_object(rect=rect, generate_image=False)
         
@@ -238,8 +239,8 @@ class Button (UiElement):
             if not key in self.params:
                 self.params[key] = Button.__default_config[key]
 
-        fnt_size = Resizer.max_font_size(self.params['text'], self.rect.size, self.params['max_font_size'], self.params['font'])
-        self.pieces.add(self.generate_text(self.params['text'], self.params['text_color'], self.params['text_centering'], self.params['font'], fnt_size)) 
+        self.params['font_size'] = Resizer.max_font_size(self.params['text'], self.rect.size, self.params['max_font_size'], self.params['font'])
+        self.pieces.add(self.generate_text(self.params['text'], self.params['text_color'], self.params['text_centering'], self.params['font'], self.params['font_size'])) 
         if generate_image:    
             self.image = self.generate_image() 
             self.save_state()
@@ -263,14 +264,18 @@ class Button (UiElement):
         Returns:
             Nothing.
         '''
-        if 'dec' in command or 'min' in command or 'left' in command:   self.dec_index()
-        elif 'inc' in command or 'add' in command or 'right' in command:  self.inc_index()
+        if 'dec' in command or 'min' in command or 'left' in command or ("mouse" in command and "sec" in command):      self.dec_index()
+        elif 'inc' in command or 'add' in command or 'right' in command or ("mouse" in command and "first" in command): self.inc_index()
         self.send_event()
+        #TODO TESTING THIS
+        self.restore()
+        value_sprite = self.generate_text(str(self.get_value()), WHITE, 2, None, self.params['font_size']//2)
+        self.image.blit(value_sprite.image, value_sprite.rect)
 
     def inc_index(self):
         '''Increment the index in a circular fassion (If over the len, goes back to the start, 0).'''
-        self.index = self.index+1 if self.index < len(self.values) else 0
-
+        self.index = self.index+1 if self.index < len(self.values)-1 else 0
+        
     def dec_index(self):
         '''Decrements the index in a circular fassion (If undex 0, goes back to the max index).'''
         self.index = self.index-1 if self.index > 0 else len(self.values)-1
@@ -280,6 +285,7 @@ class Slider (UiElement):
     __default_config = {'text': 'default',
                         'font': None,
                         'max_font_size': 50,
+                        'font_size': 0,
                         'text_centering': 1,
                         'text_color': WHITE,
                         'shows_value': False,
@@ -295,7 +301,7 @@ class Slider (UiElement):
 
     def __init__(self, user_event_id, element_position, element_size, default_value, **params):
         self.value          =   default_value
-        self.slider         =   None      #Due to the high access rate to this sprite, it will be on its own
+        self.slider         =   None                #Due to the high access rate to this sprite, it will be on its own
         super().__init__(user_event_id, element_position, element_size, **params) 
         self.overlay        =   pygame.Surface(self.rect.size)
         self.overlay_color  =   [0, 0, 0]
@@ -309,15 +315,15 @@ class Slider (UiElement):
             if not key in self.params:              #If with the superclass update, we dont have this key (The user did not input it)
                 self.params[key] = Slider.__default_config[key]
 
-        fnt_size = Resizer.max_font_size(self.params['text'], self.rect.size, self.params['max_font_size'], self.params['font'])
-        self.pieces.add(self.generate_text(self.params['text'], self.params['text_color'], self.params['text_centering'], self.params['font'], fnt_size//2))    
+        self.params['font_size'] = Resizer.max_font_size(self.params['text'], self.rect.size, self.params['max_font_size'], self.params['font'])//2
+        self.pieces.add(self.generate_text(self.params['text'], self.params['text_color'], self.params['text_centering'], self.params['font'], self.params['font_size']))    
         self.slider =   self.generate_slider(self.params['slider_color'], self.params['slider_gradient'], self.params['slider_start_color'],\
                                             self.params['slider_end_color'], self.params['slider_border'], self.params['slider_border_color'],\
                                             self.params['slider_border_size'], self.params['slider_type'])
         if generate_image:    
             self.image = self.generate_image() 
-            self.save_state()
-            self.image.blit(self.slider.image, self.slider.rect)
+            self.save_state()   #TODO THIS SHIT KEEPS EXISTING IN THE BAR; EVEN AFTER CHANGING VALUE
+            #self.image.blit(self.slider.image, self.slider.rect)
 
     def generate_slider (self, slider_color, slider_gradient, start_color, end_color, slider_border, slider_border_color, slider_border_size, slider_type):
         '''Adds the slider to the surface parameter, and returns the slider surface for further purposes'''
@@ -336,46 +342,46 @@ class Slider (UiElement):
                                 slider_border, slider_border_size, slider_border_color,\
                                 slider_gradient, start_color, end_color)
         
-        slider.rect.x = self.value * (self.rect.width-slider.rect.width)     #To adjust the offset error due to transforming the surface.
+        slider.rect.x = (self.value*self.rect.width)-slider.rect.width//2     #To adjust the offset error due to transforming the surface.
         return slider
 
-    #Position must be between 0 and 1
-    #When we know in which form will the parameter be passed, we will implement this
-    #Could be remade into a more generic method called set_piece_pos, that have an index as a parameter, to modify any sprite of the collection
-    def set_slider_position(self, new_position):    #TODO test to check if the list works by reference
-        if new_position > 0 and new_position < 1:   #This means its a porcentual ratio
-            self.slider.rect.x =                int(self.rect.width*new_position)
-        elif new_position > 1:
-            self.slider.rect.x =                int(new_position)
-            if self.slider.rect.x > self.rect.width:    self.slider.rect.x = self.rect.width-self.slider.rect.width
-        else:
-            self.slider.rect.x = 0
+    def set_slider_position(self, position): 
+        slider_position = int(self.rect.width*position) if (0 <= position <= 1) else int(position)                                      #Converting the slider position to pixels.
+        slider_position = 0 if slider_position < 0 else self.rect.width if slider_position > self.rect.width else slider_position       #Checking if it's out of bounds 
+        self.slider.rect.x = slider_position-(self.slider.rect.width//2)                                                                #To compensate the graphical offset of managing center/top-left
 
     def get_value(self):
         return self.value
 
     def set_value(self, value):
-        self.value = 0 if value < 0 else 1 if value > 1 else value
+        if      (self.value is 0 and value<0):   self.value = 1             #It goes all the way around from 0 to 1
+        elif    (self.value is 1 and value>1): self.value = 0               #It goes all the way around from 1 to 0
+        else:   self.value = 0 if value < 0 else 1 if value > 1 else value  #The value it not yet absolute 1 or 0.
+
+        self.set_slider_position(self.value)
+        self.restore()                                                      #Restoring the original image (Without slider), and blitting value and slider
+        self.send_event()                                                   #Sending the event with the new value to be captured somewhere else
 
     def hitbox_action(self, command, value=-1):
-        if 'dec' in command or 'min' in command or 'left' in command:       self.value -= 0.1 if self.value >= 0.1 else 1
-        elif 'inc' in command or 'add' in command or 'right' in command:    self.value += 0.1 if self.value <= 0.9 else 0
-        if value is not -1:
+        if 'dec' in command or 'min' in command or 'left' in command:       self.set_value(self.get_value()-0.1)
+        elif 'inc' in command or 'add' in command or 'right' in command:    self.set_value(self.get_value()+0.1)
+        elif ('mouse' in command and ('click' in command or 'button' in command)) and value != -1:
             if type(value) is tuple:            mouse_x = value[0]
             elif type(value) is pygame.Rect:    mouse_x = value.x
             else:                               raise TypeError("Type of value in slider method Hitbox_Action must be Rect or tuple.")
-        pixels = mouse_x-self.rect.x         #Pixels into the bar, that the slider position has.
-        value = pixels/self.rect.width
-        if value != self.get_value:
-            self.set_value(value) 
-            self.set_slider_position(pixels)
-            self.image = self.generate_image()          #Regenerate the image with the new slider position
-            self.send_event()
+
+            pixels = mouse_x-self.rect.x        #Pixels into the bar, that the slider position has.
+            value = pixels/self.rect.width      #Converting to float value between 0-1
+            if value != self.get_value:         #If its a new value, we create another slider and value and blit it.
+                self.set_value(value) 
 
     def restore(self):
         self.image  =   self.image_original.copy()
-        self.image.blit(self.slider.image, self.slider.rect)
         self.rect   =   self.rect_original.copy()
+        #Since the original image only contains the background text and color, we need to blit the slider and value again
+        value_sprite = self.generate_text(str(self.get_value()), WHITE, 2, None, self.params['font_size'])
+        self.image.blit(value_sprite.image, value_sprite.rect)  #Blitting the new value string
+        self.image.blit(self.slider.image, self.slider.rect)    #Blitting the new slider position
 
     def update(self):
         '''Update method, will process and change image attributes to simulate animation when drawing
@@ -392,7 +398,7 @@ class Slider (UiElement):
         if all(color >= 255 for color in self.overlay_color) or all(color <= 0 for color in self.overlay_color):    self.color_sum = -self.color_sum
         self.set_overlay()
 
-    def set_overlay(self):
+    def set_overlay(self):  #This gets calculated in each frame, this is not necessary
         topleft         =   (int(self.value*self.rect.width)-self.rect.height//6, 0)
         center          =   (int(self.value*self.rect.width), self.rect.height//2)
         overlay_rect    =   pygame.Rect(topleft, (self.rect.height//3, self.rect.height))

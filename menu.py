@@ -1,4 +1,5 @@
 import pygame, math, numpy, os
+from utility_box import UtilityBox
 from pygame.locals import *
 from UI_Element import *
 import gradients #Gradients in polygons
@@ -24,17 +25,17 @@ class Menu (object):
 
     def __init__(self, id, resolution, centering_tuple, *elements, **params):
         #Basic info saved
-        self.id = id
-        self.resolution = resolution
-        self.config = Menu.__default_config.copy()
+        self.id                     = id
+        self.resolution             = resolution
+        self.config                 = Menu.__default_config.copy()
         self.config.update(params)
         
         #Graphic elements
-        self.static_sprites = pygame.sprite.Group() #Things without interaction
-        self.dynamic_sprites = pygame.sprite.OrderedUpdates() #Things with interaction, like buttons and such
-        self.active_sprite = pygame.sprite.GroupSingle() #Selected from dynamic_elements, only one at the same time
-        self.active_sprite_index = 0
-        self.background = self.load_background(resolution, self.config['background_path'])
+        self.static_sprites         = pygame.sprite.Group() #Things without interaction
+        self.dynamic_sprites        = pygame.sprite.OrderedUpdates() #Things with interaction, like buttons and such
+        self.active_sprite          = pygame.sprite.GroupSingle() #Selected from dynamic_elements, only one at the same time
+        self.active_sprite_index    = 0
+        self.background             = UtilityBox.load_background(resolution, self.config['background_path'])
 
         #Music & sounds
         self.main_theme = pygame.mixer.music.load(self.config['soundtheme_path'])
@@ -108,13 +109,6 @@ class Menu (object):
             sprite.rect.left = (screen_width-sprite.rect.width)/2
             sprite.save_state()
 
-    def load_background(self, size, background_path=None):
-        if background_path is None:
-            bg_surf = gradients.vertical(size, (255, 200, 200, 255), (255, 0, 0, 255)) #Gradient from white-ish to red
-        else:
-            bg_surf = pygame.transform.scale(pygame.image.load(background_path), size)
-        return bg_surf
-
     def draw(self, surface, show_fps=True):
         surface.blit(self.background, (0,0))
         self.static_sprites.draw(surface)
@@ -138,9 +132,7 @@ class Menu (object):
             elif mouse_buttons[2]:  self.active_sprite.sprite.hitbox_action('secondary_mouse_button', value=mouse_position)
         
         if mouse_movement: 
-            mouse_hitbox = pygame.sprite.Sprite()                                                                   #Creating a sprite for the mouse
-            mouse_hitbox.rect = pygame.Rect(mouse_position, (2,2))                                                  #Decoy sprite to check collision with mouse
-            colliding_sprite = pygame.sprite.spritecollideany(mouse_hitbox, self.dynamic_sprites.sprites())
+            colliding_sprite = pygame.sprite.spritecollideany(UtilityBox.mouse_sprite(mouse_position), self.dynamic_sprites.sprites())
             if colliding_sprite is not None:    self.change_active_sprite(self.get_sprite_index(colliding_sprite))  #TODO this can be done in a better way
 
     def change_active_sprite(self, index):

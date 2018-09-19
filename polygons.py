@@ -41,8 +41,9 @@ class Polygon(pygame.sprite.Sprite):
                 border=True, border_size=2, border_color=WHITE,\
                 use_gradient=True, start_color=LIGHTGRAY, end_color=DARKGRAY, gradient_type=0):
         super().__init__()
-        self.image=None
-        self.rect=None
+        self.image  = None
+        self.rect   = None
+        self.mask   = None
 
     def collidepoint(self, point):
         '''Overlay of rect.collidepoint of the sprite. The main use of this function
@@ -67,6 +68,9 @@ class Polygon(pygame.sprite.Sprite):
         else:
             raise TypeError("CollidePoint must receive a pygame.Rect or a tuple containing the point coordinates.")
 
+    def update_mask(self):
+        self.mask = pygame.mask.from_surface(self.image)
+
 class Circle(Polygon):
     '''ou shit'''
     def __init__(self, position, size,\
@@ -78,6 +82,7 @@ class Circle(Polygon):
 
         self.radius = size[0]//2 if type(size) is tuple else size//2
         self.image = Circle.generate_surface(size, self.radius, surf_color, use_gradient, start_color, end_color, border, border_size, border_color)[0]
+        self.mask = pygame.mask.from_surface(self.image)
         self.rect = pygame.Rect(position, self.image.get_size()) #Position + size
         self.center = self.rect.center
     
@@ -146,8 +151,8 @@ class Rectangle(Polygon):
                 use_gradient=True, start_color=LIGHTGRAY, end_color=DARKGRAY, gradient_type=0):
         #Hierarchy from polygon
         super().__init__(position, size, surf_color, surf_image, border, border_size, border_color, use_gradient, start_color, end_color, gradient_type)
-
         self.image = Rectangle.generate_surface(size, surf_image, surf_color, use_gradient, start_color, end_color, gradient_type, border, border_size, border_color)[0]
+        self.mask = pygame.mask.from_surface(self.image)
         self.rect = pygame.Rect(position, self.image.get_size()) #Position + size
 
     @staticmethod

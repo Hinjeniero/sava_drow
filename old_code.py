@@ -392,3 +392,31 @@ class UI_Element:
 
         self.transparency += self.transparency_speed
         if self.transparency >= 255:    self.transparency_speed = -self.transparency_speed 
+
+
+
+        #In draw of board
+        for i in range (0, self.lvl_inception-1): #Dont want a circle in the first lvl
+            pygame.draw.circle(surface, self.platform.color, self.platform.pos, int(radius), 3) #Drawing big circle
+            radius+=ratio
+        for lvl, list_of_circles in self.elements.items():
+            index = 0
+            for circle in list_of_circles:
+                pygame.draw.circle(surface, (0,0,0,255), circle.pos, circle.radius+2)
+                if circle.surface is not None:
+                    if lvl is self.active_circle[0] and index is self.active_circle[1]:
+                        pass
+                    else:
+                        surface.blit(circle.surface, circle.surface_pos)
+                index+=1
+                
+    def run(self): #board
+        self.calculate_circles()
+        loop = True
+        while loop:
+            self.clock.tick(self.fps)
+            self.draw(screen)
+            if pygame.mouse.get_rel() != (0,0): #If there is mouse movement
+                loop = self.event_handler(pygame.event.get(), pygame.key.get_pressed(), mouse_movement=True, mouse_pos=pygame.mouse.get_pos())
+            else:
+                loop = self.event_handler(pygame.event.get(), pygame.key.get_pressed())                

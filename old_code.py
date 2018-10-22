@@ -420,3 +420,49 @@ class UI_Element:
                 loop = self.event_handler(pygame.event.get(), pygame.key.get_pressed(), mouse_movement=True, mouse_pos=pygame.mouse.get_pos())
             else:
                 loop = self.event_handler(pygame.event.get(), pygame.key.get_pressed())                
+
+#game object
+    def add_menu(self, id_menu, menu):
+        self.menus[id_menu] = menu
+        self.showing_menu = menu
+
+    def add_board(self, id_board, board):
+        self.boards[id_board] = board
+        self.showing_board = board
+
+    def esc_handler(self):
+        id_ = self.current_screen().id.lower()
+        if ('main' in id_ and 'menu' in id_):
+            for i in range(0, len(self.screens)):
+                new_id = self.get_screen(i).id.lower()
+                if ('main' in new_id and 'board' in new_id):
+                    self.screen_index = i
+                    break
+        elif ('menu' in id_):
+            for i in range(0, len(self.screens)):
+                new_id = self.get_screen(i).id.lower()
+                if ('main' in new_id and 'menu' in new_id):
+                    self.screen_index = i
+                    break
+        elif ('main' in id_ and 'board' in id_):
+            for i in range(0, len(self.screens)):
+                new_id = self.get_screen(i).id.lower()
+                if ('main' in new_id and 'menu' in new_id):
+                    self.screen_index = i
+                    break
+
+#old update method of sliders
+    def update(self):
+        '''Update method, will process and change image attributes to simulate animation when drawing
+        Args, Returns:
+            None, Nothing
+        '''
+        index = random.randint(0, len(self.overlay_color)-1)
+        self.overlay_color[index] += self.color_sum
+
+        for i in range (0, len(self.overlay_color)): 
+            if self.overlay_color[i] < 0:       self.overlay_color[i] = 0  
+            elif self.overlay_color[i] > 255:   self.overlay_color[i] = 255
+
+        if all(color >= 255 for color in self.overlay_color) or all(color <= 0 for color in self.overlay_color):    self.color_sum = -self.color_sum
+        self.set_overlay()

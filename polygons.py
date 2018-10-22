@@ -34,7 +34,7 @@ class Polygon(pygame.sprite.Sprite):
         end_color: Ending color of the gradient. Default is dark gray.
         gradient_type: Orientation of the gradient, 0 for vertical, 1 or whatever for horizontal. Default is 0 (Vertical)
     """
-    euclidean_distances = UtilityBox.euclidean_generator() #LUT to store the euclidean distances. Useful in the circles hitbox checking
+    euclidean_distances = UtilityBox.EUCLIDEAN_DISTANCES #LUT to store the euclidean distances. Useful in the circles hitbox checking
     
     def __init__(self, position, size,\
                 surf_image=None, surf_color=RED,\

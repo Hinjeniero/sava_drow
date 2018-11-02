@@ -1,4 +1,5 @@
-__all__ = ["ScreenNotFoundException", "NoScreensException", "EmptyCommandException", "InvalidGameElementException"]
+__all__ = ["ScreenNotFoundException", "NoScreensException", "EmptyCommandException", "InvalidGameElementException",
+            "BadUIElementInitException", "InvalidUIElementException", "InvalidCommandValueException"]
 
 class ScreenNotFoundException(Exception):
     pass
@@ -19,4 +20,16 @@ class InvalidUIElementException(Exception):
     pass
 
 class InvalidCommandValueException(Exception):
+    pass
+
+class BadCharacterInitException(Exception):
+    pass
+
+class BadPlayersParameter(Exception):
+    pass
+
+class BadResizerParamException(Exception):
+    pass
+
+class BadCharacterActionException(Exception):
     pass

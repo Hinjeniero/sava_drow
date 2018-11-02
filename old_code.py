@@ -466,3 +466,32 @@ class UI_Element:
 
         if all(color >= 255 for color in self.overlay_color) or all(color <= 0 for color in self.overlay_color):    self.color_sum = -self.color_sum
         self.set_overlay()
+        
+    #Old methods of Resizer
+    @staticmethod
+    def __surface_resize(surface, new_size):
+        old_size = surface.get_size()
+        new_size = list(new_size)
+        for new_axis, old_axis in zip(new_size, old_size):
+            ratio = (new_axis/old_axis)
+            for i in range (0, len(new_size)): #This way it modifies the list, the normal iterator doesn't work that way, assigning names and shit
+                new_size[i] = int(new_size[i]*ratio)
+        print("NMEW"+str(new_size))
+        return pygame.transform.scale(surface, tuple(new_size)) #Resizing the surface
+    
+    @staticmethod
+    def __sprite_resize(sprite, new_size):
+        old_size = sprite.image.get_size()
+        old_position = sprite.rect.topleft
+        new_position = list(sprite.rect.topleft)
+        ratios = []
+        for new_axis, old_axis in zip(new_size, old_size):
+            ratio = (new_axis/old_axis)
+            for i in range (0, len(new_size)): #This way it modifies the list, the normal iterator doesn't work that way, assigning names and shit
+                new_size[i] = int(new_size[i]*ratio)
+                new_position[i] = int(old_position[i]*ratio)
+            ratios.append(ratio)
+        sprite.rect.topleft = tuple(new_position)                               #Scaling the rect, pos and size
+        sprite.rect.size = tuple(new_size)
+        sprite.image = pygame.transform.scale(sprite.image, sprite.rect.size)    #Scaling the surface and size
+        return ratios

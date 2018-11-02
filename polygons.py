@@ -175,11 +175,11 @@ class Rectangle(Polygon):
             A surface containing the Rectangle.
         """
         if image:
-            print(image)
             surf = pygame.transform.scale(pygame.image.load(image).convert_alpha(), surf_size)
             if border: border = pygame.mask.from_surface(surf, 200)         #If image needs a border, mask. Not using it right now TODO
         else:
-            surf = pygame.Surface(surf_size)
+            surf_size   = tuple([int(x) for x in surf_size])
+            surf        = pygame.Surface(surf_size)
             if use_gradient: surf = gradients.vertical(surf_size, start_color, end_color) if gradient_type == 0 else gradients.horizontal(surf_size, start_color, end_color) #Checking if gradient and type of gradient
             else: surf.fill(surf_color)
             if border and border_size is not 0: pygame.draw.rect(surf, border_color,(0,0)+surf_size, border_size) #Drawing the border in the surface, dont want no existant borders

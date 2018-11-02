@@ -4,8 +4,9 @@ from resizer import Resizer
 from pygame_test import PygameSuite
 from colors import *
 from exceptions import *
+from utility_box import UtilityBox
 
-__all__ = ["UIElement", "Button", "Slider", "InfoBoard", "OptionsWindow"]
+__all__ = ["UIElement", "ButtonAction", "ButtonValue", "Slider", "InfoBoard", "Dialog"]
 
 MIN_ANIMATION_VALUE     = 0.00
 MAX_ANIMATION_VALUE     = 1.00
@@ -19,7 +20,7 @@ class TextSprite(pygame.sprite.Sprite):
         rect: pygame.Rect containing the position and size of the text sprite.
     '''
     __default_config = {'font': None,
-                        'max_font'      : 200,
+                        'max_font_size' : 200,
                         'font_size'     : 0,
                         'text'          : "None",
                         'color'         : WHITE,
@@ -31,7 +32,7 @@ class TextSprite(pygame.sprite.Sprite):
         self.id     = _id
         self.params = TextSprite.__default_config.copy()
         self.params.update(params)
-        self.generate(rect)     
+        self.generate(rect)  
 
     def set_text(self, text):   #Longer string, different size must me used
         self.image  = pygame.font.Font(self.font, self.size).render(text, True, self.color)
@@ -41,15 +42,15 @@ class TextSprite(pygame.sprite.Sprite):
         x_pos               = int(source_rect.width*0.02) if alignment is 1 \
             else            source_rect.width-self.image.get_width() if alignment is 2 \
             else            (source_rect.width//2)-(self.image.get_width()//2)
-        y_pos               = (source_rect//2)-(self.image.get_height()//2)
+        y_pos               = (source_rect.height//2)-(self.image.get_height()//2)
         self.rect.topleft   = [x+y for x,y in zip(offset, (x_pos, y_pos))]
 
     def generate(self, rect=None):
         if rect is not None and isinstance(rect, pygame.Rect):              self.rect = rect
-        elif rect is not None and isinstance(rect, list, tuple):            self.rect = pygame.Rect(rect, self.params["position"])
+        elif rect is not None and isinstance(rect, (list, tuple)):          self.rect = pygame.Rect(self.params["position"], rect)
         elif rect is not None:                                              raise BadUIElementInitException("Can't create text sprite, wrong rect")
         self.params['font_size']    = Resizer.max_font_size(self.params['text'], self.rect.size, self.params['max_font_size'], self.params['font'])
-        self.image                  = pygame.font.Font(self.params['font'], self.rect.size).render(self.params['text'], True, self.params['color'])
+        self.image                  = pygame.font.Font(self.params['font'], self.params['font_size']).render(self.params['text'], True, self.params['color'])
             
 #Graphical element, automatic creation of a menu's elements
 class UIElement(pygame.sprite.Sprite):
@@ -96,9 +97,16 @@ class UIElement(pygame.sprite.Sprite):
                         'gradient_type': 0,
                         'overlay_color': WHITE
     }
+    
+    @staticmethod
+    def close_button(id_, user_event_id, window_rect, **params):
+        params['text'] = "X"
+        size     = (window_rect.width*0.20, window_rect.height*0.10)
+        position = (window_rect.width-size[0], 0)      
+        return ButtonAction(id_, user_event_id, position, size, window_rect.size, **params)
 
     @staticmethod
-    def factory(id_, user_event_id, position, size, relative_size, default_values, *elements, **params):
+    def factory(id_, user_event_id, position, size, canvas_size, default_values, *elements, **params):
         '''Method to decide what subclass to create according to the default values.
         If it's a number, a Slider with an associated value. 
         If its a list of shit, a button with those predetermined options.
@@ -119,27 +127,27 @@ class UIElement(pygame.sprite.Sprite):
         '''
         if len(elements) > 0:
             if isinstance(elements[0], ButtonAction):
-                return OptionsWindow(id_, user_event_id, position, size, relative_size, *elements, **params)
-            elif isinstance(elements[0], TextSprite):
-                return InfoBoard(id_, user_event_id, position, size, relative_size, *elements, **params)
+                return Dialog(id_, user_event_id, position, size, canvas_size, *elements, **params)
+            elif isinstance(elements[0], TextSprite, pygame.sprite.Sprite):
+                return InfoBoard(id_, user_event_id, position, size, canvas_size, *elements, **params)
             else:    raise BadUIElementInitException("Can't create an object with those *elements of type "+str(type(elements[0])))
-        if isinstance(default_values, (list, type)):
-            return ButtonValue(id_, user_event_id, position, size, relative_size, tuple(default_values), **params)
+        if isinstance(default_values, (list, tuple)):
+            return ButtonValue(id_, user_event_id, position, size, canvas_size, tuple(default_values), **params)
         elif isinstance(default_values, (int, float)):
-            return Slider(id_, user_event_id, position, size, relative_size, float(default_values), **params)
-        elif isinstance(default_values, None):
-            return ButtonAction(id_, user_event_id, position, size, relative_size, **params)    
+            return Slider(id_, user_event_id, position, size, canvas_size, float(default_values), **params)
+        elif default_values is None:
+            return ButtonAction(id_, user_event_id, position, size, canvas_size, **params)    
         else:
             raise BadUIElementInitException("Can't create an object with those default_values of type "+str(type(default_values)))
 
-    def __init__(self, command, user_event_id, position, size, relative_size, **params):
+    def __init__(self, command, user_event_id, position, size, canvas_size, **params):
         '''Constructor of the UiElement class.'''
         super().__init__() 
         #Basic parameters on top of those inherited from Sprite
         self.__action       = command
         self.__event_id     = user_event_id
-        self.__pieces       = pygame.sprite.OrderedUpdates()
-        self.__text         = None
+        self.pieces       = pygame.sprite.OrderedUpdates()
+        self.text         = None
         #Parameters to regenerate object
         self.params         = UIElement.__default_config.copy()
         self.params.update(params)
@@ -148,16 +156,16 @@ class UIElement(pygame.sprite.Sprite):
         #Rect and images
         self.rect           = pygame.Rect(position, size) 
         self.rect_original  = self.rect.copy()
-        self.real_rect      = pygame.Rect(position, relative_size)      #Made for regeneration purposes and such, have the percentage of the screen that it occupies
+        self.real_rect      = (tuple([x/y for x,y in zip(position, canvas_size)]), tuple([x/y for x,y in zip(size, canvas_size)]))      #Made for regeneration purposes and such, have the percentage of the screen that it occupies
         self.image          = None                                      #Will be assigned a good object in the next line
         self.image_original = None
         self.mask           = None                                      #TODO to use in the future
         #Animation
         self.animation_value= 0
         self.animation_step = ANIMATION_STEP
-        self.overlay        = pygame.Surface(self.rect.size).fill(self.params['overlay_color']) 
+        self.overlay        = None
         #Final method to create the complete object
-        self.generate()                                                 #Generate the first sprite and the self.image attribute
+        self.generate()                                               #Generate the first sprite and the self.image attribute
 
     def get_id(self):
         return self.__action
@@ -165,8 +173,14 @@ class UIElement(pygame.sprite.Sprite):
         return self.get_id()
     def get_action(self):
         return self.get_id()
+    def get_event(self):
+        return self.__event_id
+    def get_event_id(self):
+        return self.get_event()
+    def get_canvas_size(self):
+        return tuple([x//y for x,y in zip(self.rect.size, self.real_rect[1])])
 
-    def add_text(self, text, text_color, text_alignment, font, font_size): 
+    def add_text(self, text, font, canvas_rect, text_rect, max_font_size, text_color, alignment): 
         '''Generates and adds sprite-based text object following the input parameters.
         Args:
             text:           String object, is the text itself.
@@ -180,8 +194,14 @@ class UIElement(pygame.sprite.Sprite):
             #surface.blit(text_surf, (x_pos, y_pos))
             #return text_surf, pygame.Rect(x_pos, y_pos, text_surf.get_size())
         '''
-        text = TextSprite(self._id+"_text", self.rect, font=font, font_size=font_size, text=text, text_color=text_color)
+        text = TextSprite(self.get_id()+"_text", text_rect, font=font, max_font_size=max_font_size, text=text, text_color=text_color)
+        text.set_position(canvas_rect, alignment)
         self.pieces.add(text)  
+
+    def draw_text(self, text, font, canvas_rect, text_rect, max_font_size, text_color, alignment):
+        text = TextSprite(self.get_id()+"_text", text_rect, font=font, max_font_size=max_font_size, text=text, text_color=text_color)
+        text.set_position(canvas_rect, alignment)
+        self.image.blit(text.image, text.rect)
     
     def generate_image(self):
         '''Generates the self.image surface, adding and drawing all the pieces that form part of the sprite.
@@ -195,16 +215,14 @@ class UIElement(pygame.sprite.Sprite):
         Raise:
             IndexError: Error if the self.pieces list is empty.
         '''
-        first_sprite, final_surf = False, None
-        for sprite in self.pieces.sprites():
-            if not first_sprite: 
-                final_surf      = sprite.copy()
-                first_sprite    = True
-            else: 
-                final_surf.blit(sprite.image, sprite.rect.topleft)
+        if len(self.pieces.sprites())<1:        raise InvalidUIElementException("Creating the image of UIElement returned None")
+        surf                                    = pygame.Surface(self.rect.size)
+        for sprite in self.pieces.sprites():    surf.blit(sprite.image, sprite.rect.topleft)
+        return surf
 
-        if final_surf is None:  raise InvalidUIElementException("Creating the image of UIElement returned None")
-        else:                   return final_surf
+    def get_rect_if_canvas_size(self, canvas_size):
+        return pygame.Rect(tuple([x*y for x,y in zip(self.real_rect[0], canvas_size)]),\
+         tuple([x*y for x,y in zip(self.real_rect[1], canvas_size)]))
 
     def generate(self, rect=None, generate_image=True):
         '''Generates or regenerates the object, using the input rect, or the default self.rect.
@@ -220,7 +238,9 @@ class UIElement(pygame.sprite.Sprite):
         '''
         if rect is not None:    self.rect, self.params["position"], self.params["size"] = rect, rect.topleft, rect.size
         self.pieces.empty()
-        self.pieces.add(Rectangle(self.params['position'], self.params['size'], self.params['texture'], self.params['color'],\
+        self.overlay            = pygame.Surface(self.rect.size) #TODO Not sure if this is the best place, just doing it here
+        self.overlay.fill(self.params['overlay_color']) 
+        self.pieces.add(Rectangle((0, 0), self.params['size'], self.params['texture'], self.params['color'],\
                                 self.params['border'], self.params['border_width'], self.params['border_color'],\
                                 self.params['gradient'], self.params['start_gradient'], self.params['end_gradient'], self.params['gradient_type']))
         if generate_image:    
@@ -241,7 +261,7 @@ class UIElement(pygame.sprite.Sprite):
     def send_event(self):
         '''Post the event associated with this element, along with the current value.
         Posts it in the pygame.event queue. Can be retrieved with pygame.event.get()'''
-        my_event = pygame.event.Event(self.__event_id, command=self.action, value=self.get_value())
+        my_event = pygame.event.Event(self.get_event_id(), command=self.get_action(), value=self.get_value())
         pygame.event.post(my_event)
 
     def animate(self):
@@ -257,7 +277,8 @@ class UIElement(pygame.sprite.Sprite):
         '''
         self.animate()
         self.overlay.set_alpha(int(MAX_TRANSPARENCY*self.animation_value))
-        self.image = self.image_original.copy().blit(self.overlay, (0,0))
+        self.image = self.image_original.copy()
+        self.image.blit(self.overlay, (0,0))
 
     def set_event(self, event_id):
         self.__event_id = event_id
@@ -270,8 +291,8 @@ class ButtonAction(UIElement):
                         'text_centering': 0,
                         'text_color': WHITE
     }
-    def __init__(self, id_, user_event_id, element_position, element_size, relative_size, **params):
-        super().__init__(id_, user_event_id, element_position, element_size, relative_size, **params)    
+    def __init__(self, id_, user_event_id, element_position, element_size, canvas_size, **params):
+        super().__init__(id_, user_event_id, element_position, element_size, canvas_size, **params)    
         self.active = True
     
     def set_active(self, active):
@@ -286,37 +307,37 @@ class ButtonAction(UIElement):
         super().generate(rect=rect, generate_image=False) 
         UtilityBox.check_missing_keys_in_dict(self.params, ButtonAction.__default_config)     #Totally needed after the update of params in super.init()
         self.params['font_size'] = Resizer.max_font_size(self.params['text'], self.rect.size, self.params['max_font_size'], self.params['font'])
-        self.add_text(self.params['text'], self.params['text_color'], self.params['text_centering'], self.params['font'], self.params['font_size']) 
+        self.add_text(self.params['text'], self.params['font'], self.rect, [x//2 for x in self.rect.size], self.params['max_font_size'], self.params['text_color'], 0)
         if generate_image:    
             self.image = self.generate_image() 
             self.save_state()
+    
+    def send_event(self):
+        '''Post the event associated with this element, along with the current value.
+        Posts it in the pygame.event queue. Can be retrieved with pygame.event.get()'''
+        my_event = pygame.event.Event(self.get_event_id(), command=self.get_action(), value=None)
+        pygame.event.post(my_event)
 
 class ButtonValue (ButtonAction):
     #The default config of a subclass contains only those parameters that the superclass does not mention
     __default_config = {'shows_value': True}
-
-    def __init__(self, id_, user_event_id, element_position, element_size, relative_size, set_of_values, **params):
-        super().__init__(id_, user_event_id, element_position, element_size, relative_size, **params)    
+    def __init__(self, id_, user_event_id, element_position, element_size, canvas_size, set_of_values, **params):
         self.values             = set_of_values
         self.current_index      = 0
+        super().__init__(id_, user_event_id, element_position, element_size, canvas_size, **params)    
 
     def generate(self, rect=None, generate_image=True):
         super().generate(rect=rect, generate_image=True)
         UtilityBox.check_missing_keys_in_dict(self.params, ButtonValue.__default_config)     #Totally needed after the update of params in super.init()
-        if self.params['shows_value']:  self.draw_value()
+        if self.params['shows_value']:  self.draw_text(str(self.get_value()), self.params['font'], self.rect,\
+                        [x//3 for x in self.rect.size], self.params['max_font_size'], self.params['text_color'], 2)  
         
     #For the sake of writing short code
     def get_value(self):
         '''Returns the current value of the element.
         Returns:    Current value.
         '''
-        return self.values[self.index]
-
-    def draw_value(self):
-        value_sprite = TextSprite(self._id+"_value", [x//2 for x in self.rect.size], font=self.params['font'],\
-                        font_size=self.params['font_size'], text=str(self.get_value()), text_color=self.params['text_color'])
-        value_sprite.set_position(self.rect, 2)
-        self.image.blit(value_sprite.image, value_sprite.rect)
+        return self.values[self.current_index]
 
     def hitbox_action(self, command, value=-1):
         ''' Decrement or increment the index of the predefined action, actively
@@ -335,15 +356,22 @@ class ButtonValue (ButtonAction):
             elif 'inc' in command or 'add' in command or 'right' in command or ("mouse" in command and "first" in command): self.inc_index()
             self.send_event()
             self.load_state()
-            self.draw_value()
+            if self.params['shows_value']:  self.draw_text(str(self.get_value()), self.params['font'], self.rect,\
+                        [x//3 for x in self.rect.size], self.params['max_font_size'], self.params['text_color'], 2)  
 
     def inc_index(self):
         '''Increment the index in a circular fassion (If over the len, goes back to the start, 0).'''
-        self.index = self.index+1 if self.index < len(self.values)-1 else 0
+        self.current_index = self.current_index+1 if self.current_index < len(self.values)-1 else 0
         
     def dec_index(self):
         '''Decrements the index in a circular fassion (If undex 0, goes back to the max index).'''
-        self.index = self.index-1 if self.index > 0 else len(self.values)-1
+        self.current_index = self.current_index-1 if self.current_index > 0 else len(self.values)-1
+
+    def send_event(self):
+        '''Post the event associated with this element, along with the current value.
+        Posts it in the pygame.event queue. Can be retrieved with pygame.event.get()'''
+        my_event = pygame.event.Event(self.get_event_id(), command=self.get_action(), value=self.get_value())
+        pygame.event.post(my_event)
 
 class Slider (UIElement):
     #The default config of a subclass contains only those parameters that the superclass does not mention
@@ -364,16 +392,16 @@ class Slider (UIElement):
                         'slider_type': 1
     }
 
-    def __init__(self, id_, user_event_id, element_position, element_size, relative_size, default_value, **params):
+    def __init__(self, id_, user_event_id, element_position, element_size, canvas_size, default_value, **params):
         self.value          =   default_value
         self.slider         =   None                #Due to the high access rate to this sprite, it will be on its own
-        super().__init__(id_, user_event_id, element_position, element_size, relative_size, **params) 
+        super().__init__(id_, user_event_id, element_position, element_size, canvas_size, **params) 
 
     def generate(self, rect=None, generate_image=True):
         super().generate(rect=rect, generate_image=False)
         UtilityBox.check_missing_keys_in_dict(self.params, Slider.__default_config)     #Totally needed after the update of params in super.init()
         self.params['font_size'] = Resizer.max_font_size(self.params['text'], self.rect.size, self.params['max_font_size'], self.params['font'])//2
-        self.pieces.add(self.generate_text(self.params['text'], self.params['text_color'], self.params['text_centering'], self.params['font'], self.params['font_size']))    
+        self.add_text(self.params['text'], self.params['font'], self.rect, [x//2 for x in self.rect.size], self.params['max_font_size'], self.params['text_color'], 1)    
         self.slider =   self.generate_slider(self.params['slider_color'], self.params['slider_gradient'], self.params['slider_start_color'],\
                                             self.params['slider_end_color'], self.params['slider_border'], self.params['slider_border_color'],\
                                             self.params['slider_border_size'], self.params['slider_type'])
@@ -411,18 +439,15 @@ class Slider (UIElement):
         return self.value
 
     def set_value(self, value):
-        if      (self.value is 0 and value<0):   self.value = 1             #It goes all the way around from 0 to 1
-        elif    (self.value is 1 and value>1): self.value = 0               #It goes all the way around from 1 to 0
+        if      (self.value is 0 and value<0):  self.value = 1              #It goes all the way around from 0 to 1
+        elif    (self.value is 1 and value>1):  self.value = 0              #It goes all the way around from 1 to 0
         else:   self.value = 0 if value < 0 else 1 if value > 1 else value  #The value it not yet absolute 1 or 0.
-
         self.set_slider_position(self.value)
-        self.load_state()                                                      #Restoring the original image (Without slider), and blitting value and slider
-        self.send_event()                                                   #Sending the event with the new value to be captured somewhere else
 
     def hitbox_action(self, command, value=-1):
         if 'dec' in command or 'min' in command or 'left' in command:       self.set_value(self.get_value()-0.1)
         elif 'inc' in command or 'add' in command or 'right' in command:    self.set_value(self.get_value()+0.1)
-        elif ('mouse' in command and ('click' in command or 'button' in command)) and value != -1:
+        elif ('mouse' in command and ('click' in command or 'button' in command)):
             if isinstance(value, tuple):            mouse_x = value[0]
             elif isinstance(value, pygame.Rect):    mouse_x = value.x
             else:                                   raise InvalidCommandValueException("Value in slider hitbox can't be of type "+str(type(value)))
@@ -430,15 +455,17 @@ class Slider (UIElement):
             pixels = mouse_x-self.rect.x        #Pixels into the bar, that the slider position has.
             value = pixels/self.rect.width      #Converting to float value between 0-1
             if value != self.get_value:         #If its a new value, we create another slider and value and blit it.
-                self.set_value(value) 
+                self.set_value(value)
+        self.load_state()
+        self.send_event()
 
-    def load_state(self):
+    def load_state(self): #TODO The fuck the draw text here?? 
         self.image  =   self.image_original.copy()
         self.rect   =   self.rect_original.copy()
         #Since the original image only contains the background text and color, we need to blit the slider and value again
-        value_sprite = self.generate_text(str(self.get_value()), WHITE, 2, None, self.params['font_size'])
-        self.image.blit(value_sprite.image, value_sprite.rect)  #Blitting the new value string
-        self.image.blit(self.slider.image, self.slider.rect)    #Blitting the new slider position
+        self.image.blit(self.slider.image, self.slider.rect)    #Blitting the new slider position                                                   #Sending the event with the new value to be captured somewhere else
+        if self.params['shows_value']:  self.draw_text(str(self.get_value()), self.params['font'], self.rect,\
+                [x//3 for x in self.rect.size], self.params['max_font_size'], self.params['text_color'], 2)   
 
     def update(self):
         '''Update method, will process and change image attributes to simulate animation when drawing
@@ -452,16 +479,16 @@ class Slider (UIElement):
         topleft         = (int(self.value*self.rect.width)-self.rect.height//6, 0)
         center          = (int(self.value*self.rect.width), self.rect.height//2)
         overlay_rect    = pygame.Rect(topleft, (self.rect.height//3, self.rect.height))
-        if self.params['slider_type'] is 0:     pygame.draw.circle(self.image, self.overlay_color, center, self.rect.height//2)
-        elif self.params['slider_type'] is 1:   pygame.draw.ellipse(self.image, self.overlay_color, overlay_rect)
-        else:                                   pygame.draw.rect(self.image, self.overlay_color, overlay_rect)
+        if self.params['slider_type'] is 0:     pygame.draw.circle(self.image, color, center, self.rect.height//2)
+        elif self.params['slider_type'] is 1:   pygame.draw.ellipse(self.image, color, overlay_rect)
+        else:                                   pygame.draw.rect(self.image, color, overlay_rect)
 
 class InfoBoard (UIElement):
     #The default config of a subclass contains only those parameters that the superclass does not mention
     __default_config = {'rows'      : 1,
                         'columns'   : 1 
     }
-    def __init__(self, id_, user_event_id, element_position, element_size, relative_size, set_of_values, *elements, **params):
+    def __init__(self, id_, user_event_id, element_position, element_size, canvas_size, set_of_values, *elements, **params):
         super().__init__(id_, user_event_id, element_position, element_size, **params)    
         self.sprites = pygame.sprite.Group()
         for element in elements:  self.sprites.add(element)
@@ -486,24 +513,34 @@ class InfoBoard (UIElement):
                 pos[0] += size[0]
             pos[1]  += size[1]
 
-class OptionsWindow (UIElement):
+class Dialog (UIElement):
     #The default config of a subclass contains only those parameters that the superclass does not mention
-    __default_config = {'text': 'default',
-                        'font': None,
-                        'max_font_size': 50,
-                        'font_size': 0,
-                        'text_color': WHITE,
-                        'rows': 1,
-                        'cols': 1
+    __default_config = {'text'          : 'default',
+                        'font'          : None,
+                        'max_font_size' : 50,
+                        'font_size'     : 0,
+                        'text_color'    : WHITE,
+                        'auto_center'   : True,
+                        'rows'          : 1,
+                        'cols'          : 1
     }
 
-    def __init__(self, id_, user_event_id, element_position, element_size, relative_size, *buttons, **params):
-        super().__init__(id_, user_event_id, element_position, element_size, relative_size, **params)    
-        self.buttons = pygame.sprite.Group()
+    def __init__(self, id_, user_event_id, element_position, element_size, canvas_size, *buttons, **params):
+        self.buttons            = pygame.sprite.Group()
         for button in buttons:  self.buttons.add(button)
-        self.buttons.add(UIElement.generate_close_button(id_+"_close_exit_button", user_event_id, self.rect))
-        self.image.set_alpha(0)
-        UtilityBox.check_missing_keys_in_dict(self.params, OptionsWindow.__default_config)
+        super().__init__(id_, user_event_id, element_position, element_size, canvas_size, **params)
+
+    def generate(self, rect=None, generate_image=True):
+        super().generate(rect=rect, generate_image=False)
+        UtilityBox.check_missing_keys_in_dict(self.params, Dialog.__default_config)
+        #self.adjust_buttons()
+        self.pieces.add(UIElement.close_button(self.get_id()+"_close_exit_button", self.get_event_id(), self.rect))
+        self.params['font_size'] = Resizer.max_font_size(self.params['text'], self.rect.size, self.params['max_font_size'], self.params['font'])//2
+        self.add_text(self.params['text'], self.params['font'], self.rect, [x//1.5 for x in self.rect.size], self.params['max_font_size'], self.params['text_color'], 0)    
+        if self.params['auto_center']:  self.rect.topleft = [(x//2-y//2) for x, y in zip(self.get_canvas_size(), self.rect.size)]
+        if generate_image:    
+            self.image = self.generate_image() 
+            self.save_state()   
 
     def set_visible(self, visible):
         self.image.set_alpha(0) if visible is False else self.image.set_alpha(255)
@@ -512,15 +549,15 @@ class OptionsWindow (UIElement):
         pass
 
     def adjust_buttons(self, button_percentage=0.50):
-        if len(self.sprites) > self.params['rows']*self.params['columns']:  
-            self.params['rows'] = math.ceil(len(self.strings)//self.params['columns'])
-        size    = (self.rect.width//self.params['columns'], (self.rect.height*button_percentage)//self.params['rows'])     #Size per element
+        if len(self.buttons.sprites()) > self.params['rows']*self.params['cols']:  
+            self.params['rows'] = math.ceil(len(self.buttons.sprites())//self.params['cols'])
+        size    = (self.rect.width//self.params['cols'], (self.rect.height*button_percentage)//self.params['rows'])     #Size per element
         pos     = [0, 0]
         buttons = self.buttons.sprites()
         for i in range(0, self.params['rows']):
             pos[0]  = 0
-            for j in range(0, self.params['columns']):
-                index = i*self.params['columns']+j
+            for j in range(0, self.params['cols']):
+                index = i*self.params['cols']+j
                 buttons[index].generate(pygame.Rect(size, pos), True)
                 pos[0] += size[0]
             pos[1]  += size[1]
@@ -529,14 +566,14 @@ class OptionsWindow (UIElement):
 if __name__ == "__main__":
     timeout = 20
     testsuite = PygameSuite(fps=144)
-    #Create elements
-    sli = UiElement.factory(pygame.USEREVENT+1, (10,10), (400, 100), (0.80, 0.10), (0.2))
-    but = UiElement.factory(pygame.USEREVENT+2, (10, 210), (400, 100), (0.80, 0.10), (30, 40))
-    sli2 = UiElement.factory(pygame.USEREVENT+3, (10, 410), (400, 100), (0.80, 0.10), (0.2), text="Slider")
-    but2 = UiElement.factory(pygame.USEREVENT+4, (10, 610), (400, 100), (0.80, 0.10), ((30, 40)), text="Button")
-    sli3 = UiElement.factory(pygame.USEREVENT+5, (510, 10), (400, 100), (0.80, 0.10), (0.2), text="SuperSlider", slider_type=0, start_gradient = RED, end_gradient=BLACK, slider_start_color = RED, slider_end_color = WHITE)
-    but3 = UiElement.factory(pygame.USEREVENT+6, (510, 210), (400, 100), (0.80, 0.10), ((30, 40)), text="SuperButton", start_gradient = GREEN, end_gradient=BLACK)
-    sli4 = UiElement.factory(pygame.USEREVENT+7, (510, 410), (400, 100), (0.80, 0.10), (0.2), text="LongTextIsLongSoLongThatIsLongestEver", slider_type=2, start_gradient = RED, end_gradient=BLACK, slider_start_color = RED, slider_end_color = WHITE)
-    but4 = UiElement.factory(pygame.USEREVENT+8, (510, 610), (400, 100), (0.80, 0.10), ((30, 40)), text="LongTextIsLongSoLongThatIsLongestEver", start_gradient = GREEN, end_gradient=BLACK)
+    #Create elements DEPRECATED
+    sli = UIElement.factory(pygame.USEREVENT+1, (10,10), (400, 100), (0.80, 0.10), (0.2))
+    but = UIElement.factory(pygame.USEREVENT+2, (10, 210), (400, 100), (0.80, 0.10), (30, 40))
+    sli2 = UIElement.factory(pygame.USEREVENT+3, (10, 410), (400, 100), (0.80, 0.10), (0.2), text="Slider")
+    but2 = UIElement.factory(pygame.USEREVENT+4, (10, 610), (400, 100), (0.80, 0.10), ((30, 40)), text="Button")
+    sli3 = UIElement.factory(pygame.USEREVENT+5, (510, 10), (400, 100), (0.80, 0.10), (0.2), text="SuperSlider", slider_type=0, start_gradient = RED, end_gradient=BLACK, slider_start_color = RED, slider_end_color = WHITE)
+    but3 = UIElement.factory(pygame.USEREVENT+6, (510, 210), (400, 100), (0.80, 0.10), ((30, 40)), text="SuperButton", start_gradient = GREEN, end_gradient=BLACK)
+    sli4 = UIElement.factory(pygame.USEREVENT+7, (510, 410), (400, 100), (0.80, 0.10), (0.2), text="LongTextIsLongSoLongThatIsLongestEver", slider_type=2, start_gradient = RED, end_gradient=BLACK, slider_start_color = RED, slider_end_color = WHITE)
+    but4 = UIElement.factory(pygame.USEREVENT+8, (510, 610), (400, 100), (0.80, 0.10), ((30, 40)), text="LongTextIsLongSoLongThatIsLongestEver", start_gradient = GREEN, end_gradient=BLACK)
     testsuite.add_elements(sli, but, sli2, but2, sli3, but3, sli4, but4)
     testsuite.loop(seconds = timeout)

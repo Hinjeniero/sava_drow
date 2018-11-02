@@ -1,4 +1,4 @@
-import numpy, math, time, pygame, gradients, random
+import numpy, math, time, pygame, gradients, random 
 
 def euclidean_generator(dimension=300, print_time=False): #100 will be plenty in our case
     start = time.time()
@@ -35,12 +35,10 @@ class UtilityBox (object):
         pygame.draw.rect(surface, color, sprite.rect, 2)
 
     @staticmethod
-    def load_background(size, background_path=None, fill=True, centered=True):
-        if background_path is None: bg_surf = gradients.vertical(size, (255, 200, 200, 255), (255, 0, 0, 255)) #Gradient from white-ish to red
-        else:
-            if not fill:            bg_surf = pygame.transform.smoothscale(pygame.image.load(background_path), size)
-            else:                   bg_surf = UtilityBox.fill_surface(size, background_path, centered)
-        return bg_surf
+    def load_background(size, background_path=None, fill=True, centered=False):
+        if background_path is None: return gradients.vertical(size, (255, 200, 200, 255), (255, 0, 0, 255)) #Gradient from white-ish to red
+        if not fill:                return pygame.transform.smoothscale(pygame.image.load(background_path), size)
+        return UtilityBox.fill_surface(size, background_path, centered)
 
     @staticmethod
     def fill_surface(size, source_surf, centered=False):
@@ -97,8 +95,7 @@ class UtilityBox (object):
     def check_missing_keys_in_dict(dict_to_add_keys, dict_to_search_keys):
         for key in dict_to_search_keys.keys(): 
             key = key.lower().replace(" ", "_")
-            if not key in dict_to_add_keys:
-                dict_to_add_keys[key] = dict_to_search_keys.__default_config[key]
+            if key not in dict_to_add_keys: dict_to_add_keys[key] = dict_to_search_keys[key]
 
     '''@staticmethod
     def AAfilledRoundedRect(surface, rect, color, radius=0.4):

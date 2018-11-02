@@ -1,4 +1,5 @@
 import pygame
+from exceptions import BadResizerParamException
 
 class Resizer (object):
     #Gives an approximate in exchange for having a logaritmic execution time
@@ -20,34 +21,21 @@ class Resizer (object):
             factor = factor//2
         return font_size
         
+    @staticmethod 
+    def resize_same_aspect_ratio(element, new_size):
+        if isinstance(element, pygame.sprite.Sprite):   return Resizer.__sprite_resize(element, new_size)
+        elif isinstance(element, pygame.Surface):       return Resizer.__surface_resize(element, new_size)
+        else:                                           BadResizerParamException("Can't resize element of type "+str(type(element)))
+
     #Resizing the surface to fit in the hitbox preserving the ratio, instead of fuckin it up
     @staticmethod
-    def surface_resize(surface, new_size):
-        old_size = surface.get_size()
-        for new_axis, old_axis in zip(new_size, old_size):
-            ratio = (new_axis/old_axis)
-            for i in range (0, len(new_size)): #This way it modifies the list, the normal iterator doesn't work that way, assigning names and shit
-                new_size[i] = int(new_size[i]*ratio)
-        return pygame.transform.scale(surface, tuple(new_size)) #Resizing the surface
+    def __surface_resize(surface, new_size):
+        ratio = min([new/old for new, old in zip(new_size, surface.get_size())])
+        return pygame.transform.scale(surface, tuple([int(ratio*size) for size in surface.get_size()])) #Resizing the surface
     
     @staticmethod
-    def sprite_resize(sprite, new_size):
-        old_size = sprite.image.get_size()
-        old_position = sprite.rect.topleft
-        new_position = list(sprite.rect.topleft)
-        ratios = []
-        for new_axis, old_axis in zip(new_size, old_size):
-            ratio = (new_axis/old_axis)
-            for i in range (0, len(new_size)): #This way it modifies the list, the normal iterator doesn't work that way, assigning names and shit
-                new_size[i] = int(new_size[i]*ratio)
-                new_position[i] = int(old_position[i]*ratio)
-            ratios.append(ratio)
-        sprite.rect.topleft = tuple(new_position)                               #Scaling the rect, pos and size
-        sprite.rect.size = tuple(new_size)
-        sprite.image = pygame.transform.scale(sprite.image, sprite.rect.size)    #Scaling the surface and size
-        return ratios
-
-    '''@staticmethod
-    def draw_hitbox(surface, surface_rect, hitbox_color=(255, 0, 0)):
-        size = surface_hitbox.get_size()
-        pygame.draw.rect(surface, hitbox_color, rect, 2)'''
+    def __sprite_resize(sprite, new_size):
+        ratio = min([new/old for new, old in zip(new_size, sprite.rect.size)])
+        sprite.rect.size = tuple([int(ratio*size) for size in sprite.rect.size])
+        sprite.image = pygame.transform.scale(sprite.image, sprite.rect.size)
+        return ratio

@@ -1,7 +1,7 @@
 import pygame, math, numpy, os
 from utility_box import UtilityBox
 from pygame.locals import *
-from UI_Element import *
+from ui_element import *
 import gradients #Gradients in polygons
 import ptext #Gradients in text
 from polygons import Circle, Rectangle
@@ -17,39 +17,37 @@ class Menu (Screen):
     }
 
     def __init__(self, id_, event_id, resolution, centering_tuple, *elements, **params):
-        super.__init__(id_, event_id, resolution, **params)
+        super().__init__(id_, event_id, resolution, **params)
         #Basic info saved
-        self.resolution             = resolution
         self.alignment              = centering_tuple
         UtilityBox.check_missing_keys_in_dict(self.params, Menu.__default_config)
-        
         #Graphic elements
         self.static_sprites         = pygame.sprite.Group()             #Things without interaction
         self.dynamic_sprites        = pygame.sprite.OrderedUpdates()    #Things with interaction, like buttons and such
         self.active_sprite          = pygame.sprite.GroupSingle()       #Selected from dynamic_elements, only one at the same time
         self.active_sprite_index    = 0
 
-        #Music & sounds
-        self.main_theme = pygame.mixer.music.load(self.params['soundtheme_path'])
-        self.option_sound = pygame.mixer.Sound(file=self.params['soundeffect_path'])
-        #self.option_sound.set_volume(1)
-
         if len(elements) > 0: 
             self.add_elements(*elements)
-            self.generate_object(self.resolution, centering=self.alignment[0], centering_mode=self.alignment[1])
+            self.generate(self.resolution, centering=self.alignment[0], centering_mode=self.alignment[1])
         else:   raise IndexError("A menu needs at least one element prior to the generation.")
 
-        pygame.mixer.music.play()
-
-    def generate_object(self, resolution, centering=True, centering_mode=0):
+    def generate(self, resolution, centering=True, centering_mode=0):
         self.__adjust_elements(resolution)
         if centering:   self.__center_elements(centering_mode)
         self.active_sprite.add(self.dynamic_sprites.sprites()[0])
 
     def update_resolution(self, resolution):
-        super.update_resolution(resolution)
-        #Regenerate background + elements
-        self.generate_object(self.resolution, centering=self.alignment[0], centering_mode=self.alignment[1])
+        super().update_resolution(resolution)
+        #Regenerate elements
+        all_sprites = self.static_sprites.sprites()
+        all_sprites.extend(self.dynamic_sprites.sprites())
+        #TODO IM HERE RN
+        for sprite in all_sprites:  sprite.generate(rect=sprite.get_rect_if_canvas_size(resolution))
+        #TODO Generate elements in case it hasn't been done
+        if self.have_dialog():      self.dialog.sprite.generate(rect=sprite.get_rect_if_canvas_size(resolution))
+        self.generate(self.resolution, centering=self.alignment[0], centering_mode=self.alignment[1])
+
 
     def add_elements(self, *elements, overwrite_eventid = False):
         for element in elements:
@@ -98,7 +96,7 @@ class Menu (Screen):
             for sprite in total_sprites:
                 position = tuple([int(x*y) if x<1 else y for x,y in zip(ratios, sprite.rect.topleft)])
                 size =     tuple([int(x*y) if x<1 else y for x,y in zip(ratios, sprite.rect.size)])
-                sprite.generate_object(rect=pygame.Rect(position, size))                #Adjusting size
+                sprite.generate(rect=pygame.Rect(position, size))                #Adjusting size
 
     def __center_elements(self, centering_mode):
         screen_width = self.resolution[0]
@@ -109,11 +107,12 @@ class Menu (Screen):
             sprite.save_state()
 
     def draw(self, surface, hitboxes=False, fps=True, clock=None):
-        super.draw(surface, hitboxes, fps, clock)
+        super().draw(surface)
         self.animation()
         self.static_sprites.draw(surface)
         self.dynamic_sprites.draw(surface)
         if fps: UtilityBox.draw_fps(surface, clock)
+        if self.have_dialog() and self.dialog_is_active():    self.dialog.draw(surface)
         pygame.display.update()
 
     def event_handler(self, event, keys_pressed, mouse_buttons_pressed, mouse_movement=False, mouse_pos=(0, 0)):
@@ -144,7 +143,7 @@ class Menu (Screen):
         if index >= size_sprite_list:       self.active_sprite_index = 0
         elif index < 0:                     self.active_sprite_index = size_sprite_list-1
         
-        if self.active_sprite.sprite is not None:   self.active_sprite.sprite.load_state()             #Change the active back to the original state
+        if self.active_sprite.sprite is not None:   self.active_sprite.sprite.load_state()          #Change the active back to the original state
         self.active_sprite.add(self.dynamic_sprites.sprites()[self.active_sprite_index])            #Adding the new active sprite
 
     def get_sprite_index(self, sprite):

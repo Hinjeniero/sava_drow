@@ -125,6 +125,8 @@ class UIElement(pygame.sprite.Sprite):
             AttributeError: In case of values mismatch. Need to be a set of values, or a numerical one.
 
         '''
+        if any(x < 1 for x in size):    size = tuple(x*y for x,y in zip(size, canvas_size))
+        if any(y < 1 for y in position):position = tuple(x*y for x,y in zip(position, canvas_size))
         if len(elements) > 0:
             if isinstance(elements[0], ButtonAction):
                 return Dialog(id_, user_event_id, position, size, canvas_size, *elements, **params)

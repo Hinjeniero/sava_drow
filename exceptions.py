@@ -33,3 +33,6 @@ class BadResizerParamException(Exception):
 
 class BadCharacterActionException(Exception):
     pass
+
+class BadPlayerTypeException(Exception):
+    pass

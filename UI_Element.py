@@ -39,6 +39,8 @@ class TextSprite(pygame.sprite.Sprite):
         self.rect   = pygame.Rect(self.rect.topleft, self.image.get_size())
 
     def set_position(self, source_rect, alignment, offset=(0, 0)):
+        if isinstance(source_rect, tuple):  source_rect = pygame.Rect((0, 0), source_rect)
+        elif not isinstance(source_rect, pygame.Rect):  raise Exception("SHIT") #TODO proper exception
         x_pos               = int(source_rect.width*0.02) if alignment is 1 \
             else            source_rect.width-self.image.get_width() if alignment is 2 \
             else            (source_rect.width//2)-(self.image.get_width()//2)

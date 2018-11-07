@@ -7,8 +7,9 @@ from menu import Menu
 from ui_element import *
 from colors import *
 from paths import *
-from players import *
+from decorators import run_async
 from exceptions import *
+
 CHANGES_WERE_MADE = False
 
 def init_pygame_modules (mouse_visible, resolution, title):
@@ -65,12 +66,12 @@ class Game(object):
         mouse_mvnt          = (pygame.mouse.get_rel() != (0,0)) #True if get_rel returns non zero vaalues
 
         for event in events:
-            self.__current_screen.event_handler(event, all_keys, all_mouse_buttons, mouse_movement=mouse_mvnt, mouse_pos=mouse_pos)
             if event.type == pygame.QUIT:               return False
             elif event.type == pygame.KEYDOWN   \
                 and event.key == pygame.K_ESCAPE:       self.esc_handler()
             #elif event.type == pygame.KEYDOWN:          self.__keyboard_handler(event, keys_pressed)
             elif event.type >= pygame.USEREVENT:        self.user_command_handler(event.type, event.command, event.value)
+            self.__current_screen.event_handler(event, all_keys, all_mouse_buttons, mouse_movement=mouse_mvnt, mouse_pos=mouse_pos)
         return True
 
     def esc_handler(self):
@@ -112,7 +113,7 @@ class Game(object):
         elif eventid is pygame.USEREVENT+2: pass    #Board actions
         elif eventid is pygame.USEREVENT+3: pass    #Dialog actions
         elif eventid is pygame.USEREVENT+4: pass    #Dunno, errors?
-            
+
     def start(self):
         loop = True
         print("GAME STARTING")
@@ -157,10 +158,9 @@ if __name__ == "__main__":
     params_menu = Menu("menu_params_config",pygame.USEREVENT+1, res, (True, 0), \
                 buttonRes, buttonCountPlayers, buttonNumPawns, buttonNumWarriors, buttonNumWizards, buttonNumPriestess, background_path=IMG_FOLDER+'\\background.jpg')
 
-    player_1    = Player("Zippotudo", {"pawn":1, "warrior":1, "wizard":1, "priestess":0}, (100, 100)) #TODO those will be the game params, maybe an add player button?
-
     main_board = Board("main_board", pygame.USEREVENT+7, res, background_path = IMG_FOLDER+'\\board_2.jpg')
-    main_board.add_players(player_1)
+    main_board.create_player("Zippotudo", {"pawn":1, "warrior":1, "wizard":1, "priestess":0}, (100, 100))
+    
     #TODO EACH PLAYERS GETS HIS INFOBOARD
     game = Game(main_menu, sound_menu, params_menu, main_board, title="Sava Drow", resolution=res)
     game.start()

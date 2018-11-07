@@ -96,7 +96,9 @@ class Character(pygame.sprite.Sprite):
     def change_size(self, size):
         for list_ in self.sprites.values():     list_.clear()
         for list_ in self.big_sprites.values(): list_.clear()
-        for sprite_path in self.sprites.keys(): self.__add_sprite(sprite_path, size)     
+        for list_ in self.masks.values():       list_.clear()
+        for sprite_path in self.files.keys():   self.__add_sprite(sprite_path, size)
+        self.rect.size = self.__current_sprite().get_size()
 
     def move(self): #move(cols, rows, char_in_middle, char_just_near)
         if 0: return True   #Allowed movm

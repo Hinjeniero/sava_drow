@@ -6,9 +6,68 @@ import ptext #Gradients in text
 from polygons import *
 from colors import *
 from screen import Screen 
-from exceptions import BadPlayersParameter
+from exceptions import BadPlayersParameter, BadPlayerTypeException
+from decorators import run_async
+from players import Player
+from paths import IMG_FOLDER
+from ui_element import TextSprite
 
 POSITION_CHAR = (10, 10)
+
+class Cell(pygame.sprite.Sprite):
+    def __init__(self, circle, grid_position):
+        super().__init__()
+        self.image  = circle.image
+        self.rect   = circle.rect
+        self.center = circle.center
+        self.pos    = grid_position
+        self.chars  = pygame.sprite.Group
+
+    def get_level(self):
+        return self.pos[0]
+    
+    def get_index(self):
+        return self.pos[1]
+
+class LoadingScreen(Screen):
+    def __init__(self, id_, event_id, resolution, text, loading_sprite = None, **params):
+        super().__init__(id_, event_id, resolution, **params)
+        self.loading_sprite = self.generate_load_sprite(loading_sprite)
+        self.index_sprite   = 0
+
+        self.text_sprite    = TextSprite(self.id, (int(0.6*self.resolution[0]), int(0.1*self.resolution[1])), text=text)
+        self.text_sprite.set_position(self.resolution, 0)
+        self.count          = 0
+    
+    def generate_load_sprite(self, path, degrees=45):
+        sprites         = [] 
+        load_surface    = pygame.image.load(IMG_FOLDER+"//loading_circle.png") if path is None else pygame.image.load(path)
+        orig_rect            = load_surface.get_rect()
+        orig_rect.topleft    = (self.resolution[0]//2-orig_rect.width//2, self.resolution[1]-orig_rect.height*1.5)
+        
+        for i in range (0, 360, degrees):
+            surf = pygame.transform.rotate(load_surface, i)
+            rect = surf.get_rect()
+            rect.center = orig_rect.center
+            sprite = pygame.sprite.Sprite()
+            sprite.image, sprite.rect = surf, rect
+            sprites.append(sprite)
+        return sprites
+    
+    def update(self):
+        if self.count is 100:
+            self.index_sprite = 0 if self.index_sprite is (len(self.loading_sprite)-1) else self.index_sprite+1
+            self.count = 0
+        else: self.count+=1
+
+    def draw(self, surface):
+        super().draw(surface)
+        surface.blit(self.loading_sprite[self.index_sprite].image, self.loading_sprite[self.index_sprite].rect)
+        surface.blit(self.text_sprite.image, self.text_sprite.rect)
+        self.update()
+
+    def update_resolution(self, resolution):
+        super().update_resolution(resolution)
 
 class Board(Screen):
     __default_config = {'circles_per_lvl': 16,
@@ -18,11 +77,18 @@ class Board(Screen):
     def __init__(self, id_, event_id, resolution, *players, **params):
         #Basic info saved
         super().__init__(id_, event_id, resolution, **params)
-        self.resolution     = resolution
         self.turn           = -1
         UtilityBox.check_missing_keys_in_dict(self.params, Board.__default_config)
         #Graphic elements
+        self.loading        = LoadingScreen(id_, event_id, resolution, "Loading, hang tight like a japanese pussy", background_path=IMG_FOLDER+"//loading_background.png")
+        
         self.cells          = pygame.sprite.Group()
+        self.quadrants      = {0: [],
+                                1: [],
+                                2: [],
+                                3: []
+        }
+
         self.paths          = pygame.sprite.Group()
         self.characters     = pygame.sprite.OrderedUpdates()
         self.active_cell    = pygame.sprite.GroupSingle()
@@ -35,6 +101,8 @@ class Board(Screen):
         self.map            = numpy.zeros(dimensions, dtype=int)        #Contains characters
         self.distances      = numpy.zeros(dimensions, dtype=int)        #Says the distance between cells
         self.enabled_paths  = numpy.zeros(dimensions, dtype=bool)       #Shows if the path exist
+        self.total_players  = 0
+        self.loaded_players = 0
         self.players        = []
         self.player_index   = 0
         self.add_players(*players)
@@ -45,41 +113,44 @@ class Board(Screen):
         return self.players[self.player_index]
 
     def generate(self):
-        self.platform       = Rectangle((int(self.resolution[0]*0.05), int(self.resolution[1]*0.05)), (int(self.resolution[1]*0.75), int(self.resolution[1]*0.75)))
-        self.generate_cells()
-        self.generate_paths()
+        self.platform       = Rectangle((int(self.resolution[0]*0.025), int(self.resolution[1]*0.025)), (int(self.resolution[1]*0.95), int(self.resolution[1]*0.95)))
+        self.generate_all_cells()
+        self.generate_paths(offset=True)
 
-    def generate_cells(self):
+    def generate_all_cells(self, custom_radius=None):
         self.cells.empty()
         self.active_cell.empty()
         ratio   = self.platform.rect.height//(2*self.params['max_levels'])
         radius  = 0
+        small_radius = ratio//4 if custom_radius is None else custom_radius
+        self.cells.add(Cell(Circle(tuple(x-small_radius for x in self.platform.rect.center), (small_radius*2, small_radius*2)), (-1, -1)))
         for i in range (0, self.params['max_levels']):
-            radius  += ratio
-            if i is 0:  self.cells.add(*self.generate_circles(radius, self.platform.rect.center, radius//6, 4, initial_offset=0.25*math.pi))
-            else:       self.cells.add(*self.generate_circles(radius, self.platform.rect.center, radius//6, self.params['circles_per_lvl']))
+            radius      += ratio
+            if i is 0:  self.cells.add(self.__generate_cells(radius-ratio//3, self.platform.rect.center, small_radius, 4, 0, initial_offset=0.25*math.pi))
+            else:       self.cells.add(self.__generate_cells(radius-ratio//3, self.platform.rect.center, small_radius, self.params['circles_per_lvl'], i))
+        for cell in self.cells.sprites():
+            if cell.get_level() is not 0:    self.quadrants[cell.get_index()//(self.params['circles_per_lvl']//4)].append(cell)
     
-    def update_resolution(self, resolution):
-        super().update_resolution(resolution)
-        self.generate()          #This goes according to self.resolution, so everything is fine.
-
     #TODO could pass params in this function if we want coloured circles
-    def generate_circles(self, radius, center, circle_radius, circle_number, initial_offset=0):
-        circles = []
+    def __generate_cells(self, radius, center, circle_radius, circle_number, lvl, initial_offset=0):
+        cells = []
         two_pi  = 2*math.pi    
         angle   = initial_offset*(math.pi/180) if initial_offset > two_pi else initial_offset
         distance= two_pi/circle_number
+        index=0
         while angle < two_pi:
             position    = (center[0]+(radius*math.sin(angle))-circle_radius, center[1]+(radius*math.cos(angle))-circle_radius)  
             angle       += distance
-            circles.append(Circle(position, (circle_radius*2, circle_radius*2)))
-        return circles
+            yes = Cell(Circle(position, (circle_radius*2, circle_radius*2)), (lvl, index))
+            cells.append(yes)
+            index+=1
+        return cells
 
-    def generate_paths(self):
+    def generate_paths(self, offset=False):
         self.paths.empty()
         self.active_path.empty()
         ratio = self.platform.rect.width//self.params['max_levels']
-        radius = ratio//2
+        radius = ratio//2-ratio//6 if offset else ratio//2
         for i in range (0, self.params['max_levels']):
             colorkey = (0, 0, 0)
             out_circle = Circle((self.platform.rect.centerx-radius, self.platform.rect.centery-radius),(radius*2, radius*2), surf_color=colorkey, border_size=3, use_gradient=False)
@@ -88,42 +159,67 @@ class Board(Screen):
             self.paths.add(out_circle)
             radius+=ratio//2
 
+    def update_resolution(self, resolution):
+        super().update_resolution(resolution)
+        self.generate()          #This goes according to self.resolution, so everything is fine.
+
+    def ALL_PLAYERS_LOADED(self):
+        return self.loaded_players is self.total_players
+
+    def create_player(self, *params, **kwparams):
+        self.total_players += 1
+        self.__create_player(*params, **kwparams)
+
+    @run_async
+    def __create_player(self, *params, **kwparams):
+        self.__add_player(Player(*params, **kwparams))
+
     def add_players(self, *players):
         if not isinstance(players, (tuple, list)):    raise BadPlayersParameter("The list of players to add can't be of type "+str(type(players)))
         for player in players:  self.__add_player(player)
 
     def __add_player(self, player):
-        global POSITION_CHAR 
-        self.players.append(player)
-        for character in player.characters:  
-            character.rect.topleft = POSITION_CHAR
-            POSITION_CHAR = tuple([x+100 for x in POSITION_CHAR])
-            self.characters.add(character)
+        if isinstance(player, Player): 
+            global POSITION_CHAR 
+            self.players.append(player)
+            for character in player.characters: 
+                character.rect.topleft = POSITION_CHAR
+                POSITION_CHAR = tuple([x+100 for x in POSITION_CHAR])
+                character.change_size((self.cells.sprites()[0].rect.width, self.cells.sprites()[0].rect.width))
+                self.characters.add(character)
+            self.loaded_players += 1
+            return 0
+        raise BadPlayerTypeException("A player in the board can't be of type "+str(type(player)))
 
     def draw(self, surface, hitboxes=False, fps=True, clock=None):
-        super().draw(surface)                                                                                 #Draws background
-        surface.blit(self.platform.image, self.platform.rect)                                                                   #Draws board
-        self.paths.draw(surface)                                                                                                #Draws paths between cells
-        
-        active_path = self.active_path.sprite
-        if active_path is not None: 
-            pygame.draw.circle(surface, RED, active_path.rect.center, active_path.radius, 4)            #Draw active path
-        self.cells.draw(surface)                                                                                                #Draws cells    
-        
-        active_sprite = self.active_cell.sprite
-        if active_sprite is not None: 
-            pygame.draw.circle(surface, UtilityBox.random_rgb_color(), active_sprite.rect.center, active_sprite.rect.height//2) #Draws an overlay on the active cell
+        if self.ALL_PLAYERS_LOADED():
+            super().draw(surface)                                                                                 #Draws background
+            surface.blit(self.platform.image, self.platform.rect)                                                                   #Draws board
+            self.paths.draw(surface)                                                                                                #Draws paths between cells
+            
+            active_path = self.active_path.sprite
+            if active_path is not None: 
+                pygame.draw.circle(surface, RED, active_path.rect.center, active_path.radius, 4)            #Draw active path
+            self.cells.draw(surface)                                                                                                #Draws cells    
+            
+            active_sprite = self.active_cell.sprite
+            if active_sprite is not None: 
+                pygame.draw.circle(surface, UtilityBox.random_rgb_color(), active_sprite.rect.center, active_sprite.rect.height//2) #Draws an overlay on the active cell
 
-        self.characters.update()
-        self.characters.draw(surface)
-        
-        if hitboxes:    UtilityBox.draw_hitboxes(surface, self.cells.sprites())
-        if fps:         UtilityBox.draw_fps(surface, clock)
+            self.characters.update()
+            self.characters.draw(surface)
+            #for char in self.characters: UtilityBox.draw_hitbox(surface, char) #TODO TESTING
+            
+            if hitboxes:    UtilityBox.draw_hitboxes(surface, self.cells.sprites())
+            if fps:         UtilityBox.draw_fps(surface, clock)
+        else:
+            self.loading.draw(surface)
         pygame.display.update()
         
     def event_handler(self, event, keys_pressed, mouse_buttons_pressed, mouse_movement=False, mouse_pos=(0, 0)):
-        if event.type == pygame.KEYDOWN:    self.keyboard_handler(keys_pressed)
-        else:                               self.mouse_handler(event, mouse_buttons_pressed, mouse_movement, mouse_pos)  
+        if self.ALL_PLAYERS_LOADED():
+            if event.type == pygame.KEYDOWN:    self.keyboard_handler(keys_pressed)
+            else:                               self.mouse_handler(event, mouse_buttons_pressed, mouse_movement, mouse_pos)  
 
     #Does all the shit related to the mouse hovering an option
     def mouse_handler(self, event, mouse_buttons, mouse_movement, mouse_position):

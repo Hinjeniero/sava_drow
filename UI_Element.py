@@ -220,8 +220,10 @@ class UIElement(pygame.sprite.Sprite):
             IndexError: Error if the self.pieces list is empty.
         '''
         if len(self.pieces.sprites())<1:        raise InvalidUIElementException("Creating the image of UIElement returned None")
-        surf                                    = pygame.Surface(self.rect.size)
-        for sprite in self.pieces.sprites():    surf.blit(sprite.image, sprite.rect.topleft)
+        #surf                                    = pygame.Surface(self.rect.size) #Doesnt handle well transparencies
+        #surf = surf.convert_alpha()
+        surf = self.pieces.sprites()[0].image
+        for sprite in self.pieces.sprites()[1:]:       surf.blit(sprite.image, sprite.rect.topleft)
         return surf
 
     def get_rect_if_canvas_size(self, canvas_size):

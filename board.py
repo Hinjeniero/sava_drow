@@ -1,4 +1,4 @@
-import pygame, math, numpy, os
+import pygame, math, numpy, os, random
 from utility_box import UtilityBox
 from pygame.locals import *
 import gradients #Gradients in polygons
@@ -32,7 +32,10 @@ class Cell(pygame.sprite.Sprite):
 class LoadingScreen(Screen):
     def __init__(self, id_, event_id, resolution, text, loading_sprite = None, **params):
         super().__init__(id_, event_id, resolution, **params)
-        self.loading_sprite = self.generate_load_sprite(loading_sprite)
+        self.full_sprite    = self.generate_load_sprite(loading_sprite)
+        self.loading_sprite = self.copy_sprite(0, *self.full_sprite)
+        self.real_rect_sprt = (tuple(x//y for x, y in zip(self.loading_sprite[0].rect.size, self.resolution)),\
+                            tuple(x//y for x, y in zip(self.loading_sprite[0].rect.topleft, self.resolution)))
         self.index_sprite   = 0
 
         self.text_sprite    = TextSprite(self.id, (int(0.6*self.resolution[0]), int(0.1*self.resolution[1])), text=text)
@@ -66,8 +69,18 @@ class LoadingScreen(Screen):
         surface.blit(self.text_sprite.image, self.text_sprite.rect)
         self.update()
 
+    def copy_sprite(self, new_size, *sprite_list):
+        sprites_copy = []
+        for sprite in sprite_list:
+            spr = pygame.sprite.Sprite()
+            spr.image, spr.rect = sprite.image.copy(), sprite.rect.copy()
+            sprites_copy.append(spr)
+        return sprites_copy
+
     def update_resolution(self, resolution):
         super().update_resolution(resolution)
+        #for sprite in self.loading_sprite:
+            #sprite.image = pygame.transform.smoot
 
 class Board(Screen):
     __default_config = {'circles_per_lvl': 16,
@@ -123,7 +136,7 @@ class Board(Screen):
         ratio   = self.platform.rect.height//(2*self.params['max_levels'])
         radius  = 0
         small_radius = ratio//4 if custom_radius is None else custom_radius
-        self.cells.add(Cell(Circle(tuple(x-small_radius for x in self.platform.rect.center), (small_radius*2, small_radius*2)), (-1, -1)))
+        self.cells.add(Cell(Circle(tuple(x-small_radius for x in self.platform.rect.center), (small_radius*2, small_radius*2)), (0, -1)))
         for i in range (0, self.params['max_levels']):
             radius      += ratio
             if i is 0:  self.cells.add(self.__generate_cells(radius-ratio//3, self.platform.rect.center, small_radius, 4, 0, initial_offset=0.25*math.pi))
@@ -161,6 +174,7 @@ class Board(Screen):
 
     def update_resolution(self, resolution):
         super().update_resolution(resolution)
+        self.loading.update_resolution(resolution)
         self.generate()          #This goes according to self.resolution, so everything is fine.
 
     def ALL_PLAYERS_LOADED(self):
@@ -186,6 +200,7 @@ class Board(Screen):
                 character.rect.topleft = POSITION_CHAR
                 POSITION_CHAR = tuple([x+100 for x in POSITION_CHAR])
                 character.change_size((self.cells.sprites()[0].rect.width, self.cells.sprites()[0].rect.width))
+                character.rect.center = random.choice(self.quadrants[self.loaded_players]).rect.center #TODO This will fail when adding a lot of players at the same time
                 self.characters.add(character)
             self.loaded_players += 1
             return 0
@@ -193,14 +208,14 @@ class Board(Screen):
 
     def draw(self, surface, hitboxes=False, fps=True, clock=None):
         if self.ALL_PLAYERS_LOADED():
-            super().draw(surface)                                                                                 #Draws background
-            surface.blit(self.platform.image, self.platform.rect)                                                                   #Draws board
-            self.paths.draw(surface)                                                                                                #Draws paths between cells
+            super().draw(surface)                                                                           #Draws background
+            surface.blit(self.platform.image, self.platform.rect)                                           #Draws board
+            self.paths.draw(surface)                                                                        #Draws paths between cells
             
             active_path = self.active_path.sprite
             if active_path is not None: 
                 pygame.draw.circle(surface, RED, active_path.rect.center, active_path.radius, 4)            #Draw active path
-            self.cells.draw(surface)                                                                                                #Draws cells    
+            self.cells.draw(surface)                                                                        #Draws cells    
             
             active_sprite = self.active_cell.sprite
             if active_sprite is not None: 

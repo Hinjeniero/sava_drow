@@ -1,4 +1,4 @@
-import pygame, os
+import pygame, os, threading, sys
 from pygame.locals import *
 from pygame.key import *
 from screen import Screen
@@ -6,7 +6,7 @@ from board import Board
 from menu import Menu
 from ui_element import *
 from colors import *
-from paths import *
+from paths import IMG_FOLDER
 from decorators import run_async
 from exceptions import *
 
@@ -120,6 +120,7 @@ class Game(object):
         while loop:
             self.__current_screen.draw(self.pygame_params['display'], clock=self.pygame_params['clock'])
             loop = self.event_handler(pygame.event.get())
+        sys.exit()
 
 #List of (ids, text)
 if __name__ == "__main__":
@@ -127,7 +128,7 @@ if __name__ == "__main__":
     res = resolutions[0]
     init_pygame_modules(True, res, 'Sava Drow')
     #Create elements, main menu buttons (POSITIONS AND SIZES ARE IN PERCENTAGES OF THE CANVAS_SIZE, can use absolute integers too)
-    buttonStart         = UIElement.factory("start_game_go_main_board", pygame.USEREVENT+1, (0.05, 0.10), (0.90, 0.20), res, None, text="Start game", start_gradient = GREEN, end_gradient=BLACK)
+    buttonStart         = UIElement.factory("start_game_go_main_board", pygame.USEREVENT+1, (0.05, 0.10), (0.90, 0.20), res, None, text="Start game", texture=IMG_FOLDER+"//button.png")
     buttonParamsMenu    = UIElement.factory("go_menu_params_config",    pygame.USEREVENT+1, (0.05, 0.40), (0.90, 0.20), res, None, text="Parameters", start_gradient = RED, end_gradient=BLACK)
     buttonSoundMenu     = UIElement.factory("go_menu_sound_music",      pygame.USEREVENT+1, (0.05, 0.70), (0.90, 0.20), res, None, text="Music menu", start_gradient = RED, end_gradient=BLACK)
     #buttons of parameters menu

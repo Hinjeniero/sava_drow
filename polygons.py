@@ -1,5 +1,6 @@
 import pygame, gradients, numpy
 from utility_box import UtilityBox
+#from resizer import Resizer
 
 #COLORS = pygame.color.THECOLORS
 __all__ = ["Circle", "Rectangle"]
@@ -173,17 +174,16 @@ class Rectangle(Polygon):
         
         Returns:
             A surface containing the Rectangle.
+        #surf = Resizer.resize_same_aspect_ratio(pygame.image.load(image).convert_alpha(), surf_size)
+        #if border: border = pygame.mask.from_surface(surf, 200)         #If image needs a border, mask. Not using it right now TODO
         """
-        if image:
-            surf = pygame.transform.scale(pygame.image.load(image).convert_alpha(), surf_size)
-            if border: border = pygame.mask.from_surface(surf, 200)         #If image needs a border, mask. Not using it right now TODO
+        surf_size   = tuple([int(x) for x in surf_size])
+        if image:   surf = pygame.transform.smoothscale(pygame.image.load(image).convert_alpha(), surf_size)
         else:
-            surf_size   = tuple([int(x) for x in surf_size])
-            surf        = pygame.Surface(surf_size)
-            if use_gradient: surf = gradients.vertical(surf_size, start_color, end_color) if gradient_type == 0 else gradients.horizontal(surf_size, start_color, end_color) #Checking if gradient and type of gradient
-            else: surf.fill(surf_color)
+            surf    = pygame.Surface(surf_size)
+            if use_gradient:    surf = gradients.vertical(surf_size, start_color, end_color) if gradient_type == 0 else gradients.horizontal(surf_size, start_color, end_color) #Checking if gradient and type of gradient
+            else:               surf.fill(surf_color)
             if border and border_size is not 0: pygame.draw.rect(surf, border_color,(0,0)+surf_size, border_size) #Drawing the border in the surface, dont want no existant borders
-        if type(surf_size) is pygame.Rect:
-            return surf, surf_size
-        else:       #We need a coordinate to create a Rect, so if the size is a tuple, 0,0 will it be.
-            return surf, pygame.Rect((0,0)+surf_size)
+        
+        if type(surf_size) is pygame.Rect:      return surf, surf_size
+        else:                                   return surf, pygame.Rect((0,0)+surf_size)

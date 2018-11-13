@@ -1,4 +1,4 @@
-import pygame, math, numpy, os, random
+import pygame, math, numpy, os, random, functools
 from utility_box import UtilityBox
 from pygame.locals import *
 import gradients #Gradients in polygons
@@ -6,14 +6,15 @@ import ptext #Gradients in text
 from polygons import *
 from colors import *
 from screen import Screen 
-from exceptions import BadPlayersParameter, BadPlayerTypeException
+from exceptions import BadPlayersParameter, BadPlayerTypeException, PlayerNameExistsException
 from decorators import run_async
 from players import Player
-from paths import IMG_FOLDER
+from paths import IMG_FOLDER, Path
 from ui_element import TextSprite
 
 POSITION_CHAR = (10, 10)
 
+@functools.total_ordering
 class Cell(pygame.sprite.Sprite):
     def __init__(self, circle, grid_position):
         super().__init__()
@@ -28,6 +29,34 @@ class Cell(pygame.sprite.Sprite):
     
     def get_index(self):
         return self.pos[1]
+
+    def has_enemy(self, who_asking):
+        for character in self.chars:
+            if character.get_master() != who_asking: return True
+        return False
+
+    def has_ally(self, who_asking):
+        for character in self.chars:
+            if character.get_master() == who_asking: return True
+        return False
+
+    def to_path(self, who_asking):
+        return Path(self.pos, self.has_enemy(who_asking), self.has_ally(who_asking))
+    
+    def __lt__(self, cell):
+        return self.pos[0]<cell.pos[0] if self.pos[0] != cell.pos[0] else self.pos[1]<cell.pos[1]
+
+    def __le__(self, cell):
+        return True if self.pos[0]<cell.pos[0] else True if self.pos[1]<cell.pos[1] else self.__eq__(cell)
+
+    def __gt__(self, cell):
+        return self.pos[0]>cell.pos[0] if self.pos[0] != cell.pos[0] else self.pos[1]>cell.pos[1]
+    
+    def __ge__(self, cell):
+        return True if self.pos[0]>cell.pos[0] else True if self.pos[1]>cell.pos[1] else self.__eq__(cell)
+    
+    def __eq__(self, cell):
+        return all(mine == his for mine, his in zip (self.pos, cell.pos))
 
 class LoadingScreen(Screen):
     def __init__(self, id_, event_id, resolution, text, loading_sprite = None, **params):
@@ -96,7 +125,8 @@ class Board(Screen):
         self.loading        = LoadingScreen(id_, event_id, resolution, "Loading, hang tight like a japanese pussy", background_path=IMG_FOLDER+"//loading_background.png")
         
         self.cells          = pygame.sprite.Group()
-        self.quadrants      = {0: [],
+        self.quadrants      = {-1: [], #AXISES, COULD BE UNUSED
+                                0: [],
                                 1: [],
                                 2: [],
                                 3: []
@@ -142,8 +172,24 @@ class Board(Screen):
             if i is 0:  self.cells.add(self.__generate_cells(radius-ratio//3, self.platform.rect.center, small_radius, 4, 0, initial_offset=0.25*math.pi))
             else:       self.cells.add(self.__generate_cells(radius-ratio//3, self.platform.rect.center, small_radius, self.params['circles_per_lvl'], i))
         for cell in self.cells.sprites():
-            if cell.get_level() is not 0:    self.quadrants[cell.get_index()//(self.params['circles_per_lvl']//4)].append(cell)
+            if cell.get_level() is not 0:  self.__assign_quadrant(cell, self.platform.rect.center)  
+            #self.quadrants[cell.get_index()//(self.params['circles_per_lvl']//4)].append(cell)
     
+    def __assign_quadrant(self, cell, container_center, count_axis=False, log=False):
+        x, y = cell.rect.center[0], cell.rect.center[1]
+        center_x, center_y = container_center[0], container_center[1]
+        if 0 < abs(x - center_x) < 2: x = center_x
+        if 0 < abs(y - center_y) < 2: y = center_y
+        if not count_axis:  quadrant = 0 if (x>=center_x and y<center_y) else 1 if (x>center_x and y>=center_y)\
+                            else 2 if (x<=center_x and y>center_y) else 3
+        else:               quadrant = 0 if (x>center_x and y<center_y) else 1 if (x>center_x and y>center_y)\
+                             else 2 if (x<center_x and y>center_y) else 3 if (x<center_x and y<center_y) else -1
+        if log:
+            print("x, y => " + str(x)+", "+str(y)+", center => " + str(center_x)+", "+str(center_y)+\
+            ", quadrant => "+str(quadrant) + ", cell => "+ str(cell.get_level())+", "+str(cell.get_index()))
+        #TODO use logger hjere
+        self.quadrants[quadrant].append(cell)
+
     #TODO could pass params in this function if we want coloured circles
     def __generate_cells(self, radius, center, circle_radius, circle_number, lvl, initial_offset=0):
         cells = []
@@ -152,11 +198,10 @@ class Board(Screen):
         distance= two_pi/circle_number
         index=0
         while angle < two_pi:
-            position    = (center[0]+(radius*math.sin(angle))-circle_radius, center[1]+(radius*math.cos(angle))-circle_radius)  
+            position    = (center[0]+(radius*math.cos(angle))-circle_radius, center[1]+(radius*math.sin(angle))-circle_radius) 
+            cells.append(Cell(Circle(position, (circle_radius*2, circle_radius*2)), (lvl, index)))
+            index       +=1
             angle       += distance
-            yes = Cell(Circle(position, (circle_radius*2, circle_radius*2)), (lvl, index))
-            cells.append(yes)
-            index+=1
         return cells
 
     def generate_paths(self, offset=False):
@@ -164,13 +209,19 @@ class Board(Screen):
         self.active_path.empty()
         ratio = self.platform.rect.width//self.params['max_levels']
         radius = ratio//2-ratio//6 if offset else ratio//2
-        for i in range (0, self.params['max_levels']):
+        for _ in range (0, self.params['max_levels']):
             colorkey = (0, 0, 0)
             out_circle = Circle((self.platform.rect.centerx-radius, self.platform.rect.centery-radius),(radius*2, radius*2), surf_color=colorkey, border_size=3, use_gradient=False)
             out_circle.image.set_colorkey(colorkey)
             out_circle.update_mask()
             self.paths.add(out_circle)
             radius+=ratio//2
+
+    def generate_map(self, to_who):
+        paths = []
+        for cell in self.cells: paths.append(cell.to_path(to_who))
+        paths.sort()
+        return paths
 
     def update_resolution(self, resolution):
         super().update_resolution(resolution)
@@ -180,13 +231,15 @@ class Board(Screen):
     def ALL_PLAYERS_LOADED(self):
         return self.loaded_players is self.total_players
 
-    def create_player(self, *params, **kwparams):
-        self.total_players += 1
+    def create_player(self, name, *params, **kwparams):
+        self.total_players          += 1
+        for player in self.players:
+            if name == player.name: raise PlayerNameExistsException("The player name "+name+" already exists")
         self.__create_player(*params, **kwparams)
 
     @run_async
-    def __create_player(self, *params, **kwparams):
-        self.__add_player(Player(*params, **kwparams))
+    def __create_player(self, player_name, *params, **kwparams):
+        self.__add_player(Player(player_name, *params, **kwparams))
 
     def add_players(self, *players):
         if not isinstance(players, (tuple, list)):    raise BadPlayersParameter("The list of players to add can't be of type "+str(type(players)))
@@ -200,7 +253,13 @@ class Board(Screen):
                 character.rect.topleft = POSITION_CHAR
                 POSITION_CHAR = tuple([x+100 for x in POSITION_CHAR])
                 character.change_size((self.cells.sprites()[0].rect.width, self.cells.sprites()[0].rect.width))
-                character.rect.center = random.choice(self.quadrants[self.loaded_players]).rect.center #TODO This will fail when adding a lot of players at the same time
+                c = random.choice(self.quadrants[player.order])
+                character.rect.center = c.rect.center
+                
+                print(character.id)
+                print("("+str(c.get_level()) +","+str(c.get_index()))
+                print("----")
+                
                 self.characters.add(character)
             self.loaded_players += 1
             return 0

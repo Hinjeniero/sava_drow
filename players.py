@@ -3,13 +3,14 @@ from os import listdir
 from os.path import isfile, join, dirname
 from exceptions import BadCharacterInitException, BadCharacterActionException
 from resizer import Resizer
-from paths import IMG_FOLDER
+from paths import IMG_FOLDER, Path
 __all__ = ["Player", "Character", "Warrior", "Wizard", "Priestess", "Pawn"]
 NEXT_SPRITE_COUNTER = 10
 
 class Player(object):
-    def __init__(self, name, pieces_qty, sprite_size, infoboard=None, **sprite_paths): #TODO infoboard shoudlnt be none
+    def __init__(self, name, order, pieces_qty, sprite_size, infoboard=None, **sprite_paths): #TODO infoboard shoudlnt be none
         self.name       = name
+        self.order      = order
         self.characters = Character.factory(pieces_qty, sprite_size, **sprite_paths)
         self.turn       = -1
     
@@ -18,7 +19,7 @@ class Player(object):
     
 class Character(pygame.sprite.Sprite):
     @staticmethod
-    def factory(pieces_qty, sprite_size, **sprite_paths):
+    def factory(player_name, pieces_qty, sprite_size, **sprite_paths):
         characters                              = pygame.sprite.Group()
         if not isinstance(pieces_qty, dict):    raise BadCharacterInitException("pieces_qty must be dictionary, not "+str(type(pieces_qty)))   
         if not isinstance(sprite_paths, dict):  raise BadCharacterInitException("sprite_paths must be dictionary, not "+str(type(sprite_paths)))
@@ -52,8 +53,9 @@ class Character(pygame.sprite.Sprite):
         else:                           characters.add(Priestess("priestess", sprite_size, IMG_FOLDER+"\\priestess"))
         return characters
 
-    def __init__(self, id_, size, sprites_path):
+    def __init__(self, my_player, id_, size, sprites_path):
         super().__init__()
+        self.my_master  = my_player
         self.id         = id_
         self.rect       = None
         self.image      = None
@@ -93,6 +95,9 @@ class Character(pygame.sprite.Sprite):
         self.selected   = False
         self.load_sprites(size, sprites_path)
     
+    def get_master(self):
+        return self.my_master
+
     def change_size(self, size):
         for list_ in self.sprites.values():     list_.clear()
         for list_ in self.big_sprites.values(): list_.clear()
@@ -174,23 +179,45 @@ class Character(pygame.sprite.Sprite):
     def is_selected(self):
         return self.selected
     
+    def mvnt_possible(self, source, destiny):
+        return True
+    
     def set_hover(self, active=True):
         if active:  self.image = self.__current_big_sprite()
         else:       self.image = self.__current_sprite()
         self.hover = active
     
 class Warrior(Character):
-    def __init__(self, id_, size, sprites_path):
-        super().__init__(id_, size, sprites_path)
+    def __init__(self, my_player, id_, size, sprites_path):
+        super().__init__(my_player, id_, size, sprites_path)
+    
+    def mvnt_possible(self, source, destiny):
+        pass
 
 class Wizard(Character):
-    def __init__(self, id_, size, sprites_path):
-        super().__init__(id_, size, sprites_path)
+    def __init__(self, my_player, id_, size, sprites_path):
+        super().__init__(my_player, id_, size, sprites_path)
+    
+    def mvnt_possible(self, source, destiny):
+        pass
 
 class Priestess(Character):
-    def __init__(self, id_, size, sprites_path):
-        super().__init__(id_, size, sprites_path)
+    def __init__(self, my_player, id_, size, sprites_path):
+        super().__init__(my_player, id_, size, sprites_path)
+    
+    def mvnt_possible(self, source, destiny):
+        pass
 
 class Pawn(Character):
-    def __init__(self, id_, size, sprites_path):
-        super().__init__(id_, size, sprites_path)
+    def __init__(self, my_player, id_, size, sprites_path):
+        super().__init__(my_player, id_, size, sprites_path)
+    
+    def mvnt_possible(self, source, destiny):
+        pass
+
+class MatronMother(Character):
+    def __init__(self, my_player, id_, size, sprites_path):
+        super().__init__(my_player, id_, size, sprites_path)
+    
+    def mvnt_possible(self, source, destiny):
+        pass   

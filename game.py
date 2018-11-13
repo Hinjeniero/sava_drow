@@ -160,7 +160,7 @@ if __name__ == "__main__":
                 buttonRes, buttonCountPlayers, buttonNumPawns, buttonNumWarriors, buttonNumWizards, buttonNumPriestess, background_path=IMG_FOLDER+'\\background.jpg')
 
     main_board = Board("main_board", pygame.USEREVENT+7, res, background_path = IMG_FOLDER+'\\board_2.jpg')
-    main_board.create_player("Zippotudo", {"pawn":1, "warrior":1, "wizard":1, "priestess":0}, (100, 100))
+    main_board.create_player("Zippotudo", 0, {"pawn":1, "warrior":1, "wizard":1, "priestess":0}, (100, 100))
     
     #TODO EACH PLAYERS GETS HIS INFOBOARD
     game = Game(main_menu, sound_menu, params_menu, main_board, title="Sava Drow", resolution=res)

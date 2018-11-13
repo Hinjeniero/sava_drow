@@ -36,3 +36,6 @@ class BadCharacterActionException(Exception):
 
 class BadPlayerTypeException(Exception):
     pass
+
+class PlayerNameExistsException(Exception):
+    pass

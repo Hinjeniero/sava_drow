@@ -144,12 +144,14 @@ class Board(Screen):
         self.map            = numpy.zeros(dimensions, dtype=int)        #Contains characters
         self.distances      = numpy.zeros(dimensions, dtype=int)        #Says the distance between cells
         self.enabled_paths  = numpy.zeros(dimensions, dtype=bool)       #Shows if the path exist
+        self.current_map    = []
+        #Players 
         self.total_players  = 0
         self.loaded_players = 0
         self.players        = []
         self.player_index   = 0
         self.add_players(*players)
-
+        #Final of all
         self.generate()
 
     def __current_player(self):

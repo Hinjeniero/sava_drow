@@ -7,6 +7,16 @@ from paths import IMG_FOLDER, Path
 __all__ = ["Player", "Character", "Warrior", "Wizard", "Priestess", "Pawn"]
 NEXT_SPRITE_COUNTER = 10
 
+#The only purpose of this class is to organize the shit inside characters a little but better
+class Restrictions(object):
+    def __init__(self, max_dist=1, move_along_lvl = False, move_along_index = False, bypass_allies=True, bypass_enemies=True, approach_enemies=False):
+        self.dist               = max_dist          #Max spaces that a char can move
+        self.move_in_same_lvl   = move_along_lvl    #If only can move along the same level
+        self.move_in_same_index = move_along_index  #If only can move along the same index
+        self.bypass_allies      = bypass_allies     #If can move bypassing allies in a cell
+        self.bypass_enemies     = bypass_enemies	#If can move bypassing enemies in a cell
+        self.approach_enemies   = approach_enemies  #If can only move in a way that will approach him to enemies
+
 class Player(object):
     def __init__(self, name, order, pieces_qty, sprite_size, infoboard=None, **sprite_paths): #TODO infoboard shoudlnt be none
         self.name       = name
@@ -60,6 +70,7 @@ class Character(pygame.sprite.Sprite):
         self.rect       = None
         self.image      = None
         self.mask       = None
+        self.movement   = Restrictions()
         self.files      = {}
         self.sprites    = {"idle"   : [], 
                         "run"       : [], 
@@ -186,38 +197,67 @@ class Character(pygame.sprite.Sprite):
         if active:  self.image = self.__current_big_sprite()
         else:       self.image = self.__current_sprite()
         self.hover = active
-    
+
+    #THIS NEEDS A FUCKIN BACKTRACKING
+    #Map --> graph of booleans
+    #paths --> Contain info of all the rooms
+    #TODO make sure of the format to return and the format of the input parameters to make a decent implementation
+    def generate_paths(self, map, paths, initial_pos):
+        possible_paths  = []
+        current_path    = []
+        checked         = []
+        to_check        = [initial_pos]
+        while len(to_check) > 0:
+            current_pos = to_check.pop(-1)
+            checked.append(current_pos)
+            current_path.append(current_pos)
+            if len(current_path) is self.movement.dist or current_path[-1] is current_path[0]: #TODO HOW TO CHECK PRIESTESS USE CASES OF THE LVL-moving-and-ending
+                pass #TODO deep copy the list to possible_paths
+                to_check.pop(-1)
+                current_path.pop(-1)
+            else:
+                for cell in map[current_pos]:
+                    if cell not in checked and cell not in to_check:
+                        if self.valid_mvnt(initial_pos, cell):
+                            to_check.append(cell)
+        return possible_paths
+
+    def valid_mvnt(self, init_pos, dest_pos):
+        if init_pos is not dest_pos:
+            if not self.movement.bypass_enemies and dest_pos.has_enemy():
+                return False 
+            if not self.movement.bypass_allies and dest_pos.has_ally():
+                return False
+            if (init_pos.get_lvl() is not dest_pos.get_lvl()) and self.movement.move_in_same_lvl:
+                return False
+            if (init_pos.get_index() is not dest_pos.get_index()) and self.movement.move_in_same_index:
+                return False
+        return True
+
+    def __modify_paths(self, paths, map, solutions):
+        pass #Do nothing, this must be 
+
 class Warrior(Character):
     def __init__(self, my_player, id_, size, sprites_path):
         super().__init__(my_player, id_, size, sprites_path)
-    
-    def mvnt_possible(self, source, destiny):
-        pass
+        self.movement   = Restrictions(max_dist=2)
 
 class Wizard(Character):
     def __init__(self, my_player, id_, size, sprites_path):
         super().__init__(my_player, id_, size, sprites_path)
-    
-    def mvnt_possible(self, source, destiny):
-        pass
+        self.movement   = Restrictions(max_dist=3)
 
 class Priestess(Character):
     def __init__(self, my_player, id_, size, sprites_path):
         super().__init__(my_player, id_, size, sprites_path)
-    
-    def mvnt_possible(self, source, destiny):
-        pass
+        self.movement   = Restrictions(max_dist=-1, move_along_lvl=True, move_along_index=True, bypass_allies=False, bypass_enemies=False)
 
 class Pawn(Character):
     def __init__(self, my_player, id_, size, sprites_path):
         super().__init__(my_player, id_, size, sprites_path)
-    
-    def mvnt_possible(self, source, destiny):
-        pass
+        self.movement   = Restrictions(approach_enemies=True)
 
 class MatronMother(Character):
     def __init__(self, my_player, id_, size, sprites_path):
         super().__init__(my_player, id_, size, sprites_path)
-    
-    def mvnt_possible(self, source, destiny):
-        pass   
+        self.movement   = Restrictions(bypass_enemies=True)

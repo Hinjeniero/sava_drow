@@ -97,6 +97,23 @@ class UtilityBox (object):
             key = key.lower().replace(" ", "_")
             if key not in dict_to_add_keys: dict_to_add_keys[key] = dict_to_search_keys[key]
 
+    @staticmethod
+    def rotate(sprite, angle, iterations):
+        if iterations > 0:
+            sprites         = [] 
+            orig_surface    = sprite.image
+            orig_rect       = sprite.rect
+            curr_angle      = angle
+            for _ in range (0, iterations):
+                surf = pygame.transform.rotate(orig_surface, curr_angle)
+                rect = surf.get_rect()
+                rect.center = orig_rect.center
+                sprite = pygame.sprite.Sprite()
+                sprite.image, sprite.rect = surf, rect
+                sprites.append(sprite)
+                curr_angle += angle
+            return sprites if len(sprites) > 1 else sprites[0]
+
     '''@staticmethod
     def AAfilledRoundedRect(surface, rect, color, radius=0.4):
 

@@ -21,7 +21,7 @@ class Player(object):
     def __init__(self, name, order, pieces_qty, sprite_size, infoboard=None, **sprite_paths): #TODO infoboard shoudlnt be none
         self.name       = name
         self.order      = order
-        self.characters = Character.factory(pieces_qty, sprite_size, **sprite_paths)
+        self.characters = Character.factory(name, pieces_qty, sprite_size, **sprite_paths)
         self.turn       = -1
     
     def draw_characters(self, surface, active=True):
@@ -38,29 +38,29 @@ class Character(pygame.sprite.Sprite):
         if "pawn" in pieces_qty:            limit = pieces_qty["pawn"]
         while counter < limit:
             name = "pawn"+str(counter)    
-            if "pawn" in sprite_paths:      characters.add(Pawn(name, sprite_size, sprite_paths["pawn"]))
-            else:                           characters.add(Pawn(name, sprite_size, IMG_FOLDER+"\\pawn"))
+            if "pawn" in sprite_paths:      characters.add(Pawn(player_name, name, sprite_size, sprite_paths["pawn"]))
+            else:                           characters.add(Pawn(player_name, name, sprite_size, IMG_FOLDER+"\\pawn"))
             counter+=1 
 
         limit, counter = 4, 0
         if "warrior" in pieces_qty:         limit = pieces_qty["warrior"]
         while counter < limit:
             name = "warrior"+str(counter) 
-            if "warrior" in sprite_paths:   characters.add(Warrior(name, sprite_size, sprite_paths["warrior"]))
-            else:                           characters.add(Warrior(name, sprite_size, IMG_FOLDER+"\\warrior"))
+            if "warrior" in sprite_paths:   characters.add(Warrior(player_name, name, sprite_size, sprite_paths["warrior"]))
+            else:                           characters.add(Warrior(player_name, name, sprite_size, IMG_FOLDER+"\\warrior"))
             counter+=1
 
         limit, counter = 2, 0
         if "wizard" in pieces_qty:          limit = pieces_qty["wizard"]
         while counter < limit:
             name = "wizard"+str(counter) 
-            if "wizard" in sprite_paths:    characters.add(Wizard(name, sprite_size, sprite_paths["wizard"]))
-            else:                           characters.add(Wizard(name, sprite_size, IMG_FOLDER+"\\wizard"))
+            if "wizard" in sprite_paths:    characters.add(Wizard(player_name, name, sprite_size, sprite_paths["wizard"]))
+            else:                           characters.add(Wizard(player_name, name, sprite_size, IMG_FOLDER+"\\wizard"))
             counter+=1
         
         #ONLY 1 PRIESTESS, MAKES NO SENSE TO HAVE MORE FROM THE START
-        if "priestess" in sprite_paths: characters.add(Priestess("priestess", sprite_size, sprite_paths["priestess"]))
-        else:                           characters.add(Priestess("priestess", sprite_size, IMG_FOLDER+"\\priestess"))
+        if "priestess" in sprite_paths: characters.add(Priestess(player_name, "priestess", sprite_size, sprite_paths["priestess"]))
+        else:                           characters.add(Priestess(player_name, "priestess", sprite_size, IMG_FOLDER+"\\priestess"))
         return characters
 
     def __init__(self, my_player, id_, size, sprites_path):
@@ -198,29 +198,51 @@ class Character(pygame.sprite.Sprite):
         else:       self.image = self.__current_sprite()
         self.hover = active
 
-    #THIS NEEDS A FUCKIN BACKTRACKING
-    #Map --> graph of booleans
-    #paths --> Contain info of all the rooms
-    #TODO make sure of the format to return and the format of the input parameters to make a decent implementation
-    def generate_paths(self, map, paths, initial_pos):
+    def generate_pathss(self, map, paths, initial_pos):
+        print("Searching paths for "+self.id)
         possible_paths  = []
         current_path    = []
         checked         = []
-        to_check        = [initial_pos]
+        to_check        = [(initial_pos, initial_pos)] #Both are paths type objects. Every objects of us is (path, path)
+        step            = 0
         while len(to_check) > 0:
-            current_pos = to_check.pop(-1)
-            checked.append(current_pos)
-            current_path.append(current_pos)
-            if len(current_path) is self.movement.dist or current_path[-1] is current_path[0]: #TODO HOW TO CHECK PRIESTESS USE CASES OF THE LVL-moving-and-ending
-                pass #TODO deep copy the list to possible_paths
-                to_check.pop(-1)
+            current_square     = to_check.pop(-1)
+            current_path.append(current_square)
+            if step is self.movement.dist:
+                self.__add_path(current_path, possible_paths)
                 current_path.pop(-1)
+                current_square  = current_path[-1]
+                step            -= 1
             else:
-                for cell in map[current_pos]:
-                    if cell not in checked and cell not in to_check:
-                        if self.valid_mvnt(initial_pos, cell):
-                            to_check.append(cell)
+                for dest_cell in map[current_square[1].pos]: #Depends on map
+                    next_step = (current_square[1], dest_cell)
+                    if next_step not in checked and next_step not in to_check:
+                        if self.valid_mvnt(initial_pos, dest_cell):
+                            to_check.append(next_step)
+            if current_square[1] not in to_check[-1][0]:
+                current_path.pop(-1)
+                current_square = current_path[-1]
+                step        -= 1
+                #delete last one
+            step            += 1
         return possible_paths
+    #PRIESTESS IS EASY! Only have to check which cells are in the same lvl and index, and she can move to those if there exists pathss!!!
+
+    #Only works with primitive types!!
+    def __add_path(self, path_to_add, final_list):
+        path = []
+        for element in path_to_add:
+            if isinstance(element, tuple, list):    
+                if isinstance(element[0], tuple): #Nested tuple
+                    path.append(tuple(x for x in element[0]))
+                elif isinstance(element[0], Path):
+                    path.append(tuple(x for x in element[0].pos))
+                elif isinstance(element, float, int):   
+                    path.append(element)
+            elif isinstance(element, Path):         path.append(tuple(x for x in element.pos))
+            elif isinstance(element, float, int):   path.append(element)
+        print("PATH FOUND! "+str(path))
+        final_list.append(path)
 
     def valid_mvnt(self, init_pos, dest_pos):
         if init_pos is not dest_pos:

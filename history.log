@@ -1,0 +1,1489 @@
+[2018-11-24 21:08:03,780]: Pygame parameters:
+ 
+
+[2018-11-24 21:09:40,733]: Pygame parameters:
+%s 
+
+[2018-11-24 21:09:40,734]: FPS: 60
+%s 
+
+[2018-11-24 21:10:40,601]: ----Pygame parameters----%s 
+
+[2018-11-24 21:10:40,601]: FPS: 60%s 
+
+[2018-11-24 21:10:40,602]: RESOLUTION: (1280, 720)%s 
+
+[2018-11-24 21:23:28,261]: ----Pygame parameters---- 
+
+[2018-11-24 21:24:44,967]: ----Pygame parameters---- 
+
+[2018-11-24 21:24:44,968]: FPS: 60 
+
+[2018-11-24 21:24:44,968]: RESOLUTION: (1280, 720) 
+
+[2018-11-24 21:26:53,586]: ----Pygame parameters---- 
+
+[2018-11-24 21:26:53,586]: FPS: 60 
+
+[2018-11-24 21:26:53,586]: RESOLUTION: (1280, 720) 
+
+[2018-11-24 21:27:21,608]: ----Pygame parameters---- 
+
+[2018-11-24 21:27:21,608]: FPS: 60 
+
+[2018-11-24 21:27:21,609]: RESOLUTION: (1280, 720) 
+
+[2018-11-24 21:27:21,622]: Received event <Event(17-VideoExpose {})> 
+
+[2018-11-24 21:27:21,622]: Received event <Event(16-VideoResize {size: (1280, 720), w: 1280, h: 720})>" 
+
+[2018-11-24 21:27:21,622]: Received event <Event(1-ActiveEvent {gain: 0, state: 1})>" 
+
+[2018-11-24 21:27:21,622]: Received event <Event(4-MouseMotion {pos: (1178, 402), rel: (1179, 403), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:21,623]: Received event <Event(1-ActiveEvent {gain: 1, state: 1})>" 
+
+[2018-11-24 21:27:21,623]: Received event <Event(1-ActiveEvent {gain: 0, state: 1})>" 
+
+[2018-11-24 21:27:21,623]: Received event <Event(4-MouseMotion {pos: (948, 155), rel: (-230, -247), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:21,829]: Received event <Event(1-ActiveEvent {gain: 1, state: 1})>" 
+
+[2018-11-24 21:27:21,830]: Received event <Event(4-MouseMotion {pos: (950, 147), rel: (2, -8), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:21,841]: Received event <Event(4-MouseMotion {pos: (952, 142), rel: (2, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:21,851]: Received event <Event(4-MouseMotion {pos: (954, 136), rel: (2, -6), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:21,862]: Received event <Event(4-MouseMotion {pos: (956, 131), rel: (2, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:21,873]: Received event <Event(4-MouseMotion {pos: (956, 123), rel: (0, -8), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:21,884]: Received event <Event(4-MouseMotion {pos: (956, 121), rel: (0, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:21,895]: Received event <Event(4-MouseMotion {pos: (955, 117), rel: (-1, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:21,906]: Received event <Event(4-MouseMotion {pos: (955, 110), rel: (0, -7), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:21,917]: Received event <Event(4-MouseMotion {pos: (955, 106), rel: (0, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:21,928]: Received event <Event(4-MouseMotion {pos: (955, 99), rel: (0, -7), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:21,939]: Received event <Event(4-MouseMotion {pos: (955, 93), rel: (0, -6), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:21,956]: Received event <Event(4-MouseMotion {pos: (955, 84), rel: (0, -9), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:21,972]: Received event <Event(4-MouseMotion {pos: (954, 76), rel: (-1, -8), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:21,983]: Received event <Event(4-MouseMotion {pos: (953, 73), rel: (-1, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:21,994]: Received event <Event(4-MouseMotion {pos: (952, 68), rel: (-1, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,003]: Received event <Event(4-MouseMotion {pos: (951, 65), rel: (-1, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,014]: Received event <Event(4-MouseMotion {pos: (951, 62), rel: (0, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,024]: Received event <Event(4-MouseMotion {pos: (950, 59), rel: (-1, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,034]: Received event <Event(4-MouseMotion {pos: (950, 57), rel: (0, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,044]: Received event <Event(4-MouseMotion {pos: (950, 54), rel: (0, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,054]: Received event <Event(4-MouseMotion {pos: (949, 52), rel: (-1, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,065]: Received event <Event(4-MouseMotion {pos: (949, 50), rel: (0, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,075]: Received event <Event(4-MouseMotion {pos: (949, 48), rel: (0, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,085]: Received event <Event(4-MouseMotion {pos: (949, 46), rel: (0, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,095]: Received event <Event(4-MouseMotion {pos: (948, 45), rel: (-1, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,105]: Received event <Event(4-MouseMotion {pos: (948, 44), rel: (0, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,116]: Received event <Event(4-MouseMotion {pos: (947, 42), rel: (-1, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,126]: Received event <Event(4-MouseMotion {pos: (947, 41), rel: (0, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,137]: Received event <Event(4-MouseMotion {pos: (946, 39), rel: (-1, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,147]: Received event <Event(4-MouseMotion {pos: (945, 38), rel: (-1, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,157]: Received event <Event(4-MouseMotion {pos: (945, 36), rel: (0, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,167]: Received event <Event(4-MouseMotion {pos: (944, 34), rel: (-1, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,178]: Received event <Event(4-MouseMotion {pos: (943, 31), rel: (-1, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,189]: Received event <Event(4-MouseMotion {pos: (942, 29), rel: (-1, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,199]: Received event <Event(4-MouseMotion {pos: (941, 27), rel: (-1, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,208]: Received event <Event(4-MouseMotion {pos: (940, 24), rel: (-1, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,218]: Received event <Event(4-MouseMotion {pos: (939, 21), rel: (-1, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,228]: Received event <Event(4-MouseMotion {pos: (937, 19), rel: (-2, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,239]: Received event <Event(4-MouseMotion {pos: (936, 17), rel: (-1, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,249]: Received event <Event(4-MouseMotion {pos: (935, 15), rel: (-1, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,259]: Received event <Event(4-MouseMotion {pos: (935, 13), rel: (0, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,269]: Received event <Event(4-MouseMotion {pos: (934, 12), rel: (-1, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,279]: Received event <Event(4-MouseMotion {pos: (934, 11), rel: (0, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,289]: Received event <Event(4-MouseMotion {pos: (933, 10), rel: (-1, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,300]: Received event <Event(4-MouseMotion {pos: (932, 9), rel: (-1, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,310]: Received event <Event(4-MouseMotion {pos: (932, 8), rel: (0, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,320]: Received event <Event(4-MouseMotion {pos: (931, 7), rel: (-1, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,340]: Received event <Event(4-MouseMotion {pos: (931, 6), rel: (0, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,350]: Received event <Event(4-MouseMotion {pos: (930, 5), rel: (-1, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,370]: Received event <Event(4-MouseMotion {pos: (929, 4), rel: (-1, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,459]: Received event <Event(4-MouseMotion {pos: (928, 3), rel: (-1, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,469]: Received event <Event(4-MouseMotion {pos: (928, 2), rel: (0, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,480]: Received event <Event(4-MouseMotion {pos: (927, 0), rel: (-1, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,490]: Received event <Event(1-ActiveEvent {gain: 0, state: 1})>" 
+
+[2018-11-24 21:27:22,937]: Received event <Event(1-ActiveEvent {gain: 1, state: 1})>" 
+
+[2018-11-24 21:27:22,938]: Received event <Event(4-MouseMotion {pos: (911, 5), rel: (-16, 5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,948]: Received event <Event(4-MouseMotion {pos: (906, 13), rel: (-5, 8), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,958]: Received event <Event(4-MouseMotion {pos: (900, 23), rel: (-6, 10), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,969]: Received event <Event(4-MouseMotion {pos: (893, 36), rel: (-7, 13), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,979]: Received event <Event(4-MouseMotion {pos: (887, 49), rel: (-6, 13), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:22,990]: Received event <Event(4-MouseMotion {pos: (881, 63), rel: (-6, 14), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,000]: Received event <Event(4-MouseMotion {pos: (877, 80), rel: (-4, 17), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,012]: Received event <Event(4-MouseMotion {pos: (872, 104), rel: (-5, 24), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,023]: Received event <Event(4-MouseMotion {pos: (868, 131), rel: (-4, 27), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,034]: Received event <Event(4-MouseMotion {pos: (863, 152), rel: (-5, 21), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,045]: Received event <Event(4-MouseMotion {pos: (860, 176), rel: (-3, 24), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,056]: Received event <Event(4-MouseMotion {pos: (856, 202), rel: (-4, 26), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,067]: Received event <Event(4-MouseMotion {pos: (854, 221), rel: (-2, 19), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,077]: Received event <Event(4-MouseMotion {pos: (852, 237), rel: (-2, 16), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,087]: Received event <Event(4-MouseMotion {pos: (850, 255), rel: (-2, 18), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,097]: Received event <Event(4-MouseMotion {pos: (850, 272), rel: (0, 17), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,107]: Received event <Event(4-MouseMotion {pos: (850, 287), rel: (0, 15), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,118]: Received event <Event(4-MouseMotion {pos: (849, 301), rel: (-1, 14), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,129]: Received event <Event(4-MouseMotion {pos: (847, 317), rel: (-2, 16), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,140]: Received event <Event(4-MouseMotion {pos: (847, 329), rel: (0, 12), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,150]: Received event <Event(4-MouseMotion {pos: (847, 339), rel: (0, 10), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,161]: Received event <Event(4-MouseMotion {pos: (847, 346), rel: (0, 7), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,172]: Received event <Event(4-MouseMotion {pos: (847, 353), rel: (0, 7), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,183]: Received event <Event(4-MouseMotion {pos: (847, 357), rel: (0, 4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,193]: Received event <Event(4-MouseMotion {pos: (848, 360), rel: (1, 3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,204]: Received event <Event(4-MouseMotion {pos: (848, 361), rel: (0, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,235]: Received event <Event(5-MouseButtonDown {pos: (848, 361), button: 1})>" 
+
+[2018-11-24 21:27:23,245]: Received event <Event(25-UserEvent {command: go_menu_params_config, value: None})>" 
+
+[2018-11-24 21:27:23,302]: Received event <Event(6-MouseButtonUp {pos: (848, 361), button: 1})>" 
+
+[2018-11-24 21:27:23,397]: Received event <Event(4-MouseMotion {pos: (848, 359), rel: (0, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,404]: Received event <Event(4-MouseMotion {pos: (846, 359), rel: (-2, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,412]: Received event <Event(4-MouseMotion {pos: (845, 357), rel: (-1, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,419]: Received event <Event(4-MouseMotion {pos: (844, 356), rel: (-1, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,426]: Received event <Event(4-MouseMotion {pos: (842, 355), rel: (-2, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,433]: Received event <Event(4-MouseMotion {pos: (840, 353), rel: (-2, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,440]: Received event <Event(4-MouseMotion {pos: (839, 352), rel: (-1, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,447]: Received event <Event(4-MouseMotion {pos: (837, 350), rel: (-2, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,454]: Received event <Event(4-MouseMotion {pos: (836, 348), rel: (-1, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,461]: Received event <Event(4-MouseMotion {pos: (833, 346), rel: (-3, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,468]: Received event <Event(4-MouseMotion {pos: (830, 344), rel: (-3, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,475]: Received event <Event(4-MouseMotion {pos: (828, 341), rel: (-2, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,482]: Received event <Event(4-MouseMotion {pos: (824, 340), rel: (-4, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,489]: Received event <Event(4-MouseMotion {pos: (821, 338), rel: (-3, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,496]: Received event <Event(4-MouseMotion {pos: (815, 334), rel: (-6, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,503]: Received event <Event(4-MouseMotion {pos: (811, 331), rel: (-4, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,511]: Received event <Event(4-MouseMotion {pos: (804, 327), rel: (-7, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,518]: Received event <Event(4-MouseMotion {pos: (799, 324), rel: (-5, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,525]: Received event <Event(4-MouseMotion {pos: (792, 319), rel: (-7, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,532]: Received event <Event(4-MouseMotion {pos: (785, 315), rel: (-7, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,539]: Received event <Event(4-MouseMotion {pos: (780, 312), rel: (-5, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,547]: Received event <Event(4-MouseMotion {pos: (776, 309), rel: (-4, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,554]: Received event <Event(4-MouseMotion {pos: (771, 306), rel: (-5, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,561]: Received event <Event(4-MouseMotion {pos: (765, 303), rel: (-6, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,568]: Received event <Event(4-MouseMotion {pos: (761, 300), rel: (-4, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,576]: Received event <Event(4-MouseMotion {pos: (756, 297), rel: (-5, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,583]: Received event <Event(4-MouseMotion {pos: (753, 295), rel: (-3, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,589]: Received event <Event(4-MouseMotion {pos: (750, 293), rel: (-3, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,596]: Received event <Event(4-MouseMotion {pos: (747, 292), rel: (-3, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,603]: Received event <Event(4-MouseMotion {pos: (746, 291), rel: (-1, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,617]: Received event <Event(4-MouseMotion {pos: (745, 291), rel: (-1, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,631]: Received event <Event(4-MouseMotion {pos: (745, 290), rel: (0, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,638]: Received event <Event(4-MouseMotion {pos: (745, 289), rel: (0, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,645]: Received event <Event(4-MouseMotion {pos: (746, 287), rel: (1, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,653]: Received event <Event(4-MouseMotion {pos: (748, 285), rel: (2, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,660]: Received event <Event(4-MouseMotion {pos: (750, 282), rel: (2, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,667]: Received event <Event(4-MouseMotion {pos: (752, 279), rel: (2, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,674]: Received event <Event(4-MouseMotion {pos: (754, 275), rel: (2, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,683]: Received event <Event(4-MouseMotion {pos: (754, 269), rel: (0, -6), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,690]: Received event <Event(4-MouseMotion {pos: (756, 262), rel: (2, -7), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,697]: Received event <Event(4-MouseMotion {pos: (758, 254), rel: (2, -8), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,705]: Received event <Event(4-MouseMotion {pos: (759, 248), rel: (1, -6), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,712]: Received event <Event(4-MouseMotion {pos: (760, 243), rel: (1, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,719]: Received event <Event(4-MouseMotion {pos: (761, 234), rel: (1, -9), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,726]: Received event <Event(4-MouseMotion {pos: (762, 228), rel: (1, -6), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,733]: Received event <Event(4-MouseMotion {pos: (762, 219), rel: (0, -9), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,741]: Received event <Event(4-MouseMotion {pos: (763, 209), rel: (1, -10), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,748]: Received event <Event(4-MouseMotion {pos: (763, 203), rel: (0, -6), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,756]: Received event <Event(4-MouseMotion {pos: (763, 194), rel: (0, -9), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,763]: Received event <Event(4-MouseMotion {pos: (763, 185), rel: (0, -9), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,771]: Received event <Event(4-MouseMotion {pos: (763, 177), rel: (0, -8), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,778]: Received event <Event(4-MouseMotion {pos: (763, 170), rel: (0, -7), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,786]: Received event <Event(4-MouseMotion {pos: (763, 161), rel: (0, -9), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,793]: Received event <Event(4-MouseMotion {pos: (763, 154), rel: (0, -7), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,801]: Received event <Event(4-MouseMotion {pos: (763, 144), rel: (0, -10), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,809]: Received event <Event(4-MouseMotion {pos: (764, 135), rel: (1, -9), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,816]: Received event <Event(4-MouseMotion {pos: (765, 127), rel: (1, -8), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,823]: Received event <Event(4-MouseMotion {pos: (765, 121), rel: (0, -6), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,831]: Received event <Event(4-MouseMotion {pos: (765, 114), rel: (0, -7), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,841]: Received event <Event(4-MouseMotion {pos: (765, 108), rel: (0, -6), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,849]: Received event <Event(4-MouseMotion {pos: (765, 104), rel: (0, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,857]: Received event <Event(4-MouseMotion {pos: (766, 101), rel: (1, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,864]: Received event <Event(4-MouseMotion {pos: (766, 99), rel: (0, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,872]: Received event <Event(4-MouseMotion {pos: (767, 95), rel: (1, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,879]: Received event <Event(4-MouseMotion {pos: (767, 92), rel: (0, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,887]: Received event <Event(4-MouseMotion {pos: (767, 89), rel: (0, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,895]: Received event <Event(4-MouseMotion {pos: (767, 87), rel: (0, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,903]: Received event <Event(4-MouseMotion {pos: (768, 84), rel: (1, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,911]: Received event <Event(4-MouseMotion {pos: (769, 81), rel: (1, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,919]: Received event <Event(4-MouseMotion {pos: (769, 78), rel: (0, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,927]: Received event <Event(4-MouseMotion {pos: (770, 75), rel: (1, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,934]: Received event <Event(4-MouseMotion {pos: (771, 73), rel: (1, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,942]: Received event <Event(4-MouseMotion {pos: (772, 72), rel: (1, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,948]: Received event <Event(4-MouseMotion {pos: (772, 69), rel: (0, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,956]: Received event <Event(4-MouseMotion {pos: (773, 68), rel: (1, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,963]: Received event <Event(4-MouseMotion {pos: (773, 67), rel: (0, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,971]: Received event <Event(4-MouseMotion {pos: (773, 66), rel: (0, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,978]: Received event <Event(4-MouseMotion {pos: (774, 65), rel: (1, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:23,993]: Received event <Event(4-MouseMotion {pos: (775, 63), rel: (1, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:24,009]: Received event <Event(4-MouseMotion {pos: (775, 62), rel: (0, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:24,016]: Received event <Event(4-MouseMotion {pos: (776, 61), rel: (1, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:24,024]: Received event <Event(4-MouseMotion {pos: (776, 60), rel: (0, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:24,038]: Received event <Event(4-MouseMotion {pos: (776, 59), rel: (0, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:24,095]: Received event <Event(5-MouseButtonDown {pos: (776, 59), button: 1})>" 
+
+[2018-11-24 21:27:24,109]: Received event <Event(24-UserEvent {command: change_resolution_screen_display, value: (1366, 768)})>" 
+
+[2018-11-24 21:27:24,724]: Changed resolution to (1366, 768) 
+
+[2018-11-24 21:27:24,732]: Received event <Event(6-MouseButtonUp {pos: (776, 59), button: 1})>" 
+
+[2018-11-24 21:27:24,732]: Received event <Event(17-VideoExpose {})> 
+
+[2018-11-24 21:27:24,733]: Received event <Event(16-VideoResize {size: (1366, 768), w: 1366, h: 768})>" 
+
+[2018-11-24 21:27:24,733]: Received event <Event(1-ActiveEvent {gain: 0, state: 1})>" 
+
+[2018-11-24 21:27:24,733]: Received event <Event(6-MouseButtonUp {pos: (776, 59), button: 1})>" 
+
+[2018-11-24 21:27:24,741]: Received event <Event(1-ActiveEvent {gain: 1, state: 1})>" 
+
+[2018-11-24 21:27:25,345]: Received event <Event(4-MouseMotion {pos: (778, 58), rel: (2, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:25,353]: Received event <Event(4-MouseMotion {pos: (781, 56), rel: (3, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:25,361]: Received event <Event(4-MouseMotion {pos: (785, 53), rel: (4, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:25,369]: Received event <Event(4-MouseMotion {pos: (789, 49), rel: (4, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:25,378]: Received event <Event(4-MouseMotion {pos: (795, 46), rel: (6, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:25,386]: Received event <Event(4-MouseMotion {pos: (802, 42), rel: (7, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:25,394]: Received event <Event(4-MouseMotion {pos: (810, 39), rel: (8, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:25,403]: Received event <Event(4-MouseMotion {pos: (819, 36), rel: (9, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:25,411]: Received event <Event(4-MouseMotion {pos: (827, 32), rel: (8, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:25,420]: Received event <Event(4-MouseMotion {pos: (837, 28), rel: (10, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:25,428]: Received event <Event(4-MouseMotion {pos: (846, 24), rel: (9, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:25,436]: Received event <Event(4-MouseMotion {pos: (855, 21), rel: (9, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:25,444]: Received event <Event(4-MouseMotion {pos: (864, 17), rel: (9, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:25,452]: Received event <Event(4-MouseMotion {pos: (871, 14), rel: (7, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:25,459]: Received event <Event(4-MouseMotion {pos: (879, 11), rel: (8, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:25,467]: Received event <Event(4-MouseMotion {pos: (886, 8), rel: (7, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:25,475]: Received event <Event(4-MouseMotion {pos: (893, 5), rel: (7, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:25,483]: Received event <Event(4-MouseMotion {pos: (900, 2), rel: (7, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:25,491]: Received event <Event(4-MouseMotion {pos: (907, 0), rel: (7, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:25,500]: Received event <Event(1-ActiveEvent {gain: 0, state: 1})>" 
+
+[2018-11-24 21:27:26,673]: Received event <Event(17-VideoExpose {})> 
+
+[2018-11-24 21:27:26,778]: Received event <Event(1-ActiveEvent {gain: 1, state: 1})>" 
+
+[2018-11-24 21:27:26,779]: Received event <Event(4-MouseMotion {pos: (969, 1), rel: (62, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:26,787]: Received event <Event(4-MouseMotion {pos: (970, 4), rel: (1, 3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:26,796]: Received event <Event(4-MouseMotion {pos: (971, 9), rel: (1, 5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:26,804]: Received event <Event(4-MouseMotion {pos: (971, 13), rel: (0, 4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:26,812]: Received event <Event(4-MouseMotion {pos: (972, 16), rel: (1, 3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:26,820]: Received event <Event(4-MouseMotion {pos: (973, 20), rel: (1, 4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:26,827]: Received event <Event(4-MouseMotion {pos: (975, 25), rel: (2, 5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:26,835]: Received event <Event(4-MouseMotion {pos: (976, 29), rel: (1, 4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:26,844]: Received event <Event(4-MouseMotion {pos: (977, 32), rel: (1, 3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:26,852]: Received event <Event(4-MouseMotion {pos: (978, 36), rel: (1, 4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:26,860]: Received event <Event(4-MouseMotion {pos: (980, 39), rel: (2, 3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:26,868]: Received event <Event(4-MouseMotion {pos: (981, 42), rel: (1, 3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:26,877]: Received event <Event(4-MouseMotion {pos: (982, 47), rel: (1, 5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:26,885]: Received event <Event(4-MouseMotion {pos: (983, 50), rel: (1, 3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:26,894]: Received event <Event(4-MouseMotion {pos: (984, 52), rel: (1, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:26,902]: Received event <Event(4-MouseMotion {pos: (985, 54), rel: (1, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:26,910]: Received event <Event(4-MouseMotion {pos: (986, 56), rel: (1, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:26,919]: Received event <Event(4-MouseMotion {pos: (987, 57), rel: (1, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:26,927]: Received event <Event(4-MouseMotion {pos: (987, 58), rel: (0, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:26,935]: Received event <Event(4-MouseMotion {pos: (987, 59), rel: (0, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:27,024]: Received event <Event(4-MouseMotion {pos: (987, 60), rel: (0, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:27,032]: Received event <Event(4-MouseMotion {pos: (987, 61), rel: (0, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:27,040]: Received event <Event(4-MouseMotion {pos: (985, 62), rel: (-2, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:27,048]: Received event <Event(4-MouseMotion {pos: (984, 63), rel: (-1, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:27,056]: Received event <Event(4-MouseMotion {pos: (982, 65), rel: (-2, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:27,065]: Received event <Event(4-MouseMotion {pos: (979, 67), rel: (-3, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:27,074]: Received event <Event(4-MouseMotion {pos: (977, 68), rel: (-2, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:27,082]: Received event <Event(4-MouseMotion {pos: (975, 69), rel: (-2, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:27,090]: Received event <Event(4-MouseMotion {pos: (973, 71), rel: (-2, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:27,098]: Received event <Event(4-MouseMotion {pos: (971, 72), rel: (-2, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:27,111]: Received event <Event(4-MouseMotion {pos: (967, 74), rel: (-4, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:27,124]: Received event <Event(4-MouseMotion {pos: (964, 76), rel: (-3, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:27,137]: Received event <Event(4-MouseMotion {pos: (962, 77), rel: (-2, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:27,150]: Received event <Event(4-MouseMotion {pos: (961, 77), rel: (-1, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:27,200]: Received event <Event(5-MouseButtonDown {pos: (961, 77), button: 1})>" 
+
+[2018-11-24 21:27:27,215]: Received event <Event(24-UserEvent {command: change_resolution_screen_display, value: (1600, 900)})>" 
+
+[2018-11-24 21:27:27,917]: Changed resolution to (1600, 900) 
+
+[2018-11-24 21:27:27,927]: Received event <Event(6-MouseButtonUp {pos: (961, 77), button: 1})>" 
+
+[2018-11-24 21:27:27,928]: Received event <Event(17-VideoExpose {})> 
+
+[2018-11-24 21:27:27,928]: Received event <Event(16-VideoResize {size: (1600, 900), w: 1600, h: 900})>" 
+
+[2018-11-24 21:27:27,928]: Received event <Event(1-ActiveEvent {gain: 0, state: 1})>" 
+
+[2018-11-24 21:27:27,928]: Received event <Event(1-ActiveEvent {gain: 1, state: 1})>" 
+
+[2018-11-24 21:27:27,928]: Received event <Event(6-MouseButtonUp {pos: (961, 77), button: 1})>" 
+
+[2018-11-24 21:27:27,928]: Received event <Event(4-MouseMotion {pos: (1518, 384), rel: (557, 307), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,117]: Received event <Event(4-MouseMotion {pos: (1516, 382), rel: (-2, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,128]: Received event <Event(4-MouseMotion {pos: (1512, 377), rel: (-4, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,138]: Received event <Event(4-MouseMotion {pos: (1507, 372), rel: (-5, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,148]: Received event <Event(4-MouseMotion {pos: (1497, 366), rel: (-10, -6), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,159]: Received event <Event(4-MouseMotion {pos: (1486, 359), rel: (-11, -7), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,170]: Received event <Event(4-MouseMotion {pos: (1470, 351), rel: (-16, -8), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,181]: Received event <Event(4-MouseMotion {pos: (1455, 344), rel: (-15, -7), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,191]: Received event <Event(4-MouseMotion {pos: (1441, 337), rel: (-14, -7), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,202]: Received event <Event(4-MouseMotion {pos: (1424, 329), rel: (-17, -8), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,213]: Received event <Event(4-MouseMotion {pos: (1411, 323), rel: (-13, -6), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,224]: Received event <Event(4-MouseMotion {pos: (1396, 315), rel: (-15, -8), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,235]: Received event <Event(4-MouseMotion {pos: (1387, 310), rel: (-9, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,245]: Received event <Event(4-MouseMotion {pos: (1373, 302), rel: (-14, -8), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,255]: Received event <Event(4-MouseMotion {pos: (1362, 294), rel: (-11, -8), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,266]: Received event <Event(4-MouseMotion {pos: (1352, 287), rel: (-10, -7), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,276]: Received event <Event(4-MouseMotion {pos: (1342, 279), rel: (-10, -8), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,286]: Received event <Event(4-MouseMotion {pos: (1335, 273), rel: (-7, -6), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,296]: Received event <Event(4-MouseMotion {pos: (1329, 266), rel: (-6, -7), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,306]: Received event <Event(4-MouseMotion {pos: (1323, 258), rel: (-6, -8), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,317]: Received event <Event(4-MouseMotion {pos: (1317, 249), rel: (-6, -9), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,329]: Received event <Event(4-MouseMotion {pos: (1310, 240), rel: (-7, -9), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,339]: Received event <Event(4-MouseMotion {pos: (1304, 232), rel: (-6, -8), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,351]: Received event <Event(4-MouseMotion {pos: (1296, 221), rel: (-8, -11), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,362]: Received event <Event(4-MouseMotion {pos: (1289, 212), rel: (-7, -9), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,373]: Received event <Event(4-MouseMotion {pos: (1281, 201), rel: (-8, -11), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,384]: Received event <Event(4-MouseMotion {pos: (1275, 194), rel: (-6, -7), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,395]: Received event <Event(4-MouseMotion {pos: (1268, 185), rel: (-7, -9), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,406]: Received event <Event(4-MouseMotion {pos: (1261, 176), rel: (-7, -9), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,417]: Received event <Event(4-MouseMotion {pos: (1255, 168), rel: (-6, -8), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,428]: Received event <Event(4-MouseMotion {pos: (1247, 160), rel: (-8, -8), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,439]: Received event <Event(4-MouseMotion {pos: (1241, 153), rel: (-6, -7), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,449]: Received event <Event(4-MouseMotion {pos: (1235, 146), rel: (-6, -7), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,459]: Received event <Event(4-MouseMotion {pos: (1229, 139), rel: (-6, -7), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,470]: Received event <Event(4-MouseMotion {pos: (1224, 133), rel: (-5, -6), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,481]: Received event <Event(4-MouseMotion {pos: (1219, 128), rel: (-5, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,491]: Received event <Event(4-MouseMotion {pos: (1215, 123), rel: (-4, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,502]: Received event <Event(4-MouseMotion {pos: (1211, 117), rel: (-4, -6), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,513]: Received event <Event(4-MouseMotion {pos: (1209, 111), rel: (-2, -6), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,524]: Received event <Event(4-MouseMotion {pos: (1206, 106), rel: (-3, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,534]: Received event <Event(4-MouseMotion {pos: (1204, 102), rel: (-2, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,545]: Received event <Event(4-MouseMotion {pos: (1202, 98), rel: (-2, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,556]: Received event <Event(4-MouseMotion {pos: (1201, 95), rel: (-1, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,566]: Received event <Event(4-MouseMotion {pos: (1200, 91), rel: (-1, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,577]: Received event <Event(4-MouseMotion {pos: (1199, 88), rel: (-1, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,588]: Received event <Event(4-MouseMotion {pos: (1198, 83), rel: (-1, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,598]: Received event <Event(4-MouseMotion {pos: (1197, 79), rel: (-1, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,609]: Received event <Event(4-MouseMotion {pos: (1196, 74), rel: (-1, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,620]: Received event <Event(4-MouseMotion {pos: (1195, 69), rel: (-1, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,631]: Received event <Event(4-MouseMotion {pos: (1194, 65), rel: (-1, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,642]: Received event <Event(4-MouseMotion {pos: (1193, 61), rel: (-1, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,652]: Received event <Event(4-MouseMotion {pos: (1191, 56), rel: (-2, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,663]: Received event <Event(4-MouseMotion {pos: (1189, 51), rel: (-2, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,673]: Received event <Event(4-MouseMotion {pos: (1187, 47), rel: (-2, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,684]: Received event <Event(4-MouseMotion {pos: (1185, 42), rel: (-2, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,695]: Received event <Event(4-MouseMotion {pos: (1181, 36), rel: (-4, -6), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,705]: Received event <Event(4-MouseMotion {pos: (1178, 32), rel: (-3, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,715]: Received event <Event(4-MouseMotion {pos: (1177, 29), rel: (-1, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,726]: Received event <Event(4-MouseMotion {pos: (1174, 24), rel: (-3, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,736]: Received event <Event(4-MouseMotion {pos: (1170, 18), rel: (-4, -6), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,747]: Received event <Event(4-MouseMotion {pos: (1167, 13), rel: (-3, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,757]: Received event <Event(4-MouseMotion {pos: (1163, 6), rel: (-4, -7), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,768]: Received event <Event(4-MouseMotion {pos: (1159, 1), rel: (-4, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:27:28,779]: Received event <Event(1-ActiveEvent {gain: 0, state: 1})>" 
+
+[2018-11-24 21:27:30,967]: Received event <Event(17-VideoExpose {})> 
+
+[2018-11-24 21:27:31,591]: Received event <Event(12-Quit {})> 
+
+[2018-11-24 21:28:01,458]: ----Pygame parameters---- 
+
+[2018-11-24 21:28:01,459]: FPS: 60 
+
+[2018-11-24 21:28:01,459]: RESOLUTION: (1280, 720) 
+
+[2018-11-24 21:28:01,470]: Received event <Event(17-VideoExpose {})> 
+
+[2018-11-24 21:28:01,471]: Received event <Event(16-VideoResize {size: (1280, 720), w: 1280, h: 720})>" 
+
+[2018-11-24 21:28:01,472]: Received event <Event(1-ActiveEvent {gain: 0, state: 1})>" 
+
+[2018-11-24 21:28:01,473]: Received event <Event(4-MouseMotion {pos: (1279, 623), rel: (1280, 624), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,475]: Received event <Event(1-ActiveEvent {gain: 1, state: 1})>" 
+
+[2018-11-24 21:28:01,477]: Received event <Event(1-ActiveEvent {gain: 0, state: 1})>" 
+
+[2018-11-24 21:28:01,478]: Received event <Event(4-MouseMotion {pos: (760, 293), rel: (-519, -330), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,479]: Received event <Event(1-ActiveEvent {gain: 1, state: 1})>" 
+
+[2018-11-24 21:28:01,480]: Received event <Event(4-MouseMotion {pos: (758, 291), rel: (-2, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,490]: Received event <Event(4-MouseMotion {pos: (751, 287), rel: (-7, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,502]: Received event <Event(4-MouseMotion {pos: (746, 284), rel: (-5, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,519]: Received event <Event(4-MouseMotion {pos: (740, 281), rel: (-6, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,530]: Received event <Event(4-MouseMotion {pos: (736, 278), rel: (-4, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,540]: Received event <Event(4-MouseMotion {pos: (732, 276), rel: (-4, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,554]: Received event <Event(4-MouseMotion {pos: (728, 274), rel: (-4, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,569]: Received event <Event(4-MouseMotion {pos: (720, 271), rel: (-8, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,580]: Received event <Event(4-MouseMotion {pos: (715, 269), rel: (-5, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,592]: Received event <Event(4-MouseMotion {pos: (708, 266), rel: (-7, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,603]: Received event <Event(4-MouseMotion {pos: (700, 263), rel: (-8, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,614]: Received event <Event(4-MouseMotion {pos: (691, 260), rel: (-9, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,625]: Received event <Event(4-MouseMotion {pos: (680, 257), rel: (-11, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,635]: Received event <Event(4-MouseMotion {pos: (673, 255), rel: (-7, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,646]: Received event <Event(4-MouseMotion {pos: (659, 250), rel: (-14, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,657]: Received event <Event(4-MouseMotion {pos: (649, 246), rel: (-10, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,669]: Received event <Event(4-MouseMotion {pos: (638, 241), rel: (-11, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,680]: Received event <Event(4-MouseMotion {pos: (627, 237), rel: (-11, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,691]: Received event <Event(4-MouseMotion {pos: (620, 234), rel: (-7, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,702]: Received event <Event(4-MouseMotion {pos: (611, 231), rel: (-9, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,713]: Received event <Event(4-MouseMotion {pos: (605, 229), rel: (-6, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,724]: Received event <Event(4-MouseMotion {pos: (599, 227), rel: (-6, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,736]: Received event <Event(4-MouseMotion {pos: (593, 225), rel: (-6, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,747]: Received event <Event(4-MouseMotion {pos: (590, 223), rel: (-3, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,759]: Received event <Event(4-MouseMotion {pos: (585, 221), rel: (-5, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,773]: Received event <Event(4-MouseMotion {pos: (581, 219), rel: (-4, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,785]: Received event <Event(4-MouseMotion {pos: (579, 218), rel: (-2, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,798]: Received event <Event(4-MouseMotion {pos: (577, 216), rel: (-2, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,810]: Received event <Event(4-MouseMotion {pos: (576, 214), rel: (-1, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,825]: Received event <Event(4-MouseMotion {pos: (575, 211), rel: (-1, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,838]: Received event <Event(4-MouseMotion {pos: (574, 208), rel: (-1, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,856]: Received event <Event(4-MouseMotion {pos: (573, 204), rel: (-1, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,871]: Received event <Event(4-MouseMotion {pos: (573, 198), rel: (0, -6), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,883]: Received event <Event(4-MouseMotion {pos: (574, 194), rel: (1, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,901]: Received event <Event(4-MouseMotion {pos: (576, 187), rel: (2, -7), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,913]: Received event <Event(4-MouseMotion {pos: (578, 182), rel: (2, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,924]: Received event <Event(4-MouseMotion {pos: (580, 180), rel: (2, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,935]: Received event <Event(4-MouseMotion {pos: (582, 177), rel: (2, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,947]: Received event <Event(4-MouseMotion {pos: (583, 175), rel: (1, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,960]: Received event <Event(4-MouseMotion {pos: (585, 173), rel: (2, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,973]: Received event <Event(4-MouseMotion {pos: (588, 170), rel: (3, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:01,985]: Received event <Event(4-MouseMotion {pos: (590, 168), rel: (2, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:02,001]: Received event <Event(4-MouseMotion {pos: (591, 166), rel: (1, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:02,012]: Received event <Event(4-MouseMotion {pos: (592, 165), rel: (1, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:02,024]: Received event <Event(4-MouseMotion {pos: (593, 165), rel: (1, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:03,609]: Received event <Event(4-MouseMotion {pos: (593, 166), rel: (0, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:03,620]: Received event <Event(4-MouseMotion {pos: (593, 167), rel: (0, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:03,631]: Received event <Event(4-MouseMotion {pos: (593, 169), rel: (0, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:03,642]: Received event <Event(4-MouseMotion {pos: (592, 171), rel: (-1, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:03,653]: Received event <Event(4-MouseMotion {pos: (591, 173), rel: (-1, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:03,665]: Received event <Event(4-MouseMotion {pos: (590, 174), rel: (-1, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:03,677]: Received event <Event(4-MouseMotion {pos: (589, 175), rel: (-1, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:03,688]: Received event <Event(4-MouseMotion {pos: (589, 176), rel: (0, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:03,699]: Received event <Event(4-MouseMotion {pos: (588, 177), rel: (-1, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:03,711]: Received event <Event(4-MouseMotion {pos: (587, 179), rel: (-1, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:03,733]: Received event <Event(4-MouseMotion {pos: (587, 180), rel: (0, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:03,744]: Received event <Event(4-MouseMotion {pos: (586, 181), rel: (-1, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:03,755]: Received event <Event(4-MouseMotion {pos: (586, 182), rel: (0, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:03,767]: Received event <Event(4-MouseMotion {pos: (585, 183), rel: (-1, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:03,779]: Received event <Event(4-MouseMotion {pos: (585, 184), rel: (0, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:03,792]: Received event <Event(4-MouseMotion {pos: (585, 185), rel: (0, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:03,803]: Received event <Event(4-MouseMotion {pos: (584, 187), rel: (-1, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:03,818]: Received event <Event(4-MouseMotion {pos: (584, 190), rel: (0, 3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:03,831]: Received event <Event(4-MouseMotion {pos: (583, 193), rel: (-1, 3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:03,843]: Received event <Event(4-MouseMotion {pos: (583, 196), rel: (0, 3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:03,854]: Received event <Event(4-MouseMotion {pos: (583, 198), rel: (0, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:03,866]: Received event <Event(4-MouseMotion {pos: (583, 201), rel: (0, 3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:03,878]: Received event <Event(4-MouseMotion {pos: (583, 204), rel: (0, 3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:03,890]: Received event <Event(4-MouseMotion {pos: (583, 206), rel: (0, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:03,902]: Received event <Event(4-MouseMotion {pos: (582, 208), rel: (-1, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:03,913]: Received event <Event(4-MouseMotion {pos: (582, 209), rel: (0, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:03,924]: Received event <Event(4-MouseMotion {pos: (582, 210), rel: (0, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,236]: Received event <Event(4-MouseMotion {pos: (583, 210), rel: (1, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,247]: Received event <Event(4-MouseMotion {pos: (585, 209), rel: (2, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,258]: Received event <Event(4-MouseMotion {pos: (588, 208), rel: (3, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,270]: Received event <Event(4-MouseMotion {pos: (591, 206), rel: (3, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,280]: Received event <Event(4-MouseMotion {pos: (595, 205), rel: (4, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,292]: Received event <Event(4-MouseMotion {pos: (600, 204), rel: (5, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,304]: Received event <Event(4-MouseMotion {pos: (603, 203), rel: (3, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,315]: Received event <Event(4-MouseMotion {pos: (608, 203), rel: (5, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,326]: Received event <Event(4-MouseMotion {pos: (612, 203), rel: (4, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,339]: Received event <Event(4-MouseMotion {pos: (617, 202), rel: (5, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,350]: Received event <Event(4-MouseMotion {pos: (621, 202), rel: (4, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,363]: Received event <Event(4-MouseMotion {pos: (626, 202), rel: (5, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,374]: Received event <Event(4-MouseMotion {pos: (629, 201), rel: (3, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,385]: Received event <Event(4-MouseMotion {pos: (632, 201), rel: (3, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,397]: Received event <Event(4-MouseMotion {pos: (635, 200), rel: (3, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,408]: Received event <Event(4-MouseMotion {pos: (637, 200), rel: (2, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,420]: Received event <Event(4-MouseMotion {pos: (638, 199), rel: (1, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,431]: Received event <Event(4-MouseMotion {pos: (641, 199), rel: (3, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,442]: Received event <Event(4-MouseMotion {pos: (643, 197), rel: (2, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,454]: Received event <Event(4-MouseMotion {pos: (644, 196), rel: (1, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,466]: Received event <Event(4-MouseMotion {pos: (647, 196), rel: (3, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,479]: Received event <Event(4-MouseMotion {pos: (651, 194), rel: (4, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,491]: Received event <Event(4-MouseMotion {pos: (654, 193), rel: (3, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,502]: Received event <Event(4-MouseMotion {pos: (658, 192), rel: (4, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,514]: Received event <Event(4-MouseMotion {pos: (664, 191), rel: (6, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,526]: Received event <Event(4-MouseMotion {pos: (670, 190), rel: (6, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,538]: Received event <Event(4-MouseMotion {pos: (675, 190), rel: (5, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,551]: Received event <Event(4-MouseMotion {pos: (680, 192), rel: (5, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,562]: Received event <Event(4-MouseMotion {pos: (684, 194), rel: (4, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,573]: Received event <Event(4-MouseMotion {pos: (688, 196), rel: (4, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,585]: Received event <Event(4-MouseMotion {pos: (691, 199), rel: (3, 3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,597]: Received event <Event(4-MouseMotion {pos: (693, 202), rel: (2, 3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,608]: Received event <Event(4-MouseMotion {pos: (694, 204), rel: (1, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,620]: Received event <Event(4-MouseMotion {pos: (695, 208), rel: (1, 4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,631]: Received event <Event(4-MouseMotion {pos: (695, 212), rel: (0, 4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,646]: Received event <Event(4-MouseMotion {pos: (695, 215), rel: (0, 3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,657]: Received event <Event(4-MouseMotion {pos: (694, 218), rel: (-1, 3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,669]: Received event <Event(4-MouseMotion {pos: (692, 221), rel: (-2, 3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,680]: Received event <Event(4-MouseMotion {pos: (690, 222), rel: (-2, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,690]: Received event <Event(4-MouseMotion {pos: (687, 224), rel: (-3, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,701]: Received event <Event(4-MouseMotion {pos: (684, 226), rel: (-3, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,713]: Received event <Event(4-MouseMotion {pos: (680, 227), rel: (-4, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,723]: Received event <Event(4-MouseMotion {pos: (677, 227), rel: (-3, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,734]: Received event <Event(4-MouseMotion {pos: (673, 228), rel: (-4, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,745]: Received event <Event(4-MouseMotion {pos: (668, 228), rel: (-5, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,762]: Received event <Event(4-MouseMotion {pos: (661, 228), rel: (-7, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,773]: Received event <Event(4-MouseMotion {pos: (654, 226), rel: (-7, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,788]: Received event <Event(4-MouseMotion {pos: (647, 224), rel: (-7, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,799]: Received event <Event(4-MouseMotion {pos: (641, 222), rel: (-6, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,811]: Received event <Event(4-MouseMotion {pos: (634, 219), rel: (-7, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,821]: Received event <Event(4-MouseMotion {pos: (630, 217), rel: (-4, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,833]: Received event <Event(4-MouseMotion {pos: (623, 213), rel: (-7, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,845]: Received event <Event(4-MouseMotion {pos: (617, 208), rel: (-6, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,857]: Received event <Event(4-MouseMotion {pos: (611, 203), rel: (-6, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,869]: Received event <Event(4-MouseMotion {pos: (606, 199), rel: (-5, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,882]: Received event <Event(4-MouseMotion {pos: (599, 193), rel: (-7, -6), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,894]: Received event <Event(4-MouseMotion {pos: (595, 189), rel: (-4, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,906]: Received event <Event(4-MouseMotion {pos: (590, 185), rel: (-5, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,918]: Received event <Event(4-MouseMotion {pos: (585, 181), rel: (-5, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,929]: Received event <Event(4-MouseMotion {pos: (580, 177), rel: (-5, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,941]: Received event <Event(4-MouseMotion {pos: (575, 174), rel: (-5, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,956]: Received event <Event(4-MouseMotion {pos: (570, 171), rel: (-5, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,967]: Received event <Event(4-MouseMotion {pos: (566, 170), rel: (-4, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,978]: Received event <Event(4-MouseMotion {pos: (563, 170), rel: (-3, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:04,991]: Received event <Event(4-MouseMotion {pos: (558, 169), rel: (-5, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:05,003]: Received event <Event(4-MouseMotion {pos: (554, 168), rel: (-4, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:05,015]: Received event <Event(4-MouseMotion {pos: (549, 167), rel: (-5, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:05,026]: Received event <Event(4-MouseMotion {pos: (544, 167), rel: (-5, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:05,038]: Received event <Event(4-MouseMotion {pos: (540, 167), rel: (-4, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:05,050]: Received event <Event(4-MouseMotion {pos: (537, 167), rel: (-3, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:05,062]: Received event <Event(4-MouseMotion {pos: (534, 168), rel: (-3, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:05,077]: Received event <Event(4-MouseMotion {pos: (530, 171), rel: (-4, 3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:05,089]: Received event <Event(4-MouseMotion {pos: (528, 174), rel: (-2, 3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:05,103]: Received event <Event(4-MouseMotion {pos: (525, 179), rel: (-3, 5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:05,115]: Received event <Event(4-MouseMotion {pos: (524, 182), rel: (-1, 3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:05,134]: Received event <Event(4-MouseMotion {pos: (523, 189), rel: (-1, 7), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:05,145]: Received event <Event(4-MouseMotion {pos: (522, 192), rel: (-1, 3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:05,156]: Received event <Event(4-MouseMotion {pos: (522, 195), rel: (0, 3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:05,170]: Received event <Event(4-MouseMotion {pos: (523, 197), rel: (1, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:05,182]: Received event <Event(4-MouseMotion {pos: (524, 198), rel: (1, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:05,193]: Received event <Event(4-MouseMotion {pos: (525, 199), rel: (1, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:05,206]: Received event <Event(4-MouseMotion {pos: (526, 199), rel: (1, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:05,217]: Received event <Event(4-MouseMotion {pos: (526, 200), rel: (0, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:06,716]: Received event <Event(4-MouseMotion {pos: (526, 203), rel: (0, 3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:06,727]: Received event <Event(4-MouseMotion {pos: (527, 208), rel: (1, 5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:06,739]: Received event <Event(4-MouseMotion {pos: (527, 215), rel: (0, 7), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:06,750]: Received event <Event(4-MouseMotion {pos: (528, 223), rel: (1, 8), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:06,768]: Received event <Event(4-MouseMotion {pos: (533, 236), rel: (5, 13), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:06,778]: Received event <Event(4-MouseMotion {pos: (538, 247), rel: (5, 11), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:06,789]: Received event <Event(4-MouseMotion {pos: (543, 256), rel: (5, 9), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:06,800]: Received event <Event(4-MouseMotion {pos: (549, 269), rel: (6, 13), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:06,811]: Received event <Event(4-MouseMotion {pos: (554, 280), rel: (5, 11), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:06,822]: Received event <Event(4-MouseMotion {pos: (559, 292), rel: (5, 12), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:06,833]: Received event <Event(4-MouseMotion {pos: (565, 304), rel: (6, 12), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:06,845]: Received event <Event(4-MouseMotion {pos: (571, 315), rel: (6, 11), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:06,856]: Received event <Event(4-MouseMotion {pos: (575, 323), rel: (4, 8), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:06,868]: Received event <Event(4-MouseMotion {pos: (577, 329), rel: (2, 6), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:06,884]: Received event <Event(4-MouseMotion {pos: (580, 333), rel: (3, 4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:06,896]: Received event <Event(4-MouseMotion {pos: (581, 335), rel: (1, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:06,907]: Received event <Event(4-MouseMotion {pos: (581, 336), rel: (0, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:06,949]: Received event <Event(5-MouseButtonDown {pos: (581, 336), button: 1})>" 
+
+[2018-11-24 21:28:06,960]: Received event <Event(25-UserEvent {command: go_menu_params_config, value: None})>" 
+
+[2018-11-24 21:28:07,010]: Received event <Event(6-MouseButtonUp {pos: (581, 336), button: 1})>" 
+
+[2018-11-24 21:28:07,324]: Received event <Event(4-MouseMotion {pos: (581, 334), rel: (0, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,332]: Received event <Event(4-MouseMotion {pos: (581, 331), rel: (0, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,339]: Received event <Event(4-MouseMotion {pos: (581, 327), rel: (0, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,352]: Received event <Event(4-MouseMotion {pos: (582, 321), rel: (1, -6), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,360]: Received event <Event(4-MouseMotion {pos: (582, 316), rel: (0, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,368]: Received event <Event(4-MouseMotion {pos: (583, 309), rel: (1, -7), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,376]: Received event <Event(4-MouseMotion {pos: (583, 299), rel: (0, -10), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,388]: Received event <Event(4-MouseMotion {pos: (583, 283), rel: (0, -16), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,396]: Received event <Event(4-MouseMotion {pos: (583, 271), rel: (0, -12), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,403]: Received event <Event(4-MouseMotion {pos: (583, 263), rel: (0, -8), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,411]: Received event <Event(4-MouseMotion {pos: (584, 251), rel: (1, -12), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,421]: Received event <Event(4-MouseMotion {pos: (586, 236), rel: (2, -15), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,429]: Received event <Event(4-MouseMotion {pos: (588, 224), rel: (2, -12), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,436]: Received event <Event(4-MouseMotion {pos: (588, 212), rel: (0, -12), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,444]: Received event <Event(4-MouseMotion {pos: (589, 205), rel: (1, -7), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,452]: Received event <Event(4-MouseMotion {pos: (589, 196), rel: (0, -9), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,460]: Received event <Event(4-MouseMotion {pos: (590, 188), rel: (1, -8), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,469]: Received event <Event(4-MouseMotion {pos: (591, 179), rel: (1, -9), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,477]: Received event <Event(4-MouseMotion {pos: (592, 173), rel: (1, -6), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,486]: Received event <Event(4-MouseMotion {pos: (593, 168), rel: (1, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,494]: Received event <Event(4-MouseMotion {pos: (594, 162), rel: (1, -6), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,502]: Received event <Event(4-MouseMotion {pos: (595, 157), rel: (1, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,511]: Received event <Event(4-MouseMotion {pos: (597, 152), rel: (2, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,519]: Received event <Event(4-MouseMotion {pos: (599, 147), rel: (2, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,527]: Received event <Event(4-MouseMotion {pos: (600, 142), rel: (1, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,534]: Received event <Event(4-MouseMotion {pos: (601, 139), rel: (1, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,542]: Received event <Event(4-MouseMotion {pos: (603, 135), rel: (2, -4), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,550]: Received event <Event(4-MouseMotion {pos: (603, 133), rel: (0, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,558]: Received event <Event(4-MouseMotion {pos: (604, 130), rel: (1, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,566]: Received event <Event(4-MouseMotion {pos: (605, 127), rel: (1, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,574]: Received event <Event(4-MouseMotion {pos: (606, 126), rel: (1, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,582]: Received event <Event(4-MouseMotion {pos: (607, 124), rel: (1, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,594]: Received event <Event(4-MouseMotion {pos: (608, 121), rel: (1, -3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,602]: Received event <Event(4-MouseMotion {pos: (609, 119), rel: (1, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,610]: Received event <Event(4-MouseMotion {pos: (609, 117), rel: (0, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,618]: Received event <Event(4-MouseMotion {pos: (610, 115), rel: (1, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,628]: Received event <Event(4-MouseMotion {pos: (610, 113), rel: (0, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,636]: Received event <Event(4-MouseMotion {pos: (610, 112), rel: (0, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,705]: Received event <Event(4-MouseMotion {pos: (611, 112), rel: (1, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,849]: Received event <Event(4-MouseMotion {pos: (611, 111), rel: (0, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,856]: Received event <Event(4-MouseMotion {pos: (612, 110), rel: (1, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,865]: Received event <Event(4-MouseMotion {pos: (612, 109), rel: (0, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,872]: Received event <Event(4-MouseMotion {pos: (613, 107), rel: (1, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,880]: Received event <Event(4-MouseMotion {pos: (613, 106), rel: (0, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,888]: Received event <Event(4-MouseMotion {pos: (614, 105), rel: (1, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,898]: Received event <Event(4-MouseMotion {pos: (614, 104), rel: (0, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,911]: Received event <Event(4-MouseMotion {pos: (615, 102), rel: (1, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,919]: Received event <Event(4-MouseMotion {pos: (616, 100), rel: (1, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,927]: Received event <Event(4-MouseMotion {pos: (617, 99), rel: (1, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,935]: Received event <Event(4-MouseMotion {pos: (617, 97), rel: (0, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,946]: Received event <Event(4-MouseMotion {pos: (618, 96), rel: (1, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,957]: Received event <Event(4-MouseMotion {pos: (618, 95), rel: (0, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,965]: Received event <Event(4-MouseMotion {pos: (619, 94), rel: (1, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:07,974]: Received event <Event(4-MouseMotion {pos: (619, 93), rel: (0, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:08,019]: Received event <Event(4-MouseMotion {pos: (619, 92), rel: (0, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:08,441]: Received event <Event(5-MouseButtonDown {pos: (619, 92), button: 1})>" 
+
+[2018-11-24 21:28:08,456]: Received event <Event(24-UserEvent {command: change_resolution_screen_display, value: (1366, 768)})>" 
+
+[2018-11-24 21:28:09,071]: Changed resolution to (1366, 768) 
+
+[2018-11-24 21:28:09,079]: Received event <Event(6-MouseButtonUp {pos: (619, 92), button: 1})>" 
+
+[2018-11-24 21:28:09,080]: Received event <Event(17-VideoExpose {})> 
+
+[2018-11-24 21:28:09,080]: Received event <Event(16-VideoResize {size: (1366, 768), w: 1366, h: 768})>" 
+
+[2018-11-24 21:28:09,080]: Received event <Event(1-ActiveEvent {gain: 0, state: 1})>" 
+
+[2018-11-24 21:28:09,081]: Received event <Event(1-ActiveEvent {gain: 1, state: 1})>" 
+
+[2018-11-24 21:28:09,081]: Received event <Event(6-MouseButtonUp {pos: (619, 92), button: 1})>" 
+
+[2018-11-24 21:28:18,277]: Received event <Event(5-MouseButtonDown {pos: (619, 92), button: 1})>" 
+
+[2018-11-24 21:28:18,292]: Received event <Event(24-UserEvent {command: change_resolution_screen_display, value: (1600, 900)})>" 
+
+[2018-11-24 21:28:18,981]: Changed resolution to (1600, 900) 
+
+[2018-11-24 21:28:18,992]: Received event <Event(6-MouseButtonUp {pos: (619, 92), button: 1})>" 
+
+[2018-11-24 21:28:18,992]: Received event <Event(17-VideoExpose {})> 
+
+[2018-11-24 21:28:18,993]: Received event <Event(16-VideoResize {size: (1600, 900), w: 1600, h: 900})>" 
+
+[2018-11-24 21:28:18,993]: Received event <Event(1-ActiveEvent {gain: 0, state: 1})>" 
+
+[2018-11-24 21:28:18,993]: Received event <Event(1-ActiveEvent {gain: 1, state: 1})>" 
+
+[2018-11-24 21:28:18,994]: Received event <Event(6-MouseButtonUp {pos: (619, 92), button: 1})>" 
+
+[2018-11-24 21:28:19,509]: Received event <Event(4-MouseMotion {pos: (617, 92), rel: (-2, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:19,520]: Received event <Event(4-MouseMotion {pos: (614, 93), rel: (-3, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:19,532]: Received event <Event(4-MouseMotion {pos: (612, 94), rel: (-2, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:19,545]: Received event <Event(4-MouseMotion {pos: (609, 95), rel: (-3, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:19,558]: Received event <Event(4-MouseMotion {pos: (607, 95), rel: (-2, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:19,569]: Received event <Event(4-MouseMotion {pos: (604, 96), rel: (-3, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:19,582]: Received event <Event(4-MouseMotion {pos: (603, 97), rel: (-1, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:19,593]: Received event <Event(4-MouseMotion {pos: (601, 97), rel: (-2, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:19,606]: Received event <Event(4-MouseMotion {pos: (600, 97), rel: (-1, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:19,618]: Received event <Event(4-MouseMotion {pos: (599, 98), rel: (-1, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:19,630]: Received event <Event(4-MouseMotion {pos: (598, 98), rel: (-1, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:19,642]: Received event <Event(4-MouseMotion {pos: (598, 99), rel: (0, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:19,654]: Received event <Event(4-MouseMotion {pos: (596, 100), rel: (-2, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:19,666]: Received event <Event(4-MouseMotion {pos: (595, 100), rel: (-1, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:19,678]: Received event <Event(4-MouseMotion {pos: (594, 101), rel: (-1, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:19,690]: Received event <Event(4-MouseMotion {pos: (593, 101), rel: (-1, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:19,703]: Received event <Event(4-MouseMotion {pos: (591, 102), rel: (-2, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:19,715]: Received event <Event(4-MouseMotion {pos: (590, 103), rel: (-1, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:19,727]: Received event <Event(4-MouseMotion {pos: (588, 104), rel: (-2, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:19,739]: Received event <Event(4-MouseMotion {pos: (587, 104), rel: (-1, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:19,750]: Received event <Event(4-MouseMotion {pos: (587, 105), rel: (0, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:19,763]: Received event <Event(4-MouseMotion {pos: (587, 104), rel: (0, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:20,587]: Received event <Event(4-MouseMotion {pos: (588, 104), rel: (1, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:20,599]: Received event <Event(4-MouseMotion {pos: (590, 104), rel: (2, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:20,611]: Received event <Event(4-MouseMotion {pos: (592, 104), rel: (2, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:20,623]: Received event <Event(4-MouseMotion {pos: (594, 104), rel: (2, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:20,635]: Received event <Event(4-MouseMotion {pos: (597, 104), rel: (3, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:20,647]: Received event <Event(4-MouseMotion {pos: (600, 104), rel: (3, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:20,659]: Received event <Event(4-MouseMotion {pos: (604, 104), rel: (4, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:20,673]: Received event <Event(4-MouseMotion {pos: (607, 104), rel: (3, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:20,685]: Received event <Event(4-MouseMotion {pos: (610, 104), rel: (3, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:20,697]: Received event <Event(4-MouseMotion {pos: (613, 104), rel: (3, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:20,709]: Received event <Event(4-MouseMotion {pos: (614, 104), rel: (1, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:20,721]: Received event <Event(4-MouseMotion {pos: (615, 104), rel: (1, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:21,163]: Received event <Event(4-MouseMotion {pos: (616, 104), rel: (1, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:21,174]: Received event <Event(4-MouseMotion {pos: (617, 103), rel: (1, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:21,187]: Received event <Event(4-MouseMotion {pos: (618, 102), rel: (1, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:21,199]: Received event <Event(4-MouseMotion {pos: (619, 100), rel: (1, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:21,211]: Received event <Event(4-MouseMotion {pos: (619, 99), rel: (0, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:21,223]: Received event <Event(4-MouseMotion {pos: (620, 98), rel: (1, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:21,235]: Received event <Event(4-MouseMotion {pos: (620, 97), rel: (0, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:21,247]: Received event <Event(4-MouseMotion {pos: (620, 96), rel: (0, -1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:21,615]: Received event <Event(4-MouseMotion {pos: (616, 98), rel: (-4, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:21,626]: Received event <Event(4-MouseMotion {pos: (613, 100), rel: (-3, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:21,638]: Received event <Event(4-MouseMotion {pos: (608, 102), rel: (-5, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:21,650]: Received event <Event(4-MouseMotion {pos: (605, 105), rel: (-3, 3), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:21,662]: Received event <Event(4-MouseMotion {pos: (602, 107), rel: (-3, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:21,676]: Received event <Event(4-MouseMotion {pos: (600, 108), rel: (-2, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:21,688]: Received event <Event(4-MouseMotion {pos: (599, 109), rel: (-1, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:22,139]: Received event <Event(4-MouseMotion {pos: (601, 109), rel: (2, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:22,151]: Received event <Event(4-MouseMotion {pos: (607, 109), rel: (6, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:22,167]: Received event <Event(4-MouseMotion {pos: (617, 107), rel: (10, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:22,179]: Received event <Event(4-MouseMotion {pos: (632, 107), rel: (15, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:22,194]: Received event <Event(4-MouseMotion {pos: (657, 108), rel: (25, 1), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:22,206]: Received event <Event(4-MouseMotion {pos: (677, 110), rel: (20, 2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:22,218]: Received event <Event(4-MouseMotion {pos: (698, 110), rel: (21, 0), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:22,229]: Received event <Event(4-MouseMotion {pos: (728, 108), rel: (30, -2), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:22,242]: Received event <Event(4-MouseMotion {pos: (759, 102), rel: (31, -6), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:22,254]: Received event <Event(4-MouseMotion {pos: (794, 97), rel: (35, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:22,265]: Received event <Event(4-MouseMotion {pos: (830, 92), rel: (36, -5), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:22,277]: Received event <Event(4-MouseMotion {pos: (866, 83), rel: (36, -9), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:22,289]: Received event <Event(4-MouseMotion {pos: (899, 75), rel: (33, -8), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:22,301]: Received event <Event(4-MouseMotion {pos: (932, 67), rel: (33, -8), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:22,312]: Received event <Event(4-MouseMotion {pos: (963, 61), rel: (31, -6), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:22,326]: Received event <Event(4-MouseMotion {pos: (994, 53), rel: (31, -8), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:22,337]: Received event <Event(4-MouseMotion {pos: (1022, 45), rel: (28, -8), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:22,349]: Received event <Event(4-MouseMotion {pos: (1044, 38), rel: (22, -7), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:22,360]: Received event <Event(4-MouseMotion {pos: (1069, 30), rel: (25, -8), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:22,372]: Received event <Event(4-MouseMotion {pos: (1097, 23), rel: (28, -7), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:22,383]: Received event <Event(4-MouseMotion {pos: (1119, 17), rel: (22, -6), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:22,395]: Received event <Event(4-MouseMotion {pos: (1146, 10), rel: (27, -7), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:22,407]: Received event <Event(4-MouseMotion {pos: (1171, 2), rel: (25, -8), buttons: (0, 0, 0)})>" 
+
+[2018-11-24 21:28:22,418]: Received event <Event(1-ActiveEvent {gain: 0, state: 1})>" 
+
+[2018-11-24 21:28:23,106]: Received event <Event(12-Quit {})> 
+
+[2018-11-24 21:31:37,563]: ----Pygame parameters---- 
+
+[2018-11-24 21:31:37,564]: FPS: 60 
+
+[2018-11-24 21:31:37,564]: RESOLUTION: (1280, 720) 
+
+[2018-11-24 21:31:39,535]: Requested change of screen to (go, menu, params, config)" 
+
+[2018-11-24 21:31:39,535]: Changed to  menu_params_config 
+
+[2018-11-24 21:31:47,771]: Changed resolution to (1366, 768) 
+
+[2018-11-24 21:31:49,166]: Changed resolution to (1600, 900) 
+
+[2018-11-24 21:31:50,152]: Changed resolution to (640, 480) 
+
+[2018-11-24 21:31:53,835]: Changed resolution to (800, 600) 
+
+[2018-11-24 21:31:54,722]: Changed resolution to (1024, 768) 
+
+[2018-11-24 21:33:09,235]: ----Initial Pygame parameters---- 
+
+[2018-11-24 21:33:09,235]: FPS: 60 
+
+[2018-11-24 21:33:09,235]: RESOLUTION: (1280, 720) 
+
+[2018-11-24 21:33:10,267]: Requested change of screen to (go, menu, params, config)" 
+
+[2018-11-24 21:33:10,267]: Changed to  menu_params_config 
+
+[2018-11-24 21:33:13,872]: Requested change of pygame params: change_resolution_screen_display->(1366, 768) 
+
+[2018-11-24 21:33:14,492]: Changed resolution to (1366, 768) 
+
+[2018-11-24 21:37:34,816]: ----Initial Pygame parameters---- 
+
+[2018-11-24 21:37:34,817]: FPS: 60 
+
+[2018-11-24 21:37:34,817]: RESOLUTION: (1280, 720) 
+
+[2018-11-24 21:37:34,818]: GAME STARTING! 
+
+[2018-11-24 21:41:09,293]: x, y => 516, 360, center => 374, 360, quadrant => 1, cell => 1, 0 
+
+[2018-11-24 21:41:09,294]: x, y => 505, 414, center => 374, 360, quadrant => 1, cell => 1, 1 
+
+[2018-11-24 21:41:09,294]: x, y => 474, 460, center => 374, 360, quadrant => 1, cell => 1, 2 
+
+[2018-11-24 21:41:09,295]: x, y => 428, 491, center => 374, 360, quadrant => 1, cell => 1, 3 
+
+[2018-11-24 21:41:09,295]: x, y => 374, 502, center => 374, 360, quadrant => 2, cell => 1, 4 
+
+[2018-11-24 21:41:09,295]: x, y => 319, 491, center => 374, 360, quadrant => 2, cell => 1, 5 
+
+[2018-11-24 21:41:09,296]: x, y => 273, 460, center => 374, 360, quadrant => 2, cell => 1, 6 
+
+[2018-11-24 21:41:09,296]: x, y => 242, 414, center => 374, 360, quadrant => 2, cell => 1, 7 
+
+[2018-11-24 21:41:09,296]: x, y => 232, 360, center => 374, 360, quadrant => 3, cell => 1, 8 
+
+[2018-11-24 21:41:09,297]: x, y => 242, 305, center => 374, 360, quadrant => 3, cell => 1, 9 
+
+[2018-11-24 21:41:09,297]: x, y => 273, 259, center => 374, 360, quadrant => 3, cell => 1, 10 
+
+[2018-11-24 21:41:09,297]: x, y => 319, 228, center => 374, 360, quadrant => 3, cell => 1, 11 
+
+[2018-11-24 21:41:09,298]: x, y => 374, 218, center => 374, 360, quadrant => 0, cell => 1, 12 
+
+[2018-11-24 21:41:09,298]: x, y => 428, 228, center => 374, 360, quadrant => 0, cell => 1, 13 
+
+[2018-11-24 21:41:09,298]: x, y => 474, 259, center => 374, 360, quadrant => 0, cell => 1, 14 
+
+[2018-11-24 21:41:09,298]: x, y => 505, 305, center => 374, 360, quadrant => 0, cell => 1, 15 
+
+[2018-11-24 21:41:09,299]: x, y => 601, 360, center => 374, 360, quadrant => 1, cell => 2, 0 
+
+[2018-11-24 21:41:09,299]: x, y => 583, 446, center => 374, 360, quadrant => 1, cell => 2, 1 
+
+[2018-11-24 21:41:09,299]: x, y => 534, 520, center => 374, 360, quadrant => 1, cell => 2, 2 
+
+[2018-11-24 21:41:09,299]: x, y => 460, 569, center => 374, 360, quadrant => 1, cell => 2, 3 
+
+[2018-11-24 21:41:09,300]: x, y => 374, 587, center => 374, 360, quadrant => 2, cell => 2, 4 
+
+[2018-11-24 21:41:09,300]: x, y => 287, 569, center => 374, 360, quadrant => 2, cell => 2, 5 
+
+[2018-11-24 21:41:09,300]: x, y => 213, 520, center => 374, 360, quadrant => 2, cell => 2, 6 
+
+[2018-11-24 21:41:09,300]: x, y => 164, 446, center => 374, 360, quadrant => 2, cell => 2, 7 
+
+[2018-11-24 21:41:09,301]: x, y => 147, 360, center => 374, 360, quadrant => 3, cell => 2, 8 
+
+[2018-11-24 21:41:09,301]: x, y => 164, 273, center => 374, 360, quadrant => 3, cell => 2, 9 
+
+[2018-11-24 21:41:09,301]: x, y => 213, 199, center => 374, 360, quadrant => 3, cell => 2, 10 
+
+[2018-11-24 21:41:09,301]: x, y => 287, 150, center => 374, 360, quadrant => 3, cell => 2, 11 
+
+[2018-11-24 21:41:09,302]: x, y => 374, 133, center => 374, 360, quadrant => 0, cell => 2, 12 
+
+[2018-11-24 21:41:09,302]: x, y => 460, 150, center => 374, 360, quadrant => 0, cell => 2, 13 
+
+[2018-11-24 21:41:09,302]: x, y => 534, 199, center => 374, 360, quadrant => 0, cell => 2, 14 
+
+[2018-11-24 21:41:09,303]: x, y => 583, 273, center => 374, 360, quadrant => 0, cell => 2, 15 
+
+[2018-11-24 21:41:09,304]: x, y => 686, 360, center => 374, 360, quadrant => 1, cell => 3, 0 
+
+[2018-11-24 21:41:09,304]: x, y => 662, 479, center => 374, 360, quadrant => 1, cell => 3, 1 
+
+[2018-11-24 21:41:09,305]: x, y => 594, 580, center => 374, 360, quadrant => 1, cell => 3, 2 
+
+[2018-11-24 21:41:09,306]: x, y => 493, 648, center => 374, 360, quadrant => 1, cell => 3, 3 
+
+[2018-11-24 21:41:09,306]: x, y => 374, 672, center => 374, 360, quadrant => 2, cell => 3, 4 
+
+[2018-11-24 21:41:09,306]: x, y => 254, 648, center => 374, 360, quadrant => 2, cell => 3, 5 
+
+[2018-11-24 21:41:09,306]: x, y => 153, 580, center => 374, 360, quadrant => 2, cell => 3, 6 
+
+[2018-11-24 21:41:09,306]: x, y => 85, 479, center => 374, 360, quadrant => 2, cell => 3, 7 
+
+[2018-11-24 21:41:09,306]: x, y => 62, 360, center => 374, 360, quadrant => 3, cell => 3, 8 
+
+[2018-11-24 21:41:09,306]: x, y => 85, 240, center => 374, 360, quadrant => 3, cell => 3, 9 
+
+[2018-11-24 21:41:09,306]: x, y => 153, 139, center => 374, 360, quadrant => 3, cell => 3, 10 
+
+[2018-11-24 21:41:09,306]: x, y => 254, 71, center => 374, 360, quadrant => 3, cell => 3, 11 
+
+[2018-11-24 21:41:09,307]: x, y => 374, 48, center => 374, 360, quadrant => 0, cell => 3, 12 
+
+[2018-11-24 21:41:09,307]: x, y => 493, 71, center => 374, 360, quadrant => 0, cell => 3, 13 
+
+[2018-11-24 21:41:09,307]: x, y => 594, 139, center => 374, 360, quadrant => 0, cell => 3, 14 
+
+[2018-11-24 21:41:09,308]: x, y => 662, 240, center => 374, 360, quadrant => 0, cell => 3, 15 
+
+[2018-11-24 21:41:09,336]: ----Initial Pygame parameters---- 
+
+[2018-11-24 21:41:09,337]: FPS: 60 
+
+[2018-11-24 21:41:09,337]: RESOLUTION: (1280, 720) 
+
+[2018-11-24 21:41:09,338]: GAME STARTING! 
+
+[2018-11-24 21:41:21,923]: Character pawn0 has the initial position (1, 12) 
+
+[2018-11-24 21:41:22,005]: Character warrior0 has the initial position (1, 13) 
+
+[2018-11-24 21:41:22,048]: Character wizard0 has the initial position (1, 15) 
+
+[2018-11-24 21:41:22,134]: Character priestess has the initial position (2, 14) 
+
+[2018-11-24 21:41:26,914]: Requested change of screen to (start, game, go, main, board)" 
+
+[2018-11-24 21:41:26,914]: Changed to  main_board 
+

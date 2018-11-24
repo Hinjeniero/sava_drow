@@ -495,3 +495,30 @@ class UI_Element:
         sprite.rect.size = tuple(new_size)
         sprite.image = pygame.transform.scale(sprite.image, sprite.rect.size)    #Scaling the surface and size
         return ratios
+
+#CHARACTER
+    #THIS NEEDS A FUCKIN BACKTRACKING
+    #Map --> graph of booleans
+    #paths --> Contain info of all the rooms
+    #TODO make sure of the format to return and the format of the input parameters to make a decent implementation
+    def generate_paths(self, map, paths, initial_pos):
+        possible_paths  = []
+        current_path    = []
+        checked         = []
+        to_check        = [initial_pos]
+        step            = 0
+        while len(to_check) > 0:
+            current_pos = to_check.pop(-1)
+            checked.append(current_pos)
+            current_path.append(current_pos)
+            if len(current_path) is self.movement.dist or current_path[-1] is current_path[0]: #TODO HOW TO CHECK PRIESTESS USE CASES OF THE LVL-moving-and-ending
+                self.__add_path(current_path, possible_paths)
+                to_check.pop(-1)
+                current_path.pop(-1)
+            else:
+                for cell in map[current_pos]:
+                    if cell not in checked and cell not in to_check:
+                        if self.valid_mvnt(initial_pos, cell):
+                            to_check.append(cell)
+            step += 1
+        return possible_paths

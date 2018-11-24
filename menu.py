@@ -124,8 +124,9 @@ class Menu (Screen):
         if keys_pressed[pygame.K_UP]:           self.change_active_sprite(self.active_sprite_index-1)
         if keys_pressed[pygame.K_LEFT]:         self.active_sprite.sprite.hitbox_action('left_arrow')
         if keys_pressed[pygame.K_RIGHT]:        self.active_sprite.sprite.hitbox_action('right_arrow')
-        if keys_pressed[pygame.K_KP_ENTER]\
-            or keys_pressed[pygame.K_SPACE]:    self.active_sprite.sprite.hitbox_action('add_value')
+        if keys_pressed[pygame.K_RETURN]\
+            or keys_pressed[pygame.K_KP_ENTER]\
+            or keys_pressed[pygame.K_SPACE]:    self.active_sprite.sprite.hitbox_action('do_action_or_add_value')
 
     def mouse_handler(self, event, mouse_buttons, mouse_movement, mouse_position):
         if event.type == pygame.MOUSEBUTTONDOWN:

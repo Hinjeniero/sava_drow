@@ -11,7 +11,7 @@ from decorators import run_async
 from players import Player
 from paths import IMG_FOLDER, Path
 from ui_element import TextSprite
-
+from logger import Logger as LOG
 POSITION_CHAR = (10, 10)
 
 @functools.total_ordering
@@ -58,6 +58,9 @@ class Cell(pygame.sprite.Sprite):
     def __eq__(self, cell):
         return all(mine == his for mine, his in zip (self.pos, cell.pos))
 
+    def __hash__(self):
+        return hash(self.pos)
+
 class LoadingScreen(Screen):
     def __init__(self, id_, event_id, resolution, text, loading_sprite = None, **params):
         super().__init__(id_, event_id, resolution, **params)
@@ -72,19 +75,11 @@ class LoadingScreen(Screen):
         self.count          = 0
     
     def generate_load_sprite(self, path, degrees=45):
-        sprites         = [] 
-        load_surface    = pygame.image.load(IMG_FOLDER+"//loading_circle.png") if path is None else pygame.image.load(path)
-        orig_rect            = load_surface.get_rect()
-        orig_rect.topleft    = (self.resolution[0]//2-orig_rect.width//2, self.resolution[1]-orig_rect.height*1.5)
-        
-        for i in range (0, 360, degrees):
-            surf = pygame.transform.rotate(load_surface, i)
-            rect = surf.get_rect()
-            rect.center = orig_rect.center
-            sprite = pygame.sprite.Sprite()
-            sprite.image, sprite.rect = surf, rect
-            sprites.append(sprite)
-        return sprites
+        sprite = pygame.sprite.Sprite()
+        sprite.image        = pygame.image.load(IMG_FOLDER+"//loading_circle.png") if path is None else pygame.image.load(path)
+        sprite.rect         = sprite.image.get_rect()
+        sprite.rect.topleft = (self.resolution[0]//2-sprite.rect.width//2, self.resolution[1]-sprite.rect.height*1.5)
+        return UtilityBox.rotate(sprite, 360//8, 8)
     
     def update(self):
         if self.count is 100:
@@ -112,8 +107,9 @@ class LoadingScreen(Screen):
             #sprite.image = pygame.transform.smoot
 
 class Board(Screen):
-    __default_config = {'circles_per_lvl': 16,
-                        'max_levels': 4,
+    __default_config = {'circles_per_lvl':  16,
+                        'max_levels':       4,
+                        'number_of_paths':  8
     }
 
     def __init__(self, id_, event_id, resolution, *players, **params):
@@ -132,6 +128,7 @@ class Board(Screen):
                                 3: []
         }
 
+        self.trans_paths    = pygame.sprite.Group() #TODO Did you just assume my type?
         self.paths          = pygame.sprite.Group()
         self.characters     = pygame.sprite.OrderedUpdates()
         self.active_cell    = pygame.sprite.GroupSingle()
@@ -168,7 +165,8 @@ class Board(Screen):
         ratio   = self.platform.rect.height//(2*self.params['max_levels'])
         radius  = 0
         small_radius = ratio//4 if custom_radius is None else custom_radius
-        self.cells.add(Cell(Circle(tuple(x-small_radius for x in self.platform.rect.center), (small_radius*2, small_radius*2)), (0, -1)))
+        cell = Cell(Circle(tuple(x-small_radius for x in self.platform.rect.center), (small_radius*2, small_radius*2)), (0, -1))
+        self.cells.add(cell)
         for i in range (0, self.params['max_levels']):
             radius      += ratio
             if i is 0:  self.cells.add(self.__generate_cells(radius-ratio//3, self.platform.rect.center, small_radius, 4, 0, initial_offset=0.25*math.pi))
@@ -177,7 +175,7 @@ class Board(Screen):
             if cell.get_level() is not 0:  self.__assign_quadrant(cell, self.platform.rect.center)  
             #self.quadrants[cell.get_index()//(self.params['circles_per_lvl']//4)].append(cell)
     
-    def __assign_quadrant(self, cell, container_center, count_axis=False, log=False):
+    def __assign_quadrant(self, cell, container_center, count_axis=False):
         x, y = cell.rect.center[0], cell.rect.center[1]
         center_x, center_y = container_center[0], container_center[1]
         if 0 < abs(x - center_x) < 2: x = center_x
@@ -186,9 +184,9 @@ class Board(Screen):
                             else 2 if (x<=center_x and y>center_y) else 3
         else:               quadrant = 0 if (x>center_x and y<center_y) else 1 if (x>center_x and y>center_y)\
                              else 2 if (x<center_x and y>center_y) else 3 if (x<center_x and y<center_y) else -1
-        if log:
-            print("x, y => " + str(x)+", "+str(y)+", center => " + str(center_x)+", "+str(center_y)+\
-            ", quadrant => "+str(quadrant) + ", cell => "+ str(cell.get_level())+", "+str(cell.get_index()))
+        
+        LOG.log('DEBUG', "x, y => " , x, ", ", y, ", center => ", center_x, ", ", center_y,\
+        ", quadrant => ", quadrant, ", cell => ", cell.get_level(), ", ", cell.get_index())
         #TODO use logger hjere
         self.quadrants[quadrant].append(cell)
 
@@ -202,7 +200,7 @@ class Board(Screen):
         while angle < two_pi:
             position    = (center[0]+(radius*math.cos(angle))-circle_radius, center[1]+(radius*math.sin(angle))-circle_radius) 
             cells.append(Cell(Circle(position, (circle_radius*2, circle_radius*2)), (lvl, index)))
-            index       +=1
+            index       += 1
             angle       += distance
         return cells
 
@@ -211,13 +209,21 @@ class Board(Screen):
         self.active_path.empty()
         ratio = self.platform.rect.width//self.params['max_levels']
         radius = ratio//2-ratio//6 if offset else ratio//2
-        for _ in range (0, self.params['max_levels']):
+        for _ in range (0, self.params['max_levels']): #Lvl circles
             colorkey = (0, 0, 0)
             out_circle = Circle((self.platform.rect.centerx-radius, self.platform.rect.centery-radius),(radius*2, radius*2), surf_color=colorkey, border_size=3, use_gradient=False)
             out_circle.image.set_colorkey(colorkey)
             out_circle.update_mask()
             self.paths.add(out_circle)
             radius+=ratio//2
+
+        self.__adjust_number_of_paths()
+        spr = Rectangle((self.platform.rect.centerx-self.platform.rect.width//2, self.platform.rect.centery), (self.platform.rect.width, 4))
+        self.trans_paths.add(*UtilityBox.rotate(spr, 360//self.params['number_of_paths'], self.params['number_of_paths']))
+
+    def __adjust_number_of_paths(self):
+        if self.params['circles_per_lvl']%self.params['number_of_paths'] is not 0:
+            self.params['number_of_paths'] = self.params['circles_per_lvl']//math.ceil(self.params['circles_per_lvl']/self.params['number_of_paths']) 
 
     def generate_map(self, to_who):
         paths = []
@@ -233,15 +239,15 @@ class Board(Screen):
     def ALL_PLAYERS_LOADED(self):
         return self.loaded_players is self.total_players
 
-    def create_player(self, name, *params, **kwparams):
+    def create_player(self, name, number, chars_number, chars_size, **kwparams):
         self.total_players          += 1
         for player in self.players:
             if name == player.name: raise PlayerNameExistsException("The player name "+name+" already exists")
-        self.__create_player(*params, **kwparams)
+        self.__create_player(name, number, chars_number, chars_size, **kwparams)
 
     @run_async
-    def __create_player(self, player_name, *params, **kwparams):
-        self.__add_player(Player(player_name, *params, **kwparams))
+    def __create_player(self, player_name, player_number, chars_number, chars_size, **kwparams):
+        self.__add_player(Player(player_name, player_number, chars_number, chars_size, **kwparams))
 
     def add_players(self, *players):
         if not isinstance(players, (tuple, list)):    raise BadPlayersParameter("The list of players to add can't be of type "+str(type(players)))
@@ -257,12 +263,8 @@ class Board(Screen):
                 character.change_size((self.cells.sprites()[0].rect.width, self.cells.sprites()[0].rect.width))
                 c = random.choice(self.quadrants[player.order])
                 character.rect.center = c.rect.center
-                
-                print(character.id)
-                print("("+str(c.get_level()) +","+str(c.get_index()))
-                print("----")
-                
                 self.characters.add(character)
+                LOG.log('DEBUG', "Character ", character.id, " has the initial position ", c.pos)
             self.loaded_players += 1
             return 0
         raise BadPlayerTypeException("A player in the board can't be of type "+str(type(player)))
@@ -272,7 +274,8 @@ class Board(Screen):
             super().draw(surface)                                                                           #Draws background
             surface.blit(self.platform.image, self.platform.rect)                                           #Draws board
             self.paths.draw(surface)                                                                        #Draws paths between cells
-            
+            self.trans_paths.draw(surface) 
+
             active_path = self.active_path.sprite
             if active_path is not None: 
                 pygame.draw.circle(surface, RED, active_path.rect.center, active_path.radius, 4)            #Draw active path

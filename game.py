@@ -9,6 +9,7 @@ from colors import *
 from paths import IMG_FOLDER
 from decorators import run_async
 from exceptions import *
+from logger import Logger as LOG
 
 CHANGES_WERE_MADE = False
 
@@ -43,9 +44,13 @@ class Game(object):
         params['display']       = pygame.display.get_surface()
         if resolution is not params['display'].get_size(): 
             params['display']   = pygame.display.set_mode(resolution)
+        LOG.log('INFO', "----Initial Pygame parameters----")
+        LOG.log('INFO', "FPS: ", params['fps'])
+        LOG.log('INFO', "RESOLUTION: ", params['display'].get_size())
         return params
 
     def change_pygame_var(self, command, value):
+        LOG.log('DEBUG', "Requested change of pygame params: ", command, "->", value)
         global CHANGES_WERE_MADE
         CHANGES_WERE_MADE   = True
         cmd                 = command.lower()
@@ -58,6 +63,7 @@ class Game(object):
     def __set_resolution(self, resolution):
         self.pygame_params['display'] = pygame.display.set_mode(resolution)
         for screen in self.screens:     screen.update_resolution(resolution)
+        LOG.log('DEBUG', "Changed resolution to ", resolution)
 
     def event_handler(self, events):
         all_keys            = pygame.key.get_pressed()          #Get all the pressed keyboard keys
@@ -75,6 +81,7 @@ class Game(object):
         return True
 
     def esc_handler(self):
+        LOG.log('DEBUG', "Pressed esc in ", self.__current_screen.id)
         id_screen = self.__current_screen.id.lower()
         if 'main' in id_screen and 'menu' in id_screen: self.__esc_main_menu()
         elif 'menu' in id_screen:                       self.__esc_menu()
@@ -92,6 +99,7 @@ class Game(object):
         elif self.__current_screen.have_dialog() and self.__current_screen.dialog_is_active():  self.__current_screen.hide_dialog()  
 
     def change_screen(self, *keywords):
+        LOG.log('DEBUG', "Requested change of screen to ", keywords)
         count = 0
         for i in range(0, len(self.screens)):
             matches = len([0 for j in keywords if j in self.screens[i].id])
@@ -99,6 +107,7 @@ class Game(object):
                 self.__current_screen = self.screens[i]
                 count = matches
         if count is 0:  raise ScreenNotFoundException("A screen with those keywords wasn't found")
+        else:           LOG.log('DEBUG', "Changed to  ", self.__current_screen.id)
  
     def user_command_handler(self, eventid, command, value):
         ''' Ou shit the user command handler, good luck m8
@@ -115,12 +124,15 @@ class Game(object):
         elif eventid is pygame.USEREVENT+4: pass    #Dunno, errors?
 
     def start(self):
-        loop = True
-        print("GAME STARTING")
-        while loop:
-            self.__current_screen.draw(self.pygame_params['display'], clock=self.pygame_params['clock'])
-            loop = self.event_handler(pygame.event.get())
-        sys.exit()
+        LOG.log('INFO', "GAME STARTING!")
+        try:
+            loop = True
+            while loop:
+                self.__current_screen.draw(self.pygame_params['display'], clock=self.pygame_params['clock'])
+                loop = self.event_handler(pygame.event.get())
+            sys.exit()
+        except Exception as exc:
+            LOG.exception(exc)
 
 #List of (ids, text)
 if __name__ == "__main__":

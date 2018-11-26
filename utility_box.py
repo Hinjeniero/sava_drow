@@ -98,21 +98,21 @@ class UtilityBox (object):
             if key not in dict_to_add_keys: dict_to_add_keys[key] = dict_to_search_keys[key]
 
     @staticmethod
-    def rotate(sprite, angle, iterations):
-        if iterations > 0:
-            sprites         = [] 
-            orig_surface    = sprite.image
-            orig_rect       = sprite.rect
-            curr_angle      = angle
-            for _ in range (0, iterations):
-                surf = pygame.transform.rotate(orig_surface, curr_angle)
-                rect = surf.get_rect()
-                rect.center = orig_rect.center
-                sprite = pygame.sprite.Sprite()
-                sprite.image, sprite.rect = surf, rect
-                sprites.append(sprite)
-                curr_angle += angle
-            return sprites if len(sprites) > 1 else sprites[0]
+    def rotate(sprite, angle, iterations, offset=0, include_original=False): #TODO BE CAREFUL WITH THE REFERENCES, DUNNO IF THE LIST OF SPRITES ARE DIFFERENT SPRITERS!
+        #TODO implement difference between sprite and surface, to make it a valid method for both
+        sprites         = [sprite] 
+        orig_surface    = sprite.image
+        orig_rect       = sprite.rect
+        curr_angle      = angle+offset
+        for _ in range (0, iterations):
+            surf = pygame.transform.rotate(orig_surface, curr_angle)
+            rect = surf.get_rect()
+            rect.center = orig_rect.center
+            sprite = pygame.sprite.Sprite()
+            sprite.image, sprite.rect = surf, rect
+            sprites.append(sprite)
+            curr_angle += angle
+        return sprites[1:] if not include_original else sprites
 
     '''@staticmethod
     def AAfilledRoundedRect(surface, rect, color, radius=0.4):

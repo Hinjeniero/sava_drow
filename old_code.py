@@ -522,3 +522,49 @@ class UI_Element:
                             to_check.append(cell)
             step += 1
         return possible_paths
+
+##Sync method of factory
+class Character(pygame.sprite.Sprite):
+    @staticmethod
+    def factory(player_name, pieces_qty, sprite_size, **sprite_paths):
+        characters                          = pygame.sprite.Group()
+        if not isinstance(pieces_qty, dict):    raise BadCharacterInitException("pieces_qty must be dictionary, not "+str(type(pieces_qty)))   
+        if not isinstance(sprite_paths, dict):  raise BadCharacterInitException("sprite_paths must be dictionary, not "+str(type(sprite_paths)))
+        
+        limit, counter = 8, 0
+        if "pawn" in pieces_qty:            limit = pieces_qty["pawn"]
+        while counter < limit:
+            name = "pawn_"+str(counter)    
+            if "pawn" in sprite_paths:      characters.add(Pawn(player_name, name, sprite_size, sprite_paths["pawn"]))
+            else:                           characters.add(Pawn(player_name, name, sprite_size, IMG_FOLDER+"\\pawn"))
+            counter+=1
+            LOG.log('DEBUG', "Loading character ", name, " of player ", player_name) 
+
+        limit, counter = 4, 0
+        if "warrior" in pieces_qty:         limit = pieces_qty["warrior"]
+        while counter < limit:
+            name = "warrior_"+str(counter) 
+            if "warrior" in sprite_paths:   characters.add(Warrior(player_name, name, sprite_size, sprite_paths["warrior"]))
+            else:                           characters.add(Warrior(player_name, name, sprite_size, IMG_FOLDER+"\\warrior"))
+            counter+=1
+            LOG.log('DEBUG',"Loading character ", name, " of player ", player_name)
+
+        limit, counter = 2, 0
+        if "wizard" in pieces_qty:          limit = pieces_qty["wizard"]
+        while counter < limit:
+            name = "wizard_"+str(counter) 
+            if "wizard" in sprite_paths:    characters.add(Wizard(player_name, name, sprite_size, sprite_paths["wizard"]))
+            else:                           characters.add(Wizard(player_name, name, sprite_size, IMG_FOLDER+"\\wizard"))
+            counter+=1
+            LOG.log('DEBUG',"Loading character ", name, " of player ", player_name)
+
+        limit, counter = 2, 0
+        if "priestess" in pieces_qty:          limit = pieces_qty["wizard"]
+        while counter < limit:
+            name = "priestess_"+str(counter)
+            if "priestess" in sprite_paths: characters.add(Priestess(player_name, name, sprite_size, sprite_paths["priestess"]))
+            else:                           characters.add(Priestess(player_name, name, sprite_size, IMG_FOLDER+"\\priestess"))
+            counter+=1
+            LOG.log('DEBUG',"Loading character ", name, " of player ", player_name)
+        return characters
+    #TODO make those whiles in a method, this shit repeats a lot of code

@@ -4,6 +4,9 @@ from os.path import isfile, join, dirname
 from exceptions import BadCharacterInitException, BadCharacterActionException
 from resizer import Resizer
 from paths import IMG_FOLDER, Path
+from logger import Logger as LOG
+from decorators import run_async
+
 __all__ = ["Player", "Character", "Warrior", "Wizard", "Priestess", "Pawn"]
 NEXT_SPRITE_COUNTER = 10
 
@@ -28,42 +31,8 @@ class Player(object):
         pass
     
 class Character(pygame.sprite.Sprite):
-    @staticmethod
-    def factory(player_name, pieces_qty, sprite_size, **sprite_paths):
-        characters                              = pygame.sprite.Group()
-        if not isinstance(pieces_qty, dict):    raise BadCharacterInitException("pieces_qty must be dictionary, not "+str(type(pieces_qty)))   
-        if not isinstance(sprite_paths, dict):  raise BadCharacterInitException("sprite_paths must be dictionary, not "+str(type(sprite_paths)))
-        
-        limit, counter = 8, 0
-        if "pawn" in pieces_qty:            limit = pieces_qty["pawn"]
-        while counter < limit:
-            name = "pawn"+str(counter)    
-            if "pawn" in sprite_paths:      characters.add(Pawn(player_name, name, sprite_size, sprite_paths["pawn"]))
-            else:                           characters.add(Pawn(player_name, name, sprite_size, IMG_FOLDER+"\\pawn"))
-            counter+=1 
-
-        limit, counter = 4, 0
-        if "warrior" in pieces_qty:         limit = pieces_qty["warrior"]
-        while counter < limit:
-            name = "warrior"+str(counter) 
-            if "warrior" in sprite_paths:   characters.add(Warrior(player_name, name, sprite_size, sprite_paths["warrior"]))
-            else:                           characters.add(Warrior(player_name, name, sprite_size, IMG_FOLDER+"\\warrior"))
-            counter+=1
-
-        limit, counter = 2, 0
-        if "wizard" in pieces_qty:          limit = pieces_qty["wizard"]
-        while counter < limit:
-            name = "wizard"+str(counter) 
-            if "wizard" in sprite_paths:    characters.add(Wizard(player_name, name, sprite_size, sprite_paths["wizard"]))
-            else:                           characters.add(Wizard(player_name, name, sprite_size, IMG_FOLDER+"\\wizard"))
-            counter+=1
-        
-        #ONLY 1 PRIESTESS, MAKES NO SENSE TO HAVE MORE FROM THE START
-        if "priestess" in sprite_paths: characters.add(Priestess(player_name, "priestess", sprite_size, sprite_paths["priestess"]))
-        else:                           characters.add(Priestess(player_name, "priestess", sprite_size, IMG_FOLDER+"\\priestess"))
-        return characters
-
     def __init__(self, my_player, id_, size, sprites_path):
+        LOG.log('DEBUG', "Initializing character ", id_, " of player ", my_player)
         super().__init__()
         self.my_master  = my_player
         self.id         = id_
@@ -198,7 +167,7 @@ class Character(pygame.sprite.Sprite):
         else:       self.image = self.__current_sprite()
         self.hover = active
 
-    def generate_pathss(self, map, paths, initial_pos):
+    def generate_paths(self, map, paths, initial_pos):
         print("Searching paths for "+self.id)
         possible_paths  = []
         current_path    = []
@@ -259,6 +228,47 @@ class Character(pygame.sprite.Sprite):
     def __modify_paths(self, paths, map, solutions):
         pass #Do nothing, this must be 
 
+    @staticmethod
+    @run_async
+    def __char_loader(char_constructor, result, count, *params, **kwparams):
+        #the method referente is .add if its a pygame.sprite.group, else .append because its supposed to be a list
+        add_to_result = result.add if isinstance(result, pygame.sprite.Group) else result.append
+        for _ in range (0, count):          
+            add_to_result(char_constructor(*params, **kwparams))
+    
+    @staticmethod
+    def factory(player_name, pieces_qty, sprite_size, **sprite_paths):
+        LOG.log('INFO', "----Factory, making ", player_name, " characters----")
+        if not isinstance(pieces_qty, dict):    raise BadCharacterInitException("pieces_qty must be dictionary, not "+str(type(pieces_qty)))   
+        if not isinstance(sprite_paths, dict):  raise BadCharacterInitException("sprite_paths must be dictionary, not "+str(type(sprite_paths)))
+        characters                          = pygame.sprite.Group()
+        threads                             = []
+
+        path, number_of = IMG_FOLDER+"\\pawn", 8
+        if "pawn" in pieces_qty:            number_of   = pieces_qty["pawn"]
+        if "pawn" in sprite_paths:          path        = sprite_paths["pawn"]  
+        threads.append(Character.__char_loader(Pawn, characters, number_of, player_name, "pawn", sprite_size, path))
+
+        path, number_of = IMG_FOLDER+"\\warrior", 4
+        if "warrior" in pieces_qty:         number_of   = pieces_qty["warrior"]
+        if "warrior" in sprite_paths:       path        = sprite_paths["warrior"]
+        threads.append(Character.__char_loader(Pawn, characters, number_of, player_name, "warrior", sprite_size, path))
+
+        path, number_of = IMG_FOLDER+"\\wizard", 2
+        if "wizard" in pieces_qty:          number_of   = pieces_qty["wizard"]
+        if "wizard" in sprite_paths:        path        = sprite_paths["wizard"]
+        threads.append(Character.__char_loader(Wizard, characters, number_of, player_name, "wizard", sprite_size, path))
+
+        path, number_of = IMG_FOLDER+"\\priestess", 1
+        if "priestess" in pieces_qty:       number_of   = pieces_qty["priestess"]
+        if "priestess" in sprite_paths:     path        = sprite_paths["priestess"]       
+        threads.append(Character.__char_loader(Priestess, characters, number_of, player_name, "priestess", sprite_size, path))
+
+        for t in threads:
+            t.join()        #Threading.join
+        LOG.log('INFO', "----Factory, done making ", player_name, " characters----")
+        return characters
+        
 class Warrior(Character):
     def __init__(self, my_player, id_, size, sprites_path):
         super().__init__(my_player, id_, size, sprites_path)

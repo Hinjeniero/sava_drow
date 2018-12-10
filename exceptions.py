@@ -39,3 +39,6 @@ class BadPlayerTypeException(Exception):
 
 class PlayerNameExistsException(Exception):
     pass
+
+class TooManyElementsException(Exception) :
+    pass

@@ -31,11 +31,11 @@ class Resizer (object):
     @staticmethod
     def __surface_resize(surface, new_size):
         ratio = min([new/old for new, old in zip(new_size, surface.get_size())])
-        return pygame.transform.scale(surface, tuple([int(ratio*size) for size in surface.get_size()])) #Resizing the surface
+        return pygame.transform.smoothscale(surface, tuple([int(ratio*size) for size in surface.get_size()])) #Resizing the surface
     
     @staticmethod
     def __sprite_resize(sprite, new_size):
         ratio = min([new/old for new, old in zip(new_size, sprite.rect.size)])
         sprite.rect.size = tuple([int(ratio*size) for size in sprite.rect.size])
-        sprite.image = pygame.transform.scale(sprite.image, sprite.rect.size)
+        sprite.image = pygame.transform.smoothscale(sprite.image, sprite.rect.size)
         return ratio

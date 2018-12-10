@@ -1,110 +1,18 @@
-import pygame, math, numpy, os, random, functools
+import pygame, math, numpy, os, random
 from utility_box import UtilityBox
 from pygame.locals import *
 import gradients #Gradients in polygons
 import ptext #Gradients in text
 from polygons import *
 from colors import *
-from screen import Screen 
+from screen import Screen, LoadingScreen
+from cell import Cell
 from exceptions import BadPlayersParameter, BadPlayerTypeException, PlayerNameExistsException
 from decorators import run_async
 from players import Player
 from paths import IMG_FOLDER, Path
 from ui_element import TextSprite
 from logger import Logger as LOG
-numpy.set_printoptions(threshold=numpy.inf)
-
-@functools.total_ordering
-class Cell(pygame.sprite.Sprite):
-    def __init__(self, circle, grid_position):
-        super().__init__()
-        self.image  = circle.image
-        self.rect   = circle.rect
-        self.center = circle.center
-        self.pos    = grid_position
-        self.chars  = pygame.sprite.Group
-
-    def get_level(self):
-        return self.pos[0]
-    
-    def get_index(self):
-        return self.pos[1]
-
-    def has_enemy(self, who_asking):
-        for character in self.chars:
-            if character.get_master() != who_asking: return True
-        return False
-
-    def has_ally(self, who_asking):
-        for character in self.chars:
-            if character.get_master() == who_asking: return True
-        return False
-
-    def to_path(self, who_asking):
-        return Path(self.pos, self.has_enemy(who_asking), self.has_ally(who_asking))
-    
-    def __lt__(self, cell):
-        return self.pos[0]<cell.pos[0] if self.pos[0] != cell.pos[0] else self.pos[1]<cell.pos[1]
-
-    def __le__(self, cell):
-        return True if self.pos[0]<cell.pos[0] else True if self.pos[1]<cell.pos[1] else self.__eq__(cell)
-
-    def __gt__(self, cell):
-        return self.pos[0]>cell.pos[0] if self.pos[0] != cell.pos[0] else self.pos[1]>cell.pos[1]
-    
-    def __ge__(self, cell):
-        return True if self.pos[0]>cell.pos[0] else True if self.pos[1]>cell.pos[1] else self.__eq__(cell)
-    
-    def __eq__(self, cell):
-        return all(mine == his for mine, his in zip (self.pos, cell.pos))
-
-    def __hash__(self):
-        return hash(self.pos)
-
-class LoadingScreen(Screen):
-    def __init__(self, id_, event_id, resolution, text, loading_sprite = None, **params):
-        super().__init__(id_, event_id, resolution, **params)
-        self.full_sprite    = self.generate_load_sprite(loading_sprite)
-        self.loading_sprite = self.copy_sprite(0, *self.full_sprite)
-        self.real_rect_sprt = (tuple(x//y for x, y in zip(self.loading_sprite[0].rect.size, self.resolution)),\
-                            tuple(x//y for x, y in zip(self.loading_sprite[0].rect.topleft, self.resolution)))
-        self.index_sprite   = 0
-
-        self.text_sprite    = TextSprite(self.id, (int(0.6*self.resolution[0]), int(0.1*self.resolution[1])), text=text)
-        self.text_sprite.set_position(self.resolution, 0)
-        self.count          = 0
-    
-    def generate_load_sprite(self, path, degrees=45):
-        sprite = pygame.sprite.Sprite()
-        sprite.image        = pygame.image.load(IMG_FOLDER+"//loading_circle.png") if path is None else pygame.image.load(path)
-        sprite.rect         = sprite.image.get_rect()
-        sprite.rect.topleft = (self.resolution[0]//2-sprite.rect.width//2, self.resolution[1]-sprite.rect.height*1.5)
-        return UtilityBox.rotate(sprite, 360//8, 8, include_original=True)
-    
-    def update(self):
-        if self.count is 100:
-            self.index_sprite = 0 if self.index_sprite is (len(self.loading_sprite)-1) else self.index_sprite+1
-            self.count = 0
-        else: self.count+=1
-
-    def draw(self, surface):
-        super().draw(surface)
-        surface.blit(self.loading_sprite[self.index_sprite].image, self.loading_sprite[self.index_sprite].rect)
-        surface.blit(self.text_sprite.image, self.text_sprite.rect)
-        self.update()
-
-    def copy_sprite(self, new_size, *sprite_list):
-        sprites_copy = []
-        for sprite in sprite_list:
-            spr = pygame.sprite.Sprite()
-            spr.image, spr.rect = sprite.image.copy(), sprite.rect.copy()
-            sprites_copy.append(spr)
-        return sprites_copy
-
-    def update_resolution(self, resolution):
-        super().update_resolution(resolution)
-        #for sprite in self.loading_sprite:
-            #sprite.image = pygame.transform.smoot
 
 class Board(Screen):
     __default_config = {'circles_per_lvl':  16,
@@ -117,17 +25,13 @@ class Board(Screen):
         super().__init__(id_, event_id, resolution, **params)
         self.turn           = -1
         UtilityBox.check_missing_keys_in_dict(self.params, Board.__default_config)
+        
         #Graphic elements
         self.loading        = LoadingScreen(id_, event_id, resolution, "Loading, hang tight like a japanese pussy", background_path=IMG_FOLDER+"//loading_background.png")
-        
         self.cells          = pygame.sprite.Group()
-        self.quadrants      = {-1: [], #in the middle of AXISES, COULD BE UNUSED
-                                0: [],
-                                1: [],
-                                2: [],
-                                3: []
-        }
+        self.quadrants      = {}
 
+        self.possible_paths = pygame.sprite.Group() #To save cells that are destinations of the character
         self.trans_paths    = pygame.sprite.Group() #TODO Did you just assume my type?
         self.paths          = pygame.sprite.Group()
         self.characters     = pygame.sprite.OrderedUpdates()
@@ -136,18 +40,22 @@ class Board(Screen):
         self.active_char    = pygame.sprite.GroupSingle()
         self.drag_char      = pygame.sprite.GroupSingle()
         self.platform       = None
+        self.temp_infoboard=None
+        
         #Paths and maping
         dimensions          = (self.params['circles_per_lvl']*self.params['max_levels'], self.params['circles_per_lvl']*self.params['max_levels'])
-        self.map            = numpy.zeros(dimensions, dtype=int)        #Contains characters
         self.distances      = numpy.full(dimensions, -888, dtype=int)   #Says the distance between cells
         self.enabled_paths  = numpy.zeros(dimensions, dtype=bool)       #Shows if the path exist
-        self.current_map    = []
+        self.current_map    = {}
+        self.changed_cells  = ["platano"] #Simply coordinates
+        
         #Players 
         self.total_players  = 0
         self.loaded_players = 0
         self.players        = []
         self.player_index   = 0
         self.add_players(*players)
+        
         #Final of all
         self.generate()
         self.map_board()
@@ -158,6 +66,7 @@ class Board(Screen):
             for character in player.characters: 
                 character.change_size((self.cells.sprites()[0].rect.width, self.cells.sprites()[0].rect.width))
                 c = random.choice(self.quadrants[player.order])
+                c.add_char(character)
                 character.rect.center = c.rect.center
                 self.characters.add(character)
                 LOG.log('DEBUG', "Character ", character.id, " spawned with position ", c.pos)
@@ -201,7 +110,7 @@ class Board(Screen):
         index=0
         while angle < two_pi:
             position    = (center[0]+(radius*math.cos(angle))-circle_radius, center[1]+(radius*math.sin(angle))-circle_radius) 
-            cells.append(Cell(Circle(position, (circle_radius*2, circle_radius*2)), (lvl, index)))
+            cells.append(Cell(Circle(position, (circle_radius*2, circle_radius*2)), (lvl, index), lvl*circle_number+index))
             index       += 1
             angle       += distance
         return cells
@@ -240,8 +149,8 @@ class Board(Screen):
                     self.enabled_paths[index][index+1], self.enabled_paths[index+1][index] = True, True
                 #Conencting oneself
                 self.enabled_paths[index][index] = True
-
-        #LOG.log('DEBUG', "Paths of this map: \n", self.enabled_paths)          
+            
+        LOG.log('DEBUG', "Paths of this map: \n", self.enabled_paths)          
 
     def __map_distances(self): #TODO parse distances in the opposite path (0->15 is not 15, its 1 because its a circle)
         lvls, circles = self.params['max_levels'], self.params['circles_per_lvl'], 
@@ -271,7 +180,6 @@ class Board(Screen):
 
         self.__parse_two_way_distances()
         LOG.log('DEBUG', "Distances of this map: \n", self.distances)  
-        raise Exception("except")
 
     def __parse_two_way_distances(self):
         #Parse also ends of the circle
@@ -299,6 +207,17 @@ class Board(Screen):
     def __get_outside_circle(self, index):
         return self.params['circles_per_lvl']+(index*(self.params['circles_per_lvl']//4)+self.params['initial_offset'])
 
+    def __update_map(self): #TODO wwe have to use only changed cells to update, right now doing everything
+        self.current_map.clear()
+        self.changed_cells.clear()
+        for cell in self.cells.sprites():   #They are already ordered
+            self.current_map[cell.index] = cell.to_path("Yes") #TODO change this shit
+        #for key, path in self.current_map.items():
+            #LOG.log('DEBUG', "Dictionary ", key," -> Cell ", path.pos, " with real index ", path.index, " have a path object ", path)
+
+    def drop_char(self):
+        pass
+
     def generate(self):
         self.platform       = Rectangle((int(self.resolution[0]*0.025), int(self.resolution[1]*0.025)), (int(self.resolution[1]*0.95), int(self.resolution[1]*0.95)))
         self.generate_all_cells()
@@ -310,7 +229,7 @@ class Board(Screen):
         ratio   = self.platform.rect.height//(2*self.params['max_levels'])
         radius  = 0
         small_radius = ratio//4 if custom_radius is None else custom_radius
-        cell = Cell(Circle(tuple(x-small_radius for x in self.platform.rect.center), (small_radius*2, small_radius*2)), (0, -1))
+        cell = Cell(Circle(tuple(x-small_radius for x in self.platform.rect.center), (small_radius*2, small_radius*2)), (0, -1), -1)
         self.cells.add(cell)
         for i in range (0, self.params['max_levels']):
             radius      += ratio
@@ -322,6 +241,7 @@ class Board(Screen):
 
     def generate_paths(self, offset=False):
         self.paths.empty()
+        self.trans_paths.empty()
         self.active_path.empty()
         ratio = self.platform.rect.width//self.params['max_levels']
         radius = ratio//2-ratio//6 if offset else ratio//2
@@ -368,6 +288,7 @@ class Board(Screen):
 
     def draw(self, surface, hitboxes=False, fps=True, clock=None):
         if self.ALL_PLAYERS_LOADED():
+            if len(self.changed_cells) > 0:     self.__update_map() #TODO do this in another method, ni mouse handler would be good
             super().draw(surface)                                                                           #Draws background
             surface.blit(self.platform.image, self.platform.rect)                                           #Draws board
             self.paths.draw(surface)                                                                        #Draws paths between cells
@@ -390,6 +311,7 @@ class Board(Screen):
             if fps:         UtilityBox.draw_fps(surface, clock)
         else:
             self.loading.draw(surface)
+        self.temp_infoboard.draw(surface)
         pygame.display.update()
         
     def event_handler(self, event, keys_pressed, mouse_buttons_pressed, mouse_movement=False, mouse_pos=(0, 0)):
@@ -406,6 +328,9 @@ class Board(Screen):
                 LOG.log('INFO', 'Selected ', self.active_char.sprite.id)
                 self.drag_char.add(self.active_char.sprite)
                 self.drag_char.sprite.set_selected(True)
+                #TODO BIG SHIT HERE, THIS IT A BETA METHOD. ASSIGN TO SOMETHING FUCK
+                self.drag_char.sprite.generate_paths(self.enabled_paths, self.current_map, self.distances, self.active_cell.sprite.to_path("YES")) 
+                #TODO Change name of who asking
         elif event.type == pygame.MOUSEBUTTONUP:  #If we are dragging it we will have a char in here
             if self.drag_char.sprite is not None:
                 LOG.log('INFO', 'Dropped ', self.drag_char.sprite.id)

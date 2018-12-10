@@ -114,6 +114,11 @@ class UtilityBox (object):
             curr_angle += angle
         return sprites[1:] if not include_original else sprites
 
+    @staticmethod
+    def draw_grid(surface, rows, columns, color=(255, 0, 0)):
+        for i in range(0, surface.get_height(), surface.get_height()//rows):    pygame.draw.line(surface, color, (0, i), (surface.get_width(), i))
+        for i in range(0, surface.get_width(), surface.get_width()//columns):   pygame.draw.line(surface, color, (i, 0), (i, surface.get_height()))
+
     '''@staticmethod
     def AAfilledRoundedRect(surface, rect, color, radius=0.4):
 

@@ -568,3 +568,82 @@ class Character(pygame.sprite.Sprite):
             LOG.log('DEBUG',"Loading character ", name, " of player ", player_name)
         return characters
     #TODO make those whiles in a method, this shit repeats a lot of code
+
+    #map is of type numpy, and paths of type 
+    def generate_paths(self, circle_number, existing_paths, type_paths, initial_pos): #TODO Initial pos is a pasth and we are passing it as a utple
+        print("Searching paths for "+self.id)
+        possible_paths  = []    #All solutions
+        current_path    = []    #Currebt solutionb
+        checked         = []    #Checked already    
+        to_check        = [(initial_pos, initial_pos)] #Both are paths type objects. Every objects of us is (path, path)
+        step            = 0     #Simply index
+        while len(to_check) > 0:
+            current_square     = to_check.pop(-1)
+            current_path.append(current_square)
+            if step is self.movement.dist:
+                self.__add_path(current_path, possible_paths)
+                current_path.pop(-1)
+                current_square  = current_path[-1]
+                step            -= 1
+            else:
+                for i in range (0, len(existing_paths[current_square[1].index])):
+                for dest_cell in existing_paths[current_square[1].index]: #Existing paths only contains booleans
+                    next_step = (current_square[1], dest_cell)
+                    if next_step not in checked and next_step not in to_check:
+                        if self.valid_mvnt(initial_pos, dest_cell):
+                            to_check.append(next_step)
+            if current_square[1] not in to_check[-1][0]:
+                current_path.pop(-1)
+                current_square = current_path[-1]
+                step        -= 1
+                #delete last one
+            step            += 1
+        return possible_paths
+    #PRIESTESS IS EASY! Only have to check which cells are in the same lvl and index, and she can move to those if there exists pathss!!!
+
+    #map is of type numpy, and paths of type 
+    def generate_paths(self, circle_number, existing_paths, type_paths, initial_pos): #TODO Initial pos is a pasth and we are passing it as a utple
+        print("Searching paths for "+self.id)
+        possible_paths  = []    #All solutions
+        current_path    = []    #Currebt solutionb
+        checked         = []    #Checked already    
+        to_check        = [(initial_pos, initial_pos)] #Both are paths type objects. Every objects of us is (path, path)
+        step            = 0     #Simply index
+        while len(to_check) > 0:
+            current_square     = to_check.pop(-1)
+            current_path.append(current_square)
+            if step is self.movement.dist:
+                self.__add_path(current_path, possible_paths)
+                current_path.pop(-1)
+                current_square  = current_path[-1]
+                step            -= 1
+            else:
+                for i in range (0, len(existing_paths[current_square[1].index])):
+                for dest_cell in existing_paths[current_square[1].index]: #Existing paths only contains booleans
+                    next_step = (current_square[1], dest_cell)
+                    if next_step not in checked and next_step not in to_check:
+                        if self.valid_mvnt(initial_pos, dest_cell):
+                            to_check.append(next_step)
+            if current_square[1] not in to_check[-1][0]:
+                current_path.pop(-1)
+                current_square = current_path[-1]
+                step        -= 1
+                #delete last one
+            step            += 1
+        return possible_paths
+    #PRIESTESS IS EASY! Only have to check which cells are in the same lvl and index, and she can move to those if there exists pathss!!!
+    
+    def __assign_quadrant(self, cell, container_center, count_axis=False):
+        x, y = cell.rect.center[0], cell.rect.center[1]
+        center_x, center_y = container_center[0], container_center[1]
+        if 0 < abs(x - center_x) < 2: x = center_x
+        if 0 < abs(y - center_y) < 2: y = center_y
+        if not count_axis:  quadrant = 0 if (x>=center_x and y<center_y) else 1 if (x>center_x and y>=center_y)\
+                            else 2 if (x<=center_x and y>center_y) else 3
+        else:               quadrant = 0 if (x>center_x and y<center_y) else 1 if (x>center_x and y>center_y)\
+                             else 2 if (x<center_x and y>center_y) else 3 if (x<center_x and y<center_y) else -1
+        
+        #LOG.log('DEBUG', "Cell with pixel pos x, y => " , x, ", ", y, ", center => ", center_x, ", ", center_y,\
+        #", quadrant => ", quadrant, ", cell => ", cell.get_level(), ", ", cell.get_index())
+        self.quadrants[quadrant].append(cell)
+    

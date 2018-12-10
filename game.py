@@ -132,8 +132,7 @@ class Game(object):
                 loop = self.event_handler(pygame.event.get())
             sys.exit()
         except Exception as exc:
-            LOG.exception(exc)
-
+            raise exc
 #List of (ids, text)
 if __name__ == "__main__":
     resolutions = ((1280, 720), (1366, 768), (1600, 900), (640, 480), (800, 600), (1024, 768), (1280, 1024))
@@ -172,7 +171,16 @@ if __name__ == "__main__":
                 buttonRes, buttonCountPlayers, buttonNumPawns, buttonNumWarriors, buttonNumWizards, buttonNumPriestess, background_path=IMG_FOLDER+'\\background.jpg')
 
     main_board = Board("main_board", pygame.USEREVENT+7, res, background_path = IMG_FOLDER+'\\board_2.jpg')
-    main_board.create_player("Zippotudo", 0, {"pawn":2, "warrior":1, "wizard":1, "priestess":1}, (100, 100))
+
+    textSprite1 = TextSprite("testSprite", "YESSS", (200, 100))
+    textSprite2 = TextSprite("testSprite", "NOOOO", (200, 100))
+    textSprite3 = TextSprite("testSprite", "SIIII", (200, 100))
+    textSprite4 = TextSprite("testSprite", "NUUUUmale", (600, 100))
+                            #id_, userevent, element_position, element_size, canvas_size, *elements, **params
+    infoboard = InfoBoard("test", USEREVENT+2, (0, 0), (400, 400), res, (textSprite1, 1), (textSprite2, 2), (textSprite3, 3), (textSprite4, 6))
+    main_board.temp_infoboard = infoboard
+    main_board.create_player("Zippotudo", 0, {"pawn":1, "warrior":1, "wizard":1, "priestess":1}, (100, 100))
+    main_board.create_player("Zippotudo_2", 0, {"pawn":1, "warrior":1, "wizard":1, "priestess":1}, (100, 100))
     
     #TODO EACH PLAYERS GETS HIS INFOBOARD
     game = Game(main_menu, sound_menu, params_menu, main_board, title="Sava Drow", resolution=res)

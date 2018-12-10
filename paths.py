@@ -5,11 +5,18 @@ IMG_FOLDER = os.path.join(GAME_FOLDER, 'img')
 SOUND_FOLDER = os.path.join(GAME_FOLDER, 'sounds')
 @functools.total_ordering
 class Path(object):
-    def __init__(self, grid_pos, ally, enemy):
-        self.pos = grid_pos
-        self.ally = ally
-        self.enemy = enemy
+    def __init__(self, grid_pos, ally, enemy, real_index):
+        self.pos    = grid_pos
+        self.index  = real_index
+        self.ally   = ally
+        self.enemy  = enemy
     
+    def get_lvl(self):
+        return self.pos[0]
+    
+    def get_index(self):
+        return self.pos[1]
+
     def has_enemy(self):
         return self.enemy
         

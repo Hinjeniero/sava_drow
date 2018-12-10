@@ -3,10 +3,10 @@ from polygons import *
 from resizer import Resizer
 from pygame_test import PygameSuite
 from colors import *
-from exceptions import *
+from exceptions import InvalidUIElementException, BadUIElementInitException, InvalidCommandValueException, TooManyElementsException
 from utility_box import UtilityBox
 
-__all__ = ["UIElement", "ButtonAction", "ButtonValue", "Slider", "InfoBoard", "Dialog"]
+__all__ = ["TextSprite", "UIElement", "ButtonAction", "ButtonValue", "Slider", "InfoBoard", "Dialog"]
 
 MIN_ANIMATION_VALUE     = 0.00
 MAX_ANIMATION_VALUE     = 1.00
@@ -22,37 +22,45 @@ class TextSprite(pygame.sprite.Sprite):
     __default_config = {'font': None,
                         'max_font_size' : 200,
                         'font_size'     : 0,
-                        'text'          : "None",
                         'color'         : WHITE,
                         'position'      : (0, 0)
     }
     #def __init__(self, font, rect_size, max_font_allowed, text, text_color, position=(0,0), source_rect=None, alignment=0):
-    def __init__(self, _id, rect, **params):
+    def __init__(self, _id, text, rect, **params):
         super().__init__()
         self.id     = _id
+        self.text   = text
         self.params = TextSprite.__default_config.copy()
         self.params.update(params)
-        self.generate(rect)  
+        self.generate(text, rect)  
+    
+    def draw(self, surface, offset=(0, 0)):
+        if offset != (0, 0):    surface.blit(self.image, tuple([x+y for x,y in zip(offset, self.rect.topleft)]))
+        else:                   surface.blit(self.image, self.rect)
 
     def set_text(self, text):   #Longer string, different size must me used
-        self.image  = pygame.font.Font(self.font, self.size).render(text, True, self.color)
-        self.rect   = pygame.Rect(self.rect.topleft, self.image.get_size())
+        if len(text) is not len(self.text):
+            self.generate(text)
+        else:
+            self.image  = pygame.font.Font(self.font, self.size).render(text, True, self.color)
+            self.rect   = pygame.Rect(self.rect.topleft, self.image.get_size())
+        self.text       = text
 
     def set_position(self, source_rect, alignment, offset=(0, 0)):
         if isinstance(source_rect, tuple):  source_rect = pygame.Rect((0, 0), source_rect)
-        elif not isinstance(source_rect, pygame.Rect):  raise Exception("SHIT") #TODO proper exception
+        elif not isinstance(source_rect, pygame.Rect):  raise BadUIElementInitException("Source rect of text sprite must be a tuple or a rect")
         x_pos               = int(source_rect.width*0.02) if alignment is 1 \
             else            source_rect.width-self.image.get_width() if alignment is 2 \
             else            (source_rect.width//2)-(self.image.get_width()//2)
         y_pos               = (source_rect.height//2)-(self.image.get_height()//2)
         self.rect.topleft   = [x+y for x,y in zip(offset, (x_pos, y_pos))]
 
-    def generate(self, rect=None):
+    def generate(self, text, rect=None):
         if rect is not None and isinstance(rect, pygame.Rect):              self.rect = rect
         elif rect is not None and isinstance(rect, (list, tuple)):          self.rect = pygame.Rect(self.params["position"], rect)
         elif rect is not None:                                              raise BadUIElementInitException("Can't create text sprite, wrong rect")
-        self.params['font_size']    = Resizer.max_font_size(self.params['text'], self.rect.size, self.params['max_font_size'], self.params['font'])
-        self.image                  = pygame.font.Font(self.params['font'], self.params['font_size']).render(self.params['text'], True, self.params['color'])
+        self.params['font_size']    = Resizer.max_font_size(text, self.rect.size, self.params['max_font_size'], self.params['font'])
+        self.image                  = pygame.font.Font(self.params['font'], self.params['font_size']).render(text, True, self.params['color'])
             
 #Graphical element, automatic creation of a menu's elements
 class UIElement(pygame.sprite.Sprite):
@@ -164,10 +172,11 @@ class UIElement(pygame.sprite.Sprite):
         self.image          = None                                      #Will be assigned a good object in the next line
         self.image_original = None
         self.mask           = None                                      #TODO to use in the future
-        #Animation
+        #Animation and showing
         self.animation_value= 0
         self.animation_step = ANIMATION_STEP
         self.overlay        = None
+        self.visible        = True
         #Final method to create the complete object
         self.generate()                                               #Generate the first sprite and the self.image attribute
 
@@ -184,6 +193,9 @@ class UIElement(pygame.sprite.Sprite):
     def get_canvas_size(self):
         return tuple([x//y for x,y in zip(self.rect.size, self.real_rect[1])])
 
+    def set_visible(self, visible):
+        self.visible = visible
+
     def add_text(self, text, font, canvas_rect, text_rect, max_font_size, text_color, alignment): 
         '''Generates and adds sprite-based text object following the input parameters.
         Args:
@@ -198,12 +210,17 @@ class UIElement(pygame.sprite.Sprite):
             #surface.blit(text_surf, (x_pos, y_pos))
             #return text_surf, pygame.Rect(x_pos, y_pos, text_surf.get_size())
         '''
-        text = TextSprite(self.get_id()+"_text", text_rect, font=font, max_font_size=max_font_size, text=text, text_color=text_color)
+        text = TextSprite(self.get_id()+"_text", text, text_rect, font=font, max_font_size=max_font_size, text_color=text_color)
         text.set_position(canvas_rect, alignment)
         self.pieces.add(text)  
 
+    def draw(self, surface, offset=(0, 0)):
+        if self.visible:
+            if offset != (0, 0):    surface.blit(self.image, tuple([x+y for x,y in zip(offset, self.rect.topleft)]))
+            else:                   surface.blit(self.image, self.rect)
+
     def draw_text(self, text, font, canvas_rect, text_rect, max_font_size, text_color, alignment):
-        text = TextSprite(self.get_id()+"_text", text_rect, font=font, max_font_size=max_font_size, text=text, text_color=text_color)
+        text = TextSprite(self.get_id()+"_text", text, text_rect, font=font, max_font_size=max_font_size, text_color=text_color)
         text.set_position(canvas_rect, alignment)
         self.image.blit(text.image, text.rect)
     
@@ -491,33 +508,46 @@ class Slider (UIElement):
 
 class InfoBoard (UIElement):
     #The default config of a subclass contains only those parameters that the superclass does not mention
-    __default_config = {'rows'      : 1,
-                        'columns'   : 1 
+    __default_config = {'rows'  : 6,
+                        'cols'  : 3 
     }
-    def __init__(self, id_, user_event_id, element_position, element_size, canvas_size, set_of_values, *elements, **params):
-        super().__init__(id_, user_event_id, element_position, element_size, **params)    
-        self.sprites = pygame.sprite.Group()
-        for element in elements:  self.sprites.add(element)
+    def __init__(self, id_, user_event_id, element_position, element_size, canvas_size, *elements, **params):
+        super().__init__(id_, user_event_id, element_position, element_size, canvas_size, **params)    
+        self.sprites        = pygame.sprite.Group()
         UtilityBox.check_missing_keys_in_dict(self.params, InfoBoard.__default_config)     #Totally needed after the update of params in super.init()
-        
+        self.spaces         = self.params['rows']*self.params['cols']
+        self.taken_spaces   = 0
+        self.add_and_adjust_sprites(*elements)
+ 
+    def draw(self, surface):
+        if self.visible:
+            super().draw(surface)
+            for sprite in self.sprites: sprite.draw(surface, offset=self.rect.topleft)
 
     def update(self):
         pass
-        
-    def adjust_sprites(self):
-        if len(self.sprites) > self.params['rows']*self.params['columns']:  
-            self.params['rows'] = math.ceil(len(self.strings)//self.params['columns'])
-        size    = (self.rect.width//self.params['columns'], self.rect.height//self.params['rows'])     #Size per element
-        pos     = [0, 0]
-        sprites = self.strings.sprites()
-        for i in range(0, self.paramns['rows']):
-            pos[0]  = 0
-            for j in range(0, self.paramns['columns']):
-                index = i*self.paramns['columns']+j
-                sprites[index].generate(size)
-                sprites[index].set_position(size, 0, offset=pos)  #If we used the self.rect, we would only have one sprite in the board
-                pos[0] += size[0]
-            pos[1]  += size[1]
+    
+    #Modify to also add elements when there are elements inside already
+    def add_and_adjust_sprites(self, *elements, element_scale=0.95):
+        UtilityBox.draw_grid(self.image, 6, 3)
+        rows, columns       = self.params['rows'], self.params['cols']
+        size_per_element    = (self.rect.width//columns, self.rect.height//rows)
+        for element in elements:
+            current_pos         = ((self.taken_spaces%columns)*size_per_element[0], (self.taken_spaces//columns)*size_per_element[1])
+            spaces = element[1]
+            if not isinstance(element, tuple):  raise BadUIElementInitException("Elements of infoboard must follow the [(element, spaces_to_occupy), ...] scheme")
+            if spaces > columns:    spaces = columns*math.ceil(spaces/columns) #Other type of occupied spaces are irreal
+            #if spaces%columns = 0 FULL WIDTH
+            height_ratio = columns if spaces>=columns else spaces%columns
+            ratios              = (height_ratio, math.ceil(spaces/columns)) #Width, height
+            element_size        = tuple([x*y for x,y in zip(size_per_element, ratios)])
+            #element[0].image = pygame.transform.smoothscale(element[0].image, element_size) #This was just to test how it looks like
+            Resizer.resize_same_aspect_ratio(element[0], tuple([x*element_scale for x in element_size]))
+            current_center      = [x+y//2 for x,y in zip(current_pos, element_size)]
+            element[0].rect.center   = tuple(x for x in current_center)
+            self.sprites.add(element[0])
+            self.taken_spaces   += spaces 
+            if self.taken_spaces > self.spaces: raise TooManyElementsException("Too many elements in infoboard") 
 
 class Dialog (UIElement):
     #The default config of a subclass contains only those parameters that the superclass does not mention

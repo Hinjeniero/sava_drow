@@ -646,4 +646,363 @@ class Character(pygame.sprite.Sprite):
         #LOG.log('DEBUG', "Cell with pixel pos x, y => " , x, ", ", y, ", center => ", center_x, ", ", center_y,\
         #", quadrant => ", quadrant, ", cell => ", cell.get_level(), ", ", cell.get_index())
         self.quadrants[quadrant].append(cell)
+
+#POLYGONS
+
+    @staticmethod
+    def generate_surface (surf_size, radius, surf_color, use_gradient, start_color, end_color, border, border_size, border_color):
+        """Generates a transparent surface with a circle drawn in it (According to parameters).
+        
+        Args:
+            surf_size: Rect or tuple containing the dimensions of the surface (width, height)
+            radius: Radius of the drawn circle
+            surf_color: Solid color of the circle. 
+            use_gradient: True if we want a circle w/ a gradient. Priority over solid colors.
+            start_color: Starting color of the gradient. Only if gradient is True.
+            end_color: Ending color of the gradient. Only if gradient is True.
+            border: True if the circle has a border.
+            border_size: Size of the border in pixels.
+            border_color: Color of the border. RGBA/RGB format.
+        
+        Returns:
+            A surface containing the circle.
+        """
+        surf = pygame.Surface(surf_size)
+        if use_gradient: surf = gradients.radial(radius, start_color, end_color) 
+        else: pygame.draw.circle(surf, surf_color, (radius, radius), radius, 0)
+        if border: pygame.draw.circle(surf, border_color,(radius, radius), radius, border_size)
+        if type(surf_size) is pygame.Rect:
+            return surf, surf_size
+        else:       #We need a coordinate to create a Rect, so if the size is a tuple, 0,0 will it be.
+            return surf, pygame.Rect((0,0)+surf_size)
+
+
+    @staticmethod
+    def generate_surface(surf_size, image, surf_color, use_gradient, start_color, end_color, gradient_type, border, border_size, border_color):
+        """Generates a transparent surface with a rectangle drawn in it (According to parameters).
+        The rectangle will leave no transparent pixels, taking up all the surface space.
+
+        Args:
+            surf_size: Rect or tuple containing the dimensions of the surface (width, height)
+            image: Texture to draw in the surface. Priority over solid colors and gradients.
+            surf_color: Solid color of the circle. Only if use_gradient is False.
+            use_gradient: True if we want a circle w/ a gradient. 
+            start_color: Starting color of the gradient. Only if gradient is True.
+            end_color: Ending color of the gradient. Only if gradient is True.
+            border: True if the circle has a border.
+            border_size: Size of the border in pixels.
+            border_color: Color of the border. RGBA/RGB format.
+        
+        Returns:
+            A surface containing the Rectangle.
+        #surf = Resizer.resize_same_aspect_ratio(pygame.image.load(image).convert_alpha(), surf_size)
+        #if border: border = pygame.mask.from_surface(surf, 200)         #If image needs a border, mask. Not using it right now TODO
+        """
+        surf_size   = tuple([int(x) for x in surf_size])
+        if image:   surf = pygame.transform.smoothscale(pygame.image.load(image).convert_alpha(), surf_size)
+        else:
+            surf    = pygame.Surface(surf_size)
+            if use_gradient:    surf = gradients.vertical(surf_size, start_color, end_color) if gradient_type == 0 else gradients.horizontal(surf_size, start_color, end_color) #Checking if gradient and type of gradient
+            else:               surf.fill(surf_color)
+            if border and border_size is not 0: pygame.draw.rect(surf, border_color,(0,0)+surf_size, border_size) #Drawing the border in the surface, dont want no existant borders
+        
+        if type(surf_size) is pygame.Rect:      return surf, surf_size
+        else:                                   return surf, pygame.Rect((0,0)+surf_size)
     
+#OLD CHARACTER
+class Character(AnimatedSprite):
+    def __init__(self, my_player, id_, size, sprites_path):
+        LOG.log('DEBUG', "Initializing character ", id_, " of player ", my_player)
+        super().__init__()
+        self.my_master  = my_player
+        self.movement   = Restrictions()
+        self.files      = {}
+        self._sprites   = {"idle"   : [], 
+                        "run"       : [], 
+                        "walk"      : [],
+                        "attack"    : [],
+                        "hurt"      : [],
+                        "pick"      : [],
+                        "drop"      : [],
+                        "die"       : []
+        }
+        self.big_sprites= {"idle"   : [],
+                        "run"       : [], 
+                        "walk"      : [],
+                        "attack"    : [],
+                        "hurt"      : [],
+                        "pick"      : [],
+                        "drop"      : [],
+                        "die"       : []
+        }
+        self.masks      = {"idle"   : [],
+                        "run"       : [], 
+                        "walk"      : [],
+                        "attack"    : [],
+                        "hurt"      : [],
+                        "pick"      : [],
+                        "drop"      : [],
+                        "die"       : []
+        }
+        self.state      = "idle"
+        self.index      = 0
+        self.counter    = 0
+        self.hover      = False
+        self.selected   = False
+        self.load_sprites(size, sprites_path)
+    
+    def get_master(self):
+        return self.my_master
+
+    def change_size(self, size):
+        for list_ in self.sprites.values():     list_.clear()
+        for list_ in self.big_sprites.values(): list_.clear()
+        for list_ in self.masks.values():       list_.clear()
+        for sprite_path in self.files.keys():   self.__add_sprite(sprite_path, size)
+        self.rect.size = self.__current_sprite().get_size()
+
+    def move(self): #move(cols, rows, char_in_middle, char_just_near)
+        if 0: return True   #Allowed movm
+        if 1: return False  #not allowed
+
+    #This method is tested already
+    def load_sprites(self, size, sprite_path):
+        sprite_images = [sprite_path+'\\'+f for f in listdir(sprite_path) if isfile(join(sprite_path, f))]
+        for sprite_image in sprite_images:
+            if sprite_image.lower().endswith(('.png', '.jpg', '.jpeg', 'bmp')):
+                self.__add_sprite(sprite_image, size)
+        self.image  = self.__current_sprite()
+        self.rect   = pygame.Rect((200, 200), self.image.get_size())
+        self.mask   = self.__current_mask()
+    
+    def __add_sprite(self, path, size=None):
+        for action in self.sprites.keys():
+            if action in path.lower():
+                try:                self.files[path] 
+                except KeyError:    self.files[path] = pygame.image.load(path)
+                if size is None:    self.sprites[action].append(self.files[path])
+                else:               self.sprites[action].append(Resizer.resize_same_aspect_ratio(self.files[path], size))
+                self.masks[action].append(pygame.mask.from_surface(self.sprites[action][-1]))
+                big_sprite = pygame.transform.smoothscale(self.sprites[action][-1], tuple(int(x*1.25 ) for x in self.sprites[action][-1].get_size()))
+                self.big_sprites[action].append(big_sprite)
+                return
+
+    def update(self): #Make it bigger (Like when in touch with hitbox, this could be done in board itself)
+        self.counter        += 1
+        if self.counter is NEXT_SPRITE_COUNTER:
+            self.counter    = 0
+            self.animate()
+
+    def change_action(self, action):
+        try:
+            self.sprites[action]
+            self.state  = action
+            self.index  = 0
+            self.image  = self.sprites[action][self.index] #TODO big sprite here too
+        except KeyError:
+            raise BadCharacterActionException("Character doesn't have the action "+str(action))
+
+    def animate(self):
+        #if self.state is not "pick":
+        self.index  = 0 if self.index is len(self.sprites[self.state])-1 else self.index+1
+        self.image  = self.__current_sprite() if not self.hover else self.__current_big_sprite()
+        self.mask   = self.__current_mask()
+        #else:   self.index +=1 if self.index < len(self.sprites[self.state])-1 else 0
+
+    def hitbox_action(self, command, value=-1):
+        #if  "mouse" in command and "sec" in command:        self.dec_index()
+        #elif "mouse" in command and "first" in command:     self.inc_index()
+        pass
+
+    def set_selected(self, selected=True):
+        self.index  = 0
+        if selected: 
+            self.state      = "pick"
+            self.selected   = True
+        else:
+            self.state      = "idle"
+            self.selected   = False
+    
+    def is_selected(self):
+        return self.selected
+    
+    def mvnt_possible(self, source, destiny):
+        return True
+    
+    def set_hover(self, active=True):
+        if active:  self.image = self.__current_big_sprite()
+        else:       self.image = self.__current_sprite()
+        self.hover = active
+
+#UI_ELEMENT, TEXT SPRITE
+    def set_position(self, source_rect, alignment, offset=(0, 0)):
+        if isinstance(source_rect, tuple):  source_rect = pygame.Rect((0, 0), source_rect)
+        elif not isinstance(source_rect, pygame.Rect):  raise BadUIElementInitException("Source rect of text sprite must be a tuple or a rect")
+        x_pos               = int(source_rect.width*0.02) if alignment is 1 \
+            else            source_rect.width-self.image.get_width() if alignment is 2 \
+            else            (source_rect.width//2)-(self.image.get_width()//2)
+        y_pos               = (source_rect.height//2)-(self.image.get_height()//2)
+        self.rect.topleft   = [x+y for x,y in zip(offset, (x_pos, y_pos))]
+
+    def generate(self, text, rect=None):
+        if rect is not None and isinstance(rect, pygame.Rect):              self.rect = rect
+        elif rect is not None and isinstance(rect, (list, tuple)):          self.rect = pygame.Rect(self.params["position"], rect)
+        elif rect is not None:                                              raise BadUIElementInitException("Can't create text sprite, wrong rect")
+        self.params['font_size']    = Resizer.max_font_size(text, self.rect.size, self.params['max_font_size'], self.params['font'])
+        self.image                  = pygame.font.Font(self.params['font'], self.params['font_size']).render(text, True, self.params['color'])
+
+
+    def set_text(self, text):   #Longer string, different size must me used
+        if len(text) is not len(self.text):
+            self.generate(text)
+        else:
+            self.image  = pygame.font.Font(self.font, self.size).render(text, True, self.color)
+            self.rect   = pygame.Rect(self.rect.topleft, self.image.get_size())
+        self.text       = text
+
+#Dict  and methods of uielement
+    __default_config = {'texture': None,
+                        'fill_color': RED,
+                        'keep_aspect_ratio': True,
+                        'border': True,
+                        'border_width': 2,
+                        'border_color': WHITE,
+                        'fill_gradient': True,
+                        'gradient': (LIGHTGRAY, DARKGRAY),
+                        'gradient_type': 0,
+                        'overlay_color': WHITE
+    }
+
+    def draw_text(self, text, font, canvas_rect, text_rect, max_font_size, text_color, alignment):
+        text = TextSprite(self.get_id()+"_text", text, text_rect, font=font, max_font_size=max_font_size, text_color=text_color)
+        text.set_position(canvas_rect, alignment)
+        self.image.blit(text.image, text.rect)
+
+   def generate_image(self):
+        '''Generates the self.image surface, adding and drawing all the pieces that form part of the sprite.
+        The rect attribute of the pieces after the first one are the relative position over the first sprite (piece).
+        Args:       
+            None
+        Use:
+            self.pieces    
+        Returns:
+            base_surf:  Complex surface containing all the individual sprites in self.pieces. 
+        Raise:
+            IndexError: Error if the self.pieces list is empty.
+        '''
+        if len(self.pieces.sprites())<1:        raise InvalidUIElementException("Creating the image of UIElement returned None")
+        #surf                                    = pygame.Surface(self.rect.size) #Doesnt handle well transparencies
+        #surf = surf.convert_alpha()
+        surf = self.pieces.sprites()[0].image
+        for sprite in self.pieces.sprites()[1:]:       surf.blit(sprite.image, sprite.rect.topleft)
+        return surf
+
+    def generate(self, rect=None, generate_image=True):
+        '''Generates or regenerates the object, using the input rect, or the default self.rect.
+        Empty the pieces list, and generate and add the pieces using the self.params values.
+        This method can be overriden by subclasses, generating and adding different or more sprites.
+        Lastly, the generate_image method is called again, and assigned to the self.image attribute.
+        Can be used as a fancy and heavy resizer.
+        Args:
+            rect:           Rect containing the new size and position of the Element. Defaults to None and uses sef.rect.
+            generate_image: Flag. If true, self.image is generated again using generate_image().
+        Returns:
+            Nothing.
+        '''
+        if rect is not None:    self.rect, self.params["position"], self.params["size"] = rect, rect.topleft, rect.size
+        self.pieces.empty()
+        self.overlay            = pygame.Surface(self.rect.size) #TODO Not sure if this is the best place, just doing it here
+        self.overlay.fill(self.params['overlay_color']) 
+        self.pieces.add(Rectangle((0, 0), self.params['size'], self.params['texture'], self.params['color'],\
+                                self.params['border'], self.params['border_width'], self.params['border_color'],\
+                                self.params['gradient'], self.params['start_gradient'], self.params['end_gradient'], self.params['gradient_type']))
+        if generate_image:    
+            self.image          = self.generate_image()  
+            self.save_state()
+
+    def save_state(self):
+        self.image_original  =   self.image.copy()
+        self.rect_original   =   self.rect.copy()        
+
+    def load_state(self):
+        self.image  =   self.image_original.copy()
+        self.rect   =   self.rect_original.copy()
+
+#SLIDER
+    def load_state(self): #TODO The fuck the draw text here?? 
+        self.image  =   self.image_original.copy()
+        self.rect   =   self.rect_original.copy()
+        #Since the original image only contains the background text and color, we need to blit the slider and value again
+        self.image.blit(self.slider.image, self.slider.rect)    #Blitting the new slider position                                                   #Sending the event with the new value to be captured somewhere else
+        if self.params['shows_value']:  self.draw_text(str(self.get_value()), self.params['font'], self.rect,\
+                [x//3 for x in self.rect.size], self.params['max_font_size'], self.params['text_color'], 2)   
+
+#NEW SPrite methods, but wiht offset
+
+    def draw(self, surface, offset=(0, 0)):
+        if self.visible:
+            position = tuple([x+y for x,y in zip(offset, self.rect.topleft)])
+            if self.use_overlay:    self.draw_overlay(surface, offset=offset)
+            else:                   surface.blit(self.image, position)
+            self.update()
+
+    def draw_overlay(self, surface, offset=(0, 0)):
+        surface.blit(self.overlay, tuple([x+y for x,y in zip(offset, self.rect.topleft)]))
+
+#Slider again
+    def draw_slider_overlay(self, color):  #This gets calculated in each frame, this is not necessary
+        topleft         = (int(self.value*self.rect.width)-self.rect.height//6, 0)
+        center          = (int(self.value*self.rect.width), self.rect.height//2)
+        overlay_rect    = pygame.Rect(topleft, (self.rect.height//3, self.rect.height))
+        if self.params['slider_type'] is 0:     pygame.draw.circle(self.image, color, center, self.rect.height//2)
+        elif self.params['slider_type'] is 1:   pygame.draw.ellipse(self.image, color, overlay_rect)
+        else:                                   pygame.draw.rect(self.image, color, overlay_rect)
+
+#New slider
+    def draw(self, surface):
+        if self.use_overlay:
+            self.use_overlay = False #Doing this so we don't draw the default overlay
+            super().draw(surface)
+            self.use_overlay = True
+            self.draw_overlay(surface, UtilityBox.random_rgb_color())
+        else:
+            super().draw(surface)
+
+#MENU OLD MAIN
+#List of (ids, text)
+if __name__ == "__main__":
+    #Variables
+    resolution = (1280, 720)
+    pygame.init()
+    screen = pygame.display.set_mode(resolution)
+    pygame.mouse.set_visible(True)
+    clock = pygame.time.Clock()
+    timeout = 20
+
+    #Create elements
+    sli = UiElement.factory("slider1_command_action", pygame.USEREVENT, (10,10), (800, 100), (0.2))
+    but = UiElement.factory("button1_command_action", pygame.USEREVENT+1, (10, 160), (800, 100), (0, 10, 20, 30, 40))
+    sli2 = UiElement.factory("slider2_command_action",pygame.USEREVENT+2, (10, 310), (800, 100), (0), text="Slider")
+    but2 = UiElement.factory("button2_command_action",pygame.USEREVENT+3, (10, 460), (800, 100), ((50, 60, 70, 80)), text="Button")
+    sli3 = UiElement.factory("slider3_command_action",pygame.USEREVENT+4, (10, 960), (800, 100), (1), text="SuperSlider", slider_type=0, start_gradient = RED, end_gradient=BLACK, slider_start_color = RED, slider_end_color = WHITE)
+    but3 = UiElement.factory("button3_command_action",pygame.USEREVENT+5, (10, 1110), (800, 100), ((90, 100, 110)), text="SuperButton", start_gradient = GREEN, end_gradient=BLACK)
+    sli4 = UiElement.factory("slider4_command_action",pygame.USEREVENT+6, (10, 1260), (800, 100), (0.8), text="LongTextIsLongSoLongThatIsLongestEver", slider_type=2, start_gradient = RED, end_gradient=BLACK, slider_start_color = RED, slider_end_color = WHITE)
+    but4 = UiElement.factory("button4_command_action",pygame.USEREVENT+7, (10, 1410), (800, 100), (("platano", "naranja", "orange", "ouranch")), text="LongTextIsLongSoLongThatIsLongestEver", start_gradient = GREEN, end_gradient=BLACK)
+    
+    #Create Menu
+    menu = Menu("MainMenu", pygame.USEREVENT, resolution, (True, 0), sli, but, sli2, but2, sli3, but3, sli4, but4)
+    
+    #Start the test
+    loop = True
+    while loop:
+        clock.tick(144)
+        menu.draw(screen, clock=clock)       #Drawing the sprite group
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:       loop = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:    loop = False
+            elif event.type >= pygame.USEREVENT:
+                print("Received event number "+str(event.type)+", with value "+str(event.value)+ ", with command "+str(event.command))
+            if loop:            #If not exit yet                        
+                menu.event_handler(event, pygame.key.get_pressed(), pygame.mouse.get_pressed(),\
+                                    mouse_movement=(pygame.mouse.get_rel() != (0,0)), mouse_pos=pygame.mouse.get_pos())

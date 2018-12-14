@@ -7,6 +7,7 @@ from paths import IMG_FOLDER, Path
 from logger import Logger as LOG
 from decorators import run_async
 from ui_element import InfoBoard
+from sprite import AnimatedSprite
 
 __all__ = ["Player", "Character", "Warrior", "Wizard", "Priestess", "Pawn"]
 NEXT_SPRITE_COUNTER = 10
@@ -32,48 +33,14 @@ class Player(object):
     def draw_characters(self, surface, active=True):
         pass
     
-class Character(pygame.sprite.Sprite):
+class Character(AnimatedSprite):
     def __init__(self, my_player, id_, size, sprites_path):
         LOG.log('DEBUG', "Initializing character ", id_, " of player ", my_player)
         super().__init__()
         self.my_master  = my_player
-        self.id         = id_
-        self.rect       = None
-        self.image      = None
-        self.mask       = None
         self.movement   = Restrictions()
-        self.files      = {}
-        self.sprites    = {"idle"   : [], 
-                        "run"       : [], 
-                        "walk"      : [],
-                        "attack"    : [],
-                        "hurt"      : [],
-                        "pick"      : [],
-                        "drop"      : [],
-                        "die"       : []
-        }
-        self.big_sprites= {"idle"   : [],
-                        "run"       : [], 
-                        "walk"      : [],
-                        "attack"    : [],
-                        "hurt"      : [],
-                        "pick"      : [],
-                        "drop"      : [],
-                        "die"       : []
-        }
-        self.masks      = {"idle"   : [],
-                        "run"       : [], 
-                        "walk"      : [],
-                        "attack"    : [],
-                        "hurt"      : [],
-                        "pick"      : [],
-                        "drop"      : [],
-                        "die"       : []
-        }
+
         self.state      = "idle"
-        self.index      = 0
-        self.counter    = 0
-        self.hover      = False
         self.selected   = False
         self.load_sprites(size, sprites_path)
     
@@ -127,15 +94,6 @@ class Character(pygame.sprite.Sprite):
             self.image  = self.sprites[action][self.index] #TODO big sprite here too
         except KeyError:
             raise BadCharacterActionException("Character doesn't have the action "+str(action))
-    
-    def __current_sprite(self):
-        return self.sprites[self.state][self.index]
-
-    def __current_big_sprite(self):
-        return self.big_sprites[self.state][self.index]
-
-    def __current_mask(self):
-        return self.masks[self.state][self.index]
 
     def animate(self):
         #if self.state is not "pick":

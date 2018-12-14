@@ -2,6 +2,8 @@ import pygame
 from paths import *
 from utility_box import UtilityBox
 from ui_element import TextSprite
+from sprite import AnimatedSprite
+
 class Screen(object):
     __default_config = {'background_path'   : None,
                         'music_path'        : '\\music.mp3',
@@ -50,20 +52,26 @@ class Screen(object):
         pass
     
 class LoadingScreen(Screen):
-    def __init__(self, id_, event_id, resolution, text, loading_sprite = None, **params):
+    def __init__(self, id_, event_id, resolution, text, loading_sprite_path=None, **params):
         super().__init__(id_, event_id, resolution, **params)
-        self.full_sprite    = self.generate_load_sprite(loading_sprite)
-        self.loading_sprite = self.copy_sprite(0, *self.full_sprite)
-        self.real_rect_sprt = (tuple(x//y for x, y in zip(self.loading_sprite[0].rect.size, self.resolution)),\
-                            tuple(x//y for x, y in zip(self.loading_sprite[0].rect.topleft, self.resolution)))
-        self.index_sprite   = 0
-
-        self.text_sprite    = TextSprite(self.id, text, (int(0.6*self.resolution[0]), int(0.1*self.resolution[1])))
-        self.text_sprite.set_position(self.resolution, 0)
+        self.loading_sprite, self.text_sprite = self.generate_sprites(text, loading_sprite_path=loading_sprite_path)
         self.count          = 0
     
+    def generate_sprites(self, text, loading_sprite_path=None):
+        loading_sprite  = None
+        load_sprites    = self.generate_load_sprite(loading_sprite_path)
+        if loading_sprite_path:
+            loading_sprite  = AnimatedSprite(self.id+'_loading_sprite', load_sprites[0].rect.topleft,\
+                            load_sprites[0].rect.size, self.resolution, *(load_sprites))
+
+        text_size   = (int(0.6*self.resolution[0]), int(0.1*self.resolution[1]))
+        text_pos    = tuple([x//2-y//2 for x, y in zip(self.resolution, text_size)])
+        text_sprite = TextSprite(self.id+'_text', text_pos, text_size, self.resolution, text)
+
+        return loading_sprite, text_sprite
+
     def generate_load_sprite(self, path, degrees=45):
-        sprite = pygame.sprite.Sprite()
+        sprite              = pygame.sprite.Sprite()
         sprite.image        = pygame.image.load(IMG_FOLDER+"//loading_circle.png") if path is None else pygame.image.load(path)
         sprite.rect         = sprite.image.get_rect()
         sprite.rect.topleft = (self.resolution[0]//2-sprite.rect.width//2, self.resolution[1]-sprite.rect.height*1.5)
@@ -81,9 +89,9 @@ class LoadingScreen(Screen):
         surface.blit(self.text_sprite.image, self.text_sprite.rect)
         self.update()
 
-    def copy_sprite(self, new_size, *sprite_list):
+    def copy_sprite(self, new_size, *sprites):
         sprites_copy = []
-        for sprite in sprite_list:
+        for sprite in sprites:
             spr = pygame.sprite.Sprite()
             spr.image, spr.rect = sprite.image.copy(), sprite.rect.copy()
             sprites_copy.append(spr)

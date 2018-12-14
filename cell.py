@@ -58,27 +58,30 @@ class Cell(pygame.sprite.Sprite):
 class Quadrant(object):
     def __init__(self, id_, *cells):
         self.id     = id_
+        self.cells  = pygame.sprite.Group()
         self.center = pygame.sprite.Group()
         self.border = pygame.sprite.Group()
         self.lvl    = (0, 0)        #interval to return pseudo cells (exterior-border-center, and shit like that)
         self.index  = (0, 0)
-        self.get_intervals()
+        self.get_intervals(*cells)
         self.sort_cells()
 
     def get_cell(self):
         pass
 
-    def get_random_cell(self):
-        pass
+    def get_random_cell(self, restriction=None):
+        return random.choice(self.cells) if restriction is None else random.choice(self.cells) #TODO Do this shit properly here
 
     def get_intervals(self, *cells):
         indexes, levels = tuple([cell.get_index() for cell in cells]), tuple([cell.get_level() for cell in cells])
+        print("INDEXES"+str(indexes))
         self.lvl, self.index = (min(indexes), max(indexes)), (min(levels), max(levels))
 
     def sort_cells(self, *cells):
         for cell in cells:  self.__sort_cell(cell, *cells)
     
     def __sort_cell(self, cell, *cells):
+        self.cells.add(cell)
         less_lvl, more_lvl, less_index, more_index = False, False, False, False
         for other_cell in cells:
             if all(less_lvl, more_lvl, less_index, more_index): 

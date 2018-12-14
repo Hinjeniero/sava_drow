@@ -1,4 +1,5 @@
 import numpy, math, time, pygame, gradients, random 
+from sprite import Sprite
 
 def euclidean_generator(dimension=300, print_time=False): #100 will be plenty in our case
     start = time.time()
@@ -92,13 +93,13 @@ class UtilityBox (object):
             x+=step[1]
 
     @staticmethod
-    def check_missing_keys_in_dict(dict_to_add_keys, dict_to_search_keys):
+    def join_dicts(dict_to_add_keys, dict_to_search_keys):
         for key in dict_to_search_keys.keys(): 
             key = key.lower().replace(" ", "_")
             if key not in dict_to_add_keys: dict_to_add_keys[key] = dict_to_search_keys[key]
 
     @staticmethod
-    def rotate(sprite, angle, iterations, offset=0, include_original=False): #TODO BE CAREFUL WITH THE REFERENCES, DUNNO IF THE LIST OF SPRITES ARE DIFFERENT SPRITERS!
+    def rotate(sprite, angle, iterations, offset=0, include_original=False):
         #TODO implement difference between sprite and surface, to make it a valid method for both
         sprites         = [sprite] 
         orig_surface    = sprite.image

@@ -6,7 +6,7 @@ import ptext #Gradients in text
 from polygons import *
 from colors import *
 from screen import Screen, LoadingScreen
-from cell import Cell
+from cell import Cell, Quadrant
 from exceptions import BadPlayersParameter, BadPlayerTypeException, PlayerNameExistsException
 from decorators import run_async
 from players import Player
@@ -15,7 +15,9 @@ from ui_element import TextSprite
 from logger import Logger as LOG
 
 class Board(Screen):
-    __default_config = {'circles_per_lvl':  16,
+    __default_config = {'platform_proportion': 0.75,
+                        'platform_alignment': "center",
+                        'circles_per_lvl':  16,
                         'max_levels':       4,
                         'number_of_paths':  5,
                         'initial_offset':   2    
@@ -24,7 +26,7 @@ class Board(Screen):
         #Basic info saved
         super().__init__(id_, event_id, resolution, **params)
         self.turn           = -1
-        UtilityBox.check_missing_keys_in_dict(self.params, Board.__default_config)
+        UtilityBox.join_dicts(self.params, Board.__default_config)
         
         #Graphic elements
         self.loading        = LoadingScreen(id_, event_id, resolution, "Loading, hang tight like a japanese pussy", background_path=IMG_FOLDER+"//loading_background.png")
@@ -65,7 +67,7 @@ class Board(Screen):
             self.players.append(player)
             for character in player.characters: 
                 character.change_size((self.cells.sprites()[0].rect.width, self.cells.sprites()[0].rect.width))
-                c = random.choice(self.quadrants[player.order])
+                c = self.quadrants[player.order].get_random_cell()
                 c.add_char(character)
                 character.rect.center = c.rect.center
                 self.characters.add(character)
@@ -80,7 +82,16 @@ class Board(Screen):
             self.params['number_of_paths'] = circles//math.ceil(circles/paths) 
             LOG.log('DEBUG', "Changed number of paths from ", paths, " to ", self.params['number_of_paths'])
     
-    def __assign_quadrant(self, cell, container_center, count_axis=False):
+    def assign_quadrants(self, container_center, *cells, count_axis=False): #TODO this shit of conut axis will be deleted when curves are implmeneted
+        quadrants = {}
+        for cell in cells:
+            quadrant = self.__get_quadrant(cell, container_center, count_axis=count_axis)
+            try:                quadrants[quadrant].append(cell)
+            except KeyError:    quadrants[quadrant] = [cell]
+        for quadrant_number, quadrant_cells in quadrants.items():
+            self.quadrants[quadrant_number] = Quadrant(quadrant_number, *quadrant_cells)
+
+    def __get_quadrant(self, cell, container_center, count_axis=False):
         x, y = cell.rect.center[0], cell.rect.center[1]
         center_x, center_y = container_center[0], container_center[1]
         if 0 < abs(x - center_x) < 2: x = center_x
@@ -89,10 +100,7 @@ class Board(Screen):
                             else 2 if (x<=center_x and y>center_y) else 3
         else:               quadrant = 0 if (x>center_x and y<center_y) else 1 if (x>center_x and y>center_y)\
                              else 2 if (x<center_x and y>center_y) else 3 if (x<center_x and y<center_y) else -1
-        
-        #LOG.log('DEBUG', "Cell with pixel pos x, y => " , x, ", ", y, ", center => ", center_x, ", ", center_y,\
-        #", quadrant => ", quadrant, ", cell => ", cell.get_level(), ", ", cell.get_index())
-        self.quadrants[quadrant].append(cell)
+        return quadrant
     
     @run_async
     def __create_player(self, player_name, player_number, chars_number, chars_size, **kwparams):
@@ -101,7 +109,7 @@ class Board(Screen):
     def __current_player(self):
         return self.players[self.player_index]
     
-    def __generate_cells(self, radius, center, circle_radius, circle_number, lvl, initial_offset=0):
+    def __generate_cells(self, radius, center, circle_radius, circle_number, lvl, initial_offset=0, **cell_params):
         #TODO could pass params in this function if we want coloured circles
         cells = []
         two_pi  = 2*math.pi    
@@ -109,8 +117,9 @@ class Board(Screen):
         distance= two_pi/circle_number
         index=0
         while angle < two_pi:
-            position    = (center[0]+(radius*math.cos(angle))-circle_radius, center[1]+(radius*math.sin(angle))-circle_radius) 
-            cells.append(Cell(Circle(position, (circle_radius*2, circle_radius*2)), (lvl, index), lvl*circle_number+index))
+            position    = (center[0]+(radius*math.cos(angle))-circle_radius, center[1]+(radius*math.sin(angle))-circle_radius)
+            cell_sprite = Circle(str(lvl)+"_"+str(index), position, (circle_radius*2, circle_radius*2), self.resolution, **cell_params)
+            cells.append(Cell(cell_sprite, (lvl, index), lvl*circle_number+index))
             index       += 1
             angle       += distance
         return cells
@@ -219,46 +228,55 @@ class Board(Screen):
         pass
 
     def generate(self):
-        self.platform       = Rectangle((int(self.resolution[0]*0.025), int(self.resolution[1]*0.025)), (int(self.resolution[1]*0.95), int(self.resolution[1]*0.95)))
+        platform_size   = tuple(x*self.params['platform_proportion'] for x in self.resolution)
+        centered_pos    = tuple(x//2-y//2 for x, y in zip(self.resolution, platform_size))
+        platform_pos    = (0, centered_pos[1]) if 'left' in self.params['platform_alignment']\
+        else centered_pos if 'center' in self.params['platform_alignment']\
+        else (self.resolution[0]-platform_size[0], centered_pos[1])
+        self.platform   = Rectangle(self.id+"_platform", platform_pos, platform_size, self.resolution)
         self.generate_all_cells()
+        self.assign_quadrants(self.platform.rect.center, *self.cells)
         self.generate_paths(offset=True)
 
     def generate_all_cells(self, custom_radius=None):
         self.cells.empty()
         self.active_cell.empty()
-        ratio   = self.platform.rect.height//(2*self.params['max_levels'])
-        radius  = 0
-        small_radius = ratio//4 if custom_radius is None else custom_radius
-        cell = Cell(Circle(tuple(x-small_radius for x in self.platform.rect.center), (small_radius*2, small_radius*2)), (0, -1), -1)
+        ratio       = self.platform.rect.height//(2*self.params['max_levels'])
+        radius      = 0
+        small_radius= ratio//4 if custom_radius is None else custom_radius
+        cell_sprite = Circle('cell', tuple(x-small_radius for x in self.platform.rect.center),\
+                    (small_radius*2, small_radius*2), self.resolution)
+        cell        = Cell(cell_sprite, (-1, 0), -1)
         self.cells.add(cell)
         for i in range (0, self.params['max_levels']):
             radius      += ratio
             if i is 0:  self.cells.add(self.__generate_cells(radius-ratio//3, self.platform.rect.center, small_radius, 4, 0, initial_offset=0.25*math.pi))
             else:       self.cells.add(self.__generate_cells(radius-ratio//3, self.platform.rect.center, small_radius, self.params['circles_per_lvl'], i))
-        for cell in self.cells.sprites():
-            if cell.get_level() is not 0:  self.__assign_quadrant(cell, self.platform.rect.center)
         LOG.log('DEBUG', "Generated cells of ", self.id)
 
-    def generate_paths(self, offset=False):
+    def generate_paths(self, offset=False, color=WHITE): #BIG PATH CIRCLES
         self.paths.empty()
         self.trans_paths.empty()
         self.active_path.empty()
         ratio = self.platform.rect.width//self.params['max_levels']
         radius = ratio//2-ratio//6 if offset else ratio//2
         for _ in range (0, self.params['max_levels']): #Lvl circles
-            colorkey = (0, 0, 0)
-            out_circle = Circle((self.platform.rect.centerx-radius, self.platform.rect.centery-radius),(radius*2, radius*2), surf_color=colorkey, border_size=3, use_gradient=False)
+            border_color = color
+            colorkey = UtilityBox.random_rgb_color()
+            while colorkey == border_color: colorkey = UtilityBox.random_rgb_color() #1 in 16*10^6 chance
+            out_circle = Circle('circular_path', (self.platform.rect.centerx-radius, self.platform.rect.centery-radius),\
+                        (radius*2, radius*2), self.resolution, fill_color=colorkey, border_color=border_color, border_width=3, use_gradient=False)
             out_circle.image.set_colorkey(colorkey)
             out_circle.update_mask()
-            self.paths.add(out_circle)
+            #self.paths.add(out_circle)
             radius+=ratio//2
         LOG.log('DEBUG', "Generated circular paths in ", self.id)
 
-        self.__adjust_number_of_paths()
+        '''self.__adjust_number_of_paths()
         spr = Rectangle((self.platform.rect.centerx-self.platform.rect.width//2, self.platform.rect.centery), (self.platform.rect.width, 4))
         offset = (360//self.params['circles_per_lvl'])*self.params['initial_offset']
         self.trans_paths.add(*UtilityBox.rotate(spr, 360//self.params['number_of_paths'], self.params['number_of_paths'], offset))
-        LOG.log('DEBUG', "Generated middle paths in board ", self.id)
+        LOG.log('DEBUG', "Generated middle paths in board ", self.id)'''#TODO MAKE THIS A REAL BROOO
 
     def generate_map(self, to_who):
         paths = []
@@ -311,7 +329,7 @@ class Board(Screen):
             if fps:         UtilityBox.draw_fps(surface, clock)
         else:
             self.loading.draw(surface)
-        self.temp_infoboard.draw(surface)
+        #self.temp_infoboard.draw(surface)
         pygame.display.update()
         
     def event_handler(self, event, keys_pressed, mouse_buttons_pressed, mouse_movement=False, mouse_pos=(0, 0)):

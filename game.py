@@ -139,49 +139,49 @@ if __name__ == "__main__":
     res = resolutions[0]
     init_pygame_modules(True, res, 'Sava Drow')
     #Create elements, main menu buttons (POSITIONS AND SIZES ARE IN PERCENTAGES OF THE CANVAS_SIZE, can use absolute integers too)
-    buttonStart         = UIElement.factory("start_game_go_main_board", pygame.USEREVENT+1, (0.05, 0.10), (0.90, 0.20), res, None, text="Start game", texture=IMG_FOLDER+"//button.png")
-    buttonParamsMenu    = UIElement.factory("go_menu_params_config",    pygame.USEREVENT+1, (0.05, 0.40), (0.90, 0.20), res, None, text="Parameters", start_gradient = RED, end_gradient=BLACK)
-    buttonSoundMenu     = UIElement.factory("go_menu_sound_music",      pygame.USEREVENT+1, (0.05, 0.70), (0.90, 0.20), res, None, text="Music menu", start_gradient = RED, end_gradient=BLACK)
+    buttonStart         = UIElement.factory('button_start', "start_game_go_main_board", pygame.USEREVENT+1, (0.05, 0.10), (0.90, 0.20), res, None, text="Start game", keep_aspect_ratio = False, texture=IMG_FOLDER+"//button.png")
+    print('10')
+    buttonParamsMenu    = UIElement.factory('button_params_menu', "go_menu_params_config",    pygame.USEREVENT+1, (0.05, 0.40), (0.90, 0.20), res, None, text="Parameters", gradient = (RED, BLACK))
+    print('10')
+    buttonSoundMenu     = UIElement.factory('button_sound', "go_menu_sound_music",      pygame.USEREVENT+1, (0.05, 0.70), (0.90, 0.20), res, None, text="Music menu", gradient = (RED, BLACK))
+    print('10')
     #buttons of parameters menu
-    buttonRes           = UIElement.factory("change_resolution_screen_display", pygame.USEREVENT, (0.05, 0.05), (0.90, 0.10), res, resolutions, text="Resolution",          text_centering=1)
-    buttonCountPlayers  = UIElement.factory("change_number_count_players",      pygame.USEREVENT, (0.05, 0.20), (0.90, 0.10), res, (2, 3, 4),   text="Number of players",   text_centering=1)
-    buttonNumPawns      = UIElement.factory("change_number_count_pawns",        pygame.USEREVENT, (0.15, 0.35), (0.80, 0.10), res, (4, 8),      text="Number of pawns",     text_centering=1)
-    buttonNumWarriors   = UIElement.factory("change_number_count_warriors",     pygame.USEREVENT, (0.15, 0.50), (0.80, 0.10), res, (1, 2, 4),   text="Number of warriors",  text_centering=1)
-    buttonNumWizards    = UIElement.factory("change_number_count_wizards",      pygame.USEREVENT, (0.15, 0.65), (0.80, 0.10), res, (1, 2),      text="Number of wizards",   text_centering=1)
-    buttonNumPriestess  = UIElement.factory("change_number_count_priestess",    pygame.USEREVENT, (0.15, 0.80), (0.80, 0.10), res, (1, 1),      text="Number of priestess", text_centering=1)
-    #Exit dialog and its buttons
+    buttonRes           = UIElement.factory('button_resolution',"change_resolution_screen_display", pygame.USEREVENT, (0.05, 0.05), (0.90, 0.10), res, resolutions, text="Resolution",     text_alignment = 'left')
+    buttonCountPlayers  = UIElement.factory('button_players', "change_number_count_players",      pygame.USEREVENT, (0.05, 0.20), (0.90, 0.10), res, (2, 3, 4),   text="Number of players",   text_alignment = 'left')
+    buttonNumPawns      = UIElement.factory('button_pawns', "change_number_count_pawns",        pygame.USEREVENT, (0.15, 0.35), (0.80, 0.10), res, (4, 8),      text="Number of pawns",     text_alignment = 'left')
+    buttonNumWarriors   = UIElement.factory('button_warriors', "change_number_count_warriors",     pygame.USEREVENT, (0.15, 0.50), (0.80, 0.10), res, (1, 2, 4),   text="Number of warriors",  text_alignment = 'left')
+    buttonNumWizards    = UIElement.factory('button_wizards', "change_number_count_wizards",      pygame.USEREVENT, (0.15, 0.65), (0.80, 0.10), res, (1, 2),      text="Number of wizards",   text_alignment = 'left')
+    buttonNumPriestess  = UIElement.factory('button_priestesses', "change_number_count_priestess",    pygame.USEREVENT, (0.15, 0.80), (0.80, 0.10), res, (1, 1),      text="Number of priestess", text_alignment = 'left')
+    '''#Exit dialog and its buttons
     dialog_resolution   = tuple(x//2 for x in res)
     dialog_position     = tuple(x//2-y//2 for x, y in zip(res, dialog_resolution))
     acceptButton        = UIElement.factory("accept_notification",          pygame.USEREVENT+2, (0.00, 0.80), (0.50, 0.20), dialog_resolution, None, text="ACCEPT") #Could do this in realtion with the total canvas size
     cancelButton        = UIElement.factory("cancel_notification",          pygame.USEREVENT+2, (0.50, 0.80), (0.50, 0.20), dialog_resolution, None, text="CANCEL")
-    exitDialog          = UIElement.factory("exit_main_menu_notification",  pygame.USEREVENT+2, dialog_position, dialog_resolution, res, None, acceptButton, cancelButton, text="Exit this shit?")
+    exitDialog          = UIElement.factory("exit_main_menu_notification",  pygame.USEREVENT+2, dialog_position, dialog_resolution, res, None, acceptButton, cancelButton, text="Exit this shit?")'''
     #Sliders of the music and sound menu
-    sliderMenuMusic     = UIElement.factory("change_menu_music_volume", pygame.USEREVENT, (0.05, 0.10), (0.80, 0.15), res, (0.75), text="Menus music volume", slider_type=0,\
-                        start_gradient = RED, end_gradient=BLACK, slider_start_color = RED, slider_end_color = WHITE)
-    sliderMenuSounds    = UIElement.factory("change_menu_sound_volume", pygame.USEREVENT, (0.05, 0.30), (0.80, 0.15), res, (0.75), text="Menus sound volume", slider_type=1)
-    sliderBoardMusic    = UIElement.factory("change_board_music_volume",pygame.USEREVENT, (0.05, 0.50), (0.80, 0.15), res, (0.75), text="Board music volume", slider_type=2)
-    sliderBoardSounds   = UIElement.factory("change_board_sound_volume",pygame.USEREVENT, (0.05, 0.70), (0.80, 0.15), res, (0.75), text="Board sound volume", slider_type=0)
-
+    sliderMenuMusic     = UIElement.factory('slider_music_volume', "change_menu_music_volume", pygame.USEREVENT, (0.05, 0.10), (0.80, 0.15), res, (0.75), text="Menus music volume", slider_type='circular',\
+                        gradient = (RED, BLACK), slider_start_color = RED, slider_end_color = WHITE)
+    sliderMenuSounds    = UIElement.factory('slider_sound_volume', "change_menu_sound_volume", pygame.USEREVENT, (0.05, 0.30), (0.80, 0.15), res, (0.75), text="Menus sound volume", slider_type='elliptical')
+    sliderBoardMusic    = UIElement.factory('slider_board_music_volume', "change_board_music_volume",pygame.USEREVENT, (0.05, 0.50), (0.80, 0.15), res, (0.75), text="Board music volume", slider_type='rectangular')
+    sliderBoardSounds   = UIElement.factory('slider_board_sound_volume', "change_board_sound_volume",pygame.USEREVENT, (0.05, 0.70), (0.80, 0.15), res, (0.75), text="Board sound volume")
     #Create Menu and board
     main_menu   = Menu("main_menu",         pygame.USEREVENT,   res, (True, 0), \
-                buttonStart, buttonParamsMenu, buttonSoundMenu, dialog=exitDialog, background_path=IMG_FOLDER+'\\background.jpg')
+                buttonStart, buttonParamsMenu, buttonSoundMenu, background_path=IMG_FOLDER+'\\background.jpg')
     sound_menu  = Menu("menu_volume_music", pygame.USEREVENT+1, res, (True, 0), \
                 sliderMenuMusic, sliderMenuSounds, sliderBoardMusic, sliderBoardSounds, background_path=IMG_FOLDER+'\\background.jpg')
     params_menu = Menu("menu_params_config",pygame.USEREVENT+1, res, (True, 0), \
                 buttonRes, buttonCountPlayers, buttonNumPawns, buttonNumWarriors, buttonNumWizards, buttonNumPriestess, background_path=IMG_FOLDER+'\\background.jpg')
 
     main_board = Board("main_board", pygame.USEREVENT+7, res, background_path = IMG_FOLDER+'\\board_2.jpg')
-
-    textSprite1 = TextSprite("testSprite", "YESSS", (200, 100))
+    '''textSprite1 = TextSprite("testSprite", "YESSS", (200, 100))
     textSprite2 = TextSprite("testSprite", "NOOOO", (200, 100))
     textSprite3 = TextSprite("testSprite", "SIIII", (200, 100))
-    textSprite4 = TextSprite("testSprite", "NUUUUmale", (600, 100))
+    textSprite4 = TextSprite("testSprite", "NUUUUmale", (600, 100))'''
                             #id_, userevent, element_position, element_size, canvas_size, *elements, **params
-    infoboard = InfoBoard("test", USEREVENT+2, (0, 0), (400, 400), res, (textSprite1, 1), (textSprite2, 2), (textSprite3, 3), (textSprite4, 6))
+    '''infoboard = InfoBoard("test", USEREVENT+2, (0, 0), (400, 400), res, (textSprite1, 1), (textSprite2, 2), (textSprite3, 3), (textSprite4, 6))
     main_board.temp_infoboard = infoboard
     main_board.create_player("Zippotudo", 0, {"pawn":1, "warrior":1, "wizard":1, "priestess":1}, (100, 100))
-    main_board.create_player("Zippotudo_2", 0, {"pawn":1, "warrior":1, "wizard":1, "priestess":1}, (100, 100))
-    
+    main_board.create_player("Zippotudo_2", 0, {"pawn":1, "warrior":1, "wizard":1, "priestess":1}, (100, 100))'''
     #TODO EACH PLAYERS GETS HIS INFOBOARD
     game = Game(main_menu, sound_menu, params_menu, main_board, title="Sava Drow", resolution=res)
     game.start()

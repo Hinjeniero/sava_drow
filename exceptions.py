@@ -42,3 +42,12 @@ class PlayerNameExistsException(Exception):
 
 class TooManyElementsException(Exception) :
     pass
+
+class ShapeNotFoundException(Exception):
+    pass
+
+class InvalidSliderException(Exception):
+    pass
+
+class NotEnoughSpritesException(Exception):
+    pass

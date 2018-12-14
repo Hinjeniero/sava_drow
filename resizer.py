@@ -7,19 +7,31 @@ class Resizer (object):
     #Results have an error margin of 0-2 in font size with the maximum best result (example of max error, perfect font size is 99, result is 97).
     #200->100->50->75->87->93->96->97, factor is 0 here.
     @staticmethod
-    def max_font_size(text, max_size, max_font_size, font=None):
+    def max_font_size_limited(text, max_size, max_font_size, font_type=None):
         factor = max_font_size//2 #We start substracting
         font_size = max_font_size
         while factor is not 0:
-            font = pygame.font.Font(None, font_size)
+            font = pygame.font.Font(font_type, font_size)
             current_size = font.size(text) #Getting the needed size to render this text with i size
 
-            if all(current<max for current, max in zip(current_size, max_size)):
+            if all(current<size for current, size in zip(current_size, max_size)):
                 font_size += factor
             else: #This equals any(current>max for current, max in zip(current_size, max_size))
                 font_size -= factor
             factor = factor//2
         return font_size
+
+    #Gives an approximate in exchange for having a logaritmic execution time
+    #Determines the max font size.
+    @staticmethod
+    def max_font_size(text, max_size, font_type=None):
+        font_size       = 1
+        current_size    = (0, 0)
+        while not any(current>size for current, size in zip(current_size, max_size)):   #While not hitting the upper limit
+            font = pygame.font.Font(font_type, font_size)
+            current_size = font.size(text) #Getting the needed size to render this text with i size
+            font_size *= 2
+        return Resizer.max_font_size_limited(text, max_size, font_size, font_type=font_type)
         
     @staticmethod 
     def resize_same_aspect_ratio(element, new_size):

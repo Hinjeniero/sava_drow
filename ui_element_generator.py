@@ -22,3 +22,10 @@ class UIGenerator(object):
     @staticmethod
     def red_button_custom(self, size, text):
         pass
+
+    @staticmethod
+    def close_button(id_, user_event_id, window_rect, **params):
+        params['text'] = "X"
+        size     = (window_rect.width*0.20, window_rect.height*0.10)
+        position = (window_rect.width-size[0], 0)      
+        return ButtonAction(id_, user_event_id, position, size, window_rect.size, **params)

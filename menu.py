@@ -16,11 +16,9 @@ class Menu (Screen):
                         'title_text_size': 0.15
     }
 
-    def __init__(self, id_, event_id, resolution, centering_tuple, *elements, **params):
+    def __init__(self, id_, event_id, resolution, centering, *elements, **params):
         super().__init__(id_, event_id, resolution, **params)
-        #Basic info saved
-        self.alignment              = centering_tuple
-        UtilityBox.check_missing_keys_in_dict(self.params, Menu.__default_config)
+        UtilityBox.join_dicts(self.params, Menu.__default_config)
         #Graphic elements
         self.static_sprites         = pygame.sprite.Group()             #Things without interaction
         self.dynamic_sprites        = pygame.sprite.OrderedUpdates()    #Things with interaction, like buttons and such
@@ -29,15 +27,15 @@ class Menu (Screen):
 
         if len(elements) > 0: 
             self.add_elements(*elements)
-            self.generate(self.resolution, centering=self.alignment[0], centering_mode=self.alignment[1])
+            self.generate(self.resolution, centering=centering)
         else:   raise IndexError("A menu needs at least one element prior to the generation.")
 
-    def generate(self, resolution, centering=True, centering_mode=0):
+    def generate(self, resolution, centering=True):
         self.__adjust_elements(resolution)
-        if centering:   self.__center_elements(centering_mode)
+        if centering:   self.__center_elements()
         self.active_sprite.add(self.dynamic_sprites.sprites()[0])
 
-    def update_resolution(self, resolution):
+    def update_resolution(self, resolution): #TODO modify this shit
         super().update_resolution(resolution)
         #Regenerate elements
         all_sprites = self.static_sprites.sprites()
@@ -71,9 +69,6 @@ class Menu (Screen):
         if issubclass(type(element), UIElement):    self.dynamic_sprites.add(element)
         elif type(element) is pygame.Surface:       self.static_sprites.add(element)
         else:                                       raise TypeError("Elements should be a pygame.Surface, or an ui_element subclass.") 
-    
-    def animation(self):
-        self.active_sprite.update()
 
     def __adjust_elements(self, resolution):
         total_spaces =  [0, 0]
@@ -98,19 +93,17 @@ class Menu (Screen):
                 size =     tuple([int(x*y) if x<1 else y for x,y in zip(ratios, sprite.rect.size)])
                 sprite.generate(rect=pygame.Rect(position, size))                #Adjusting size
 
-    def __center_elements(self, centering_mode):
+    def __center_elements(self):
         screen_width = self.resolution[0]
         sprites = self.static_sprites.sprites().copy()
         sprites.extend(self.dynamic_sprites.sprites()) 
-        for sprite in sprites:
-            sprite.rect.left = (screen_width-sprite.rect.width)/2
-            sprite.save_state()
+        for sprite in sprites:  sprite.rect.x = (screen_width-sprite.rect.width)//2
 
     def draw(self, surface, hitboxes=False, fps=True, clock=None):
         super().draw(surface)
-        self.animation()
-        self.static_sprites.draw(surface)
-        self.dynamic_sprites.draw(surface)
+        #self.static_sprites.draw(surface)
+        for sprite in self.dynamic_sprites.sprites(): sprite.draw(surface)
+        #self.dynamic_sprites.draw(surface)
         if fps: UtilityBox.draw_fps(surface, clock)
         if self.have_dialog() and self.dialog_is_active():    self.dialog.draw(surface)
         pygame.display.update()
@@ -135,57 +128,25 @@ class Menu (Screen):
         
         if mouse_movement: 
             colliding_sprite = pygame.sprite.spritecollideany(UtilityBox.get_mouse_sprite(mouse_position), self.dynamic_sprites.sprites())
-            if colliding_sprite is not None:    self.change_active_sprite(self.get_sprite_index(colliding_sprite))  #TODO this can be done in a better way
+            if colliding_sprite is not None:    self.change_active_sprite(self.get_sprite_index(colliding_sprite))  
+            #TODO this can be done in a better way
 
     def change_active_sprite(self, index):
-        size_sprite_list =                  len(self.dynamic_sprites.sprites())
+        if index is not self.active_sprite_index:
+            size_sprite_list                    = len(self.dynamic_sprites.sprites())
 
-        self.active_sprite_index =          index   #This all can be compressed in one line
-        if index >= size_sprite_list:       self.active_sprite_index = 0
-        elif index < 0:                     self.active_sprite_index = size_sprite_list-1
+            self.active_sprite_index            = index 
+            if index >= size_sprite_list:       self.active_sprite_index = 0
+            elif index < 0:                     self.active_sprite_index = size_sprite_list-1
+            
+            if self.active_sprite.sprite is not None:   
+                self.active_sprite.sprite.set_hover(False) #Change the active back to the original state
+                self.active_sprite.sprite.set_active(False)
+            self.active_sprite.add(self.dynamic_sprites.sprites()[self.active_sprite_index])       #Adding the new active sprite
+            self.active_sprite.sprite.set_hover(True)
+            self.active_sprite.sprite.set_active(True)
         
-        if self.active_sprite.sprite is not None:   self.active_sprite.sprite.load_state()          #Change the active back to the original state
-        self.active_sprite.add(self.dynamic_sprites.sprites()[self.active_sprite_index])            #Adding the new active sprite
-
     def get_sprite_index(self, sprite):
         sprite_list = self.dynamic_sprites.sprites()
         for i in range(0, len(sprite_list)):
             if sprite is sprite_list[i]:    return i
-
-#List of (ids, text)
-if __name__ == "__main__":
-    #Variables
-    resolution = (1280, 720)
-    pygame.init()
-    screen = pygame.display.set_mode(resolution)
-    pygame.mouse.set_visible(True)
-    clock = pygame.time.Clock()
-    timeout = 20
-
-    #Create elements
-    sli = UiElement.factory("slider1_command_action", pygame.USEREVENT, (10,10), (800, 100), (0.2))
-    but = UiElement.factory("button1_command_action", pygame.USEREVENT+1, (10, 160), (800, 100), (0, 10, 20, 30, 40))
-    sli2 = UiElement.factory("slider2_command_action",pygame.USEREVENT+2, (10, 310), (800, 100), (0), text="Slider")
-    but2 = UiElement.factory("button2_command_action",pygame.USEREVENT+3, (10, 460), (800, 100), ((50, 60, 70, 80)), text="Button")
-    sli3 = UiElement.factory("slider3_command_action",pygame.USEREVENT+4, (10, 960), (800, 100), (1), text="SuperSlider", slider_type=0, start_gradient = RED, end_gradient=BLACK, slider_start_color = RED, slider_end_color = WHITE)
-    but3 = UiElement.factory("button3_command_action",pygame.USEREVENT+5, (10, 1110), (800, 100), ((90, 100, 110)), text="SuperButton", start_gradient = GREEN, end_gradient=BLACK)
-    sli4 = UiElement.factory("slider4_command_action",pygame.USEREVENT+6, (10, 1260), (800, 100), (0.8), text="LongTextIsLongSoLongThatIsLongestEver", slider_type=2, start_gradient = RED, end_gradient=BLACK, slider_start_color = RED, slider_end_color = WHITE)
-    but4 = UiElement.factory("button4_command_action",pygame.USEREVENT+7, (10, 1410), (800, 100), (("platano", "naranja", "orange", "ouranch")), text="LongTextIsLongSoLongThatIsLongestEver", start_gradient = GREEN, end_gradient=BLACK)
-    
-    #Create Menu
-    menu = Menu("MainMenu", pygame.USEREVENT, resolution, (True, 0), sli, but, sli2, but2, sli3, but3, sli4, but4)
-    
-    #Start the test
-    loop = True
-    while loop:
-        clock.tick(144)
-        menu.draw(screen, clock=clock)       #Drawing the sprite group
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:       loop = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:    loop = False
-            elif event.type >= pygame.USEREVENT:
-                print("Received event number "+str(event.type)+", with value "+str(event.value)+ ", with command "+str(event.command))
-            if loop:            #If not exit yet                        
-                menu.event_handler(event, pygame.key.get_pressed(), pygame.mouse.get_pressed(),\
-                                    mouse_movement=(pygame.mouse.get_rel() != (0,0)), mouse_pos=pygame.mouse.get_pos())

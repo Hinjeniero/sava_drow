@@ -15,8 +15,9 @@ from ui_element import TextSprite
 from logger import Logger as LOG
 
 class Board(Screen):
-    __default_config = {'platform_proportion': 0.75,
+    __default_config = {'platform_proportion': 0.95,
                         'platform_alignment': "center",
+                        'inter_path_sequence': (4, 2) #every 4, every 2, every 4...
                         'circles_per_lvl':  16,
                         'max_levels':       4,
                         'number_of_paths':  5,
@@ -109,14 +110,18 @@ class Board(Screen):
     def __current_player(self):
         return self.players[self.player_index]
     
-    def __generate_cells(self, radius, center, circle_radius, circle_number, lvl, initial_offset=0, **cell_params):
+    def __generate_cells(self, radius, center, circle_radius, circle_number, lvl, initial_offset=-180, **cell_params):
         #TODO could pass params in this function if we want coloured circles
         cells = []
-        two_pi  = 2*math.pi    
+        two_pi  = 2*math.pi
+        print("BEFORE "+str(initial_offset))
+        initial_offset = initial_offset*(math.pi/180) if abs(initial_offset) > two_pi\
+        else initial_offset%360*(math.pi/180) if abs(initial_offset) > 360 else initial_offset
+        print("AFTER "+str(initial_offset))
         angle   = initial_offset*(math.pi/180) if initial_offset > two_pi else initial_offset
         distance= two_pi/circle_number
-        index=0
-        while angle < two_pi:
+        index   = 0
+        while angle < (two_pi-initial_offset):
             position    = (center[0]+(radius*math.cos(angle))-circle_radius, center[1]+(radius*math.sin(angle))-circle_radius)
             cell_sprite = Circle(str(lvl)+"_"+str(index), position, (circle_radius*2, circle_radius*2), self.resolution, **cell_params)
             cells.append(Cell(cell_sprite, (lvl, index), lvl*circle_number+index))
@@ -228,7 +233,7 @@ class Board(Screen):
         pass
 
     def generate(self):
-        platform_size   = tuple(x*self.params['platform_proportion'] for x in self.resolution)
+        platform_size   = tuple(min(self.resolution)*self.params['platform_proportion'] for _ in self.resolution)
         centered_pos    = tuple(x//2-y//2 for x, y in zip(self.resolution, platform_size))
         platform_pos    = (0, centered_pos[1]) if 'left' in self.params['platform_alignment']\
         else centered_pos if 'center' in self.params['platform_alignment']\
@@ -254,29 +259,26 @@ class Board(Screen):
             else:       self.cells.add(self.__generate_cells(radius-ratio//3, self.platform.rect.center, small_radius, self.params['circles_per_lvl'], i))
         LOG.log('DEBUG', "Generated cells of ", self.id)
 
-    def generate_paths(self, offset=False, color=WHITE): #BIG PATH CIRCLES
+    def generate_paths(self, offset=False, border_color=WHITE): #BIG PATH CIRCLES
         self.paths.empty()
         self.trans_paths.empty()
         self.active_path.empty()
-        ratio = self.platform.rect.width//self.params['max_levels']
+        ratio = self.platform.rect.height//self.params['max_levels']
         radius = ratio//2-ratio//6 if offset else ratio//2
         for _ in range (0, self.params['max_levels']): #Lvl circles
-            border_color = color
-            colorkey = UtilityBox.random_rgb_color()
-            while colorkey == border_color: colorkey = UtilityBox.random_rgb_color() #1 in 16*10^6 chance
-            out_circle = Circle('circular_path', (self.platform.rect.centerx-radius, self.platform.rect.centery-radius),\
-                        (radius*2, radius*2), self.resolution, fill_color=colorkey, border_color=border_color, border_width=3, use_gradient=False)
-            out_circle.image.set_colorkey(colorkey)
-            out_circle.update_mask()
-            #self.paths.add(out_circle)
+            out_circle = Circle('circular_path', tuple(x-radius for x in self.platform.rect.center),\
+                        (radius*2, radius*2), self.resolution, fill_gradient=False,\
+                        border_color=border_color, border_width=3, transparent=True)
+            self.paths.add(out_circle)
             radius+=ratio//2
         LOG.log('DEBUG', "Generated circular paths in ", self.id)
 
-        '''self.__adjust_number_of_paths()
-        spr = Rectangle((self.platform.rect.centerx-self.platform.rect.width//2, self.platform.rect.centery), (self.platform.rect.width, 4))
+    def generate_trans_paths(self):
+        self.__adjust_number_of_paths()
+        '''spr = Rectangle((self.platform.rect.centerx-self.platform.rect.width//2, self.platform.rect.centery), (self.platform.rect.width, 4))
         offset = (360//self.params['circles_per_lvl'])*self.params['initial_offset']
         self.trans_paths.add(*UtilityBox.rotate(spr, 360//self.params['number_of_paths'], self.params['number_of_paths'], offset))
-        LOG.log('DEBUG', "Generated middle paths in board ", self.id)'''#TODO MAKE THIS A REAL BROOO
+        LOG.log('DEBUG', "Generated middle paths in board ", self.id)'''#TODO MAKE THIS A REAL BROOO'''
 
     def generate_map(self, to_who):
         paths = []
@@ -329,7 +331,7 @@ class Board(Screen):
             if fps:         UtilityBox.draw_fps(surface, clock)
         else:
             self.loading.draw(surface)
-        #self.temp_infoboard.draw(surface)
+        self.temp_infoboard.draw(surface)
         pygame.display.update()
         
     def event_handler(self, event, keys_pressed, mouse_buttons_pressed, mouse_movement=False, mouse_pos=(0, 0)):

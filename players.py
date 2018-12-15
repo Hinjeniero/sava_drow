@@ -1,13 +1,14 @@
 import pygame
 from os import listdir
 from os.path import isfile, join, dirname
-from exceptions import BadCharacterInitException, BadCharacterActionException
+from exceptions import BadCharacterInitException, StateNotFoundException
 from resizer import Resizer
 from paths import IMG_FOLDER, Path
 from logger import Logger as LOG
 from decorators import run_async
 from ui_element import InfoBoard
-from sprite import AnimatedSprite
+from sprite  import AnimatedSprite
+from utility_box import UtilityBox
 
 __all__ = ["Player", "Character", "Warrior", "Wizard", "Priestess", "Pawn"]
 NEXT_SPRITE_COUNTER = 10
@@ -34,98 +35,58 @@ class Player(object):
         pass
     
 class Character(AnimatedSprite):
-    def __init__(self, my_player, id_, size, sprites_path):
-        LOG.log('DEBUG', "Initializing character ", id_, " of player ", my_player)
-        super().__init__()
+    __default_aliases   = { "idle" : "idle",
+                            "fight" : "fight",
+                            "pickup" : "pickup",
+                            "drop" : "drop",
+                            "action" : "action",
+                            "die" : "die"    
+    }
+    def __init__(self, my_player, _id, position, size, canvas_size, sprites_path, *sprite_list, **aliases):
+        LOG.log('DEBUG', "Initializing character ", _id, " of player ", my_player)
+        super().__init__(_id, position, size, canvas_size, *sprite_list, sprite_folder=sprites_path)
         self.my_master  = my_player
         self.movement   = Restrictions()
-
         self.state      = "idle"
-        self.selected   = False
-        self.load_sprites(size, sprites_path)
+        self.aliases    = aliases
+        UtilityBox.join_dicts(self.aliases, Character.__default_alias)
     
     def get_master(self):
         return self.my_master
 
-    def change_size(self, size):
-        for list_ in self.sprites.values():     list_.clear()
-        for list_ in self.big_sprites.values(): list_.clear()
-        for list_ in self.masks.values():       list_.clear()
-        for sprite_path in self.files.keys():   self.__add_sprite(sprite_path, size)
-        self.rect.size = self.__current_sprite().get_size()
+    def set_state(self, state):
+        self.state  = state
+        for index in range (0, len(self.ids)):
+            if state in self.ids[index]:
+                self.animation_index = index
+                return True
+        raise StateNotFoundException("Character doesn't have the state "+str(state))
 
-    def move(self): #move(cols, rows, char_in_middle, char_just_near)
-        if 0: return True   #Allowed movm
-        if 1: return False  #not allowed
-
-    #This method is tested already
-    def load_sprites(self, size, sprite_path):
-        sprite_images = [sprite_path+'\\'+f for f in listdir(sprite_path) if isfile(join(sprite_path, f))]
-        for sprite_image in sprite_images:
-            if sprite_image.lower().endswith(('.png', '.jpg', '.jpeg', 'bmp')):
-                self.__add_sprite(sprite_image, size)
-        self.image  = self.__current_sprite()
-        self.rect   = pygame.Rect((200, 200), self.image.get_size())
-        self.mask   = self.__current_mask()
-    
-    def __add_sprite(self, path, size=None):
-        for action in self.sprites.keys():
-            if action in path.lower():
-                try:                self.files[path] 
-                except KeyError:    self.files[path] = pygame.image.load(path)
-                if size is None:    self.sprites[action].append(self.files[path])
-                else:               self.sprites[action].append(Resizer.resize_same_aspect_ratio(self.files[path], size))
-                self.masks[action].append(pygame.mask.from_surface(self.sprites[action][-1]))
-                big_sprite = pygame.transform.smoothscale(self.sprites[action][-1], tuple(int(x*1.25 ) for x in self.sprites[action][-1].get_size()))
-                self.big_sprites[action].append(big_sprite)
-                return
-
-    def update(self): #Make it bigger (Like when in touch with hitbox, this could be done in board itself)
-        self.counter        += 1
-        if self.counter is NEXT_SPRITE_COUNTER:
-            self.counter    = 0
-            self.animate()
-
-    def change_action(self, action):
-        try:
-            self.sprites[action]
-            self.state  = action
-            self.index  = 0
-            self.image  = self.sprites[action][self.index] #TODO big sprite here too
-        except KeyError:
-            raise BadCharacterActionException("Character doesn't have the action "+str(action))
-
-    def animate(self):
-        #if self.state is not "pick":
-        self.index  = 0 if self.index is len(self.sprites[self.state])-1 else self.index+1
-        self.image  = self.__current_sprite() if not self.hover else self.__current_big_sprite()
-        self.mask   = self.__current_mask()
-        #else:   self.index +=1 if self.index < len(self.sprites[self.state])-1 else 0
+    def animation_frame(self):
+        '''Update method, will process and change image attributes to simulate animation when drawing'''
+        self.animation_index = self.animation_index+1 if self.animation_index < (len(self.sprites)-1) else 0
+        #Do it properly so it finds the next one even going all the way around the list
+        index = 0
+        while True:
+            if self.state in self.ids[index]:
+                self.animation_index = index
+                break
+            index+=1
+            if index == len(self.ids): #A complete loop with no matches, only one sprite of the action in self.state
+                break
 
     def hitbox_action(self, command, value=-1):
         #if  "mouse" in command and "sec" in command:        self.dec_index()
         #elif "mouse" in command and "first" in command:     self.inc_index()
         pass
-
-    def set_selected(self, selected=True):
-        self.index  = 0
-        if selected: 
-            self.state      = "pick"
-            self.selected   = True
-        else:
-            self.state      = "idle"
-            self.selected   = False
-    
-    def is_selected(self):
-        return self.selected
     
     def mvnt_possible(self, source, destiny):
         return True
     
-    def set_hover(self, active=True):
-        if active:  self.image = self.__current_big_sprite()
+    def set_hover(self, hover):
+        if hover:   self.image = self.__current_big_sprite()
         else:       self.image = self.__current_sprite()
-        self.hover = active
+        self.hover = hover
 
     #map is of type numpy, and paths of type 
     def generate_paths(self, existing_paths, board_map, distance_map, initial_pos): #TODO Initial pos is a pasth and we are passing it as a utple
@@ -235,18 +196,18 @@ class Character(AnimatedSprite):
         return characters
         
 class Warrior(Character):
-    def __init__(self, my_player, id_, size, sprites_path):
-        super().__init__(my_player, id_, size, sprites_path)
+    def __init__(self, my_player, id_, position, size, canvas_size, sprites_path):
+        super().__init__(my_player, id_, position, size, canvas_size, sprites_path)
         self.movement   = Restrictions(max_dist=2)
 
 class Wizard(Character):
-    def __init__(self, my_player, id_, size, sprites_path):
-        super().__init__(my_player, id_, size, sprites_path)
+    def __init__(self, my_player, id_, position, size, canvas_size, sprites_path):
+        super().__init__(my_player, id_, position, size, canvas_size, sprites_path)
         self.movement   = Restrictions(max_dist=3)
 
 class Priestess(Character):
-    def __init__(self, my_player, id_, size, sprites_path):
-        super().__init__(my_player, id_, size, sprites_path)
+    def __init__(self, my_player, id_, position, size, canvas_size, sprites_path):
+        super().__init__(my_player, id_, position, size, canvas_size, sprites_path)
         self.movement   = Restrictions(max_dist=-1, move_along_lvl=True, move_along_index=True, bypass_allies=False, bypass_enemies=False)
 
     #No need for a backtracking in priestess, only two steps.
@@ -262,8 +223,8 @@ class Priestess(Character):
         return possible_paths
 
 class Pawn(Character):
-    def __init__(self, my_player, id_, size, sprites_path):
-        super().__init__(my_player, id_, size, sprites_path)
+    def __init__(self, my_player, id_, position, size, canvas_size, sprites_path):
+        super().__init__(my_player, id_, position, size, canvas_size, sprites_path)
         self.movement   = Restrictions(approach_enemies=True)
     
     def generate_paths(self, existing_paths, board_map, distance_map, initial_pos):
@@ -316,6 +277,6 @@ class Pawn(Character):
         return distances_to_enemies
             
 class MatronMother(Character):
-    def __init__(self, my_player, id_, size, sprites_path):
-        super().__init__(my_player, id_, size, sprites_path)
+    def __init__(self, my_player, id_, position, size, canvas_size, sprites_path):
+        super().__init__(my_player, id_, position, size, canvas_size, sprites_path)
         self.movement   = Restrictions(bypass_enemies=True)

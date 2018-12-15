@@ -1,6 +1,7 @@
 import pygame, gradients
 from colors import *
 from resizer import Resizer
+from utility_box import UtilityBox
 from exceptions import ShapeNotFoundException, NotEnoughSpritesException
 from logger import Logger as LOG
 from os import listdir
@@ -100,10 +101,10 @@ class Sprite(pygame.sprite.Sprite):
 
     #For use after changing some input param.
     def regenerate_image(self):
-        self.image, self.overlay    = Sprite.generate_surface(self.params)
+        self.image, self.overlay    = Sprite.generate_surface(self.rect, **self.params)
 
     @staticmethod
-    def generate_surface(size, texture=None, keep_aspect_ratio=True, shape="Rectangle",\
+    def generate_surface(size, texture=None, keep_aspect_ratio=True, shape="Rectangle", transparent=False,\
                         only_text=False, text="default_text", text_color=WHITE, text_font=None,\
                         fill_color=RED, fill_gradient=True, gradient=(LIGHTGRAY, DARKGRAY), gradient_type="horizontal",\
                         overlay_color=WHITE, border=True, border_color=WHITE, border_width=2, **unexpected_kwargs):
@@ -148,8 +149,17 @@ class Sprite(pygame.sprite.Sprite):
         surf    = pygame.Surface(size)
         if shape == 'circle':
             if fill_gradient:   surf = gradients.radial(radius, gradient[0], gradient[1])
-            else:               pygame.draw.circle(surf, fill_color, (radius, radius), radius, 0)
-            if border:          pygame.draw.circle(surf, border_color, (radius, radius), radius, border_width)
+            else:  
+                colorkey = fill_color
+                if not transparent: #Search for another colorkey
+                    while colorkey == fill_color or colorkey == border_color: 
+                        colorkey = UtilityBox.random_rgb_color()
+                    surf.fill(colorkey)
+                    pygame.draw.circle(surf, fill_color, (radius, radius), radius, 0)
+                else:
+                    surf.fill(colorkey)
+                surf.set_colorkey(colorkey)
+            if border:  pygame.draw.circle(surf, border_color, (radius, radius), radius, border_width)
             pygame.draw.circle(overlay, overlay_color, (radius, radius), radius, 0)
         elif shape == 'rectangle':
             if fill_gradient:   surf = gradients.vertical(size, gradient[0], gradient[1]) if gradient_type == 0 \
@@ -168,10 +178,10 @@ class AnimatedSprite(Sprite):
     def __init__(self, _id, position, size, canvas_size, *sprite_list, sprite_folder=None, **image_params):
         super().__init__(_id, position, size, canvas_size, **image_params)
         #Adding parameters to control a lot of sprites instead of only one
-        self.sprites            = []
-        self.hover_sprites      = []
-        self.original_sprites   = []
-        self.ids                = []
+        self.sprites            = []    #Not really sprites, only surfaces
+        self.hover_sprites      = []    #Not really sprites, only surfaces
+        self.original_sprites   = []    #Not really sprites, only surfaces
+        self.ids                = []    
         self.masks              = []
         self.hover              = False
         self.animation_index    = 0
@@ -228,7 +238,7 @@ class AnimatedSprite(Sprite):
 
     def animation_frame(self):
         '''Update method, will process and change image attributes to simulate animation when drawing'''
-        self.animation_index = self.animation_index+1 if self.animation_index < (len(self.sprites.sprites())-1) else 0
+        self.animation_index = self.animation_index+1 if self.animation_index < (len(self.sprites)-1) else 0
 
     def set_hover(self, hover):
         self.hover = hover
@@ -248,7 +258,6 @@ class MultiSprite(Sprite):
         self.sprites        = pygame.sprite.OrderedUpdates()    #Could use a normal list here, but bah
 
     def add_sprite(self, sprite):
-        print("Adding "+sprite.id)
         sprite.use_overlay   = False #Not interested in overlays from a lot of sprites at the same time
         self.sprites.add(sprite)
         self.image.blit(sprite.image, sprite.rect)
@@ -263,8 +272,11 @@ class MultiSprite(Sprite):
             sprite.set_canvas_size(canvas_size)
             self.image.blit(sprite.image, sprite.rect)
 
-    def get_sprite_position(self, sprite, alignment):
-        pass
+    def get_sprite_abs_position(self, sprite):
+        return tuple(relative+absolute for relative, absolute in zip(sprite.rect.topleft, self.rect.topleft))
+
+    def get_sprite_abs_center(self, sprite):
+        return tuple(relative+absolute for relative, absolute in zip(sprite.rect.topleft, self.rect.topleft))
 
     def get_sprite(self, *keywords):
         for sprite in self.sprites.sprites():

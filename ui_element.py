@@ -8,6 +8,7 @@ TooManyElementsException, InvalidSliderException
 from utility_box import UtilityBox
 from sprite import Sprite, MultiSprite
 __all__ = ["TextSprite", "UIElement", "ButtonAction", "ButtonValue", "Slider", "InfoBoard", "Dialog"]
+from logger import Logger as LOG
 
 class TextSprite(Sprite):
     '''Class TextSprite. Inherits from pygame.sprite, and the main surface is a text, from pygame.font.render.
@@ -24,10 +25,11 @@ class TextSprite(Sprite):
     def __init__(self, _id, position, size, canvas_size, text, **params):
         UtilityBox.join_dicts(params, TextSprite.__default_config)  #Adding missing keys of default config to params
         super().__init__(_id, position, size, canvas_size, only_text=True, text=text, **params)
+        self.rect.size = self.image.get_size()
         self.id     = _id
         self.text   = text
 
-    def set_text(self, text):   #Longer string, different size must me used
+    def set_text(self, text):
         self.text           = text
         self.params['text'] = text
         self.regenerate_image()
@@ -109,15 +111,23 @@ class UIElement(MultiSprite):
         Returns:
             Nothing
         '''
+        #LOG.log('debug', "ELEMENT WITH STATS: W, H -> ", self.rect.size, ', topleft -> ', self.rect.topleft,\
+                #'center ->', self.rect.center)
         size = self.rect.size if text_size is None else text_size
         #The (0, 0) relative positoin is a decoy so the constructor of textsprite doesn't get cocky
         text = TextSprite(_id, (0, 0), size, self.get_canvas_size(), text, **params)
         #We calculate the center AFTER because the text size may vary due to the badly proportionated sizes.
-        center = (text.rect.width//2, self.rect.height//2) if 'left' in alignment.lower() else\
-        self.rect.center if 'center' in alignment.lower() else\
+        '''topleft = tuple(x//2 - y//2 for x, y in zip(self.rect.size, text.rect.size)) if 'center' in alignment.lower() else\
+        (text.rect.width//2, self.rect.height//2) if 'left' in alignment.lower() else\
+        (self.rect.width-text.rect.width//2, self.rect.height//2)'''
+        
+        center = tuple(x//2 for x in self.rect.size) if 'center' in alignment.lower() else\
+        (text.rect.width//2, self.rect.height//2) if 'left' in alignment.lower() else\
         (self.rect.width-text.rect.width//2, self.rect.height//2)
         #With the actual center according to the alignment, we now associate it
-        text.rect.center = center #The problem with this is that this is an absolute pos, we need a realtive one
+        text.rect.center = center
+        #LOG.log('debug', "TEXT WITH alignment ", alignment,": W, H -> ", text.rect.size, ', topleft -> ', text.rect.topleft,\
+            #'center ->', text.rect.center)
         self.add_sprite(text)  
     
     def hitbox_action(self, command, value=None):
@@ -261,11 +271,11 @@ class Slider (UIElement):
                         'slider_border': True, 
                         'slider_border_color': BLACK,
                         'slider_border_width': 2,
-                        'slider_type': 'rectangle'
+                        'slider_type': 'rectangular'
     }
 
     def __init__(self, id_, command, user_event_id, position, size, canvas_size, default_value, **params):
-        self.value          =   default_value   #TODO change slider initial pos to this one
+        self.value = default_value 
         super().__init__(id_, command, user_event_id, position, size, canvas_size, **params)
 
     def generate(self):
@@ -273,13 +283,15 @@ class Slider (UIElement):
         UtilityBox.join_dicts(self.params, Slider.__default_config) 
         _ = self.params  #For the sake of short code, params already have understandable names anyway
         text_size = [x//(1//_['text_proportion']) for x in self.rect.size]
+        #Text sprite
+        self.add_text_sprite(self.id+"_text", _['text'], text_size=text_size, alignment=_['text_alignment'])
+        #Value sprite
         if self.params['shows_value']:
             self.add_text_sprite(self.id+"_text", self.params['text'], text_size=text_size, alignment='left')
             self.add_text_sprite(self.id+"_value", str(self.get_value()), text_size=text_size, alignment='right')
         else:
             self.add_text_sprite(self.id+"_text", self.params['text'], text_size=text_size, alignment=self.params['text_alignment'])
-
-        self.add_text_sprite(self.id+"_text", _['text'], text_size=text_size, alignment=_['text_alignment'])
+        #Slider sprite
         self.generate_slider(_['slider_fill_color'], _['slider_use_gradient'], _['slider_gradient'], _['slider_border'],\
                             _['slider_border_color'], _['slider_border_width'], _['slider_type'])
 
@@ -287,8 +299,9 @@ class Slider (UIElement):
         '''Adds the slider to the surface parameter, and returns the slider surface for further purposes'''
         ratio = 3   #Ratio to resize square into rectangle and circle into ellipse
         slider_size = (self.rect.height, self.rect.height)
-        if 'circ' or 'ellipse' in slider_type:  #Circ for circular or circle
-            slider = Circle(self.id+"_slider", (0, 0), slider_size, self.get_canvas_size(),\
+        slider_id   = self.id+"button"
+        if 'circ' in slider_type or 'ellip' in slider_type:  #Circ for circular or circle
+            slider = Circle(slider_id, (0, 0), slider_size, self.get_canvas_size(),\
                             fill_color=fill_color, fill_gradient=use_gradient, gradient=gradient,\
                             border=border, border_width=border_width, border_color=border_color)
             if 'ellip' in slider_type:          #Ellip for elliptical or ellipse
@@ -296,20 +309,22 @@ class Slider (UIElement):
                 slider.image = pygame.transform.smoothscale(slider.image, slider.rect.size)  #Aaand using that modified rect
 
         elif 'rect' in slider_type:             #rect for rectangular or rectangle
-            slider = Rectangle(self.id+"_slider", (0, 0), (slider_size[0]//ratio, slider_size[1]), self.get_canvas_size(),\
+            slider = Rectangle(slider_id, (0, 0), (slider_size[0]//ratio, slider_size[1]), self.get_canvas_size(),\
                             fill_color=fill_color, fill_gradient=use_gradient, gradient=gradient,\
                             border=border, border_width=border_width, border_color=border_color)
 
         else:   raise InvalidSliderException("Slider of type "+str(slider_type)+" is not available")
         
-        slider.rect.center = self.rect.center   #Centering the slider in a start
+        slider.rect.center = (int(self.get_value()*self.rect.width), self.rect.height//2)   #Centering the slider in a start
         self.add_sprite(slider)
 
     def set_slider_position(self, position):
-        slider = self.get_sprite("slider")
+        slider = self.get_sprite("button")
         slider_position = int(self.rect.width*position) if (0 <= position <= 1) else int(position)                                      #Converting the slider position to pixels.
         slider_position = 0 if slider_position < 0 else self.rect.width if slider_position > self.rect.width else slider_position       #Checking if it's out of bounds 
-        slider.rect.x = slider_position-(self.slider.rect.width//2)
+        slider.rect.x = slider_position-(slider.rect.width//2)
+        value_text = self.get_sprite("value")
+        value_text.set_text(str(round(self.get_value(), 2)))
         self.regenerate_image()                                                                    #To compensate the graphical offset of managing center/top-left
 
     def get_value(self):
@@ -335,6 +350,12 @@ class Slider (UIElement):
                 self.set_value(value)
         self.send_event()
 
+    def send_event(self):
+        '''Post the event associated with this element, along with the current value.
+        Posts it in the pygame.event queue. Can be retrieved with pygame.event.get()'''
+        my_event = pygame.event.Event(self.get_event_id(), command=self.get_action(), value=self.get_value())
+        pygame.event.post(my_event)
+
     def update(self):
         '''Update method, will process and change image attributes to simulate animation when drawing
         Args, Returns:
@@ -344,26 +365,26 @@ class Slider (UIElement):
 
     def draw_overlay(self, surface):
         color   = UtilityBox.random_rgb_color()
-        slider  = self.get_sprite('slider')
+        slider  = self.get_sprite('button')
         _       = self.params
-        if 'circ' in _['slider_type']:      pygame.draw.circle(surface, color, slider.rect.center, slider.rect.height//2)
-        elif 'ellip' in _['slider_type']:   pygame.draw.ellipse(surface, color, slider.rect)
-        else:                               pygame.draw.rect(surface, color, slider.rect)
+        slider_rect = pygame.Rect(self.get_sprite_abs_position(slider), slider.rect.size)
+        if 'circ' in _['slider_type']:      pygame.draw.circle(surface, color, slider_rect.center, slider.rect.height//2)
+        elif 'ellip' in _['slider_type']:   pygame.draw.ellipse(surface, color, slider_rect)
+        else:                               pygame.draw.rect(surface, color, slider_rect)
 
-class InfoBoard (MultiSprite):
+class InfoBoard (UIElement):
     #The default config of a subclass contains only those parameters that the superclass does not mention
     __default_config = {'rows'  : 6,
                         'cols'  : 3 
     }
     def __init__(self, id_, user_event_id, position, size, canvas_size, *elements, **params):
-        super().__init__(id_, user_event_id, position, size, canvas_size, **params)    
+        super().__init__(id_, "Infoboard_no_command_bro", user_event_id, position, size, canvas_size, **params)    
+        UtilityBox.join_dicts(self.params, InfoBoard.__default_config)
         self.spaces         = self.params['rows']*self.params['cols']
         self.taken_spaces   = 0
         UtilityBox.join_dicts(self.params, InfoBoard.__default_config)
         self.add_and_adjust_sprites(*elements)
-
-    '''def update(self):
-        pass'''
+        self.use_overlay = False
     
     #Modify to also add elements when there are elements inside already
     def add_and_adjust_sprites(self, *elements, element_scale=0.95):
@@ -436,19 +457,3 @@ class Dialog (UIElement):
                 buttons[index].generate(pygame.Rect(size, pos), True)
                 pos[0] += size[0]
             pos[1]  += size[1]'''
-
-
-if __name__ == "__main__":
-    timeout = 20
-    testsuite = PygameSuite(fps=144)
-    #Create elements DEPRECATED
-    sli = UIElement.factory(pygame.USEREVENT+1, (10,10), (400, 100), (0.80, 0.10), (0.2))
-    but = UIElement.factory(pygame.USEREVENT+2, (10, 210), (400, 100), (0.80, 0.10), (30, 40))
-    sli2 = UIElement.factory(pygame.USEREVENT+3, (10, 410), (400, 100), (0.80, 0.10), (0.2), text="Slider")
-    but2 = UIElement.factory(pygame.USEREVENT+4, (10, 610), (400, 100), (0.80, 0.10), ((30, 40)), text="Button")
-    sli3 = UIElement.factory(pygame.USEREVENT+5, (510, 10), (400, 100), (0.80, 0.10), (0.2), text="SuperSlider", slider_type=0, start_gradient = RED, end_gradient=BLACK, slider_start_color = RED, slider_end_color = WHITE)
-    but3 = UIElement.factory(pygame.USEREVENT+6, (510, 210), (400, 100), (0.80, 0.10), ((30, 40)), text="SuperButton", start_gradient = GREEN, end_gradient=BLACK)
-    sli4 = UIElement.factory(pygame.USEREVENT+7, (510, 410), (400, 100), (0.80, 0.10), (0.2), text="LongTextIsLongSoLongThatIsLongestEver", slider_type=2, start_gradient = RED, end_gradient=BLACK, slider_start_color = RED, slider_end_color = WHITE)
-    but4 = UIElement.factory(pygame.USEREVENT+8, (510, 610), (400, 100), (0.80, 0.10), ((30, 40)), text="LongTextIsLongSoLongThatIsLongestEver", start_gradient = GREEN, end_gradient=BLACK)
-    testsuite.add_elements(sli, but, sli2, but2, sli3, but3, sli4, but4)
-    testsuite.loop(seconds = timeout)

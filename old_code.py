@@ -1006,3 +1006,75 @@ if __name__ == "__main__":
             if loop:            #If not exit yet                        
                 menu.event_handler(event, pygame.key.get_pressed(), pygame.mouse.get_pressed(),\
                                     mouse_movement=(pygame.mouse.get_rel() != (0,0)), mouse_pos=pygame.mouse.get_pos())
+
+#OLD MAIN of UI ELEMENT:
+
+if __name__ == "__main__":
+    timeout = 20
+    testsuite = PygameSuite(fps=144)
+    #Create elements DEPRECATED
+    sli = UIElement.factory(pygame.USEREVENT+1, (10,10), (400, 100), (0.80, 0.10), (0.2))
+    but = UIElement.factory(pygame.USEREVENT+2, (10, 210), (400, 100), (0.80, 0.10), (30, 40))
+    sli2 = UIElement.factory(pygame.USEREVENT+3, (10, 410), (400, 100), (0.80, 0.10), (0.2), text="Slider")
+    but2 = UIElement.factory(pygame.USEREVENT+4, (10, 610), (400, 100), (0.80, 0.10), ((30, 40)), text="Button")
+    sli3 = UIElement.factory(pygame.USEREVENT+5, (510, 10), (400, 100), (0.80, 0.10), (0.2), text="SuperSlider", slider_type=0, start_gradient = RED, end_gradient=BLACK, slider_start_color = RED, slider_end_color = WHITE)
+    but3 = UIElement.factory(pygame.USEREVENT+6, (510, 210), (400, 100), (0.80, 0.10), ((30, 40)), text="SuperButton", start_gradient = GREEN, end_gradient=BLACK)
+    sli4 = UIElement.factory(pygame.USEREVENT+7, (510, 410), (400, 100), (0.80, 0.10), (0.2), text="LongTextIsLongSoLongThatIsLongestEver", slider_type=2, start_gradient = RED, end_gradient=BLACK, slider_start_color = RED, slider_end_color = WHITE)
+    but4 = UIElement.factory(pygame.USEREVENT+8, (510, 610), (400, 100), (0.80, 0.10), ((30, 40)), text="LongTextIsLongSoLongThatIsLongestEver", start_gradient = GREEN, end_gradient=BLACK)
+    testsuite.add_elements(sli, but, sli2, but2, sli3, but3, sli4, but4)
+    testsuite.loop(seconds = timeout)
+#Character
+    def change_size(self, size):
+        for list_ in self.sprites.values():     list_.clear()
+        for list_ in self.big_sprites.values(): list_.clear()
+        for list_ in self.masks.values():       list_.clear()
+        for sprite_path in self.files.keys():   self.__add_sprite(sprite_path, size)
+        self.rect.size = self.__current_sprite().get_size()
+
+    def move(self): #move(cols, rows, char_in_middle, char_just_near)
+        if 0: return True   #Allowed movm
+        if 1: return False  #not allowed
+
+    #This method is tested already
+    def load_sprites(self, size, sprite_path):
+        sprite_images = [sprite_path+'\\'+f for f in listdir(sprite_path) if isfile(join(sprite_path, f))]
+        for sprite_image in sprite_images:
+            if sprite_image.lower().endswith(('.png', '.jpg', '.jpeg', 'bmp')):
+                self.__add_sprite(sprite_image, size)
+        self.image  = self.__current_sprite()
+        self.rect   = pygame.Rect((200, 200), self.image.get_size())
+        self.mask   = self.__current_mask()
+    
+    def __add_sprite(self, path, size=None):
+        for action in self.sprites.keys():
+            if action in path.lower():
+                try:                self.files[path] 
+                except KeyError:    self.files[path] = pygame.image.load(path)
+                if size is None:    self.sprites[action].append(self.files[path])
+                else:               self.sprites[action].append(Resizer.resize_same_aspect_ratio(self.files[path], size))
+                self.masks[action].append(pygame.mask.from_surface(self.sprites[action][-1]))
+                big_sprite = pygame.transform.smoothscale(self.sprites[action][-1], tuple(int(x*1.25 ) for x in self.sprites[action][-1].get_size()))
+                self.big_sprites[action].append(big_sprite)
+                return
+
+  def animate(self):
+        #if self.state is not "pick":
+        self.index  = 0 if self.index is len(self.sprites[self.state])-1 else self.index+1
+        self.image  = self.__current_sprite() if not self.hover else self.__current_big_sprite()
+        self.mask   = self.__current_mask()
+        #else:   self.index +=1 if self.index < len(self.sprites[self.state])-1 else 0
+    
+    def set_selected(self, selected=True):
+        self.index  = 0
+        if selected: 
+            self.state      = "pick"
+            self.selected   = True
+        else:
+            self.state      = "idle"
+            self.selected   = False
+
+    def update(self): #Make it bigger (Like when in touch with hitbox, this could be done in board itself)
+        self.counter        += 1
+        if self.counter is NEXT_SPRITE_COUNTER:
+            self.counter    = 0
+            self.animate()

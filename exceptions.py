@@ -31,7 +31,7 @@ class BadPlayersParameter(Exception):
 class BadResizerParamException(Exception):
     pass
 
-class BadCharacterActionException(Exception):
+class StateNotFoundException(Exception):
     pass
 
 class BadPlayerTypeException(Exception):

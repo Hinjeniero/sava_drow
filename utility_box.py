@@ -1,5 +1,4 @@
 import numpy, math, time, pygame, gradients, random 
-from sprite import Sprite
 
 def euclidean_generator(dimension=300, print_time=False): #100 will be plenty in our case
     start = time.time()

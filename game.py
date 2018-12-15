@@ -140,11 +140,8 @@ if __name__ == "__main__":
     init_pygame_modules(True, res, 'Sava Drow')
     #Create elements, main menu buttons (POSITIONS AND SIZES ARE IN PERCENTAGES OF THE CANVAS_SIZE, can use absolute integers too)
     buttonStart         = UIElement.factory('button_start', "start_game_go_main_board", pygame.USEREVENT+1, (0.05, 0.10), (0.90, 0.20), res, None, text="Start game", keep_aspect_ratio = False, texture=IMG_FOLDER+"//button.png")
-    print('10')
     buttonParamsMenu    = UIElement.factory('button_params_menu', "go_menu_params_config",    pygame.USEREVENT+1, (0.05, 0.40), (0.90, 0.20), res, None, text="Parameters", gradient = (RED, BLACK))
-    print('10')
     buttonSoundMenu     = UIElement.factory('button_sound', "go_menu_sound_music",      pygame.USEREVENT+1, (0.05, 0.70), (0.90, 0.20), res, None, text="Music menu", gradient = (RED, BLACK))
-    print('10')
     #buttons of parameters menu
     buttonRes           = UIElement.factory('button_resolution',"change_resolution_screen_display", pygame.USEREVENT, (0.05, 0.05), (0.90, 0.10), res, resolutions, text="Resolution",     text_alignment = 'left')
     buttonCountPlayers  = UIElement.factory('button_players', "change_number_count_players",      pygame.USEREVENT, (0.05, 0.20), (0.90, 0.10), res, (2, 3, 4),   text="Number of players",   text_alignment = 'left')
@@ -173,15 +170,15 @@ if __name__ == "__main__":
                 buttonRes, buttonCountPlayers, buttonNumPawns, buttonNumWarriors, buttonNumWizards, buttonNumPriestess, background_path=IMG_FOLDER+'\\background.jpg')
 
     main_board = Board("main_board", pygame.USEREVENT+7, res, background_path = IMG_FOLDER+'\\board_2.jpg')
-    '''textSprite1 = TextSprite("testSprite", "YESSS", (200, 100))
-    textSprite2 = TextSprite("testSprite", "NOOOO", (200, 100))
-    textSprite3 = TextSprite("testSprite", "SIIII", (200, 100))
-    textSprite4 = TextSprite("testSprite", "NUUUUmale", (600, 100))'''
+    textSprite1 = TextSprite("testSprite", (0, 0), (200, 100), res, "YESSS")
+    textSprite2 = TextSprite("testSprite", (0, 0), (200, 100), res, "MaybBEEEE")
+    textSprite3 = TextSprite("testSprite", (0, 0), (200, 100), res, "no.")
+    textSprite4 = TextSprite("testSprite", (0, 0), (600, 100), res, "NUUUUNMAKLE")
                             #id_, userevent, element_position, element_size, canvas_size, *elements, **params
-    '''infoboard = InfoBoard("test", USEREVENT+2, (0, 0), (400, 400), res, (textSprite1, 1), (textSprite2, 2), (textSprite3, 3), (textSprite4, 6))
+    infoboard = InfoBoard("test", USEREVENT+2, (0, 0), (400, 400), res, (textSprite1, 1), (textSprite2, 2), (textSprite3, 3), (textSprite4, 6))
     main_board.temp_infoboard = infoboard
     main_board.create_player("Zippotudo", 0, {"pawn":1, "warrior":1, "wizard":1, "priestess":1}, (100, 100))
-    main_board.create_player("Zippotudo_2", 0, {"pawn":1, "warrior":1, "wizard":1, "priestess":1}, (100, 100))'''
+    #main_board.create_player("Zippotudo_2", 0, {"pawn":1, "warrior":1, "wizard":1, "priestess":1}, (100, 100))
     #TODO EACH PLAYERS GETS HIS INFOBOARD
     game = Game(main_menu, sound_menu, params_menu, main_board, title="Sava Drow", resolution=res)
     game.start()

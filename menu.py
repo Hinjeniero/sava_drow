@@ -125,11 +125,9 @@ class Menu (Screen):
         if event.type == pygame.MOUSEBUTTONDOWN:
             if mouse_buttons[0]:    self.active_sprite.sprite.hitbox_action('first_mouse_button', value=mouse_position)
             elif mouse_buttons[2]:  self.active_sprite.sprite.hitbox_action('secondary_mouse_button', value=mouse_position)
-        
         if mouse_movement: 
             colliding_sprite = pygame.sprite.spritecollideany(UtilityBox.get_mouse_sprite(mouse_position), self.dynamic_sprites.sprites())
             if colliding_sprite is not None:    self.change_active_sprite(self.get_sprite_index(colliding_sprite))  
-            #TODO this can be done in a better way
 
     def change_active_sprite(self, index):
         if index is not self.active_sprite_index:

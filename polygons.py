@@ -99,4 +99,4 @@ class Circle(Polygon):
 
 class Rectangle(Polygon):
     def __init__(self, _id, position, size, canvas_size, **params):
-        super().__init__(_id, position, size, canvas_size, shape="circle", **params)
+        super().__init__(_id, position, size, canvas_size, shape="rectangle", **params)

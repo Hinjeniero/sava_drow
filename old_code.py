@@ -1078,3 +1078,73 @@ if __name__ == "__main__":
         if self.counter is NEXT_SPRITE_COUNTER:
             self.counter    = 0
             self.animate()
+
+    '''@staticmethod
+    def AAfilledRoundedRect(surface, rect, color, radius=0.4):
+
+        """
+        AAfilledRoundedRect(surface,rect,color,radius=0.4)
+
+        surface : destination
+        rect    : rectangle
+        color   : rgb or rgba
+        radius  : 0 <= radius <= 1
+        """
+
+        rect         = Rect(rect)
+        color        = Color(*color)
+        alpha        = color.a
+        color.a      = 0
+        pos          = rect.topleft
+        rect.topleft = 0,0
+        rectangle    = Surface(rect.size,SRCALPHA)
+
+        circle       = Surface([min(rect.size)*3]*2,SRCALPHA)
+        draw.ellipse(circle,(0,0,0),circle.get_rect(),0)
+        circle       = transform.smoothscale(circle,[int(min(rect.size)*radius)]*2)
+
+        radius              = rectangle.blit(circle,(0,0))
+        radius.bottomright  = rect.bottomright
+        rectangle.blit(circle,radius)
+        radius.topright     = rect.topright
+        rectangle.blit(circle,radius)
+        radius.bottomleft   = rect.bottomleft
+        rectangle.blit(circle,radius)
+
+        rectangle.fill((0,0,0),rect.inflate(-radius.w,0))
+        rectangle.fill((0,0,0),rect.inflate(0,-radius.h))
+
+        rectangle.fill(color,special_flags=BLEND_RGBA_MAX)
+        rectangle.fill((255,255,255,alpha),special_flags=BLEND_RGBA_MIN)
+
+        return surface.blit(rectangle,pos)'''
+#OLD TREANS POATHS
+        '''spr = Rectangle((self.platform.rect.centerx-self.platform.rect.width//2, self.platform.rect.centery), (self.platform.rect.width, 4))
+        offset = (360//self.params['circles_per_lvl'])*self.params['initial_offset']
+        self.trans_paths.add(*UtilityBox.rotate(spr, 360//self.params['number_of_paths'], self.params['number_of_paths'], offset))
+        LOG.log('DEBUG', "Generated middle paths in board ", self.id)'''#TODO MAKE THIS A REAL BROOO'''
+
+#BOARD AGAIN
+    def generate_inter_path(self, index):
+        point_list = []
+        for i in range(self.params['max_levels']-1, 0, -1):
+            point_list.append(self.get_cell(i, index).center)
+        point_list.append(self.get_cell(0, self.__get_inside_cell(index)).center) #Final point
+        return UtilityBox.bezier_surface(*(tuple(point_list)))
+
+    def generate_inter_paths(self):
+        self.__adjust_number_of_paths()
+        for i in range(0, self.params['circles_per_lvl']):
+            if (i+1)%self.params['inter_path_frequency'] is 0:
+                self.trans_paths.add(self.generate_trans_path(i)) #HAVE TO ADD SET CANVAS SIZE FUNCIONALITY
+
+    def __get_quadrant(self, cell, container_center, count_axis=False):
+        x, y = cell.rect.center[0], cell.rect.center[1]
+        center_x, center_y = container_center[0], container_center[1]
+        if 0 < abs(x - center_x) < 2: x = center_x
+        if 0 < abs(y - center_y) < 2: y = center_y
+        if not count_axis:  quadrant = 0 if (x>=center_x and y<center_y) else 1 if (x>center_x and y>=center_y)\
+                            else 2 if (x<=center_x and y>center_y) else 3
+        else:               quadrant = 0 if (x>center_x and y<center_y) else 1 if (x>center_x and y>center_y)\
+                             else 2 if (x<center_x and y>center_y) else 3 if (x<center_x and y<center_y) else -1
+        return quadrant

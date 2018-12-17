@@ -1,15 +1,16 @@
 import functools, pygame, random
 from paths import Path
+from sprite import MultiSprite
 
 @functools.total_ordering
-class Cell(pygame.sprite.Sprite):
+class Cell(MultiSprite):
     def __init__(self, circle, grid_position, real_index):
-        super().__init__()
-        self.image  = circle.image
-        self.rect   = circle.rect
+        super().__init__("cell_"+str(real_index),circle.rect.topleft, circle.rect.size,\
+                        circle.get_canvas_size(), surface=circle.image)
         self.center = circle.center
         self.pos    = grid_position
         self.index  = real_index
+        self.add_text_sprite(self.id+"_text", str(self.pos))
         self.chars  = pygame.sprite.Group()
 
     def add_char(self, character):
@@ -61,21 +62,21 @@ class Quadrant(object):
         self.cells  = pygame.sprite.Group()
         self.center = pygame.sprite.Group()
         self.border = pygame.sprite.Group()
-        self.lvl    = (0, 0)        #interval to return pseudo cells (exterior-border-center, and shit like that)
-        self.index  = (0, 0)
-        self.get_intervals(*cells)
-        self.sort_cells()
+        #interval to return pseudo cells (exterior-border-center, and shit like that)
+        self.lvl, self.index = self.get_intervals(*cells)
+        self.sort_cells(*cells)
 
     def get_cell(self):
         pass
 
     def get_random_cell(self, restriction=None):
-        return random.choice(self.cells) if restriction is None else random.choice(self.cells) #TODO Do this shit properly here
+        return random.choice(self.border.sprites()) if not restriction\
+        else random.choice(self.border.sprites()) #TODO Do this shit properly here
 
     def get_intervals(self, *cells):
         indexes, levels = tuple([cell.get_index() for cell in cells]), tuple([cell.get_level() for cell in cells])
-        print("INDEXES"+str(indexes))
-        self.lvl, self.index = (min(indexes), max(indexes)), (min(levels), max(levels))
+        #print("INDEXES"+str(indexes))
+        return (min(indexes), max(indexes)), (min(levels), max(levels))
 
     def sort_cells(self, *cells):
         for cell in cells:  self.__sort_cell(cell, *cells)
@@ -84,7 +85,7 @@ class Quadrant(object):
         self.cells.add(cell)
         less_lvl, more_lvl, less_index, more_index = False, False, False, False
         for other_cell in cells:
-            if all(less_lvl, more_lvl, less_index, more_index): 
+            if all((less_lvl, more_lvl, less_index, more_index)): 
                 self.center.add(cell)
                 return
             elif other_cell is not cell:

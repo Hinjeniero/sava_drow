@@ -24,15 +24,12 @@ class Restrictions(object):
         self.approach_enemies   = approach_enemies  #If can only move in a way that will approach him to enemies
 
 class Player(object):
-    def __init__(self, name, order, pieces_qty, sprite_size, infoboard=None, **sprite_paths): #TODO infoboard shoudlnt be none
+    def __init__(self, name, order, pieces_qty, sprite_size, canvas_size, infoboard=None, **sprite_paths): #TODO infoboard shoudlnt be none
         self.name       = name
         self.order      = order
-        self.characters = Character.factory(name, pieces_qty, sprite_size, **sprite_paths)
+        self.characters = Character.factory(name, pieces_qty, sprite_size, canvas_size, **sprite_paths)
         self.infoboard  = infoboard
         self.turn       = -1
-    
-    def draw_characters(self, surface, active=True):
-        pass
     
 class Character(AnimatedSprite):
     __default_aliases   = { "idle" : "idle",
@@ -49,7 +46,8 @@ class Character(AnimatedSprite):
         self.movement   = Restrictions()
         self.state      = "idle"
         self.aliases    = aliases
-        UtilityBox.join_dicts(self.aliases, Character.__default_alias)
+        self.count      = 0
+        UtilityBox.join_dicts(self.aliases, Character.__default_aliases)
     
     def get_master(self):
         return self.my_master
@@ -63,17 +61,21 @@ class Character(AnimatedSprite):
         raise StateNotFoundException("Character doesn't have the state "+str(state))
 
     def animation_frame(self):
-        '''Update method, will process and change image attributes to simulate animation when drawing'''
-        self.animation_index = self.animation_index+1 if self.animation_index < (len(self.sprites)-1) else 0
-        #Do it properly so it finds the next one even going all the way around the list
-        index = 0
-        while True:
-            if self.state in self.ids[index]:
-                self.animation_index = index
-                break
-            index+=1
-            if index == len(self.ids): #A complete loop with no matches, only one sprite of the action in self.state
-                break
+        if self.count < 1000:
+            self.count +=1
+        else: 
+            self.count=0
+            '''Update method, will process and change image attributes to simulate animation when drawing'''
+            self.animation_index = self.animation_index+1 if self.animation_index < (len(self.sprites)-1) else 0
+            #Do it properly so it finds the next one even going all the way around the list
+            index = self.animation_index
+            while True:
+                if self.state in self.ids[index].lower():
+                    self.animation_index = index
+                    break
+                index+=1
+                if index == len(self.ids): #A complete loop with no matches, only one sprite of the action in self.state
+                    break
 
     def hitbox_action(self, command, value=-1):
         #if  "mouse" in command and "sec" in command:        self.dec_index()
@@ -82,11 +84,6 @@ class Character(AnimatedSprite):
     
     def mvnt_possible(self, source, destiny):
         return True
-    
-    def set_hover(self, hover):
-        if hover:   self.image = self.__current_big_sprite()
-        else:       self.image = self.__current_sprite()
-        self.hover = hover
 
     #map is of type numpy, and paths of type 
     def generate_paths(self, existing_paths, board_map, distance_map, initial_pos): #TODO Initial pos is a pasth and we are passing it as a utple
@@ -163,7 +160,7 @@ class Character(AnimatedSprite):
             add_to_result(char_constructor(*params, **kwparams))
     
     @staticmethod
-    def factory(player_name, pieces_qty, sprite_size, **sprite_paths):
+    def factory(player_name, pieces_qty, sprite_size, canvas_size, **sprite_paths):
         LOG.log('INFO', "----Factory, making ", player_name, " characters----")
         if not isinstance(pieces_qty, dict):    raise BadCharacterInitException("pieces_qty must be dictionary, not "+str(type(pieces_qty)))   
         if not isinstance(sprite_paths, dict):  raise BadCharacterInitException("sprite_paths must be dictionary, not "+str(type(sprite_paths)))
@@ -172,23 +169,23 @@ class Character(AnimatedSprite):
 
         path, number_of = IMG_FOLDER+"\\pawn", 8
         if "pawn" in pieces_qty:            number_of   = pieces_qty["pawn"]
-        if "pawn" in sprite_paths:          path        = sprite_paths["pawn"]  
-        threads.append(Character.__char_loader(Pawn, characters, number_of, player_name, "pawn", sprite_size, path))
+        if "pawn" in sprite_paths:          path        = sprite_paths["pawn"]
+        threads.append(Character.__char_loader(Pawn, characters, number_of, player_name, "pawn", (0, 0), sprite_size, canvas_size, path))
 
         path, number_of = IMG_FOLDER+"\\warrior", 4
         if "warrior" in pieces_qty:         number_of   = pieces_qty["warrior"]
         if "warrior" in sprite_paths:       path        = sprite_paths["warrior"]
-        threads.append(Character.__char_loader(Pawn, characters, number_of, player_name, "warrior", sprite_size, path))
+        threads.append(Character.__char_loader(Pawn, characters, number_of, player_name, "warrior", (0, 0), sprite_size, canvas_size, path))
 
         path, number_of = IMG_FOLDER+"\\wizard", 2
         if "wizard" in pieces_qty:          number_of   = pieces_qty["wizard"]
         if "wizard" in sprite_paths:        path        = sprite_paths["wizard"]
-        threads.append(Character.__char_loader(Wizard, characters, number_of, player_name, "wizard", sprite_size, path))
+        threads.append(Character.__char_loader(Wizard, characters, number_of, player_name, "wizard", (0, 0), sprite_size, canvas_size, path))
 
         path, number_of = IMG_FOLDER+"\\priestess", 1
         if "priestess" in pieces_qty:       number_of   = pieces_qty["priestess"]
         if "priestess" in sprite_paths:     path        = sprite_paths["priestess"]       
-        threads.append(Character.__char_loader(Priestess, characters, number_of, player_name, "priestess", sprite_size, path))
+        threads.append(Character.__char_loader(Priestess, characters, number_of, player_name, "priestess", (0, 0), sprite_size, canvas_size, path))
 
         for t in threads:
             t.join()        #Threading.join

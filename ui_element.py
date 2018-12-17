@@ -6,33 +6,9 @@ from colors import *
 from exceptions import InvalidUIElementException, BadUIElementInitException, InvalidCommandValueException,\
 TooManyElementsException, InvalidSliderException
 from utility_box import UtilityBox
-from sprite import Sprite, MultiSprite
+from sprite import Sprite, MultiSprite, TextSprite
 __all__ = ["TextSprite", "UIElement", "ButtonAction", "ButtonValue", "Slider", "InfoBoard", "Dialog"]
 from logger import Logger as LOG
-
-class TextSprite(Sprite):
-    '''Class TextSprite. Inherits from pygame.sprite, and the main surface is a text, from pygame.font.render.
-    Attributes:
-        image: Surface that contains the text
-        rect: pygame.Rect containing the position and size of the text sprite.
-    '''
-    #This for the sake of an example, not needed since the method in Sprite
-    #already has default values.
-    __default_config = {'text_font'      : None,
-                        'text_color'     : WHITE
-    }
-    #def __init__(self, font, rect_size, max_font_allowed, text, text_color, position=(0,0), source_rect=None, alignment=0):
-    def __init__(self, _id, position, size, canvas_size, text, **params):
-        UtilityBox.join_dicts(params, TextSprite.__default_config)  #Adding missing keys of default config to params
-        super().__init__(_id, position, size, canvas_size, only_text=True, text=text, **params)
-        self.rect.size = self.image.get_size()
-        self.id     = _id
-        self.text   = text
-
-    def set_text(self, text):
-        self.text           = text
-        self.params['text'] = text
-        self.regenerate_image()
 
 #Graphical element, automatic creation of a menu's elements
 class UIElement(MultiSprite):
@@ -99,36 +75,6 @@ class UIElement(MultiSprite):
         A METHOD TO OVERLOAD, SUPER (UIELEMENT) DOES NOTHING HERE
         '''
         pass
-
-    def add_text_sprite(self, _id, text, alignment="center", text_size=None, **params): 
-        '''Generates and adds sprite-based text object following the input parameters.
-        Args:
-            text:           String object, is the text itself.
-            text_color:     Color of the text.
-            text_alignment: Decides which type of centering the text follows. 0-center, 1-left, 2-right.
-            font:           Type of font that the text will have. Default value of pygame: None.
-            font_size:      Size of the font (height in pixels).
-        Returns:
-            Nothing
-        '''
-        #LOG.log('debug', "ELEMENT WITH STATS: W, H -> ", self.rect.size, ', topleft -> ', self.rect.topleft,\
-                #'center ->', self.rect.center)
-        size = self.rect.size if text_size is None else text_size
-        #The (0, 0) relative positoin is a decoy so the constructor of textsprite doesn't get cocky
-        text = TextSprite(_id, (0, 0), size, self.get_canvas_size(), text, **params)
-        #We calculate the center AFTER because the text size may vary due to the badly proportionated sizes.
-        '''topleft = tuple(x//2 - y//2 for x, y in zip(self.rect.size, text.rect.size)) if 'center' in alignment.lower() else\
-        (text.rect.width//2, self.rect.height//2) if 'left' in alignment.lower() else\
-        (self.rect.width-text.rect.width//2, self.rect.height//2)'''
-        
-        center = tuple(x//2 for x in self.rect.size) if 'center' in alignment.lower() else\
-        (text.rect.width//2, self.rect.height//2) if 'left' in alignment.lower() else\
-        (self.rect.width-text.rect.width//2, self.rect.height//2)
-        #With the actual center according to the alignment, we now associate it
-        text.rect.center = center
-        #LOG.log('debug', "TEXT WITH alignment ", alignment,": W, H -> ", text.rect.size, ', topleft -> ', text.rect.topleft,\
-            #'center ->', text.rect.center)
-        self.add_sprite(text)  
     
     def hitbox_action(self, command, value=None):
         if self.active: self.send_event()

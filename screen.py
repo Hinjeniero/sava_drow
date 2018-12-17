@@ -44,7 +44,7 @@ class Screen(object):
     def draw(self, surface):
         surface.blit(self.background, (0,0))
 
-    def update_resolution(self, resolution):
+    def set_resolution(self, resolution):
         self.resolution = resolution
         self.background = UtilityBox.load_background(resolution, self.params['background_path'])
 
@@ -52,42 +52,33 @@ class Screen(object):
         pass
     
 class LoadingScreen(Screen):
-    def __init__(self, id_, event_id, resolution, text, loading_sprite_path=None, **params):
+    def __init__(self, id_, event_id, resolution, text, loading_sprite_path=IMG_FOLDER+"//loading_circle.png", **params):
         super().__init__(id_, event_id, resolution, **params)
         self.loading_sprite, self.text_sprite = self.generate_sprites(text, loading_sprite_path=loading_sprite_path)
-        self.count          = 0
     
     def generate_sprites(self, text, loading_sprite_path=None):
         loading_sprite  = None
         load_sprites    = self.generate_load_sprite(loading_sprite_path)
         if loading_sprite_path:
             loading_sprite  = AnimatedSprite(self.id+'_loading_sprite', load_sprites[0].rect.topleft,\
-                            load_sprites[0].rect.size, self.resolution, *(load_sprites))
+                            load_sprites[0].rect.size, self.resolution, *(load_sprites), animation_delay=60)
 
         text_size   = (int(0.6*self.resolution[0]), int(0.1*self.resolution[1]))
         text_pos    = tuple([x//2-y//2 for x, y in zip(self.resolution, text_size)])
         text_sprite = TextSprite(self.id+'_text', text_pos, text_size, self.resolution, text)
-
         return loading_sprite, text_sprite
 
     def generate_load_sprite(self, path, degrees=45):
         sprite              = pygame.sprite.Sprite()
-        sprite.image        = pygame.image.load(IMG_FOLDER+"//loading_circle.png") if path is None else pygame.image.load(path)
+        sprite.image        = pygame.image.load(path)
         sprite.rect         = sprite.image.get_rect()
         sprite.rect.topleft = (self.resolution[0]//2-sprite.rect.width//2, self.resolution[1]-sprite.rect.height*1.5)
         return UtilityBox.rotate(sprite, 360//8, 8, include_original=True)
-    
-    def update(self):
-        if self.count is 100:
-            self.index_sprite = 0 if self.index_sprite is (len(self.loading_sprite)-1) else self.index_sprite+1
-            self.count = 0
-        else: self.count+=1
 
     def draw(self, surface):
         super().draw(surface)
-        surface.blit(self.loading_sprite[self.index_sprite].image, self.loading_sprite[self.index_sprite].rect)
-        surface.blit(self.text_sprite.image, self.text_sprite.rect)
-        self.update()
+        self.loading_sprite.draw(surface)
+        self.text_sprite.draw(surface)
 
     def copy_sprite(self, new_size, *sprites):
         sprites_copy = []
@@ -97,7 +88,7 @@ class LoadingScreen(Screen):
             sprites_copy.append(spr)
         return sprites_copy
 
-    def update_resolution(self, resolution):
-        super().update_resolution(resolution)
-        #for sprite in self.loading_sprite:
-            #sprite.image = pygame.transform.smoot
+    def set_resolution(self, resolution):
+        super().set_resolution(resolution)
+        self.loading_sprite.set_canvas_size(resolution)
+        self.text_sprite.set_canvas_size(resolution)

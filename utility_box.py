@@ -1,4 +1,6 @@
 import numpy, math, time, pygame, gradients, random 
+from colors import *
+from PAdLib import draw as Drawing
 
 def euclidean_generator(dimension=300, print_time=False): #100 will be plenty in our case
     start = time.time()
@@ -60,8 +62,11 @@ class UtilityBox (object):
         return UtilityBox.mouse_sprite
 
     @staticmethod
-    def random_rgb_color(start=0, end=255):
-        return (random.randint(start, end), random.randint(start, end), random.randint(start, end))
+    def random_rgb_color(*colors_to_exclude, start=0, end=255):
+        rand_color = (random.randint(start, end), random.randint(start, end), random.randint(start, end))
+        while any(rand_color in excluded_color for excluded_color in colors_to_exclude):
+            rand_color = (random.randint(start, end), random.randint(start, end), random.randint(start, end))
+        return rand_color
 
     @staticmethod
     def draw_fps(surface, clock):
@@ -119,42 +124,26 @@ class UtilityBox (object):
         for i in range(0, surface.get_height(), surface.get_height()//rows):    pygame.draw.line(surface, color, (0, i), (surface.get_width(), i))
         for i in range(0, surface.get_width(), surface.get_width()//columns):   pygame.draw.line(surface, color, (i, 0), (i, surface.get_height()))
 
-    '''@staticmethod
-    def AAfilledRoundedRect(surface, rect, color, radius=0.4):
+    @staticmethod
+    def add_transparency(surface, *excluded_colors, use_color=None):
+        colorkey = UtilityBox.random_rgb_color(*excluded_colors) if not use_color else use_color
+        surface.fill(colorkey)
+        surface.set_colorkey(colorkey)
 
-        """
-        AAfilledRoundedRect(surface,rect,color,radius=0.4)
+    @staticmethod
+    def bezier_surface(*points, color=RED, width=3, steps=20):
+        min_axises = (min(point[0] for point in points), min(point[1] for point in points))
+        max_axises = (max(point[0] for point in points), max(point[1] for point in points))
+        size = tuple(abs(max_axis-min_axis) for max_axis, min_axis in zip(max_axises, min_axises))
+        for point in points: #Modyfing points to shift to occupy only the surface
+            point = tuple(point_axis-min_axis for point_axis, min_axis in zip(point, min_axises)) #Adjusting to the surface
+        surface = pygame.Surface(size)
+        UtilityBox.add_transparency(surface, color) #Making the surface transparent
+        UtilityBox.draw_bezier(surface,  *points, color=color, width=width, steps=steps)
+        return surface
 
-        surface : destination
-        rect    : rectangle
-        color   : rgb or rgba
-        radius  : 0 <= radius <= 1
-        """
-
-        rect         = Rect(rect)
-        color        = Color(*color)
-        alpha        = color.a
-        color.a      = 0
-        pos          = rect.topleft
-        rect.topleft = 0,0
-        rectangle    = Surface(rect.size,SRCALPHA)
-
-        circle       = Surface([min(rect.size)*3]*2,SRCALPHA)
-        draw.ellipse(circle,(0,0,0),circle.get_rect(),0)
-        circle       = transform.smoothscale(circle,[int(min(rect.size)*radius)]*2)
-
-        radius              = rectangle.blit(circle,(0,0))
-        radius.bottomright  = rect.bottomright
-        rectangle.blit(circle,radius)
-        radius.topright     = rect.topright
-        rectangle.blit(circle,radius)
-        radius.bottomleft   = rect.bottomleft
-        rectangle.blit(circle,radius)
-
-        rectangle.fill((0,0,0),rect.inflate(-radius.w,0))
-        rectangle.fill((0,0,0),rect.inflate(0,-radius.h))
-
-        rectangle.fill(color,special_flags=BLEND_RGBA_MAX)
-        rectangle.fill((255,255,255,alpha),special_flags=BLEND_RGBA_MIN)
-
-        return surface.blit(rectangle,pos)'''
+    @staticmethod
+    def draw_bezier(surface, *points, color=RED, width=3, steps=20):
+        if any(len(point)>2 for point in points): raise TypeError("The tuples must have 2 dimensions")
+        point_list = tuple(point for point in points)
+        if len(points)>1:   Drawing.bezier(surface, color, point_list, steps, width)

@@ -1,4 +1,5 @@
 import pygame, gradients
+import pygame.gfxdraw
 from colors import *
 from resizer import Resizer
 from utility_box import UtilityBox
@@ -15,13 +16,16 @@ MAX_TRANSPARENCY        = 255
 class Sprite(pygame.sprite.Sprite):
     def __init__(self, _id, position, size, canvas_size, **image_params):
         super().__init__()
+        #input args to generate again if needed (change of size e.g.)
+        self.params         = image_params
         #Basic stuff
         self.id             = _id
         self.rect           = pygame.Rect(position, size) 
-        self.image, self.overlay    = Sprite.generate_surface(self.rect, **image_params)
+        self.image, self.overlay = Sprite.generate_surface(self.rect, **image_params)
         self.mask           = pygame.mask.from_surface(self.image) 
         #Additions to interesting funcionality
-        self.real_rect      = (tuple([x/y for x,y in zip(position, canvas_size)]), tuple([x/y for x,y in zip(size, canvas_size)]))      
+        self.real_rect      = (tuple([x/y for x,y in zip(position, canvas_size)]), tuple([x/y for x,y in zip(size, canvas_size)]))
+        self.resolution     = canvas_size      
         #Made for regeneration purposes and such, have the percentage of the screen that it occupies
         #Animation and showing
         self.animation_value= 0
@@ -31,8 +35,6 @@ class Sprite(pygame.sprite.Sprite):
         self.active         = False
         self.enabled        = True
         self.hover          = False
-        #input args to generate again if needed (change of size e.g.)
-        self.params         = image_params
 
     def draw(self, surface):
         if self.visible:
@@ -49,19 +51,30 @@ class Sprite(pygame.sprite.Sprite):
         self.animation_frame()
 
     def get_canvas_size(self):
-        return tuple([x//y for x,y in zip(self.rect.size, self.real_rect[1])])
+        return self.resolution
 
     def get_rect_if_canvas_size(self, canvas_size):
         return pygame.Rect(tuple([x*y for x,y in zip(self.real_rect[0], canvas_size)]),\
         tuple([x*y for x,y in zip(self.real_rect[1], canvas_size)]))
 
     def set_canvas_size(self, canvas_size):
+        self.resolution = canvas_size
         new_position    = tuple([int(x*y) for x,y in zip(self.real_rect[0], canvas_size)]), 
         new_size        = tuple([int(x*y) for x,y in zip(self.real_rect[1], canvas_size)])
         self.rect       = (new_position, new_size)
         self.image, self.overlay    = Sprite.generate_surface(self.rect, self.image_params)
-        self.mask = pygame.mask.from_surface(self.image)
+        self.mask       = pygame.mask.from_surface(self.image)
         LOG.log('debug', "Succesfully changed sprite ", self.id, " to ", self.rect.size, ", due to the change to resolution ", canvas_size)
+
+    def set_size(self, size):
+        self.rect       = pygame.rect.Rect(self.rect.topleft, size)
+        self.real_rect  =  (self.real_rect[0], tuple([x/y for x,y in zip(size, self.resolution)]))
+        self.regenerate_image()
+        LOG.log('debug', "Succesfully changed sprite ", self.id, " size to ",size)
+
+    def set_position(self, position):
+        self.rect       = (position, self.rect.size)
+        self.real_rect  = (tuple([x/y for x,y in zip(position, self.resolution)]), self.real_rect[1])
 
     def set_visible(self, visible):
         self.visible = visible
@@ -102,9 +115,10 @@ class Sprite(pygame.sprite.Sprite):
     #For use after changing some input param.
     def regenerate_image(self):
         self.image, self.overlay    = Sprite.generate_surface(self.rect, **self.params)
+        self.update_mask()
 
     @staticmethod
-    def generate_surface(size, texture=None, keep_aspect_ratio=True, shape="Rectangle", transparent=False,\
+    def generate_surface(size, surface=None, texture=None, keep_aspect_ratio=True, shape="Rectangle", transparent=False,\
                         only_text=False, text="default_text", text_color=WHITE, text_font=None,\
                         fill_color=RED, fill_gradient=True, gradient=(LIGHTGRAY, DARKGRAY), gradient_type="horizontal",\
                         overlay_color=WHITE, border=True, border_color=WHITE, border_width=2, **unexpected_kwargs):
@@ -132,10 +146,10 @@ class Sprite(pygame.sprite.Sprite):
         
         Returns:
             A surface containing the circle."""
-
         size    = size.size if isinstance(size, pygame.rect.Rect) else size
         shape   = shape.lower()
         overlay = pygame.Surface(size)
+        if surface: return surface, overlay #If we creating the sprite from an already created surface
         #GENERATING IMAGE
         if only_text:   #Special case: If we want a sprite object with all the methods, but with only a text with transparent background
             font_size   = Resizer.max_font_size(text, size, text_font)
@@ -150,17 +164,14 @@ class Sprite(pygame.sprite.Sprite):
         if shape == 'circle':
             if fill_gradient:   surf = gradients.radial(radius, gradient[0], gradient[1])
             else:  
-                colorkey = fill_color
-                if not transparent: #Search for another colorkey
-                    while colorkey == fill_color or colorkey == border_color: 
-                        colorkey = UtilityBox.random_rgb_color()
-                    surf.fill(colorkey)
+                if transparent: #Dont draw the circle itself, only border
+                    UtilityBox.add_transparency(surf, border_color)
+                else:           #Draw the circle insides too
+                    UtilityBox.add_transparency(surf, fill_color, border_color)
                     pygame.draw.circle(surf, fill_color, (radius, radius), radius, 0)
-                else:
-                    surf.fill(colorkey)
-                surf.set_colorkey(colorkey)
-            if border:  pygame.draw.circle(surf, border_color, (radius, radius), radius, border_width)
-            pygame.draw.circle(overlay, overlay_color, (radius, radius), radius, 0)
+            if border:          
+                pygame.draw.circle(surf, border_color, (radius, radius), radius, border_width)
+                pygame.draw.circle(overlay, overlay_color, (radius, radius), radius, 0)
         elif shape == 'rectangle':
             if fill_gradient:   surf = gradients.vertical(size, gradient[0], gradient[1]) if gradient_type == 0 \
                                 else gradients.horizontal(size, gradient[0], gradient[1])
@@ -171,11 +182,33 @@ class Sprite(pygame.sprite.Sprite):
             raise ShapeNotFoundException("Available shapes: Rectangle, Circle. "+shape+" is not accepted")
         return surf, overlay
 
-#TODO make overlay here as another subclass? Or too much of a hassle?
+class TextSprite(Sprite):
+    '''Class TextSprite. Inherits from pygame.sprite, and the main surface is a text, from pygame.font.render.
+    Attributes:
+        image: Surface that contains the text
+        rect: pygame.Rect containing the position and size of the text sprite.
+    '''
+    #This for the sake of an example, not needed since the method in Sprite
+    #already has default values.
+    __default_config = {'text_font'      : None,
+                        'text_color'     : WHITE
+    }
+    #def __init__(self, font, rect_size, max_font_allowed, text, text_color, position=(0,0), source_rect=None, alignment=0):
+    def __init__(self, _id, position, size, canvas_size, text, **params):
+        UtilityBox.join_dicts(params, TextSprite.__default_config)  #Adding missing keys of default config to params
+        super().__init__(_id, position, size, canvas_size, only_text=True, text=text, **params)
+        self.rect.size = self.image.get_size()
+        self.id     = _id
+        self.text   = text
 
+    def set_text(self, text):
+        self.text           = text
+        self.params['text'] = text
+        self.regenerate_image()
+        
 #This only accepts textures
 class AnimatedSprite(Sprite):
-    def __init__(self, _id, position, size, canvas_size, *sprite_list, sprite_folder=None, **image_params):
+    def __init__(self, _id, position, size, canvas_size, *sprite_list, sprite_folder=None, animation_delay=10, **image_params):
         super().__init__(_id, position, size, canvas_size, **image_params)
         #Adding parameters to control a lot of sprites instead of only one
         self.sprites            = []    #Not really sprites, only surfaces
@@ -184,9 +217,13 @@ class AnimatedSprite(Sprite):
         self.ids                = []    
         self.masks              = []
         self.hover              = False
+        #Animatino
+        self.counter            = 0
+        self.next_frame_time    = animation_delay
         self.animation_index    = 0
+        #Generation
         self.load_sprites(sprite_folder) if sprite_folder else self.add_sprites(*sprite_list)
-        self.image              = self.current_sprite()     #Assigning a logical sprite in place of the decoy one of the super()
+        self.image              = self.current_sprite()    #Assigning a logical sprite in place of the decoy one of the super()
         self.mask               = self.current_mask()       #Same shit to mask
         self.use_overlay        = False
 
@@ -211,9 +248,12 @@ class AnimatedSprite(Sprite):
                     self.add_sprite(pygame.image.load(sprite_image))
 
     def add_sprite(self, surface):
-        self.original_sprites.append(surface)
-        self.sprites.append(Resizer.resize_same_aspect_ratio(surface, self.rect.size))
-        self.hover_sprites.append(Resizer.resize_same_aspect_ratio(surface, [int(x*1.5) for x in self.rect.size]))
+        if surface not in self.original_sprites: self.original_sprites.append(surface)
+        self.resize_and_add_sprite(surface, self.rect.size)
+
+    def resize_and_add_sprite(self, surface, size):
+        self.sprites.append(Resizer.resize_same_aspect_ratio(surface, size))
+        self.hover_sprites.append(Resizer.resize_same_aspect_ratio(surface, [int(x*1.5) for x in size]))
         self.masks.append(pygame.mask.from_surface(surface))
 
     def add_sprites(self, *sprite_surfaces):
@@ -228,18 +268,29 @@ class AnimatedSprite(Sprite):
     def draw(self, surface):
         self.image = self.current_sprite() if not self.hover else self.current_hover_sprite()
         surface.blit(self.image, self.rect)
+        self.update()
 
     def set_canvas_size(self, canvas_size):
+        self.resolution = canvas_size
         super().set_canvas_size(canvas_size)    #Changing the sprite size and position to the proper place
-        self.sprites.clear()                    #Cleaning idle sprites
+        self.clear_lists()
+        for surface in self.original_sprites:   self.resize_and_add_sprite(surface, self.rect.size)
+
+    def clear_lists(self):
+        self.sprites.clear()
         self.hover_sprites.clear()              
         self.masks.clear()
-        for surface in self.original_sprites:   self.add_sprite(surface)
 
     def animation_frame(self):
         '''Update method, will process and change image attributes to simulate animation when drawing'''
         self.animation_index = self.animation_index+1 if self.animation_index < (len(self.sprites)-1) else 0
 
+    def set_size(self, size):
+        super().set_size(size)
+        self.clear_lists()
+        for surface in self.original_sprites:   self.resize_and_add_sprite(surface, size)
+        self.image = self.sprites[0]
+        
     def set_hover(self, hover):
         self.hover = hover
 
@@ -251,6 +302,12 @@ class AnimatedSprite(Sprite):
 
     def current_mask(self):
         return self.masks[self.animation_index]
+
+    def update(self):
+        self.counter += 1
+        if self.counter is self.next_frame_time:
+            self.counter = 0 
+            self.animation_frame()
 
 class MultiSprite(Sprite):
     def __init__(self, _id, position, size, canvas_size, **image_params):
@@ -281,3 +338,33 @@ class MultiSprite(Sprite):
     def get_sprite(self, *keywords):
         for sprite in self.sprites.sprites():
             if all(kw in sprite.id for kw in keywords): return sprite
+
+    def add_text_sprite(self, _id, text, alignment="center", text_size=None, **params): 
+        '''Generates and adds sprite-based text object following the input parameters.
+        Args:
+            text:           String object, is the text itself.
+            text_color:     Color of the text.
+            text_alignment: Decides which type of centering the text follows. 0-center, 1-left, 2-right.
+            font:           Type of font that the text will have. Default value of pygame: None.
+            font_size:      Size of the font (height in pixels).
+        Returns:
+            Nothing
+        '''
+        #LOG.log('debug', "ELEMENT WITH STATS: W, H -> ", self.rect.size, ', topleft -> ', self.rect.topleft,\
+                #'center ->', self.rect.center)
+        size = self.rect.size if text_size is None else text_size
+        #The (0, 0) relative positoin is a decoy so the constructor of textsprite doesn't get cocky
+        text = TextSprite(_id, (0, 0), size, self.get_canvas_size(), text, **params)
+        #We calculate the center AFTER because the text size may vary due to the badly proportionated sizes.
+        '''topleft = tuple(x//2 - y//2 for x, y in zip(self.rect.size, text.rect.size)) if 'center' in alignment.lower() else\
+        (text.rect.width//2, self.rect.height//2) if 'left' in alignment.lower() else\
+        (self.rect.width-text.rect.width//2, self.rect.height//2)'''
+        
+        center = tuple(x//2 for x in self.rect.size) if 'center' in alignment.lower() else\
+        (text.rect.width//2, self.rect.height//2) if 'left' in alignment.lower() else\
+        (self.rect.width-text.rect.width//2, self.rect.height//2)
+        #With the actual center according to the alignment, we now associate it
+        text.rect.center = center
+        #LOG.log('debug', "TEXT WITH alignment ", alignment,": W, H -> ", text.rect.size, ', topleft -> ', text.rect.topleft,\
+            #'center ->', text.rect.center)
+        self.add_sprite(text)  

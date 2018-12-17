@@ -13,16 +13,18 @@ from players import Player
 from paths import IMG_FOLDER, Path
 from ui_element import TextSprite
 from logger import Logger as LOG
+from sprite import Sprite
 
 class Board(Screen):
     __default_config = {'platform_proportion': 0.95,
                         'platform_alignment': "center",
-                        'inter_path_sequence': (4, 2) #every 4, every 2, every 4...
+                        'inter_path_frequency': 2, #every 4, every 2, every 4...
                         'circles_per_lvl':  16,
                         'max_levels':       4,
-                        'number_of_paths':  5,
-                        'initial_offset':   2    
+                        'path_color': WHITE,
+                        'path_width': 5
     }
+    #CHANGE MAYBE THE THREADS OF CHARACTER TO JOIN INSTEAD OF NUM PLAYERS AND SHIT
     def __init__(self, id_, event_id, resolution, *players, **params):
         #Basic info saved
         super().__init__(id_, event_id, resolution, **params)
@@ -30,12 +32,13 @@ class Board(Screen):
         UtilityBox.join_dicts(self.params, Board.__default_config)
         
         #Graphic elements
-        self.loading        = LoadingScreen(id_, event_id, resolution, "Loading, hang tight like a japanese pussy", background_path=IMG_FOLDER+"//loading_background.png")
+        self.loading        = LoadingScreen(id_, event_id, resolution, "Loading, hang tight like a japanese pussy",\
+                            background_path=IMG_FOLDER+"//loading_background.png")
         self.cells          = pygame.sprite.Group()
         self.quadrants      = {}
 
         self.possible_paths = pygame.sprite.Group() #To save cells that are destinations of the character
-        self.trans_paths    = pygame.sprite.Group() #TODO Did you just assume my type?
+        self.inter_paths    = pygame.sprite.GroupSingle()
         self.paths          = pygame.sprite.Group()
         self.characters     = pygame.sprite.OrderedUpdates()
         self.active_cell    = pygame.sprite.GroupSingle()
@@ -61,13 +64,13 @@ class Board(Screen):
         
         #Final of all
         self.generate()
-        self.map_board()
+        #self.map_board()
     
     def __add_player(self, player):
         if isinstance(player, Player): 
             self.players.append(player)
             for character in player.characters: 
-                character.change_size((self.cells.sprites()[0].rect.width, self.cells.sprites()[0].rect.width))
+                character.set_size(self.cells.sprites()[0].rect.size)
                 c = self.quadrants[player.order].get_random_cell()
                 c.add_char(character)
                 character.rect.center = c.rect.center
@@ -78,50 +81,49 @@ class Board(Screen):
         raise BadPlayerTypeException("A player in the board can't be of type "+str(type(player)))
 
     def __adjust_number_of_paths(self):
-        circles, paths = self.params['circles_per_lvl'], self.params['number_of_paths']
+        circles, paths = self.params['circles_per_lvl'], self.params['inter_path_frequency']
         if circles%paths is not 0:
-            self.params['number_of_paths'] = circles//math.ceil(circles/paths) 
-            LOG.log('DEBUG', "Changed number of paths from ", paths, " to ", self.params['number_of_paths'])
+            self.params['inter_path_frecuency'] = circles//math.ceil(circles/paths) 
+            LOG.log('DEBUG', "Changed number of paths from ", paths, " to ", self.params['inter_path_frecuency'])
     
-    def assign_quadrants(self, container_center, *cells, count_axis=False): #TODO this shit of conut axis will be deleted when curves are implmeneted
+    def assign_quadrants(self, container_center, *cells):
         quadrants = {}
         for cell in cells:
-            quadrant = self.__get_quadrant(cell, container_center, count_axis=count_axis)
-            try:                quadrants[quadrant].append(cell)
-            except KeyError:    quadrants[quadrant] = [cell]
+            if cell.get_level() < 1: continue   #We are not interested in this cell, next one
+            quads = self.__get_quadrant(cell.get_index())
+            for quadrant in quads:
+                try:                quadrants[quadrant].append(cell)
+                except KeyError:    quadrants[quadrant] = [cell]
         for quadrant_number, quadrant_cells in quadrants.items():
+            #LOG.log('debug', quadrant_number, ": ", quadrant_cells)
             self.quadrants[quadrant_number] = Quadrant(quadrant_number, *quadrant_cells)
 
-    def __get_quadrant(self, cell, container_center, count_axis=False):
-        x, y = cell.rect.center[0], cell.rect.center[1]
-        center_x, center_y = container_center[0], container_center[1]
-        if 0 < abs(x - center_x) < 2: x = center_x
-        if 0 < abs(y - center_y) < 2: y = center_y
-        if not count_axis:  quadrant = 0 if (x>=center_x and y<center_y) else 1 if (x>center_x and y>=center_y)\
-                            else 2 if (x<=center_x and y>center_y) else 3
-        else:               quadrant = 0 if (x>center_x and y<center_y) else 1 if (x>center_x and y>center_y)\
-                             else 2 if (x<center_x and y>center_y) else 3 if (x<center_x and y<center_y) else -1
-        return quadrant
+    def __get_quadrant(self, cell_index):
+        ratio = self.params['circles_per_lvl']//4
+        result, rest = (cell_index+ratio//2)//ratio,  (cell_index+ratio//2)%ratio
+        if result >= 4:                 #We gone beyond the last quadrant boi, circular shape ftw
+            if rest is 0:   return 3, 0 #Last and first quadrant, it's that shared cell
+            else:           return 0,    #Associated with first quadrant
+        if rest is 0 and result is not 0: return result, result-1
+        return result,
     
     @run_async
     def __create_player(self, player_name, player_number, chars_number, chars_size, **kwparams):
-        self.__add_player(Player(player_name, player_number, chars_number, chars_size, **kwparams))
+        self.__add_player(Player(player_name, player_number, chars_number, chars_size, self.resolution, **kwparams))
 
     def __current_player(self):
         return self.players[self.player_index]
     
-    def __generate_cells(self, radius, center, circle_radius, circle_number, lvl, initial_offset=-180, **cell_params):
+    def __generate_cells(self, radius, center, circle_radius, circle_number, lvl, initial_offset=-90, **cell_params):
         #TODO could pass params in this function if we want coloured circles
         cells = []
         two_pi  = 2*math.pi
-        print("BEFORE "+str(initial_offset))
         initial_offset = initial_offset*(math.pi/180) if abs(initial_offset) > two_pi\
         else initial_offset%360*(math.pi/180) if abs(initial_offset) > 360 else initial_offset
-        print("AFTER "+str(initial_offset))
         angle   = initial_offset*(math.pi/180) if initial_offset > two_pi else initial_offset
         distance= two_pi/circle_number
         index   = 0
-        while angle < (two_pi-initial_offset):
+        while angle < (two_pi+initial_offset):
             position    = (center[0]+(radius*math.cos(angle))-circle_radius, center[1]+(radius*math.sin(angle))-circle_radius)
             cell_sprite = Circle(str(lvl)+"_"+str(index), position, (circle_radius*2, circle_radius*2), self.resolution, **cell_params)
             cells.append(Cell(cell_sprite, (lvl, index), lvl*circle_number+index))
@@ -146,7 +148,7 @@ class Board(Screen):
                 #Exists and connected with oneself
                 self.enabled_paths[x][x] = True                                                                 
                 #Mapping to outside
-                outside_connected = self.__get_outside_circle(x)
+                outside_connected = self.__get_outside_cell(x)
                 self.enabled_paths[x][outside_connected], self.enabled_paths[outside_connected][x] = True, True
                 #Connects the rest of the circles with all the external ones through this path
                 for l in range(outside_connected, circles*(lvls-1), circles): 
@@ -209,16 +211,12 @@ class Board(Screen):
                 if self.distances[x][y] > limit:    self.distances[x][y] = (self.params['circles_per_lvl']-self.distances[x][y])
 
     #Map lvl 1 circles to the lvl0 circle (less circles)
-    def __get_inside_circle(self, index):
-        offset, circles = self.params['initial_offset'], self.params['circles_per_lvl']
-        ratio = circles//4
-        if (index-offset)%ratio is 0:
-            LOG.log('DEBUG', "index: ", index, ", result: ", (index-offset)//ratio)
-            return (index-offset)//ratio
-        return None 
+    def __get_inside_cell(self, index):
+        ratio = self.params['circles_per_lvl']//4
+        return index//ratio
         
     #Map lvl0 circles to their outside whatever
-    def __get_outside_circle(self, index):
+    def __get_outside_cell(self, index):
         return self.params['circles_per_lvl']+(index*(self.params['circles_per_lvl']//4)+self.params['initial_offset'])
 
     def __update_map(self): #TODO wwe have to use only changed cells to update, right now doing everything
@@ -242,6 +240,7 @@ class Board(Screen):
         self.generate_all_cells()
         self.assign_quadrants(self.platform.rect.center, *self.cells)
         self.generate_paths(offset=True)
+        self.generate_inter_paths()
 
     def generate_all_cells(self, custom_radius=None):
         self.cells.empty()
@@ -255,30 +254,52 @@ class Board(Screen):
         self.cells.add(cell)
         for i in range (0, self.params['max_levels']):
             radius      += ratio
-            if i is 0:  self.cells.add(self.__generate_cells(radius-ratio//3, self.platform.rect.center, small_radius, 4, 0, initial_offset=0.25*math.pi))
+            if i is 0:  self.cells.add(self.__generate_cells(radius-ratio//3, self.platform.rect.center, small_radius, 4, 0, initial_offset=-45))
             else:       self.cells.add(self.__generate_cells(radius-ratio//3, self.platform.rect.center, small_radius, self.params['circles_per_lvl'], i))
         LOG.log('DEBUG', "Generated cells of ", self.id)
 
-    def generate_paths(self, offset=False, border_color=WHITE): #BIG PATH CIRCLES
+    def generate_paths(self, offset=False): #BIG PATH CIRCLES
         self.paths.empty()
-        self.trans_paths.empty()
         self.active_path.empty()
         ratio = self.platform.rect.height//self.params['max_levels']
         radius = ratio//2-ratio//6 if offset else ratio//2
         for _ in range (0, self.params['max_levels']): #Lvl circles
             out_circle = Circle('circular_path', tuple(x-radius for x in self.platform.rect.center),\
                         (radius*2, radius*2), self.resolution, fill_gradient=False,\
-                        border_color=border_color, border_width=3, transparent=True)
+                        border_color=self.params['path_color'], border_width=self.params['path_width'], transparent=True)
             self.paths.add(out_circle)
             radius+=ratio//2
         LOG.log('DEBUG', "Generated circular paths in ", self.id)
-
-    def generate_trans_paths(self):
+    
+    def generate_inter_paths(self):
+        self.inter_paths.empty()
+        surface = pygame.Surface(self.resolution)
+        UtilityBox.add_transparency(surface, self.params['path_color'])
         self.__adjust_number_of_paths()
-        '''spr = Rectangle((self.platform.rect.centerx-self.platform.rect.width//2, self.platform.rect.centery), (self.platform.rect.width, 4))
-        offset = (360//self.params['circles_per_lvl'])*self.params['initial_offset']
-        self.trans_paths.add(*UtilityBox.rotate(spr, 360//self.params['number_of_paths'], self.params['number_of_paths'], offset))
-        LOG.log('DEBUG', "Generated middle paths in board ", self.id)'''#TODO MAKE THIS A REAL BROOO'''
+        for i in range(0, self.params['circles_per_lvl']):
+            if (i+1)%self.params['inter_path_frequency'] is 0:
+                self.draw_inter_path(surface, i)
+
+        surface = surface.subsurface(self.platform.rect)
+        interpaths_sprite = Sprite('inter_paths', self.platform.rect.topleft, surface.get_size(), self.resolution, surface=surface)
+        self.inter_paths.add(interpaths_sprite)
+
+    def draw_inter_path(self, surface, index):
+        point_list = []
+        for i in range(self.params['max_levels']-1, 0, -1):
+            point_list.append(self.get_cell(i, index).center)
+        point_list.append(self.get_cell(0, self.__get_inside_cell(index)).center) #Final point
+        UtilityBox.draw_bezier(surface, color=self.params['path_color'], width=self.params['path_width'], *(tuple(point_list)))
+
+    def get_cell(self, lvl, index):
+        for cell in self.cells:
+            #LOG.log('debug', 'CHECKING CELL', cell.get_level(),",",cell.get_index())
+            if lvl is cell.get_level() and index is cell.get_index():
+                return cell
+            else:
+                pass
+                #LOG.log('debug', 'CELL', cell.get_level(),", ",cell.get_index(), ' is not the searched one ', lvl,', ', index)
+        return False
 
     def generate_map(self, to_who):
         paths = []
@@ -311,8 +332,8 @@ class Board(Screen):
             if len(self.changed_cells) > 0:     self.__update_map() #TODO do this in another method, ni mouse handler would be good
             super().draw(surface)                                                                           #Draws background
             surface.blit(self.platform.image, self.platform.rect)                                           #Draws board
+            self.inter_paths.draw(surface) 
             self.paths.draw(surface)                                                                        #Draws paths between cells
-            self.trans_paths.draw(surface) 
 
             active_path = self.active_path.sprite
             if active_path is not None: 
@@ -322,7 +343,6 @@ class Board(Screen):
             active_sprite = self.active_cell.sprite
             if active_sprite is not None: 
                 pygame.draw.circle(surface, UtilityBox.random_rgb_color(), active_sprite.rect.center, active_sprite.rect.height//2) #Draws an overlay on the active cell
-
             self.characters.update()
             self.characters.draw(surface)
             #for char in self.characters: UtilityBox.draw_hitbox(surface, char) #TODO TESTING
@@ -361,7 +381,9 @@ class Board(Screen):
 
         if mouse_movement:
             cell = pygame.sprite.spritecollideany(mouse_sprite, self.cells.sprites(), collided=pygame.sprite.collide_circle)
-            if cell is not None:  self.active_cell.add(cell)
+            if cell is not None and not self.active_cell.has(cell):  
+                self.active_cell.add(cell)
+                LOG.log('debug', 'hovering cell ', self.active_cell.sprite.pos)
             
             path = pygame.sprite.spritecollideany(mouse_sprite, self.paths.sprites(), collided=pygame.sprite.collide_mask)
             if path is not None:    self.active_path.add(path)

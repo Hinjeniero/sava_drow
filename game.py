@@ -47,6 +47,7 @@ class Game(object):
         LOG.log('INFO', "----Initial Pygame parameters----")
         LOG.log('INFO', "FPS: ", params['fps'])
         LOG.log('INFO', "RESOLUTION: ", params['display'].get_size())
+        pygame.time.set_timer(pygame.USEREVENT+4, 1000//params['fps'])
         return params
 
     def change_pygame_var(self, command, value):
@@ -76,7 +77,7 @@ class Game(object):
             elif event.type == pygame.KEYDOWN   \
                 and event.key == pygame.K_ESCAPE:       self.esc_handler()
             #elif event.type == pygame.KEYDOWN:          self.__keyboard_handler(event, keys_pressed)
-            elif event.type >= pygame.USEREVENT:        self.user_command_handler(event.type, event.command, event.value)
+            elif event.type >= pygame.USEREVENT:        self.user_command_handler(event)
             self.__current_screen.event_handler(event, all_keys, all_mouse_buttons, mouse_movement=mouse_mvnt, mouse_pos=mouse_pos)
         return True
 
@@ -109,26 +110,27 @@ class Game(object):
         if count is 0:  raise ScreenNotFoundException("A screen with those keywords wasn't found")
         else:           LOG.log('DEBUG', "Changed to  ", self.__current_screen.id)
  
-    def user_command_handler(self, eventid, command, value):
+    def user_command_handler(self, event):
         ''' Ou shit the user command handler, good luck m8
         USEREVENT when MENUS:           Change in settings
         UESREVENT+1 when MENUS:         Change of screen
         USEREVENT+2 when BOARD:         Action in them
         USEREVENT+3 when NOTIFICATIONS: popups and shit
         '''
-        if eventid < pygame.USEREVENT:      return False
-        elif eventid is pygame.USEREVENT:   self.change_pygame_var(command, value)
-        elif eventid is pygame.USEREVENT+1: self.change_screen(*command.split('_'))
-        elif eventid is pygame.USEREVENT+2: pass    #Board actions
-        elif eventid is pygame.USEREVENT+3: pass    #Dialog actions
-        elif eventid is pygame.USEREVENT+4: pass    #Dunno, errors?
+        if event.type < pygame.USEREVENT:      return False
+        elif event.type is pygame.USEREVENT:   self.change_pygame_var(event.command, event.value)
+        elif event.type is pygame.USEREVENT+1: self.change_screen(*event.command.split('_'))
+        elif event.type is pygame.USEREVENT+2: pass    #Board actions
+        elif event.type is pygame.USEREVENT+3: pass    #Dialog actions
+        elif event.type is pygame.USEREVENT+4: self.__current_screen.draw(self.pygame_params['display'], clock=self.pygame_params['clock'])
+        #signal every fps/1sec
 
     def start(self):
         LOG.log('INFO', "GAME STARTING!")
         try:
             loop = True
             while loop:
-                self.__current_screen.draw(self.pygame_params['display'], clock=self.pygame_params['clock'])
+                self.pygame_params['clock'].tick(self.pygame_params['fps'])
                 loop = self.event_handler(pygame.event.get())
             sys.exit()
         except Exception as exc:

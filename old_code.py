@@ -1212,3 +1212,77 @@ if __name__ == "__main__":
 
         self.__parse_two_way_distances()
         LOG.log('DEBUG', "Distances of this map: \n", self.distances)  
+
+#The only purpose of this class is to organize the shit inside characters a little but better
+#PLAYER
+class Restrictions(object):
+    def __init__(self, max_dist=1, move_along_lvl = False, move_along_index = False, bypass_allies=True, bypass_enemies=True, approach_enemies=False):
+        self.dist               = max_dist          #Max spaces that a char can move
+        self.only_same_lvl      = move_along_lvl    #If only can move along the same level
+        self.only_same_index    = move_along_index  #If only can move along the same index
+        self.bypass_allies      = bypass_allies     #If can move bypassing allies in a cell
+        self.bypass_enemies     = bypass_enemies	#If can move bypassing enemies in a cell
+        self.approach_enemies   = approach_enemies  #If can only move in a way that will approach him to enemies
+
+    #map is of type numpy, and paths of type 
+    def generate_paths(self, existing_paths, board_map, distance_map, initial_pos): #TODO Initial pos is a pasth and we are passing it as a utple
+        print("Searching paths for "+self.id)
+        possible_paths  = []    #All solutions
+        current_path    = []    #Currebt solutionb
+        checked         = []    #Checked already    
+        to_check        = [(initial_pos, initial_pos)] #Both are paths type objects. Every objects of us is (path, path)
+        #LOG.log('DEBUG', "Initial lenght of to check is ", len(to_check))
+        while len(to_check) > 0:
+            current_square     = to_check.pop(-1)
+            current_path.append(current_square)
+            #LOG.log('DEBUG', '---------------')
+            #LOG.log('DEBUG', "BEFORE: Lenght of to check is ", len(to_check))
+            #IF we already have a path that is the max distance
+            if len(current_path)-1 is self.movement.dist:
+                #LOG.log('DEBUG', 'LEnght of current path ', [(x[0].pos, x[1].pos) for x in current_path], "Is the distance")
+                self.add_path(current_path, possible_paths)
+                current_path.pop(-1)
+                current_square  = current_path[-1]
+            else:
+                #For every cell possibly connected to the actual one
+                for i in range (0, len(existing_paths[current_square[1].index])):   #Existing paths only contains booleans
+                    if existing_paths[current_square[1].index][i]\
+                    and i is not current_square[1].index:                               #If actually connected (The bool is Tr)                
+                        dest_cell = board_map[i]                                            #Assigning the cell using the index
+                        next_step = (current_square[1], dest_cell)                          #Creating the tuple step (init cell -> dest cell)
+                        if next_step not in checked and next_step not in to_check:          #If we have not done this step and dont have it already queued 
+                                if self.valid_mvnt(next_step):   to_check.append(next_step)     #If the step is valid for the character restrictions, append the step
+            #If our cell is not connected to the last one appended to check, we have to regress one more step in this backtracking
+            #LOG.log('DEBUG', "AFTER: Lenght of to check is ", len(to_check))
+            while len(to_check) > 0 and current_square[1] is not to_check[-1][0]:
+                #LOG.log('DEBUG', "if ", current_square[1].pos, " is not ", to_check[-1][0].pos, ", entered")
+                current_path.pop(-1)
+                current_square = current_path[-1]
+        return possible_paths
+
+    def add_path(self, path_to_add, final_list):
+        path = []
+        for element in path_to_add:
+            if isinstance(element, (tuple, list)):    
+                if isinstance(element[0], tuple): #Nested tuple
+                    path.append(tuple(x for x in element[0]))
+                elif isinstance(element[0], Path):
+                    path.append(tuple(x for x in element[1].pos))
+                elif isinstance(element, (float, int)):   
+                    path.append(element)
+            elif isinstance(element, Path):         path.append(tuple(x for x in element.pos))
+            elif isinstance(element, (float, int)):   path.append(element)
+        LOG.log('DEBUG', "PATH FOUND! ", path)
+        final_list.append(path)
+
+    def valid_mvnt(self, movement):
+        init_pos, dest_pos = movement[0], movement[1]
+        if init_pos is not dest_pos:
+            if not self.movement.bypass_enemies and dest_pos.has_enemy():
+                return False 
+            if not self.movement.bypass_allies and dest_pos.has_ally():
+                return False
+            if (init_pos.get_lvl() is not dest_pos.get_lvl() and self.movement.move_in_same_lvl)\
+            and (init_pos.get_index() is not dest_pos.get_index() and self.movement.move_in_same_index):
+                return False
+        return True

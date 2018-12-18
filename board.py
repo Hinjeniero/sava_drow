@@ -14,7 +14,8 @@ from paths import IMG_FOLDER, Path
 from ui_element import TextSprite
 from logger import Logger as LOG
 from sprite import Sprite
-numpy.set_printoptions(threshold=numpy.nan)
+#numpy.set_printoptions(threshold=numpy.nan)
+from players import Character, Restrictions
 
 class Board(Screen):
     __default_config = {'platform_proportion': 0.95,
@@ -54,7 +55,7 @@ class Board(Screen):
         self.distances      = numpy.full(dimensions, -888, dtype=int)   #Says the distance between cells
         self.enabled_paths  = numpy.zeros(dimensions, dtype=bool)       #Shows if the path exist
         self.current_map    = {}
-        self.changed_cells  = ["platano"] #Simply coordinates
+        self.changed_cells  = ["platano"] #Simply coordinates (indexes)
         
         #Players 
         self.total_players  = 0
@@ -156,17 +157,18 @@ class Board(Screen):
             #If first circle, check interpaths to get that done
             elif circles <= x < circles*2:
                 interpath_exists = self.__get_inside_cell(x) #Check if interpath in this circle
-                if interpath_exists:
-                    self.enabled_paths[x][interpath_exists], self.enabled_paths[interpath_exists][x]
+                if interpath_exists is not None:
+                    self.enabled_paths[x][interpath_exists], self.enabled_paths[interpath_exists][x] = True, True
                     for y in range(x, (lvls-1)*circles, circles):   #From interior -> exterior
+                        print("ENABLING PATH FROM "+str(y)+" TO "+str(y+circles))
                         self.enabled_paths[y][y+circles], self.enabled_paths[y+circles][y] = True, True
-            
+
             #No more special conditions, normal cells
             if (x+1)%circles is 0:                  #last circle of this lvl, connect with first one:
-                self.enabled_paths[x][x-circles+1], self.enabled_paths[x-circles+1][x]
+                self.enabled_paths[x][(x-circles)+1], self.enabled_paths[(x-circles)+1][x] = True, True
             else:                                   #Connect with next circle
                 self.enabled_paths[x][x+1], self.enabled_paths[x+1][x] = True, True
-        #LOG.log('DEBUG', "Paths of this map: \n", self.enabled_paths)       
+        LOG.log('DEBUG', "Paths of this map: \n", self.enabled_paths)       
 
     def __map_distances(self):
         lvls, circles = self.params['max_levels'], self.params['circles_per_lvl']
@@ -185,9 +187,8 @@ class Board(Screen):
         #Distances first complete circle among interpaths
         for x in range(circles, circles*2):
             interpath_exists = self.__get_inside_cell(x) #Check if interpath in this circle
-            if interpath_exists:
+            if interpath_exists is not None:
                 for y in range(x, lvls*circles, circles):
-                    print("CONNECTING "+str(interpath_exists)+" TO "+str(y))
                     self.distances[interpath_exists][y], self.distances[y][interpath_exists] = abs(y-interpath_exists)//circles, abs(y-interpath_exists)//circles
                 for y in range(x, lvls*circles, circles):   #From interior -> exterior
                     for z in range(y, lvls*circles, circles):
@@ -195,7 +196,7 @@ class Board(Screen):
 
         self.__parse_two_way_distances()
         LOG.log('DEBUG', "Distances of this map: \n", self.distances)  
-        L
+        
     def __parse_two_way_distances(self):
         lvls, circles = self.params['max_levels'], self.params['circles_per_lvl']
         interior_limit = 4

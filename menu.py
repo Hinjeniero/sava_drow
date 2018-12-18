@@ -13,10 +13,12 @@ class Menu (Screen):
     __default_config = {'logo_path': None,
                         'logo_size': 0.20,
                         'title_menu': '',
-                        'title_text_size': 0.15
+                        'title_text_size': 0.15,
+                        'do_align': True,
+                        'alignment': 'center'
     }
 
-    def __init__(self, id_, event_id, resolution, centering, *elements, **params):
+    def __init__(self, id_, event_id, resolution, *elements, **params):
         super().__init__(id_, event_id, resolution, **params)
         UtilityBox.join_dicts(self.params, Menu.__default_config)
         #Graphic elements
@@ -27,23 +29,20 @@ class Menu (Screen):
 
         if len(elements) > 0: 
             self.add_elements(*elements)
-            self.generate(self.resolution, centering=centering)
+            self.generate(self.resolution, centering=self.params['do_align'], alignment=self.params['alignment'])
         else:   raise IndexError("A menu needs at least one element prior to the generation.")
 
-    def generate(self, resolution, centering=True):
+    def generate(self, resolution, centering=True, alignment='center'):
         self.__adjust_elements(resolution)
         if centering:   self.__center_elements()
         self.active_sprite.add(self.dynamic_sprites.sprites()[0])
 
-    def update_resolution(self, resolution): #TODO modify this shit
-        super().update_resolution(resolution)
+    def set_resolution(self, resolution):
+        super().set_resolution(resolution)
         #Regenerate elements
-        all_sprites = self.static_sprites.sprites()
-        all_sprites.extend(self.dynamic_sprites.sprites())
-        #TODO IM HERE RN
-        for sprite in all_sprites:  sprite.generate(rect=sprite.get_rect_if_canvas_size(resolution))
-        #TODO Generate elements in case it hasn't been done
-        if self.have_dialog():      self.dialog.sprite.generate(rect=sprite.get_rect_if_canvas_size(resolution))
+        for sprite in self.static_sprites.sprites():    sprite.set_canvas_size(resolution)
+        for sprite in self.dynamic_sprites.sprites():   sprite.set_canvas_size(resolution)
+        #if self.have_dialog():      self.dialog.sprite.generate(rect=sprite.get_rect_if_canvas_size(resolution))
         self.generate(self.resolution, centering=self.alignment[0], centering_mode=self.alignment[1])
 
 
@@ -93,18 +92,22 @@ class Menu (Screen):
                 size =     tuple([int(x*y) if x<1 else y for x,y in zip(ratios, sprite.rect.size)])
                 sprite.generate(rect=pygame.Rect(position, size))                #Adjusting size
 
-    def __center_elements(self):
+    def __center_elements(self, alignment='center'):
+        self.__center_sprites(self.static_sprites, alignment=alignment)
+        self.__center_sprites(self.dynamic_sprites, alignment=alignment)
+    
+    def __center_sprites(self, sprites, alignment='center'):
+        list_of_sprites = sprites.sprites() if isinstance(sprites, pygame.sprite.Group) else sprites
         screen_width = self.resolution[0]
-        sprites = self.static_sprites.sprites().copy()
-        sprites.extend(self.dynamic_sprites.sprites()) 
-        for sprite in sprites:  sprite.rect.x = (screen_width-sprite.rect.width)//2
+        for sprite in list_of_sprites:
+            sprite.rect.x = (screen_width-sprite.rect.width)//2 if 'center' in alignment\
+            else (0.05*screen_width) if 'left' in alignment\
+            else (screen_width-sprite.rect.width-0.05*screen_width)
 
-    def draw(self, surface, hitboxes=False, fps=True, clock=None):
+    def draw(self, surface, hitboxes=False):
         super().draw(surface)
-        #self.static_sprites.draw(surface)
+        for sprite in self.static_sprites.sprites(): sprite.draw(surface)
         for sprite in self.dynamic_sprites.sprites(): sprite.draw(surface)
-        #self.dynamic_sprites.draw(surface)
-        if fps: UtilityBox.draw_fps(surface, clock)
         if self.have_dialog() and self.dialog_is_active():    self.dialog.draw(surface)
         pygame.display.update()
 

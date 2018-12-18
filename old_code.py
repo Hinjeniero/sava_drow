@@ -1148,3 +1148,67 @@ if __name__ == "__main__":
         else:               quadrant = 0 if (x>center_x and y<center_y) else 1 if (x>center_x and y>center_y)\
                              else 2 if (x<center_x and y>center_y) else 3 if (x<center_x and y<center_y) else -1
         return quadrant
+
+   def __map_enabled_paths(self):
+        lvls, circles = self.params['max_levels'], self.params['circles_per_lvl'], 
+        #paths, offset = self.params['number_of_paths'], self.params['initial_offset']
+        
+        #Connecting first level among themselves and to the outside of the next lvls
+        for x in range(0, circles):
+            limit = 4
+            if x >= limit:   self.enabled_paths[x][x] = None #Non existant cell
+            else:       
+                if x+1 is limit:    self.enabled_paths[0][limit-1], self.enabled_paths[limit-1][0] = True, True #End of the circle
+                else:               self.enabled_paths[x][x+1], self.enabled_paths[x+1][x] = True, True         #Adyacent
+                #Exists and connected with oneself
+                self.enabled_paths[x][x] = True                                                                 
+                #Mapping to outside
+                outside_connected = self.__get_outside_cells(x)
+                for connected in outside_connected:
+                    self.enabled_paths[x][connected], self.enabled_paths[connected][x] = True, True
+                    #Connects the rest of the circles with all the external ones through this path
+                    for l in range(connected, circles*(lvls-1), circles): 
+                        self.enabled_paths[l][l+circles], self.enabled_paths[l+circles][l] = True, True
+
+        #Rest of the connections
+        for x in range(1, lvls):
+            for y in range(0, circles):
+                index = x*circles + y
+                #If last of the circle
+                if y+1 is circles: #THe end of the circle connnected to the start
+                    self.enabled_paths[index][x*circles], self.enabled_paths[x*circles][index] = True, True
+                else: #Connecting adyacent
+                    self.enabled_paths[index][index+1], self.enabled_paths[index+1][index] = True, True
+                #Conencting oneself
+                self.enabled_paths[index][index] = True
+            
+        LOG.log('DEBUG', "Paths of this map: \n", self.enabled_paths) 
+
+    def __map_distances(self): #TODO parse distances in the opposite path (0->15 is not 15, its 1 because its a circle)
+        lvls, circles = self.params['max_levels'], self.params['circles_per_lvl'], 
+        #paths, offset = self.params['number_of_paths'], self.params['initial_offset']
+        #Distances first level among themselves
+        for x in range(0, circles):
+            limit = 4 #limit of the first lvl
+            if x < limit:
+                for o in range(0, limit): #In the same lvl
+                    self.distances[x][o], self.distances[o][x] = abs(o-x), abs(o-x)
+                #Connects the rest of the circles with all the external ones through this path 
+                outside_connected = self.__get_outside_cells(x)
+                for n in range(0, lvls-1):
+                    if n > 0:  orig_index = outside_connected + (n-1)*circles
+                    else:           orig_index = x
+                    for m in range(n, lvls-1):
+                        dest_index = outside_connected + m*circles
+                        dist = math.trunc(abs(dest_index-orig_index)/circles)
+                        self.distances[orig_index][dest_index], self.distances[dest_index][orig_index] = dist, dist
+        #Rest of the distances
+        for x in range(1, lvls):
+            for y in range(0, circles):
+                init_index = x*circles + y      
+                for z in range(y, circles):
+                    index = x*circles + z
+                    self.distances[init_index][index], self.distances[index][init_index] = abs(init_index-index), abs(init_index-index)
+
+        self.__parse_two_way_distances()
+        LOG.log('DEBUG', "Distances of this map: \n", self.distances)  

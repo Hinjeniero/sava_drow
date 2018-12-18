@@ -10,21 +10,22 @@ from paths import IMG_FOLDER
 from decorators import run_async
 from exceptions import *
 from logger import Logger as LOG
+from utility_box import UtilityBox
+
+pygame.init()
+pygame.mixer.pre_init(44100, -16, 1, 512)
+pygame.mouse.set_visible(True)
+pygame.display.set_caption('sava drow')
+pygame.display.set_mode((800, 600))
 
 CHANGES_WERE_MADE = False
 
-def init_pygame_modules (mouse_visible, resolution, title):
-    pygame.init()
-    pygame.mixer.pre_init(44100, -16, 1, 512)
-    pygame.mouse.set_visible(mouse_visible)
-    pygame.display.set_caption(title)
-    pygame.display.set_mode(resolution)
-
 class Game(object):
-    def __init__(self, *screens, resolution=(1280, 720), mouse_visible=True, title="Game"):
-        self.pygame_params      = self.generate_pygame_vars(resolution=resolution)
+    def __init__(self, *screens, resolution=(1280, 720), mouse_visible=True, fps=144, show_fps=True, title="Game"):
+        self.pygame_params      = self.generate_pygame_vars(resolution=resolution, fps=fps)
         self.screens            = []
         self.players            = [] 
+        self.show_fps           = show_fps
         if len(screens) > 0:    self.add_elements(*screens) 
         else:                   raise NoScreensException("A game needs at least a screen to work")
         
@@ -36,9 +37,9 @@ class Game(object):
             if isinstance(element, Screen): self.screens.append(element)
             else:                           raise InvalidGameElementException("Can't add an element of type "+str(type(element)))
 
-    def generate_pygame_vars(self, resolution=(1280, 720)):
+    def generate_pygame_vars(self, resolution=(1280, 720), fps=60):
         params                  = {}
-        params['fps']           = 60
+        params['fps']           = fps
         params['clock']         = pygame.time.Clock()
         params['clock'].tick(params['fps'])
         params['display']       = pygame.display.get_surface()
@@ -74,7 +75,7 @@ class Game(object):
 
         for event in events:
             if event.type == pygame.QUIT:               return False
-            elif event.type == pygame.KEYDOWN   \
+            elif event.type == pygame.KEYDOWN\
                 and event.key == pygame.K_ESCAPE:       self.esc_handler()
             #elif event.type == pygame.KEYDOWN:          self.__keyboard_handler(event, keys_pressed)
             elif event.type >= pygame.USEREVENT:        self.user_command_handler(event)
@@ -117,12 +118,14 @@ class Game(object):
         USEREVENT+2 when BOARD:         Action in them
         USEREVENT+3 when NOTIFICATIONS: popups and shit
         '''
-        if event.type < pygame.USEREVENT:      return False
-        elif event.type is pygame.USEREVENT:   self.change_pygame_var(event.command, event.value)
-        elif event.type is pygame.USEREVENT+1: self.change_screen(*event.command.split('_'))
-        elif event.type is pygame.USEREVENT+2: pass    #Board actions
-        elif event.type is pygame.USEREVENT+3: pass    #Dialog actions
-        elif event.type is pygame.USEREVENT+4: self.__current_screen.draw(self.pygame_params['display'], clock=self.pygame_params['clock'])
+        if event.type < pygame.USEREVENT:       return False
+        elif event.type is pygame.USEREVENT:    self.change_pygame_var(event.command, event.value)
+        elif event.type is pygame.USEREVENT+1:  self.change_screen(*event.command.split('_'))
+        elif event.type is pygame.USEREVENT+2:  pass    #Board actions
+        elif event.type is pygame.USEREVENT+3:  pass    #Dialog actions
+        elif event.type is pygame.USEREVENT+4:          #Moment to draaaw
+            self.__current_screen.draw(self.pygame_params['display'])
+            if self.show_fps:                   UtilityBox.draw_fps(self.pygame_params['display'], self.pygame_params['clock'])
         #signal every fps/1sec
 
     def start(self):
@@ -138,8 +141,8 @@ class Game(object):
 #List of (ids, text)
 if __name__ == "__main__":
     resolutions = ((1280, 720), (1366, 768), (1600, 900), (640, 480), (800, 600), (1024, 768), (1280, 1024))
+    pygame.display.set_mode(resolutions[0])
     res = resolutions[0]
-    init_pygame_modules(True, res, 'Sava Drow')
     #Create elements, main menu buttons (POSITIONS AND SIZES ARE IN PERCENTAGES OF THE CANVAS_SIZE, can use absolute integers too)
     buttonStart         = UIElement.factory('button_start', "start_game_go_main_board", pygame.USEREVENT+1, (0.05, 0.10), (0.90, 0.20), res, None, text="Start game", keep_aspect_ratio = False, texture=IMG_FOLDER+"//button.png")
     buttonParamsMenu    = UIElement.factory('button_params_menu', "go_menu_params_config",    pygame.USEREVENT+1, (0.05, 0.40), (0.90, 0.20), res, None, text="Parameters", gradient = (RED, BLACK))
@@ -164,11 +167,11 @@ if __name__ == "__main__":
     sliderBoardMusic    = UIElement.factory('slider_board_music_volume', "change_board_music_volume",pygame.USEREVENT, (0.05, 0.50), (0.80, 0.15), res, (0.75), text="Board music volume", slider_type='rectangular')
     sliderBoardSounds   = UIElement.factory('slider_board_sound_volume', "change_board_sound_volume",pygame.USEREVENT, (0.05, 0.70), (0.80, 0.15), res, (0.75), text="Board sound volume")
     #Create Menu and board
-    main_menu   = Menu("main_menu",         pygame.USEREVENT,   res, (True, 0), \
+    main_menu   = Menu("main_menu",         pygame.USEREVENT,   res,\
                 buttonStart, buttonParamsMenu, buttonSoundMenu, background_path=IMG_FOLDER+'\\background.jpg')
-    sound_menu  = Menu("menu_volume_music", pygame.USEREVENT+1, res, (True, 0), \
+    sound_menu  = Menu("menu_volume_music", pygame.USEREVENT+1, res,\
                 sliderMenuMusic, sliderMenuSounds, sliderBoardMusic, sliderBoardSounds, background_path=IMG_FOLDER+'\\background.jpg')
-    params_menu = Menu("menu_params_config",pygame.USEREVENT+1, res, (True, 0), \
+    params_menu = Menu("menu_params_config",pygame.USEREVENT+1, res,\
                 buttonRes, buttonCountPlayers, buttonNumPawns, buttonNumWarriors, buttonNumWizards, buttonNumPriestess, background_path=IMG_FOLDER+'\\background.jpg')
 
     main_board = Board("main_board", pygame.USEREVENT+7, res, background_path = IMG_FOLDER+'\\board_2.jpg')

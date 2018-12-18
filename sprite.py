@@ -208,7 +208,7 @@ class TextSprite(Sprite):
         
 #This only accepts textures
 class AnimatedSprite(Sprite):
-    def __init__(self, _id, position, size, canvas_size, *sprite_list, sprite_folder=None, animation_delay=10, **image_params):
+    def __init__(self, _id, position, size, canvas_size, *sprite_list, sprite_folder=None, animation_delay=5, **image_params):
         super().__init__(_id, position, size, canvas_size, **image_params)
         #Adding parameters to control a lot of sprites instead of only one
         self.sprites            = []    #Not really sprites, only surfaces
@@ -266,7 +266,6 @@ class AnimatedSprite(Sprite):
                 self.add_sprite(sprite_surf)
 
     def draw(self, surface):
-        self.image = self.current_sprite() if not self.hover else self.current_hover_sprite()
         surface.blit(self.image, self.rect)
         self.update()
 
@@ -282,7 +281,6 @@ class AnimatedSprite(Sprite):
         self.masks.clear()
 
     def animation_frame(self):
-        '''Update method, will process and change image attributes to simulate animation when drawing'''
         self.animation_index = self.animation_index+1 if self.animation_index < (len(self.sprites)-1) else 0
 
     def set_size(self, size):
@@ -308,6 +306,7 @@ class AnimatedSprite(Sprite):
         if self.counter is self.next_frame_time:
             self.counter = 0 
             self.animation_frame()
+            self.image = self.current_sprite() if not self.hover else self.current_hover_sprite()
 
 class MultiSprite(Sprite):
     def __init__(self, _id, position, size, canvas_size, **image_params):

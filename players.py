@@ -61,21 +61,15 @@ class Character(AnimatedSprite):
         raise StateNotFoundException("Character doesn't have the state "+str(state))
 
     def animation_frame(self):
-        if self.count < 1000:
-            self.count +=1
-        else: 
-            self.count=0
-            '''Update method, will process and change image attributes to simulate animation when drawing'''
-            self.animation_index = self.animation_index+1 if self.animation_index < (len(self.sprites)-1) else 0
-            #Do it properly so it finds the next one even going all the way around the list
-            index = self.animation_index
-            while True:
-                if self.state in self.ids[index].lower():
-                    self.animation_index = index
-                    break
-                index+=1
-                if index == len(self.ids): #A complete loop with no matches, only one sprite of the action in self.state
-                    break
+        #Do it properly so it finds the next one even going all the way around the list
+        index = self.animation_index+1
+        while True:
+            if self.state in self.ids[index].lower():
+                self.animation_index = index
+                break
+            if index is self.animation_index:           #A complete loop with no matches, only one sprite of the action in self.state
+                break
+            index=index+1 if index < len(self.ids)-1 else 0  #going back to start
 
     def hitbox_action(self, command, value=-1):
         #if  "mouse" in command and "sec" in command:        self.dec_index()
@@ -84,6 +78,9 @@ class Character(AnimatedSprite):
     
     def mvnt_possible(self, source, destiny):
         return True
+
+    def set_selected(self, selected):
+        self.state=self.aliases['pickup'] if selected is True else self.aliases['idle']
 
     #map is of type numpy, and paths of type 
     def generate_paths(self, existing_paths, board_map, distance_map, initial_pos): #TODO Initial pos is a pasth and we are passing it as a utple

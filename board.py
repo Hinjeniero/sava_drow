@@ -14,11 +14,12 @@ from paths import IMG_FOLDER, Path
 from ui_element import TextSprite
 from logger import Logger as LOG
 from sprite import Sprite
+numpy.set_printoptions(threshold=numpy.nan)
 
 class Board(Screen):
     __default_config = {'platform_proportion': 0.95,
                         'platform_alignment': "center",
-                        'inter_path_frequency': 2, #every 4, every 2, every 4...
+                        'inter_path_frequency': 2, #every 4, every 2, every 1...
                         'circles_per_lvl':  16,
                         'max_levels':       4,
                         'path_color': WHITE,
@@ -64,7 +65,7 @@ class Board(Screen):
         
         #Final of all
         self.generate()
-        #self.map_board()
+        self.map_board()
     
     def __add_player(self, player):
         if isinstance(player, Player): 
@@ -138,86 +139,96 @@ class Board(Screen):
     def __map_enabled_paths(self):
         lvls, circles = self.params['max_levels'], self.params['circles_per_lvl'], 
         #paths, offset = self.params['number_of_paths'], self.params['initial_offset']
-        #Connecting first level among themselves and to the outside of the next lvls
-        for x in range(0, circles):
-            limit = 4
-            if x >= limit:   self.enabled_paths[x][x] = None #Non existant cell
-            else:       
-                if x+1 is limit:    self.enabled_paths[0][limit-1], self.enabled_paths[limit-1][0] = True, True #End of the circle
-                else:               self.enabled_paths[x][x+1], self.enabled_paths[x+1][x] = True, True         #Adyacent
-                #Exists and connected with oneself
-                self.enabled_paths[x][x] = True                                                                 
-                #Mapping to outside
-                outside_connected = self.__get_outside_cell(x)
-                self.enabled_paths[x][outside_connected], self.enabled_paths[outside_connected][x] = True, True
-                #Connects the rest of the circles with all the external ones through this path
-                for l in range(outside_connected, circles*(lvls-1), circles): 
-                    self.enabled_paths[l][l+circles], self.enabled_paths[l+circles][l] = True, True
-
-        #Rest of the connections
-        for x in range(1, lvls):
-            for y in range(0, circles):
-                index = x*circles + y
-                #If last of the circle
-                if y+1 is circles: #THe end of the circle connnected to the start
-                    self.enabled_paths[index][x*circles], self.enabled_paths[x*circles][index] = True, True
-                else: #Connecting adyacent
-                    self.enabled_paths[index][index+1], self.enabled_paths[index+1][index] = True, True
-                #Conencting oneself
-                self.enabled_paths[index][index] = True
+        for x in range(0, circles*lvls):
+            interior_limit = 4
+            self.enabled_paths[x][x] = True
+            #Center
+            if x < interior_limit:
+                if x is interior_limit-1:           #Have to connect w/ the other end of the circle               
+                    self.enabled_paths[0][interior_limit-1], self.enabled_paths[interior_limit-1][0] = True, True 
+                    continue    #next iteration                    
             
-        LOG.log('DEBUG', "Paths of this map: \n", self.enabled_paths)          
+            #Those dont exist at all
+            elif interior_limit <= x < circles:     #Those dont exist (4 -> circles-1)
+                self.enabled_paths[x][x] = None
+                continue        #next iteration
+            
+            #If first circle, check interpaths to get that done
+            elif circles <= x < circles*2:
+                interpath_exists = self.__get_inside_cell(x) #Check if interpath in this circle
+                if interpath_exists:
+                    self.enabled_paths[x][interpath_exists], self.enabled_paths[interpath_exists][x]
+                    for y in range(x, (lvls-1)*circles, circles):   #From interior -> exterior
+                        self.enabled_paths[y][y+circles], self.enabled_paths[y+circles][y] = True, True
+            
+            #No more special conditions, normal cells
+            if (x+1)%circles is 0:                  #last circle of this lvl, connect with first one:
+                self.enabled_paths[x][x-circles+1], self.enabled_paths[x-circles+1][x]
+            else:                                   #Connect with next circle
+                self.enabled_paths[x][x+1], self.enabled_paths[x+1][x] = True, True
+        #LOG.log('DEBUG', "Paths of this map: \n", self.enabled_paths)       
 
-    def __map_distances(self): #TODO parse distances in the opposite path (0->15 is not 15, its 1 because its a circle)
-        lvls, circles = self.params['max_levels'], self.params['circles_per_lvl'], 
-        #paths, offset = self.params['number_of_paths'], self.params['initial_offset']
-        #Distances first level among themselves
-        for x in range(0, circles):
-            limit = 4 #limit of the first lvl
-            if x < limit:
-                for o in range(0, limit): #In the same lvl
-                    self.distances[x][o], self.distances[o][x] = abs(o-x), abs(o-x)
-                #Connects the rest of the circles with all the external ones through this path 
-                outside_connected = self.__get_outside_circle(x)
-                for n in range(0, lvls-1):
-                    if n > 0:  orig_index = outside_connected + (n-1)*circles
-                    else:           orig_index = x
-                    for m in range(n, lvls-1):
-                        dest_index = outside_connected + m*circles
-                        dist = math.trunc(abs(dest_index-orig_index)/circles)
-                        self.distances[orig_index][dest_index], self.distances[dest_index][orig_index] = dist, dist
+    def __map_distances(self):
+        lvls, circles = self.params['max_levels'], self.params['circles_per_lvl']
+        #First level
+        interior_limit = 4
+        for x in range(0, interior_limit):
+            for y in range(x, interior_limit):
+                self.distances[x][y], self.distances[y][x] = abs(x-y), abs(x-y)
 
-        for x in range(1, lvls):
-            for y in range(0, circles):
-                init_index = x*circles + y      
-                for z in range(y, circles):
-                    index = x*circles + z
-                    self.distances[init_index][index], self.distances[index][init_index] = abs(init_index-index), abs(init_index-index)
+        #Exterior levels
+        for x in range(circles, lvls*circles):
+            for y in range(x, lvls*circles):
+                if x//circles is y//circles: #If they are in teh same level
+                    self.distances[x][y], self.distances[y][x] = abs(x-y), abs(x-y)
+
+        #Distances first complete circle among interpaths
+        for x in range(circles, circles*2):
+            interpath_exists = self.__get_inside_cell(x) #Check if interpath in this circle
+            if interpath_exists:
+                for y in range(x, lvls*circles, circles):
+                    print("CONNECTING "+str(interpath_exists)+" TO "+str(y))
+                    self.distances[interpath_exists][y], self.distances[y][interpath_exists] = abs(y-interpath_exists)//circles, abs(y-interpath_exists)//circles
+                for y in range(x, lvls*circles, circles):   #From interior -> exterior
+                    for z in range(y, lvls*circles, circles):
+                        self.distances[y][z], self.distances[z][y] = abs(y-z)//circles, abs(y-z)//circles
 
         self.__parse_two_way_distances()
         LOG.log('DEBUG', "Distances of this map: \n", self.distances)  
-
+        L
     def __parse_two_way_distances(self):
-        #Parse also ends of the circle
-        limit = 4
-        for x in range(0, limit):
-            for y in range(0, limit):
-                if self.distances[x][y] > limit//2:
-                    dist = abs(self.distances[x][y]-limit//2)
+        lvls, circles = self.params['max_levels'], self.params['circles_per_lvl']
+        interior_limit = 4
+        limit = interior_limit//2
+        #Interior circle
+        for x in range(0, interior_limit):
+            for y in range(0, interior_limit):
+                if self.distances[x][y] > limit:
+                    dist = abs(self.distances[x][y]-limit)
                     self.distances[x][y], self.distances[y][x] = dist, dist 
-        limit = self.params['circles_per_lvl']//2
-        for x in range(self.params['circles_per_lvl'], self.params['max_levels']*self.params['circles_per_lvl']):
-            for y in range(self.params['circles_per_lvl'], self.params['max_levels']*self.params['circles_per_lvl']):
-                if self.distances[x][y] > limit:    self.distances[x][y] = (self.params['circles_per_lvl']-self.distances[x][y])
+        #Complete circles
+        limit = circles//2
+        for x in range(circles, lvls*circles):
+            for y in range(circles, lvls*circles):
+                if self.distances[x][y] > limit:    
+                    dist = abs(circles-self.distances[x][y])
+                    self.distances[x][y],self.distances[y][x] = dist, dist   
 
     #Map lvl 1 circles to the lvl0 circle (less circles)
     def __get_inside_cell(self, index):
         ratio = self.params['circles_per_lvl']//4
-        return index//ratio
+        return (index%self.params['circles_per_lvl'])//ratio if (index+1)%self.params['inter_path_frequency'] is 0 else None
         
-    #Map lvl0 circles to their outside whatever
-    def __get_outside_cell(self, index):
-        return self.params['circles_per_lvl']+(index*(self.params['circles_per_lvl']//4)+self.params['initial_offset'])
+    #Doesnt work propperly
+    def __get_outside_cells(self, index):
+        cells=[]
+        space_between_inter_paths = int((self.params['circles_per_lvl']//4)*(1/self.params['inter_path_frequency']))
+        print("SPACE "+str(space_between_inter_paths))
+        i = (self.params['circles_per_lvl']//4)-1
+        for _ in range(0, (self.params['circles_per_lvl']//4)//self.params['inter_path_frequency']):
+            cells.append(i+index*(self.params['circles_per_lvl']//4))
+            i -= space_between_inter_paths
+        return tuple(cells)
 
     def __update_map(self): #TODO wwe have to use only changed cells to update, right now doing everything
         self.current_map.clear()
@@ -308,9 +319,9 @@ class Board(Screen):
         LOG.log('DEBUG', "Generated the map of paths in ", self.id)
         return paths
 
-    def update_resolution(self, resolution):
-        super().update_resolution(resolution)
-        self.loading.update_resolution(resolution)
+    def set_resolution(self, resolution):
+        super().set_resolution(resolution)
+        self.loading.set_resolution(resolution)
         self.generate()          #This goes according to self.resolution, so everything is fine.
 
     def ALL_PLAYERS_LOADED(self):
@@ -327,7 +338,7 @@ class Board(Screen):
         if not isinstance(players, (tuple, list)):    raise BadPlayersParameter("The list of players to add can't be of type "+str(type(players)))
         for player in players:  self.__add_player(player)
 
-    def draw(self, surface, hitboxes=False, fps=True, clock=None):
+    def draw(self, surface, hitboxes=False):
         if self.ALL_PLAYERS_LOADED():
             if len(self.changed_cells) > 0:     self.__update_map() #TODO do this in another method, ni mouse handler would be good
             super().draw(surface)                                                                           #Draws background
@@ -346,9 +357,7 @@ class Board(Screen):
             self.characters.update()
             self.characters.draw(surface)
             #for char in self.characters: UtilityBox.draw_hitbox(surface, char) #TODO TESTING
-            
             if hitboxes:    UtilityBox.draw_hitboxes(surface, self.cells.sprites())
-            if fps:         UtilityBox.draw_fps(surface, clock)
         else:
             self.loading.draw(surface)
         self.temp_infoboard.draw(surface)
@@ -375,7 +384,7 @@ class Board(Screen):
             if self.drag_char.sprite is not None:
                 LOG.log('INFO', 'Dropped ', self.drag_char.sprite.id)
                 self.drag_char.sprite.set_selected(False)
-                if self.active_cell.sprite is not None: self.drag_char.sprite.rect.center = self.active_cell.sprite.center #TODO can delete the condition when chars are proplery positioned
+                self.drag_char.sprite.rect.center = self.active_cell.sprite.center 
                 self.drag_char.empty()    
         if self.drag_char.sprite is not None:   self.drag_char.sprite.rect.center = mouse_position
 

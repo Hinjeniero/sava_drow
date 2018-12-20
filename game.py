@@ -18,7 +18,12 @@ pygame.mouse.set_visible(True)
 pygame.display.set_caption('sava drow')
 pygame.display.set_mode((800, 600))
 
-CHANGES_WERE_MADE = False
+CHANGES_WERE_MADE   = False
+CHARACTER_CONFIG    = {'pawn':
+                        {'number': 2, 'path':0, 'aliases':
+                            {}
+                        }
+                    }
 
 class Game(object):
     def __init__(self, *screens, resolution=(1280, 720), mouse_visible=True, fps=144, show_fps=True, title="Game"):
@@ -182,7 +187,12 @@ if __name__ == "__main__":
                             #id_, userevent, element_position, element_size, canvas_size, *elements, **params
     infoboard = InfoBoard("test", USEREVENT+2, (0, 0), (400, 400), res, (textSprite1, 1), (textSprite2, 2), (textSprite3, 3), (textSprite4, 6))
     main_board.temp_infoboard = infoboard
-    main_board.create_player("Zippotudo", 0, {"pawn":1, "warrior":1, "wizard":1, "priestess":1}, (100, 100))
+    player_settings = {'pawn':
+                            {'number': 2, 'path':0, 'aliases':
+                                {'idle': 'cipote'}
+                            }
+                        }
+    main_board.create_player("Zippotudo", 0, (100, 100), {"pawn":1, "warrior":1, "wizard":1, "priestess":1})
     #main_board.create_player("Zippotudo_2", 0, {"pawn":1, "warrior":1, "wizard":1, "priestess":1}, (100, 100))
     #TODO EACH PLAYERS GETS HIS INFOBOARD
     game = Game(main_menu, sound_menu, params_menu, main_board, title="Sava Drow", resolution=res)

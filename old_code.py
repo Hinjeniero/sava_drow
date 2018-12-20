@@ -1286,3 +1286,36 @@ class Restrictions(object):
             and (init_pos.get_index() is not dest_pos.get_index() and self.movement.move_in_same_index):
                 return False
         return True
+
+    @staticmethod
+    def factory(player_name, pieces_qty, sprite_size, canvas_size, **sprite_paths):
+        LOG.log('INFO', "----Factory, making ", player_name, " characters----")
+        if not isinstance(pieces_qty, dict):    raise BadCharacterInitException("pieces_qty must be dictionary, not "+str(type(pieces_qty)))   
+        if not isinstance(sprite_paths, dict):  raise BadCharacterInitException("sprite_paths must be dictionary, not "+str(type(sprite_paths)))
+        characters                          = pygame.sprite.Group()
+        threads                             = []
+
+        path, number_of = IMG_FOLDER+"\\pawn", 8
+        if "pawn" in pieces_qty:            number_of   = pieces_qty["pawn"]
+        if "pawn" in sprite_paths:          path        = sprite_paths["pawn"]
+        threads.append(Character.__char_loader(Pawn, characters, number_of, player_name, "pawn", (0, 0), sprite_size, canvas_size, path))
+
+        path, number_of = IMG_FOLDER+"\\warrior", 4
+        if "warrior" in pieces_qty:         number_of   = pieces_qty["warrior"]
+        if "warrior" in sprite_paths:       path        = sprite_paths["warrior"]
+        threads.append(Character.__char_loader(Pawn, characters, number_of, player_name, "warrior", (0, 0), sprite_size, canvas_size, path))
+
+        path, number_of = IMG_FOLDER+"\\wizard", 2
+        if "wizard" in pieces_qty:          number_of   = pieces_qty["wizard"]
+        if "wizard" in sprite_paths:        path        = sprite_paths["wizard"]
+        threads.append(Character.__char_loader(Wizard, characters, number_of, player_name, "wizard", (0, 0), sprite_size, canvas_size, path))
+
+        path, number_of = IMG_FOLDER+"\\priestess", 1
+        if "priestess" in pieces_qty:       number_of   = pieces_qty["priestess"]
+        if "priestess" in sprite_paths:     path        = sprite_paths["priestess"]       
+        threads.append(Character.__char_loader(Priestess, characters, number_of, player_name, "priestess", (0, 0), sprite_size, canvas_size, path))
+
+        for t in threads:
+            t.join()        #Threading.join
+        LOG.log('INFO', "----Factory, done making ", player_name, " characters----")
+        return characters

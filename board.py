@@ -110,8 +110,8 @@ class Board(Screen):
         return result,
     
     @run_async
-    def __create_player(self, player_name, player_number, chars_number, chars_size, **kwparams):
-        self.__add_player(Player(player_name, player_number, chars_number, chars_size, self.resolution, **kwparams))
+    def __create_player(self, player_name, player_number, chars_number, chars_size, **player_params):
+        self.__add_player(Player(player_name, player_number, chars_number, chars_size, self.resolution, **player_params))
 
     def __current_player(self):
         return self.players[self.player_index]
@@ -139,7 +139,6 @@ class Board(Screen):
     
     def __map_enabled_paths(self):
         lvls, circles = self.params['max_levels'], self.params['circles_per_lvl'], 
-        #paths, offset = self.params['number_of_paths'], self.params['initial_offset']
         for x in range(0, circles*lvls):
             interior_limit = 4
             self.enabled_paths[x][x] = True
@@ -328,11 +327,11 @@ class Board(Screen):
     def ALL_PLAYERS_LOADED(self):
         return self.loaded_players is self.total_players
 
-    def create_player(self, name, number, chars_number, chars_size, **kwparams):
+    def create_player(self, name, number, chars_size, **player_settings):
         self.total_players          += 1
         for player in self.players:
             if name == player.name: raise PlayerNameExistsException("The player name "+name+" already exists")
-        self.__create_player(name, number, chars_number, chars_size, **kwparams)
+        self.__create_player(name, number, chars_size, **player_settings)
         LOG.log('DEBUG', "Queue'd player to load, total players ", self.total_players, " already loaded ", self.loaded_players)
 
     def add_players(self, *players):

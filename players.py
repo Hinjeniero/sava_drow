@@ -12,8 +12,6 @@ from utility_box import UtilityBox
 
 __all__ = ["Player", "Character", "Warrior", "Wizard", "Priestess", "Pawn"]
 
-NEXT_SPRITE_COUNTER = 10
-
 #The only purpose of this class is to organize the shit inside characters a little but better
 class Restrictions(object):
     def __init__(self, max_dist=1, move_along_lvl = False, move_along_index = False):
@@ -22,10 +20,10 @@ class Restrictions(object):
         self.only_same_index    = move_along_index  #If only can move along the same index
 
 class Player(object):
-    def __init__(self, name, order, pieces_qty, sprite_size, canvas_size, infoboard=None, **sprite_paths): #TODO infoboard shoudlnt be none
+    def __init__(self, name, order, pieces_qty, sprite_size, canvas_size, infoboard=None, **character_params): #TODO infoboard shoudlnt be none
         self.name       = name
         self.order      = order
-        self.characters = Character.factory(name, pieces_qty, sprite_size, canvas_size, **sprite_paths)
+        self.characters = Character.factory(name, sprite_size, canvas_size, **character_params)
         self.infoboard  = infoboard
         self.turn       = -1
     
@@ -37,15 +35,14 @@ class Character(AnimatedSprite):
                             "action" : "action",
                             "die" : "die"    
     }
-    def __init__(self, my_player, _id, position, size, canvas_size, sprites_path, *sprite_list, **aliases):
+    def __init__(self, my_player, _id, position, size, canvas_size, sprites_path, **aliases):
         LOG.log('DEBUG', "Initializing character ", _id, " of player ", my_player)
-        super().__init__(_id, position, size, canvas_size, *sprite_list, sprite_folder=sprites_path)
-        self.my_master  = my_player
-        self.movement   = Restrictions()
-        self.state      = "idle"
+        super().__init__(_id, position, size, canvas_size, sprite_folder=sprites_path)
         self.aliases    = aliases
-        self.count      = 0
         UtilityBox.join_dicts(self.aliases, Character.__default_aliases)
+        self.my_master  = my_player
+        self.limits     = Restrictions()
+        self.state      = self.aliases['idle']
     
     def get_master(self):
         return self.my_master
@@ -79,7 +76,77 @@ class Character(AnimatedSprite):
 
     def set_selected(self, selected):
         self.state=self.aliases['pickup'] if selected is True else self.aliases['idle']
-    
+
+    '''def valid_mvnt(self, movement):
+        init_pos, dest_pos = movement[0], movement[1]
+        if init_pos is not dest_pos:
+            if not self.movement.bypass_enemies and dest_pos.has_enemy():
+                return False 
+            if not self.movement.bypass_allies and dest_pos.has_ally():
+                return False
+            if (init_pos.get_lvl() is not dest_pos.get_lvl() and self.movement.move_in_same_lvl)\
+            and (init_pos.get_index() is not dest_pos.get_index() and self.movement.move_in_same_index):
+                return False
+        return True'''
+
+    @staticmethod
+    @run_async
+    def __char_loader(char_constructor, result, count, *params, **kwparams):
+        #the method referente is .add if its a pygame.sprite.group, else .append because its supposed to be a list
+        add_to_result = result.add if isinstance(result, pygame.sprite.Group) else result.append
+        for _ in range (0, count):          
+            add_to_result(char_constructor(*params, **kwparams))
+
+    @staticmethod
+    #This contains our default parameters for all the chars
+    def parse_json_char_params(json_params):
+        character_types = ['pawn', 'warrior', 'wizard', 'priestess', 'matron_mother']
+        ammounts        = {'pawn': Pawn.DEFAULT_AMMOUNT, 'warrior': Warrior.DEFAULT_AMMOUNT, 'wizard': Wizard.DEFAULT_AMMOUNT,\
+                            'priestess': Priestess.DEFAULT_AMMOUNT, 'matron_mother': MatronMother.DEFAULT_AMMOUNT}
+        img_paths      = {'pawn': Pawn.DEFAULT_PATH, 'warrior': Warrior.DEFAULT_PATH, 'wizard': Wizard.DEFAULT_PATH,\
+                            'priestess': Priestess.DEFAULT_PATH, 'matron_mother': MatronMother.DEFAULT_PATH}
+        #Parsing names of keys
+        for key in json_params.keys():          #Iterating input keys
+            for correct_key in character_types: #Iterating template keys
+                if key in correct_key:          #IF they match, parse the input key to the template key name
+                    json_params[correct_key] = json_params.pop(key)
+                    break
+        #Parsing non existant characters and paths
+        for character in character_types:
+            try:
+                json_params[character]
+                try:
+                    json_params[character]['path']
+                except KeyError:
+                    json_params[character]['path'] = img_paths[character]
+                try:
+                    json_params[character]['number']
+                except KeyError:
+                    json_params[character]['number'] = ammounts[character]
+            except KeyError:
+                json_params[character] = {'path': img_paths[character], 'number': ammounts[character]}
+
+    @staticmethod
+    def factory(player_name, sprite_size, canvas_size, **character_settings):
+        LOG.log('INFO', "----Factory, making ", player_name, " characters----")
+        Character.parse_json_char_params(character_settings)
+        characters  = pygame.sprite.Group()
+        threads     = []
+
+        for key in character_settings.keys():
+            char_init = Pawn if 'pawn' in key else Wizard if 'wizard' in key\
+            else Warrior if 'warrior' in key else Priestess if 'priestess' in key\
+            else MatronMother if 'matron' in key else None
+            #Actual loading
+            threads.append(Character.__char_loader(char_init, characters, character_settings[key]['number'],\
+                            player_name, player_name+key, (0, 0), sprite_size, canvas_size, character_settings[key]['path'],\
+                            **(character_settings[key]['aliases'])))
+            #character constructor -> self, my_player, _id, position, size, canvas_size, sprites_path, **aliases)
+
+        for t in threads:   t.join()        #Threading.join
+        LOG.log('INFO', "----Factory, done making ", player_name, " characters----")
+        return characters
+
     @staticmethod
     def generate_paths(existing_paths, initial_index, restrictions):
         max_dist    = restrictions.dist+1
@@ -100,63 +167,7 @@ class Character(AnimatedSprite):
                 and existing_paths[path[-1]][dest]: to_check.append((dest, len(path)))
         LOG.log('DEBUG', "Number of iterations searching paths of distance ",restrictions.dist," -> ",iterations)
         return solutions
-
-    '''def valid_mvnt(self, movement):
-        init_pos, dest_pos = movement[0], movement[1]
-        if init_pos is not dest_pos:
-            if not self.movement.bypass_enemies and dest_pos.has_enemy():
-                return False 
-            if not self.movement.bypass_allies and dest_pos.has_ally():
-                return False
-            if (init_pos.get_lvl() is not dest_pos.get_lvl() and self.movement.move_in_same_lvl)\
-            and (init_pos.get_index() is not dest_pos.get_index() and self.movement.move_in_same_index):
-                return False
-        return True'''
-
-    def __modify_paths(self, paths, map, solutions):
-        pass #Do nothing, this must be 
-
-    @staticmethod
-    @run_async
-    def __char_loader(char_constructor, result, count, *params, **kwparams):
-        #the method referente is .add if its a pygame.sprite.group, else .append because its supposed to be a list
-        add_to_result = result.add if isinstance(result, pygame.sprite.Group) else result.append
-        for _ in range (0, count):          
-            add_to_result(char_constructor(*params, **kwparams))
-
-    @staticmethod
-    def factory(player_name, pieces_qty, sprite_size, canvas_size, **sprite_paths):
-        LOG.log('INFO', "----Factory, making ", player_name, " characters----")
-        if not isinstance(pieces_qty, dict):    raise BadCharacterInitException("pieces_qty must be dictionary, not "+str(type(pieces_qty)))   
-        if not isinstance(sprite_paths, dict):  raise BadCharacterInitException("sprite_paths must be dictionary, not "+str(type(sprite_paths)))
-        characters                          = pygame.sprite.Group()
-        threads                             = []
-
-        path, number_of = IMG_FOLDER+"\\pawn", 8
-        if "pawn" in pieces_qty:            number_of   = pieces_qty["pawn"]
-        if "pawn" in sprite_paths:          path        = sprite_paths["pawn"]
-        threads.append(Character.__char_loader(Pawn, characters, number_of, player_name, "pawn", (0, 0), sprite_size, canvas_size, path))
-
-        path, number_of = IMG_FOLDER+"\\warrior", 4
-        if "warrior" in pieces_qty:         number_of   = pieces_qty["warrior"]
-        if "warrior" in sprite_paths:       path        = sprite_paths["warrior"]
-        threads.append(Character.__char_loader(Pawn, characters, number_of, player_name, "warrior", (0, 0), sprite_size, canvas_size, path))
-
-        path, number_of = IMG_FOLDER+"\\wizard", 2
-        if "wizard" in pieces_qty:          number_of   = pieces_qty["wizard"]
-        if "wizard" in sprite_paths:        path        = sprite_paths["wizard"]
-        threads.append(Character.__char_loader(Wizard, characters, number_of, player_name, "wizard", (0, 0), sprite_size, canvas_size, path))
-
-        path, number_of = IMG_FOLDER+"\\priestess", 1
-        if "priestess" in pieces_qty:       number_of   = pieces_qty["priestess"]
-        if "priestess" in sprite_paths:     path        = sprite_paths["priestess"]       
-        threads.append(Character.__char_loader(Priestess, characters, number_of, player_name, "priestess", (0, 0), sprite_size, canvas_size, path))
-
-        for t in threads:
-            t.join()        #Threading.join
-        LOG.log('INFO', "----Factory, done making ", player_name, " characters----")
-        return characters
-
+        
     @staticmethod
     def all_paths_factory(char_type, paths_map, distances_map, cells_per_level):
         lvl_size        = cells_per_level
@@ -198,21 +209,30 @@ class Character(AnimatedSprite):
         results = destinations
 
 class Warrior(Character):
-    Restrictions    = Restrictions(max_dist=2)
+    RESTRICTIONS    = Restrictions(max_dist=2)
     MOVEMENTS       = {} 
+    DEFAULT_PATH    = IMG_FOLDER+'\\Warrior'
+    DEFAULT_AMMOUNT = 4
     def __init__(self, my_player, id_, position, size, canvas_size, sprites_path):
+        #sprites_path = Warrior.DEFAULT_PATH if not sprites_path else sprites_path
         super().__init__(my_player, id_, position, size, canvas_size, sprites_path)
 
 class Wizard(Character):
     RESTRICTIONS    = Restrictions(max_dist=3)
     MOVEMENTS       = {} 
+    DEFAULT_PATH    = IMG_FOLDER+'\\Wizard'
+    DEFAULT_AMMOUNT = 2
     def __init__(self, my_player, id_, position, size, canvas_size, sprites_path):
+        #sprites_path = Wizard.DEFAULT_PATH if not sprites_path else sprites_path
         super().__init__(my_player, id_, position, size, canvas_size, sprites_path)
 
 class Priestess(Character):
-    RESTRICTIONS = Restrictions(max_dist=1, move_along_lvl=True, move_along_index=True)
-    MOVEMENTS    = {} 
+    RESTRICTIONS    = Restrictions(max_dist=1, move_along_lvl=True, move_along_index=True)
+    MOVEMENTS       = {} 
+    DEFAULT_PATH    = IMG_FOLDER+'\\Priestess'
+    DEFAULT_AMMOUNT = 2
     def __init__(self, my_player, id_, position, size, canvas_size, sprites_path):
+        #sprites_path = Priestess.DEFAULT_PATH if not sprites_path else sprites_path
         super().__init__(my_player, id_, position, size, canvas_size, sprites_path)
         #self.movement   = Restrictions(max_dist=-1, move_along_lvl=True, move_along_index=True)
 
@@ -231,7 +251,10 @@ class Priestess(Character):
 class Pawn(Character):
     RESTRICTIONS    = Restrictions()
     MOVEMENTS       = {} 
+    DEFAULT_PATH    = IMG_FOLDER+'\\Pawn'
+    DEFAULT_AMMOUNT = 8
     def __init__(self, my_player, id_, position, size, canvas_size, sprites_path):
+        #sprites_path = Pawn.DEFAULT_PATH if not sprites_path else sprites_path
         super().__init__(my_player, id_, position, size, canvas_size, sprites_path)
     
     def generate_paths(self, existing_paths, board_map, distance_map, initial_pos):
@@ -286,6 +309,9 @@ class Pawn(Character):
 class MatronMother(Character):
     RESTRICTIONS    = Restrictions()
     MOVEMENTS       = {} 
+    DEFAULT_PATH    = IMG_FOLDER+'\\Matron_Mother'
+    DEFAULT_AMMOUNT = 1
     def __init__(self, my_player, id_, position, size, canvas_size, sprites_path):
+        #sprites_path = MatronMother.DEFAULT_PATH if not sprites_path else sprites_path
         super().__init__(my_player, id_, position, size, canvas_size, sprites_path)
         #self.movement   = Restrictions(bypass_enemies=True)

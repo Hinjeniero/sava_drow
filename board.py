@@ -18,13 +18,13 @@ from sprite import Sprite
 from players import Character, Restrictions
 
 class Board(Screen):
-    __default_config = {'platform_proportion': 0.95,
-                        'platform_alignment': "center",
-                        'inter_path_frequency': 2, #every 4, every 2, every 1...
-                        'circles_per_lvl':  16,
-                        'max_levels':       4,
-                        'path_color': WHITE,
-                        'path_width': 5
+    __default_config = {'platform_proportion'   : 0.95,
+                        'platform_alignment'    : "center",
+                        'inter_path_frequency'  : 2, #every 4, every 2, every 1...
+                        'circles_per_lvl'       : 16,
+                        'max_levels'            : 4,
+                        'path_color'            : WHITE,
+                        'path_width'            : 5
     }
     #CHANGE MAYBE THE THREADS OF CHARACTER TO JOIN INSTEAD OF NUM PLAYERS AND SHIT
     def __init__(self, id_, event_id, resolution, *players, **params):
@@ -110,8 +110,8 @@ class Board(Screen):
         return result,
     
     @run_async
-    def __create_player(self, player_name, player_number, chars_number, chars_size, **player_params):
-        self.__add_player(Player(player_name, player_number, chars_number, chars_size, self.resolution, **player_params))
+    def __create_player(self, player_name, player_number, chars_size, **player_params):
+        self.__add_player(Player(player_name, player_number, chars_size, self.resolution, **player_params))
 
     def __current_player(self):
         return self.players[self.player_index]
@@ -377,9 +377,12 @@ class Board(Screen):
                 LOG.log('INFO', 'Selected ', self.active_char.sprite.id)
                 self.drag_char.add(self.active_char.sprite)
                 self.drag_char.sprite.set_selected(True)
-                #TODO BIG SHIT HERE, THIS IT A BETA METHOD. ASSIGN TO SOMETHING FUCK
-                self.drag_char.sprite.generate_paths(self.enabled_paths, self.current_map, self.distances, self.active_cell.sprite.to_path("YES")) 
-                #TODO Change name of who asking
+                #checking this #TODO index_pos braaah
+                destinations = self.drag_char.sprite.get_paths(self.active_cell.sprite.index, self.current_map) 
+                if not destinations: #If its None
+                    self.drag_char.sprite.set_paths(self.enabled_paths, self.params['circles_per_lvl'])
+                    destinations = self.drag_char.sprite.get_paths(self.active_cell.sprite.get_real_index(), self.current_map)
+                #shut up carajo mamawebo
         elif event.type == pygame.MOUSEBUTTONUP:  #If we are dragging it we will have a char in here
             if self.drag_char.sprite is not None:
                 LOG.log('INFO', 'Dropped ', self.drag_char.sprite.id)

@@ -17,13 +17,7 @@ pygame.mixer.pre_init(44100, -16, 1, 512)
 pygame.mouse.set_visible(True)
 pygame.display.set_caption('sava drow')
 pygame.display.set_mode((800, 600))
-
 CHANGES_WERE_MADE   = False
-CHARACTER_CONFIG    = {'pawn':
-                        {'number': 2, 'path':0, 'aliases':
-                            {}
-                        }
-                    }
 
 class Game(object):
     def __init__(self, *screens, resolution=(1280, 720), mouse_visible=True, fps=144, show_fps=True, title="Game"):
@@ -159,18 +153,21 @@ if __name__ == "__main__":
     buttonNumWarriors   = UIElement.factory('button_warriors', "change_number_count_warriors",     pygame.USEREVENT, (0.15, 0.50), (0.80, 0.10), res, (1, 2, 4),   text="Number of warriors",  text_alignment = 'left')
     buttonNumWizards    = UIElement.factory('button_wizards', "change_number_count_wizards",      pygame.USEREVENT, (0.15, 0.65), (0.80, 0.10), res, (1, 2),      text="Number of wizards",   text_alignment = 'left')
     buttonNumPriestess  = UIElement.factory('button_priestesses', "change_number_count_priestess",    pygame.USEREVENT, (0.15, 0.80), (0.80, 0.10), res, (1, 1),      text="Number of priestess", text_alignment = 'left')
+    
     '''#Exit dialog and its buttons
     dialog_resolution   = tuple(x//2 for x in res)
     dialog_position     = tuple(x//2-y//2 for x, y in zip(res, dialog_resolution))
     acceptButton        = UIElement.factory("accept_notification",          pygame.USEREVENT+2, (0.00, 0.80), (0.50, 0.20), dialog_resolution, None, text="ACCEPT") #Could do this in realtion with the total canvas size
     cancelButton        = UIElement.factory("cancel_notification",          pygame.USEREVENT+2, (0.50, 0.80), (0.50, 0.20), dialog_resolution, None, text="CANCEL")
     exitDialog          = UIElement.factory("exit_main_menu_notification",  pygame.USEREVENT+2, dialog_position, dialog_resolution, res, None, acceptButton, cancelButton, text="Exit this shit?")'''
+    
     #Sliders of the music and sound menu
     sliderMenuMusic     = UIElement.factory('slider_music_volume', "change_menu_music_volume", pygame.USEREVENT, (0.05, 0.10), (0.80, 0.15), res, (0.75), text="Menus music volume", slider_type='circular',\
                         gradient = (RED, BLACK), slider_start_color = RED, slider_end_color = WHITE)
     sliderMenuSounds    = UIElement.factory('slider_sound_volume', "change_menu_sound_volume", pygame.USEREVENT, (0.05, 0.30), (0.80, 0.15), res, (0.75), text="Menus sound volume", slider_type='elliptical')
     sliderBoardMusic    = UIElement.factory('slider_board_music_volume', "change_board_music_volume",pygame.USEREVENT, (0.05, 0.50), (0.80, 0.15), res, (0.75), text="Board music volume", slider_type='rectangular')
     sliderBoardSounds   = UIElement.factory('slider_board_sound_volume', "change_board_sound_volume",pygame.USEREVENT, (0.05, 0.70), (0.80, 0.15), res, (0.75), text="Board sound volume")
+    
     #Create Menu and board
     main_menu   = Menu("main_menu",         pygame.USEREVENT,   res,\
                 buttonStart, buttonParamsMenu, buttonSoundMenu, background_path=IMG_FOLDER+'\\background.jpg')
@@ -187,13 +184,14 @@ if __name__ == "__main__":
                             #id_, userevent, element_position, element_size, canvas_size, *elements, **params
     infoboard = InfoBoard("test", USEREVENT+2, (0, 0), (400, 400), res, (textSprite1, 1), (textSprite2, 2), (textSprite3, 3), (textSprite4, 6))
     main_board.temp_infoboard = infoboard
-    player_settings = {'pawn':
-                            {'number': 2, 'path':0, 'aliases':
-                                {'idle': 'cipote'}
-                            }
-                        }
-    main_board.create_player("Zippotudo", 0, (100, 100), {"pawn":1, "warrior":1, "wizard":1, "priestess":1})
-    #main_board.create_player("Zippotudo_2", 0, {"pawn":1, "warrior":1, "wizard":1, "priestess":1}, (100, 100))
+
+    character_settings = {'pawn':{'number': 1, 'aliases':{'pickup': 'running'}},
+                        'warrior':{'number': 1, 'aliases':{'pickup': 'run'}},
+                        'wizard':{'number': 1, 'aliases':{'pickup': 'pick'}},
+                        'priestess':{'number': 1, 'aliases':{'pickup': 'run'}},
+                        'matron_mother':{'number': 1, 'path': IMG_FOLDER+'\\priestess', 'aliases':{'pickup': 'pick'}},
+    }
+    main_board.create_player("Zippotudo", 0, (100, 100), **character_settings)
     #TODO EACH PLAYERS GETS HIS INFOBOARD
     game = Game(main_menu, sound_menu, params_menu, main_board, title="Sava Drow", resolution=res)
     game.start()

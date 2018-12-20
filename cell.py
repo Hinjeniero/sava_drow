@@ -22,6 +22,9 @@ class Cell(MultiSprite):
     def get_index(self):
         return self.pos[1]
 
+    def get_real_index(self):
+        return self.index
+
     def has_enemy(self, who_asking):
         for character in self.chars.sprites():
             if character.get_master() != who_asking: return True

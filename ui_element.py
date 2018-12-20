@@ -356,7 +356,7 @@ class InfoBoard (UIElement):
 
 class Dialog (UIElement):
     #The default config of a subclass contains only those parameters that the superclass does not mention
-    __default_config = {'text'          : 'default',
+    __default_config = {'text'          : 'exit_dialog',
                         'font'          : None,
                         'max_font_size' : 50,
                         'font_size'     : 0,

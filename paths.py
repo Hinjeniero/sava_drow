@@ -13,10 +13,11 @@ class Movements(object):
         return Movements.MOVEMENTS.get_item(hash_key)
     
     @staticmethod
-    def set_movements(existing_paths, restrictions, cells_per_lvl):
+    def set_movements(existing_paths, distances, restrictions, cells_per_lvl):
+        print("KEYS OF THIS SHIT "+str(Movements.MOVEMENTS.dict.keys()))
         hash_key = hash(restrictions)
         if not Movements.get_movements(hash_key): #If returns None, doesnt exist
-            paths = Path.all_paths_factory(existing_paths, cells_per_lvl, restrictions)
+            paths = Path.all_paths_factory(existing_paths, distances, cells_per_lvl, restrictions)
             Movements.MOVEMENTS.add_item(hash_key, paths)
 
 class Restrictions(object):
@@ -69,7 +70,7 @@ class Path(object):
         return all(mine == his for mine, his in zip (self.pos, path.pos))
         
     @staticmethod
-    def all_paths_factory(path_exists, cells_per_level, restrictions):
+    def all_paths_factory(path_exists, distances, cells_per_level, restrictions):
         lvl_size        = cells_per_level
         destinations    = {}
         length          = len(path_exists[0]) #Want to know how many indexes the map has
@@ -77,33 +78,41 @@ class Path(object):
             for x in range(0, length):      
                 for y in range(x, length):
                     if x is y:              continue                    #Same cell, no movmnt
-                    if path_exists[x][y]:
-                        try:                destinations[x].append((y, x))   #The list of destinations already exist for this index
-                        except KeyError:    destinations[x] = [(y, x)]       #It doesn't, have to create it
-                        try:                destinations[y].append((x, y))
-                        except KeyError:    destinations[y] = [(x, y)] 
-        if restrictions.dist < 2:   #If less that two but not one, infinite distance w/ restrictions
+                    if path_exists[x][y]:   Path.add_path(x, y, destinations)
+        if restrictions.dist < 2:   #If less that two but not one, infinite distance w/ restrictions (CANT HAVE NO RESTRICTIONS)
             for x in range(0, length):      
                 for y in range(x, length):
-                    if x is y:              continue    #Same cell not movmnt
-                    if restrictions.only_same_index:    #If the dest cell doesn't abide by this restriction
-                        if not path_exists[x][y] or x%lvl_size is not y%lvl_size:
-                            continue                    #Next iteration
-                    if restrictions.only_same_lvl:      #If the dest cell doesn't abide by this restriction
-                        if x//lvl_size is not y//lvl_size:    
-                            continue                    #Next iteration
-                    #All conditions cleared, its a possible destiny
-                    try:                destinations[x].append((y, x))   #The list of destinations already exist for this index
-                    except KeyError:    destinations[x] = [(y, x)]       #It doesn't, have to create it
-                    try:                destinations[y].append((x, y))
-                    except KeyError:    destinations[y] = [(x, y)] 
-        else:                       #For complex paths, we need a submethod
+                    if x is y or distances[x][y] < 0:   continue    #Same cell or not direct path, next iteration
+                    if Path.check_restrictions(x, y, restrictions, distances, lvl_size):
+                        Path.add_path(x, y, destinations)
+        else:   #For complex paths, we need a submethod
             for x in range(0, length):
                 destinations[x] = Path.generate_paths(path_exists, x, restrictions)
         return destinations
 
     @staticmethod
+    def add_path(init_pos, final_pos, dest_list):
+        '''add the path to the destinations. Contains the try-except logic'''
+        try:                dest_list[init_pos].append((init_pos, final_pos))   #The list of destinations already exist for this index
+        except KeyError:    dest_list[init_pos] = [(init_pos, final_pos)]       #It doesn't, have to create it
+        try:                dest_list[final_pos].append((final_pos, init_pos))
+        except KeyError:    dest_list[final_pos] = [(final_pos, init_pos)] 
+    
+    @staticmethod
+    def check_restrictions(initial_pos, final_pos, restrictions, distances, circles):
+        '''Only have to pass on one of the conditions'''
+        if restrictions.only_same_lvl and initial_pos//circles is final_pos//circles:
+            return True
+        if restrictions.only_same_index and initial_pos%circles is final_pos%circles:
+            return True
+        if restrictions.only_same_index and (initial_pos<circles or final_pos<circles)\
+        and distances[initial_pos][final_pos] > 0:
+            return True 
+        return False
+
+    @staticmethod
     def generate_paths(path_exists, initial_index, restrictions):
+        '''complex paths, rough backtracking'''
         max_dist    = restrictions.dist+1
         solutions   = []
         path        = []

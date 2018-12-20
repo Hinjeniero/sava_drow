@@ -28,7 +28,6 @@ class Character(AnimatedSprite):
                             "die" : "die"    
     }
     def __init__(self, my_player, _id, position, size, canvas_size, sprites_path, **aliases):
-        print("CHARACTER, "+str(aliases))
         LOG.log('DEBUG', "Initializing character ", _id, " of player ", my_player)
         super().__init__(_id, position, size, canvas_size, sprite_folder=sprites_path)
         self.aliases    = Character.__default_aliases.copy()
@@ -96,7 +95,7 @@ class Character(AnimatedSprite):
         #the method referente is .add if its a pygame.sprite.group, else .append because its supposed to be a list
         add_to_result = result.add if isinstance(result, pygame.sprite.Group) else result.append
         for _ in range (0, count):
-            add_to_result(char_constructor(*params, **kwparams))
+            add_to_result(char_class(*params, **kwparams))
 
     @staticmethod
     #This contains our default parameters for all the chars
@@ -146,67 +145,6 @@ class Character(AnimatedSprite):
         LOG.log('INFO', "----Factory, done making ", player_name, " characters----")
         return characters
 
-    @staticmethod
-    def generate_paths(existing_paths, initial_index, restrictions):
-        max_dist    = restrictions.dist+1
-        solutions   = []
-        path        = []
-        to_check    = [(initial_index, 0)]  #sturcture of (index, step_of_this_index)
-        iterations  = 0
-        while len(to_check) > 0:
-            iterations += 1
-            path.append(to_check.pop(-1)[0])
-            if len(path) is max_dist:
-                solutions.append(path.copy())                       #Add solution
-                if len(to_check) > 0:               del path[to_check[-1][1]:]  #Restore path to the last bifurcation
-                continue
-            #Adding destinations to to_check if there is an existant path with the current index (path last index)
-            for dest in range(0, len(existing_paths[0])):
-                if dest not in path\
-                and existing_paths[path[-1]][dest]: to_check.append((dest, len(path)))
-        LOG.log('DEBUG', "Number of iterations searching paths of distance ",restrictions.dist," -> ",iterations)
-        return solutions
-        
-    @staticmethod
-    def all_paths_factory(char_type, paths_map, distances_map, cells_per_level):
-        lvl_size        = cells_per_level
-        destinations    = {}
-        length          = len(paths_map[0]) #Want to know how many indexes the map has
-        if 'pawn' in char_type:         restrictions, results = Pawn.RESTRICTIONS, Pawn.MOVEMENTS
-        elif 'warrior' in char_type:    restrictions, results = Warrior.RESTRICTIONS, Warrior.MOVEMENTS
-        elif 'wizard' in char_type:     restrictions, results = Wizard.RESTRICTIONS, Wizard.MOVEMENTS
-        elif 'priest' in char_type:     restrictions, results = Priestess.RESTRICTIONS, Priestess.MOVEMENTS
-        elif 'matron' in char_type:     restrictions, results = MatronMother.RESTRICTIONS, MatronMother.MOVEMENTS
-        else:                           raise BadCharacterInitException("this type of char is not accepted. AllPathsFactory")
-        if restrictions.dist is 1:          #No need to check much, only if the immediate path exists
-            for x in range(0, length):      
-                for y in range(x, length):
-                    if x is y:              continue                    #Same cell, no movmnt
-                    if paths_map[x][y]:
-                        try:                destinations[x].append((y, x))   #The list of destinations already exist for this index
-                        except KeyError:    destinations[x] = [(y, x)]       #It doesn't, have to create it
-                        try:                destinations[y].append((x, y))
-                        except KeyError:    destinations[y] = [(x, y)] 
-        if restrictions.dist < 2:   #If less that two but not one, infinite distance w/ restrictions
-            for x in range(0, length):      
-                for y in range(x, length):
-                    if x is y:              continue    #Same cell not movmnt
-                    if restrictions.only_same_index:    #If the dest cell doesn't abide by this restriction
-                        if not paths_map[x][y] or x%lvl_size is not y%lvl_size:
-                            continue                    #Next iteration
-                    if restrictions.only_same_lvl:      #If the dest cell doesn't abide by this restriction
-                        if x//lvl_size is not y//lvl_size:    
-                            continue                    #Next iteration
-                    #All conditions cleared, its a possible destiny
-                    try:                destinations[x].append((y, x))   #The list of destinations already exist for this index
-                    except KeyError:    destinations[x] = [(y, x)]       #It doesn't, have to create it
-                    try:                destinations[y].append((x, y))
-                    except KeyError:    destinations[y] = [(x, y)] 
-        else:                       #For complex paths, we need a submethod
-            for x in range(0, length):
-                destinations[x] = Character.generate_paths(paths_map, x, restrictions)
-        results = destinations
-
 class Warrior(Character):
     RESTRICTIONS    = Restrictions(max_dist=2)
     DEFAULT_PATH    = IMG_FOLDER+'\\Warrior'
@@ -216,10 +154,11 @@ class Warrior(Character):
         super().__init__(my_player, id_, position, size, canvas_size, sprites_path, **aliases)
         
     def get_paths(self, index, current_map):
-        return Movements.get_movements(hash(Warrior.Restrictions))[index]
+        result = Movements.get_movements(hash(Warrior.RESTRICTIONS))
+        return None if not result else result[index]
 
-    def set_paths(self, existing_paths, cells_per_lvl):
-        Movements.set_movements(existing_paths, Warrior.Restrictions, cells_per_lvl)
+    def set_paths(self, existing_paths, distances, cells_per_lvl):
+        Movements.set_movements(existing_paths, distances, Warrior.RESTRICTIONS, cells_per_lvl)
 
 
 class Wizard(Character):
@@ -231,10 +170,10 @@ class Wizard(Character):
         super().__init__(my_player, id_, position, size, canvas_size, sprites_path, **aliases)
 
     def get_paths(self, index, current_map):
-        return Movements.get_movements(hash(Wizard.Restrictions))[index]
-
-    def set_paths(self, existing_paths, cells_per_lvl):
-        Movements.set_movements(existing_paths, Wizard.Restrictions, cells_per_lvl)
+        result = Movements.get_movements(hash(Wizard.RESTRICTIONS))
+        return None if not result else result[index]
+    def set_paths(self, existing_paths, distances, cells_per_lvl):
+        Movements.set_movements(existing_paths, distances, Wizard.RESTRICTIONS, cells_per_lvl)
 
 class Priestess(Character):
     RESTRICTIONS    = Restrictions(max_dist=0, move_along_lvl=True, move_along_index=True)
@@ -246,10 +185,12 @@ class Priestess(Character):
         #self.movement   = Restrictions(max_dist=-1, move_along_lvl=True, move_along_index=True)
 
     def get_paths(self, index, current_map):
-        return Movements.get_movements(hash(Priestess.Restrictions))[index]
-
-    def set_paths(self, existing_paths, cells_per_lvl):
-        Movements.set_movements(existing_paths, Priestess.Restrictions, cells_per_lvl)
+        result = Movements.get_movements(hash(Priestess.RESTRICTIONS))
+        return None if not result else result[index]
+        
+    def set_paths(self, existing_paths, distances, cells_per_lvl):
+        print("SET PATHS, HASH OF RESTRICTIONS -> "+str(hash(Priestess.RESTRICTIONS)))
+        Movements.set_movements(existing_paths, distances, Priestess.RESTRICTIONS, cells_per_lvl)
 
     #No need for a backtracking in priestess, only two steps.
     def generate_paths(self, existing_paths, board_map, distance_map, initial_pos):
@@ -272,10 +213,11 @@ class Pawn(Character):
         super().__init__(my_player, id_, position, size, canvas_size, sprites_path, **aliases)
 
     def get_paths(self, index, current_map):
-        return Movements.get_movements(hash(Pawn.Restrictions))[index]
+        result = Movements.get_movements(hash(Pawn.RESTRICTIONS))
+        return None if not result else result[index]
 
-    def set_paths(self, existing_paths, cells_per_lvl):
-        Movements.set_movements(existing_paths, Pawn.Restrictions, cells_per_lvl)
+    def set_paths(self, existing_paths, distances, cells_per_lvl):
+        Movements.set_movements(existing_paths, distances, Pawn.RESTRICTIONS, cells_per_lvl)
 
     def generate_paths(self, existing_paths, board_map, distance_map, initial_pos):
         print("POSITION "+str(initial_pos.index))
@@ -336,7 +278,8 @@ class MatronMother(Character):
         #self.movement   = Restrictions(bypass_enemies=True)
 
     def get_paths(self, index, current_map):
-        return Movements.get_movements(hash(MatronMother.Restrictions))[index]
+        result = Movements.get_movements(hash(MatronMother.RESTRICTIONS))
+        return None if not result else result[index]
 
-    def set_paths(self, existing_paths, cells_per_lvl):
-        Movements.set_movements(existing_paths, MatronMother.Restrictions, cells_per_lvl)
+    def set_paths(self, existing_paths, distances, cells_per_lvl):
+        Movements.set_movements(existing_paths, distances, MatronMother.RESTRICTIONS, cells_per_lvl)

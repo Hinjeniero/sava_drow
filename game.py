@@ -189,7 +189,7 @@ if __name__ == "__main__":
                         'warrior':{'number': 1, 'aliases':{'pickup': 'run'}},
                         'wizard':{'number': 1, 'aliases':{'pickup': 'pick'}},
                         'priestess':{'number': 1, 'aliases':{'pickup': 'run'}},
-                        'matron_mother':{'number': 1, 'path': IMG_FOLDER+'\\priestess', 'aliases':{'pickup': 'pick'}},
+                        'matron_mother':{'number': 0, 'path': IMG_FOLDER+'\\priestess', 'aliases':{'pickup': 'pick'}},
     }
     main_board.create_player("Zippotudo", 0, (100, 100), **character_settings)
     #TODO EACH PLAYERS GETS HIS INFOBOARD

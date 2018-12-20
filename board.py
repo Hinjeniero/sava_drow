@@ -159,7 +159,6 @@ class Board(Screen):
                 if interpath_exists is not None:
                     self.enabled_paths[x][interpath_exists], self.enabled_paths[interpath_exists][x] = True, True
                     for y in range(x, (lvls-1)*circles, circles):   #From interior -> exterior
-                        print("ENABLING PATH FROM "+str(y)+" TO "+str(y+circles))
                         self.enabled_paths[y][y+circles], self.enabled_paths[y+circles][y] = True, True
 
             #No more special conditions, normal cells
@@ -373,6 +372,7 @@ class Board(Screen):
         mouse_sprite = UtilityBox.get_mouse_sprite(mouse_position)
         
         if event.type == pygame.MOUSEBUTTONDOWN:  #On top of the char and clicking on it
+            print("MOUSE BUTTON DOWN")
             if self.active_char.sprite is not None:
                 LOG.log('INFO', 'Selected ', self.active_char.sprite.id)
                 self.drag_char.add(self.active_char.sprite)
@@ -380,9 +380,12 @@ class Board(Screen):
                 #checking this #TODO index_pos braaah
                 destinations = self.drag_char.sprite.get_paths(self.active_cell.sprite.index, self.current_map) 
                 if not destinations: #If its None
-                    self.drag_char.sprite.set_paths(self.enabled_paths, self.params['circles_per_lvl'])
+                    print("DOING THAT SHIT ABOUT PATHS AND SUCH")
+                    self.drag_char.sprite.set_paths(self.enabled_paths, self.distances, self.params['circles_per_lvl'])
                     destinations = self.drag_char.sprite.get_paths(self.active_cell.sprite.get_real_index(), self.current_map)
-                #shut up carajo mamawebo
+                else:
+                    print("ALREADY DONE THAT BEFORE")
+                #TODO SET DESTINATIONS TO BLINK, AND TO MAKE PLAYER CHOOSE ONE OF THESE
         elif event.type == pygame.MOUSEBUTTONUP:  #If we are dragging it we will have a char in here
             if self.drag_char.sprite is not None:
                 LOG.log('INFO', 'Dropped ', self.drag_char.sprite.id)

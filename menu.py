@@ -150,4 +150,5 @@ class Menu (Screen):
     def get_sprite_index(self, sprite):
         sprite_list = self.dynamic_sprites.sprites()
         for i in range(0, len(sprite_list)):
-            if sprite is sprite_list[i]:    return i
+            if sprite is sprite_list[i]:    
+                return i

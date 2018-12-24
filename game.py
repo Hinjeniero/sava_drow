@@ -1,4 +1,7 @@
-import pygame, os, threading, sys
+import pygame
+import os
+import threading
+import sys
 from pygame.locals import *
 from pygame.key import *
 from screen import Screen

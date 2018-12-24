@@ -1,3 +1,6 @@
+__version__ = '0.9999'
+__author__ = 'David Flaity Pardo'
+   
    #Defined with vertical/horizontal choice
    #0 - centered, 1 - left sided, 2 - right sided
     def resize_and_place_elements(self, elements_list, space_between_elements = 0.05, usable_size = 1.00, vertical_offset = 0.00, horizontal_offset = 0.00,\

@@ -1,3 +1,7 @@
+__all__ = ["Player", "Character", "Warrior", "Wizard", "Priestess", "Pawn", "MatronMother"]
+__version__ = '0.9'
+__author__ = 'David Flaity Pardo'
+
 import pygame
 from os import listdir
 from os.path import isfile, join, dirname
@@ -8,8 +12,6 @@ from logger import Logger as LOG
 from decorators import run_async
 from sprite  import AnimatedSprite
 from utility_box import UtilityBox
-
-__all__ = ["Player", "Character", "Warrior", "Wizard", "Priestess", "Pawn", "MatronMother"]
 
 class Player(object):
     def __init__(self, name, order, sprite_size, canvas_size, infoboard=None, **character_params): #TODO infoboard shoudlnt be none

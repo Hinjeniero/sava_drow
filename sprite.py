@@ -72,6 +72,18 @@ class Sprite(pygame.sprite.Sprite):
             canvas_size (:tuple: int,int):  Size of the display. In pixels.
             image_params (:dict:):  Dict of keywords and values as parameters to create the self.image attribute.
                                     Variety going from fill_color and use_gradient to text_only.
+        Params dict attributes: TODO modify this
+            position: Position that this surface will have on the destination surface if it's drawed.
+            size: Size of the surface containing the polygon, is a tuple (width, height).
+            surf_color: Background color of the polygon if gradient and image are false. Default is solid red.
+            surf_image: Texture to use in the surface. It's a loaded image. Default is None.
+            border: True if the polygon has a border. Default is True.
+            border_size: Width of the border in pixels. Default is 2 pixels.
+            border_color: Color of the border. Default is solid white.
+            use_gradient: True if the polygon color is a gradient. Default is True.
+            start_color: Starting color of the gradient. Default is gray.
+            end_color: Ending color of the gradient. Default is dark gray.
+            gradient_type: Orientation of the gradient, 0 for vertical, 1 or whatever for horizontal. Default is 0 (Vertical)
         """
         super().__init__()
         self.params         = image_params
@@ -211,9 +223,9 @@ class Sprite(pygame.sprite.Sprite):
         """Makes the changes to advance the animation one frame. This method is intended to be overloaded.
         In the superclass, it simply changs animation_value and reverse animation_step if needed"""
         self.animation_value    += self.animation_step
-        if not MIN_ANIMATION_VALUE <= self.animation_value <= MAX_ANIMATION_VALUE:
+        if not ANIMATION_INTERVAL[0] <= self.animation_value <= ANIMATION_INTERVAL[1]:
             self.animation_step     = -self.animation_step
-            self.animation_value    = MIN_ANIMATION_VALUE if self.animation_value < MIN_ANIMATION_VALUE else MAX_ANIMATION_VALUE
+            self.animation_value    = ANIMATION_INTERVAL[0] if self.animation_value < ANIMATION_INTERVAL[0] else ANIMATION_INTERVAL[1]
         self.overlay.set_alpha(int(MAX_TRANSPARENCY*self.animation_value))
 
     def update(self):
@@ -354,6 +366,10 @@ class AnimatedSprite(Sprite):
             position (:tuple: int,int): Position of the Sprite in the screen. In pixels.
             size (:tuple: int,int):     Size of the Sprite in the screen. In pixels.
             canvas_size (:tuple: int,int):  Size of the display. In pixels.
+            *sprite_list (:obj: pygame.Surface):    Surfaces that are to be added separated by commas.
+            sprite_folder (str):    Path of the folder that contains the surfaces to be loaded.
+            animation_delay (int):  Frames that occur between each animatino (Change of surface).
+            image_params TODO
         """
         super().__init__(id_, position, size, canvas_size)
         #Adding parameters to control a lot of sprites instead of only one

@@ -1,6 +1,12 @@
-import os, functools
+__all__ = ['Movements', 'Restrictions', 'Path']
+__version__ = '0.8'
+__author__ = 'David Flaity Pardo'
+
+import os
+import functools
 from logger import Logger as LOG
 from synch_dict import Dictionary
+
 GAME_FOLDER = os.path.dirname(__file__)
 IMG_FOLDER = os.path.join(GAME_FOLDER, 'img')
 SOUND_FOLDER = os.path.join(GAME_FOLDER, 'sounds')

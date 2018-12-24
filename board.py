@@ -1,10 +1,13 @@
-import pygame, math, numpy, os, random
+import pygame
+import math
+import numpy
+import os
+import random
 from utility_box import UtilityBox
 from pygame.locals import *
 import gradients #Gradients in polygons
-import ptext #Gradients in text
-from polygons import *
-from colors import *
+from polygons import Circle
+from colors import RED, WHITE, DARKGRAY, LIGHTGRAY, TRANSPARENT_GRAY
 from screen import Screen, LoadingScreen
 from cell import Cell, Quadrant
 from exceptions import BadPlayersParameter, BadPlayerTypeException, PlayerNameExistsException

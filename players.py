@@ -35,8 +35,9 @@ class Character(AnimatedSprite):
         self.my_master  = my_player
         self.limits     = Restrictions()
         self.state      = self.aliases['idle']
+        self.index      = 0 #Index of the cell that it is in
     
-    def get_paths(self, index_pos, current_map):
+    def get_paths(self, graph, distances, current_map):
         '''Mere interface to be overloaded'''
         return 'This is only an interface'
     
@@ -150,7 +151,6 @@ class Warrior(Character):
     DEFAULT_PATH    = IMG_FOLDER+'\\Warrior'
     DEFAULT_AMMOUNT = 4
     def __init__(self, my_player, id_, position, size, canvas_size, sprites_path, **aliases):
-        #sprites_path = Warrior.DEFAULT_PATH if not sprites_path else sprites_path
         super().__init__(my_player, id_, position, size, canvas_size, sprites_path, **aliases)
         
     def get_paths(self, index, current_map):
@@ -166,7 +166,6 @@ class Wizard(Character):
     DEFAULT_PATH    = IMG_FOLDER+'\\Wizard'
     DEFAULT_AMMOUNT = 2
     def __init__(self, my_player, id_, position, size, canvas_size, sprites_path, **aliases):
-        #sprites_path = Wizard.DEFAULT_PATH if not sprites_path else sprites_path
         super().__init__(my_player, id_, position, size, canvas_size, sprites_path, **aliases)
 
     def get_paths(self, index, current_map):
@@ -180,9 +179,7 @@ class Priestess(Character):
     DEFAULT_PATH    = IMG_FOLDER+'\\Priestess'
     DEFAULT_AMMOUNT = 2
     def __init__(self, my_player, id_, position, size, canvas_size, sprites_path, **aliases):
-        #sprites_path = Priestess.DEFAULT_PATH if not sprites_path else sprites_path
         super().__init__(my_player, id_, position, size, canvas_size, sprites_path, **aliases)
-        #self.movement   = Restrictions(max_dist=-1, move_along_lvl=True, move_along_index=True)
 
     def get_paths(self, index, current_map):
         result = Movements.get_movements(hash(Priestess.RESTRICTIONS))
@@ -206,74 +203,41 @@ class Priestess(Character):
 
 class Pawn(Character):
     RESTRICTIONS    = Restrictions()
+    CHECK_ENEMIES   = Restrictions(max_dist=0, move_along_lvl=True, move_along_index=True)
     DEFAULT_PATH    = IMG_FOLDER+'\\Pawn'
     DEFAULT_AMMOUNT = 8
     def __init__(self, my_player, id_, position, size, canvas_size, sprites_path, **aliases):
-        #sprites_path = Pawn.DEFAULT_PATH if not sprites_path else sprites_path
         super().__init__(my_player, id_, position, size, canvas_size, sprites_path, **aliases)
 
-    def get_paths(self, index, current_map):
-        result = Movements.get_movements(hash(Pawn.RESTRICTIONS))
-        return None if not result else result[index]
+    def get_paths(self, initial_pos, distances, current_map):
+        results = []
+        unfiltered_paths = Movements.get_movements(hash(Pawn.CHECK_ENEMIES))[initial_pos]
+        enemies = {}
+        for path in unfiltered_paths:
+            #If the destiny has an enemy and there is no ally in the middle. Those don't need to be checked again
+            if current_map[path[-1]].has_enemy(self.my_master)\
+            and not any(path[i].has_ally(self.my_master) for i in range(1, len(path)-1)):
+                enemies[path[-1]] = distances[initial_pos][path[-1]]  #Distance to the enemy. The key is the destiny
+        #Now, we compare the enemies distance to those that we would have in the 2-4 possible positions
+        for new_index in Movements.get_movements(hash(Pawn.RESTRICTIONS))[initial_pos]:
+            for enemy_index, enemy_dist in enemies.items():
+                if distances[new_index][enemy_index] < enemy_dist:  
+                    results.append((initial_pos,new_index))
+                    break   #breaking the first loop
+        print("PAWN, CHECKING RESULTS FOR "+str(initial_pos)+" -> "+str(results))
+        return results
 
     def set_paths(self, existing_paths, distances, cells_per_lvl):
         Movements.set_movements(existing_paths, distances, Pawn.RESTRICTIONS, cells_per_lvl)
 
-    def generate_paths(self, existing_paths, board_map, distance_map, initial_pos):
-        print("POSITION "+str(initial_pos.index))
-        print("INITIAL DISTANCES")
-        initial_distances   = self.__generate_enemies_distances(distance_map, board_map, initial_pos.index)
-        unfiltered_paths    = super().generate_paths(existing_paths, board_map, distance_map, initial_pos)
-        #print(unfiltered_paths)
-        if len(initial_distances) > 0:    #If there is a direct path possible towards an enemy
-            for i in range(0, len(unfiltered_paths)):   #For each possible basic path
-                dest_pos = None
-                for cell in board_map.values():
-
-                    if unfiltered_paths[i][-1] == (cell.get_lvl(), cell.get_index()):
-                        dest_pos = cell
-                        break
-                print("FINAL DISTANCES IN DESTINY "+str(cell.index))
-                final_distances = self.__generate_enemies_distances(distance_map, board_map, dest_pos.index)
-
-                #This type of if works because the key is a basic integer, it wouldn't otherwise
-                #If there is no less distance with any of the enemies, this path is no good
-                delete_path = True
-                for key in initial_distances.keys():
-                    try:
-                        if final_distances[key] < initial_distances[key]: delete_path = False
-                    except KeyError:    #This due to the destiny having no connnection to a cell that the start_pos did have.
-                        continue
-                if delete_path:
-                    print("DELETING PATH") 
-                    del unfiltered_paths[i]
-                    i+=1
-        #print(unfiltered_paths)
-        return unfiltered_paths #TODO FIX THIS SHIT
-
-    #IN WHERE THE HELL IM CHECKING FOR ENEMIES, WHAT THE FUCK DOES THIS SHIT DO???? 
-    def __generate_enemies_distances(self, distance_map, board_map, position):
-        distances_to_enemies = {}
-        cells_with_enemies = [cell.index for cell in board_map.values() if (cell.index is not position and cell.has_enemy())]
-        for cell in board_map.values(): print(cell.index + " has enemy "+str(cell.has_enemy()) + ", ally "+str(cell.has_ally()))
-        print(len(cells_with_enemies))
-        for cell in cells_with_enemies: print("ENEMIE IN "+str(cell.index))
-        raise Exception("dfd")
-        if distance_map[position][i] > 0: #Exists direct path to that shit (Same level or big circle [rank or file])
-            try:
-                if distance_map[position][i] < distances_to_enemies[i]:
-                    distances_to_enemies[i] = distance_map[position][i]
-            except KeyError:
-                distances_to_enemies[i] = distance_map[position][i]
-        print(distances_to_enemies)
-        return distances_to_enemies
+    def get_enemies_distances(self, initial_pos, distances):
+        pass
             
 class MatronMother(Character):
     RESTRICTIONS    = Restrictions()
     DEFAULT_PATH    = IMG_FOLDER+'\\Matron_Mother'
     DEFAULT_AMMOUNT = 1
     def __init__(self, my_player, id_, position, size, canvas_size, sprites_path, **aliases):
-        #sprites_path = MatronMother.DEFAULT_PATH if not sprites_path else sprites_path
         super().__init__(my_player, id_, position, size, canvas_size, sprites_path, **aliases)
         #self.movement   = Restrictions(bypass_enemies=True)
 

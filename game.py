@@ -63,7 +63,7 @@ class Game(object):
     
     def __set_resolution(self, resolution):
         self.pygame_params['display'] = pygame.display.set_mode(resolution)
-        for screen in self.screens:     screen.update_resolution(resolution)
+        for screen in self.screens:     screen.set_resolution(resolution)
         LOG.log('DEBUG', "Changed resolution to ", resolution)
 
     def event_handler(self, events):
@@ -177,10 +177,13 @@ if __name__ == "__main__":
                 buttonRes, buttonCountPlayers, buttonNumPawns, buttonNumWarriors, buttonNumWizards, buttonNumPriestess, background_path=IMG_FOLDER+'\\background.jpg')
 
     main_board = Board("main_board", pygame.USEREVENT+7, res, background_path = IMG_FOLDER+'\\board_2.jpg')
+    
+    #TODO in only string form.
     textSprite1 = TextSprite("testSprite", (0, 0), (200, 100), res, "YESSS")
     textSprite2 = TextSprite("testSprite", (0, 0), (200, 100), res, "MaybBEEEE")
     textSprite3 = TextSprite("testSprite", (0, 0), (200, 100), res, "no.")
     textSprite4 = TextSprite("testSprite", (0, 0), (600, 100), res, "NUUUUNMAKLE")
+
                             #id_, userevent, element_position, element_size, canvas_size, *elements, **params
     infoboard = InfoBoard("test", USEREVENT+2, (0, 0), (400, 400), res, (textSprite1, 1), (textSprite2, 2), (textSprite3, 3), (textSprite4, 6))
     main_board.temp_infoboard = infoboard

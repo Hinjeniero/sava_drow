@@ -1319,3 +1319,53 @@ class Restrictions(object):
             t.join()        #Threading.join
         LOG.log('INFO', "----Factory, done making ", player_name, " characters----")
         return characters
+
+#PAWN
+    def generate_paths(self, existing_paths, board_map, distance_map, initial_pos):
+        print("POSITION "+str(initial_pos.index))
+        print("INITIAL DISTANCES")
+        initial_distances   = self.__generate_enemies_distances(distance_map, board_map, initial_pos.index)
+        unfiltered_paths    = super().generate_paths(existing_paths, board_map, distance_map, initial_pos)
+        #print(unfiltered_paths)
+        if len(initial_distances) > 0:    #If there is a direct path possible towards an enemy
+            for i in range(0, len(unfiltered_paths)):   #For each possible basic path
+                dest_pos = None
+                for cell in board_map.values():
+
+                    if unfiltered_paths[i][-1] == (cell.get_lvl(), cell.get_index()):
+                        dest_pos = cell
+                        break
+                print("FINAL DISTANCES IN DESTINY "+str(cell.index))
+                final_distances = self.__generate_enemies_distances(distance_map, board_map, dest_pos.index)
+
+                #This type of if works because the key is a basic integer, it wouldn't otherwise
+                #If there is no less distance with any of the enemies, this path is no good
+                delete_path = True
+                for key in initial_distances.keys():
+                    try:
+                        if final_distances[key] < initial_distances[key]: delete_path = False
+                    except KeyError:    #This due to the destiny having no connnection to a cell that the start_pos did have.
+                        continue
+                if delete_path:
+                    print("DELETING PATH") 
+                    del unfiltered_paths[i]
+                    i+=1
+        #print(unfiltered_paths)
+        return unfiltered_paths #TODO FIX THIS SHIT
+
+    #IN WHERE THE HELL IM CHECKING FOR ENEMIES, WHAT THE FUCK DOES THIS SHIT DO???? 
+    def __generate_enemies_distances(self, distance_map, board_map, position):
+        distances_to_enemies = {}
+        cells_with_enemies = [cell.index for cell in board_map.values() if (cell.index is not position and cell.has_enemy())]
+        for cell in board_map.values(): print(cell.index + " has enemy "+str(cell.has_enemy()) + ", ally "+str(cell.has_ally()))
+        print(len(cells_with_enemies))
+        for cell in cells_with_enemies: print("ENEMIE IN "+str(cell.index))
+        raise Exception("dfd")
+        if distance_map[position][i] > 0: #Exists direct path to that shit (Same level or big circle [rank or file])
+            try:
+                if distance_map[position][i] < distances_to_enemies[i]:
+                    distances_to_enemies[i] = distance_map[position][i]
+            except KeyError:
+                distances_to_enemies[i] = distance_map[position][i]
+        print(distances_to_enemies)
+        return distances_to_enemies

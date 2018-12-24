@@ -247,7 +247,7 @@ class Slider (UIElement):
         slider_size = (self.rect.height, self.rect.height)
         slider_id   = self.id+"button"
         if 'circ' in slider_type or 'ellip' in slider_type:  #Circ for circular or circle
-            slider = Circle(slider_id, (0, 0), slider_size, self.get_canvas_size(),\
+            slider = Circle(slider_id, (0, 0), slider_size, self.rect.size,\
                             fill_color=fill_color, fill_gradient=use_gradient, gradient=gradient,\
                             border=border, border_width=border_width, border_color=border_color)
             if 'ellip' in slider_type:          #Ellip for elliptical or ellipse
@@ -255,7 +255,7 @@ class Slider (UIElement):
                 slider.image = pygame.transform.smoothscale(slider.image, slider.rect.size)  #Aaand using that modified rect
 
         elif 'rect' in slider_type:             #rect for rectangular or rectangle
-            slider = Rectangle(slider_id, (0, 0), (slider_size[0]//ratio, slider_size[1]), self.get_canvas_size(),\
+            slider = Rectangle(slider_id, (0, 0), (slider_size[0]//ratio, slider_size[1]), self.rect.size,\
                             fill_color=fill_color, fill_gradient=use_gradient, gradient=gradient,\
                             border=border, border_width=border_width, border_color=border_color)
 

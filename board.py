@@ -43,7 +43,8 @@ class Board(Screen):
         self.inter_paths    = pygame.sprite.GroupSingle()
         self.paths          = pygame.sprite.Group()
         self.characters     = pygame.sprite.OrderedUpdates()
-        self.active_cell    = pygame.sprite.GroupSingle()
+        self.active_cell    = pygame.sprite.GroupSingle()   #To overlay hover cells
+        self.last_cell      = pygame.sprite.GroupSingle()   # To return a char to his cell if trying a bad dest
         self.active_path    = pygame.sprite.GroupSingle()
         self.active_char    = pygame.sprite.GroupSingle()
         self.drag_char      = pygame.sprite.GroupSingle()
@@ -222,7 +223,6 @@ class Board(Screen):
     def __get_outside_cells(self, index):
         cells=[]
         space_between_inter_paths = int((self.params['circles_per_lvl']//4)*(1/self.params['inter_path_frequency']))
-        print("SPACE "+str(space_between_inter_paths))
         i = (self.params['circles_per_lvl']//4)-1
         for _ in range(0, (self.params['circles_per_lvl']//4)//self.params['inter_path_frequency']):
             cells.append(i+index*(self.params['circles_per_lvl']//4))
@@ -236,9 +236,6 @@ class Board(Screen):
             self.current_map[cell.index] = cell.to_path("Yes") #TODO change this shit
         #for key, path in self.current_map.items():
             #LOG.log('DEBUG', "Dictionary ", key," -> Cell ", path.pos, " with real index ", path.index, " have a path object ", path)
-
-    def drop_char(self):
-        pass
 
     def generate(self):
         platform_size   = tuple(min(self.resolution)*self.params['platform_proportion'] for _ in self.resolution)
@@ -303,12 +300,14 @@ class Board(Screen):
 
     def get_cell(self, lvl, index):
         for cell in self.cells:
-            #LOG.log('debug', 'CHECKING CELL', cell.get_level(),",",cell.get_index())
             if lvl is cell.get_level() and index is cell.get_index():
                 return cell
-            else:
-                pass
-                #LOG.log('debug', 'CELL', cell.get_level(),", ",cell.get_index(), ' is not the searched one ', lvl,', ', index)
+        return False
+
+    def get_cell_by_real_index(self, index):
+        for cell in self.cells:
+            if index is cell.get_real_index():  
+                return cell
         return False
 
     def generate_map(self, to_who):
@@ -352,14 +351,16 @@ class Board(Screen):
             
             active_sprite = self.active_cell.sprite
             if active_sprite is not None: 
-                pygame.draw.circle(surface, UtilityBox.random_rgb_color(), active_sprite.rect.center, active_sprite.rect.height//2) #Draws an overlay on the active cell
+                pygame.draw.circle(surface, UtilityBox.random_rgb_color(), active_sprite.rect.center, active_sprite.rect.height//2) #Draws an overlay on the active cell 
+            for shit in self.possible_paths.sprites():
+                pygame.draw.circle(surface, WHITE, shit.center, shit.rect.width//2)
             self.characters.update()
             self.characters.draw(surface)
             #for char in self.characters: UtilityBox.draw_hitbox(surface, char) #TODO TESTING
             if hitboxes:    UtilityBox.draw_hitboxes(surface, self.cells.sprites())
         else:
             self.loading.draw(surface)
-        self.temp_infoboard.draw(surface)
+        #self.temp_infoboard.draw(surface)
         pygame.display.update()
         
     def event_handler(self, event, keys_pressed, mouse_buttons_pressed, mouse_movement=False, mouse_pos=(0, 0)):
@@ -372,27 +373,11 @@ class Board(Screen):
         mouse_sprite = UtilityBox.get_mouse_sprite(mouse_position)
         
         if event.type == pygame.MOUSEBUTTONDOWN:  #On top of the char and clicking on it
-            print("MOUSE BUTTON DOWN")
-            if self.active_char.sprite is not None:
-                LOG.log('INFO', 'Selected ', self.active_char.sprite.id)
-                self.drag_char.add(self.active_char.sprite)
-                self.drag_char.sprite.set_selected(True)
-                #checking this #TODO index_pos braaah
-                destinations = self.drag_char.sprite.get_paths(self.active_cell.sprite.index, self.current_map) 
-                if not destinations: #If its None
-                    print("DOING THAT SHIT ABOUT PATHS AND SUCH")
-                    self.drag_char.sprite.set_paths(self.enabled_paths, self.distances, self.params['circles_per_lvl'])
-                    destinations = self.drag_char.sprite.get_paths(self.active_cell.sprite.get_real_index(), self.current_map)
-                else:
-                    print("ALREADY DONE THAT BEFORE")
-                #TODO SET DESTINATIONS TO BLINK, AND TO MAKE PLAYER CHOOSE ONE OF THESE
+            if self.active_char.sprite: self.pickup_character()
         elif event.type == pygame.MOUSEBUTTONUP:  #If we are dragging it we will have a char in here
-            if self.drag_char.sprite is not None:
-                LOG.log('INFO', 'Dropped ', self.drag_char.sprite.id)
-                self.drag_char.sprite.set_selected(False)
-                self.drag_char.sprite.rect.center = self.active_cell.sprite.center 
-                self.drag_char.empty()    
-        if self.drag_char.sprite is not None:   self.drag_char.sprite.rect.center = mouse_position
+            if self.drag_char.sprite:   self.drop_character()
+        if self.drag_char.sprite:   
+            self.drag_char.sprite.rect.center = mouse_position
 
         if mouse_movement:
             cell = pygame.sprite.spritecollideany(mouse_sprite, self.cells.sprites(), collided=pygame.sprite.collide_circle)
@@ -411,6 +396,30 @@ class Board(Screen):
                 if self.active_char.sprite is not None:
                     self.active_char.sprite.set_hover(False)
                     self.active_char.empty()
+    
+    def pickup_character(self):
+        LOG.log('INFO', 'Selected ', self.active_char.sprite.id)
+        self.drag_char.add(self.active_char.sprite)
+        self.drag_char.sprite.set_selected(True)
+        self.last_cell.add(self.active_cell.sprite)
+        destinations = self.drag_char.sprite.get_paths(self.active_cell.sprite.index, self.current_map) 
+        '''if not destinations: #If its None
+            self.drag_char.sprite.set_paths(self.enabled_paths, self.distances, self.params['circles_per_lvl'])
+            destinations = self.drag_char.sprite.get_paths(self.active_cell.sprite.get_real_index(), self.current_map)'''
+        for cell_index in destinations:
+            self.possible_paths.add(self.get_cell_by_real_index(cell_index[-1]))       
+
+    def drop_character(self):
+        LOG.log('INFO', 'Dropped ', self.drag_char.sprite.id)
+        self.drag_char.sprite.set_selected(False)
+        if self.possible_paths.has(self.active_cell.sprite):
+            LOG.log('debug', 'The choosen cell is possible, moving')
+            self.drag_char.sprite.rect.center = self.active_cell.sprite.center
+        else:
+            self.drag_char.sprite.rect.center = self.last_cell.sprite.center
+            LOG.log('debug', 'Cant move the char there')
+        self.drag_char.empty()
+        self.possible_paths.empty()
 
     #TODO KEYBOARD DOES NOT CHANGE ACTIVE CELL, BUT ACTIVE CHARACTER. ACTIVE CELL CHANGE ONLY BY MOUSE
     def keyboard_handler(self, keys_pressed):

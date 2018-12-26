@@ -1078,7 +1078,7 @@ if __name__ == "__main__":
 
     def update(self): #Make it bigger (Like when in touch with hitbox, this could be done in board itself)
         self.counter        += 1
-        if self.counter is NEXT_SPRITE_COUNTER:
+        if self.counter is NEXT_SPRITE_COUNTER:7
             self.counter    = 0
             self.animate()
 
@@ -1372,3 +1372,49 @@ class Restrictions(object):
                 distances_to_enemies[i] = distance_map[position][i]
         print(distances_to_enemies)
         return distances_to_enemies
+
+    def copy_sprite(self, new_size, *sprites):
+        sprites_copy = []
+        for sprite in sprites:
+            spr = pygame.sprite.Sprite()
+            spr.image, spr.rect = sprite.image.copy(), sprite.rect.copy()
+            sprites_copy.append(spr)
+        return sprites_copy
+
+#Board main
+#List of (ids, text)
+if __name__ == "__main__":
+    #Variables
+    resolution = (1024, 1024)
+    pygame.init()
+    screen = pygame.display.set_mode(resolution)
+    pygame.mouse.set_visible(True)
+    clock = pygame.time.Clock()
+    timeout = 20
+    #Create Board
+    game = Board("testboard", pygame.USEREVENT, resolution)    
+    #Start the test
+    loop = True
+    while loop:
+        clock.tick(144)
+        game.draw(screen, clock=clock)       #Drawing the sprite group
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:       loop = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:    loop = False
+            elif event.type >= pygame.USEREVENT:
+                print("Received event number "+str(event.type)+", with value "+str(event.value))
+            if loop:            #If not exit yet                        
+                game.event_handler(event, pygame.key.get_pressed(), pygame.mouse.get_pressed(),\
+                                    mouse_movement=(pygame.mouse.get_rel() != (0,0)), mouse_pos=pygame.mouse.get_pos())
+
+    #Doesnt work propperly
+    def __get_outside_cells(self, index):
+        """Same, but for the outside cells."""
+        cells=[]
+        space_between_inter_paths = int((self.params['circles_per_lvl']//4)*(1/self.params['inter_path_frequency']))
+        i = (self.params['circles_per_lvl']//4)-1
+        for _ in range(0, (self.params['circles_per_lvl']//4)//self.params['inter_path_frequency']):
+            cells.append(i+index*(self.params['circles_per_lvl']//4))
+            i -= space_between_inter_paths
+        return tuple(cells)

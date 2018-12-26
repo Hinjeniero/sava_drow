@@ -79,12 +79,6 @@ class UIElement(MultiSprite):
         """Returns:
             (int):  Id of the event that will be sent upon interaction."""
         return self.get_event()
-
-    def generate(self):
-        """Generates the object, executes all the actions that are needed upon calling of the init method.
-        A METHOD TO OVERLOAD, SUPERCLASS (UIELEMENT) DOES NOTHING.
-        """
-        pass
     
     def hitbox_action(self):
         """Executes the associated action of the element. To be called when a click or key-press happens."""
@@ -167,6 +161,7 @@ class ButtonAction(UIElement):
             params (:dict:):    Dict of keywords and values as parameters to create the self.image attribute.
                                 Variety going from fill_color and use_gradient to text_only.
             """
+        UtilityBox.join_dicts(self.params, ButtonAction.__default_config)
         super().__init__(id_, command, user_event_id, position, size, canvas_size, **params)  
         #No need to call generate here cuz THIS class generate is already called in the super()
 
@@ -174,8 +169,6 @@ class ButtonAction(UIElement):
         """Method that executes at the end of the constructor. Generates the base surface and
         adds the text with the params that we used in the init call.
         In short, build the MultiSprite adding the Sprites of ButtonAction."""
-        super().generate()
-        UtilityBox.join_dicts(self.params, ButtonAction.__default_config) #We need those default config params now to generate
         text_size = [x//(1//self.params['text_proportion']) for x in self.rect.size]
         self.add_text_sprite(self.id+"_text", self.params['text'], text_size=text_size, alignment=self.params['text_alignment'])
 
@@ -213,6 +206,7 @@ class ButtonValue (UIElement):
             params (:dict:):    Dict of keywords and values as parameters to create the self.image attribute.
                                 Variety going from fill_color and use_gradient to text_only.
             """
+        UtilityBox.join_dicts(self.params, ButtonValue.__default_config)
         self.values             = set_of_values
         self.current_index      = 0  
         super().__init__(id_, command, user_event_id, position, size, canvas_size, **params) 
@@ -222,8 +216,6 @@ class ButtonValue (UIElement):
         adds the text with the params that we used in the init call.
         Can blit the value text too, if shows_value is True.
         In short, build the MultiSprite adding the Sprites of ButtonValue."""
-        super().generate()
-        UtilityBox.join_dicts(self.params, ButtonValue.__default_config)
         text_size = [x//(1//self.params['text_proportion']) for x in self.rect.size]
         if self.params['shows_value']:
             self.add_text_sprite(self.id+"_text", self.params['text'], text_size=text_size, alignment='left')
@@ -328,6 +320,7 @@ class Slider (UIElement):   #TODO CHANGE SLIDER NAMEs TO DIAL
             params (:dict:):    Dict of keywords and values as parameters to create the self.image attribute.
                                 Variety going from fill_color and use_gradient to text_only.
             """
+        UtilityBox.join_dicts(self.params, Slider.__default_config) 
         self.value = default_value 
         super().__init__(id_, command, user_event_id, position, size, canvas_size, **params)
 
@@ -338,7 +331,6 @@ class Slider (UIElement):   #TODO CHANGE SLIDER NAMEs TO DIAL
         Blits the value too if shows_value is True.
         In the end it generates the dial and blits it."""
         super().generate()
-        UtilityBox.join_dicts(self.params, Slider.__default_config) 
         _ = self.params  #For the sake of short code, params already have understandable names anyway
         text_size = [x//(1//_['text_proportion']) for x in self.rect.size]
         #Text sprite
@@ -492,7 +484,8 @@ class InfoBoard (UIElement):
             position (:tuple: int,int): Position of the Sprite in the screen. In pixels.
             size (:tuple: int,int):     Size of the Sprite in the screen. In pixels.
             canvas_size (:tuple: int,int):  Size of the display. In pixels.
-            *elements
+            *elements (:tuple: UI_Element, int):    Subelements to be added, separated by commas. Usually TextSprites.
+                                                    The tuple follows the schema (UIElement, infoboard spaces taken).
             **params (:dict:):  Dict of keywords and values as parameters to create the self.image attribute.
                                 Variety going from fill_color and use_gradient to text_only.
             """
@@ -505,21 +498,33 @@ class InfoBoard (UIElement):
         self.use_overlay = False
     
     #Modify to also add elements when there are elements inside already
-    def add_and_adjust_sprites(self, *elements, element_scale=0.95):
+    def add_and_adjust_sprites(self, *elements, scale=0.95):
+        """Adds all the UIElements to the Infoboard, adjusting and placing them.
+        The number of spaces taken won't be modified if it's under the row number,
+        but will be rounded up otherwise. This is due to the impossibility of showing
+        a split sprite between columns.
+        Args:
+            *elements (:tuple: UI_Element, int):    Subelements to be added, separated by commas. Usually TextSprites.
+                                                    The tuple follows the schema (UIElement, infoboard spaces taken).
+            scale (float):  Percent of the spaces that the Sprite will take. Default is 0.95.
+        Raises:
+            InvalidUIElementException:  If one of the elements doesn't follow the tuple schema (uielement, spaces_taken)
+        """
         UtilityBox.draw_grid(self.image, 6, 3)
         rows, columns       = self.params['rows'], self.params['cols']
         size_per_element    = (self.rect.width//columns, self.rect.height//rows)
         for element in elements:
             current_pos         = ((self.taken_spaces%columns)*size_per_element[0], (self.taken_spaces//columns)*size_per_element[1])
             spaces = element[1]
-            if not isinstance(element, tuple):  raise BadUIElementInitException("Elements of infoboard must follow the [(element, spaces_to_occupy), ...] scheme")
+            if not isinstance(element, tuple) or not isinstance(element[1], float):  
+                raise InvalidUIElementException("Elements of infoboard must follow the [(element, spaces_to_occupy), ...] scheme")
             if spaces > columns:    spaces = columns*math.ceil(spaces/columns) #Other type of occupied spaces are irreal
             #if spaces%columns = 0 FULL WIDTH
             height_ratio = columns if spaces>=columns else spaces%columns
             ratios              = (height_ratio, math.ceil(spaces/columns)) #Width, height
             element_size        = tuple([x*y for x,y in zip(size_per_element, ratios)])
             #element[0].image = pygame.transform.smoothscale(element[0].image, element_size) #This was just to test how it looks like
-            Resizer.resize_same_aspect_ratio(element[0], tuple([x*element_scale for x in element_size]))
+            Resizer.resize_same_aspect_ratio(element[0], tuple([x*scale for x in element_size]))
             current_center      = [x+y//2 for x,y in zip(current_pos, element_size)]
             element[0].rect.center   = tuple(x for x in current_center)
             self.add_sprite(element[0])
@@ -555,9 +560,6 @@ class Dialog (UIElement):
         if generate_image:    
             self.image = self.generate_image() 
             self.save_state()   
-
-    def set_visible(self, visible):
-        self.image.set_alpha(0) if visible is False else self.image.set_alpha(255)
 
     def update(self):
         pass

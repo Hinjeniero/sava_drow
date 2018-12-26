@@ -1,17 +1,24 @@
 import functools, pygame, random
 from paths import Path
+from utility_box import UtilityBox
 from sprite import MultiSprite
 
 @functools.total_ordering
 class Cell(MultiSprite):
-    def __init__(self, circle, grid_position, real_index):
-        super().__init__("cell_"+str(real_index),circle.rect.topleft, circle.rect.size,\
-                        circle.get_canvas_size(), surface=circle.image)
-        self.center = circle.center
+    def __init__(self, grid_position, real_index, position, size, canvas_size, **params):
+        params['shape'] = 'circle'
+        super().__init__("cell_"+str(real_index), position, size, canvas_size, **params)
         self.pos    = grid_position
         self.index  = real_index
-        self.add_text_sprite(self.id+"_text", str(self.pos))
         self.chars  = pygame.sprite.Group()
+        self.add_text_sprite(self.id+"_text", str(self.pos))
+
+    def draw(self, surface):
+        super().draw(surface)
+        if self.active:
+            pygame.draw.circle(surface, UtilityBox.random_rgb_color(), self.rect.center, self.rect.height//2)
+            text = self.get_sprite("text")
+            surface.blit(text.image, text.rect) # TODO Im almost sure that this shit will be drawn in the topleft corner
 
     def add_char(self, character):
         self.chars.add(character)

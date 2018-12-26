@@ -1,12 +1,11 @@
-import pygame, math, numpy, os
-from utility_box import UtilityBox
+#Python libraries
+import pygame
+import math
+import numpy
+import os
 from pygame.locals import *
-from ui_element import *
-import gradients #Gradients in polygons
-import ptext #Gradients in text
-from polygons import Circle, Rectangle
-from pygame_test import PygameSuite
-from colors import *
+#Selfmade libraries
+from utility_box import UtilityBox
 from screen import Screen
 
 class Menu (Screen):

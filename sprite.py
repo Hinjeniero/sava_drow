@@ -93,7 +93,8 @@ class Sprite(pygame.sprite.Sprite):
         self.image, self.overlay = Sprite.generate_surface(self.rect, **image_params)
         self.mask           = pygame.mask.from_surface(self.image) 
         #Additions to interesting funcionality-------
-        self.real_rect      = (tuple([x/y for x,y in zip(position, canvas_size)]), tuple([x/y for x,y in zip(size, canvas_size)]))
+        self.real_rect      =   (tuple([x/y for x,y in zip(position, canvas_size)]),\
+                                tuple([x/y for x,y in zip(size, canvas_size)]))
         self.resolution     = canvas_size      
         #Animation and showing-----------------------
         self.animation_value= 0
@@ -103,6 +104,13 @@ class Sprite(pygame.sprite.Sprite):
         self.active         = False
         self.enabled        = True
         self.hover          = False
+        self.generate()
+
+    def generate(self):
+        """Generates the object, executes all the actions that are needed upon calling of the init method.
+        A METHOD TO OVERLOAD, SUPERCLASS (UIELEMENT) DOES NOTHING.
+        """
+        pass
 
     def draw(self, surface):
         """Draws the sprite over a surface. Draws the overlay too if use_overlay is True.

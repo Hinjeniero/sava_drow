@@ -36,20 +36,20 @@ from sprite import Sprite
 class Board(Screen):
     """Board class. Have all the methods and attributes to make the execution
     of a turn-based board game possible.
-    The board consists of a platform in which the board itself will be drawn, 
-    and the board itself. The board has 4 big circles or iterations, whose circumferences
+    The board consists of a platform in which the board will be drawn, and the board itself. 
+    The board has 4 big circles or iterations, whose circumferences
     are paths that the characters can follow. Over them the cells will be created.
     The board follows a scheme of cells connected in two ways. In one way if they are 
     in the same circumference, or in the perpendicular one if an 'inter_path' exists at that 
     cell that connects both circumferences.
     In short, kinda like a spider web.
-    The cells are organized in 4 quadrants (that follow the next scheme)(cardinal points):
+    The cells are organized in 4 quadrants (that follow the next scheme with cardinal points):
         quadrant 0 -> From NW to NE
         quadrant 1 -> From NE to SE
         quadrant 2 -> From SE to SW
         quadrant 3 -> From SW to NW
     General class attributes:
-        __default_config (:dict:): Contains parameters about the text looks and positioning.
+        __default_config (:dict:): Contains parameters about the board looks and elements.
             platform_proportion (float):    Size of the platform comparing to the height of the screen.
             platform_alignment (str):   Alignment of the platform within the Screen. Center, Left, Right.
             inter_path_frequency (int): Period of circles until a new inter_path is created between different levels.
@@ -74,8 +74,8 @@ class Board(Screen):
         active_char (:obj: pygame.sprite.GroupSingle):  Char that the mouse is hovering over. Can pick up it if we press the left button.
         drag_char (:obj: pygame.sprite.GroupSingle):    Selected char that we are dragging with the mouse movement. Can Drop it wherever.
         platform (:obj: pygame.Surface):    Platform that will be drawn under the board itself.
-        distances (:obj: numpy:ints):   Graph of distances between cells connected (without changing direction of the path between them).
-        enabled_paths (:obj: numpy:booleans):   Graph of directly connected cells.
+        distances (:obj: numpy:int):   Graph of distances between cells connected (without changing direction of the path between them).
+        enabled_paths (:obj: numpy:boolean):   Graph of directly connected cells.
         current_map (:dict: int, Cell): Current situation of the map, with all the characters and such. It's useful to the characters
                                         that can't move bypassing allies and restrictions like that.
         total_players (int):    Counter with the total of players that have been requested to be added on the board.

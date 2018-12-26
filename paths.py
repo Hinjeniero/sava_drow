@@ -1,4 +1,4 @@
-__all__ = ['Movements', 'Restrictions', 'Path']
+__all__ = ['Movements', 'Restriction', 'Path']
 __version__ = '0.8'
 __author__ = 'David Flaity Pardo'
 
@@ -25,7 +25,7 @@ class Movements(object):
             paths = Path.all_paths_factory(existing_paths, distances, cells_per_lvl, restrictions)
             Movements.MOVEMENTS.add_item(hash_key, paths)
 
-class Restrictions(object):
+class Restriction(object):
     def __init__(self, max_dist=1, move_along_lvl = False, move_along_index = False):
         self.dist               = max_dist          #Max spaces that a char can move
         self.only_same_lvl      = move_along_lvl    #If only can move along the same level

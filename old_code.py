@@ -1418,3 +1418,29 @@ if __name__ == "__main__":
             cells.append(i+index*(self.params['circles_per_lvl']//4))
             i -= space_between_inter_paths
         return tuple(cells)
+
+#Character
+    def valid_mvnt(self, movement):
+        init_pos, dest_pos = movement[0], movement[1]
+        if init_pos is not dest_pos:
+            if not self.movement.bypass_enemies and dest_pos.has_enemy():
+                return False 
+            if not self.movement.bypass_allies and dest_pos.has_ally():
+                return False
+            if (init_pos.get_lvl() is not dest_pos.get_lvl() and self.movement.move_in_same_lvl)\
+            and (init_pos.get_index() is not dest_pos.get_index() and self.movement.move_in_same_index):
+                return False
+        return True
+
+#Priestess
+    #No need for a backtracking in priestess, only two steps.
+    def generate_paths(self, existing_paths, board_map, distance_map, initial_pos):
+        possible_paths  = []    #All solutions
+        for i in range (0, len(existing_paths[initial_pos.index])):
+            try:
+                if i is not initial_pos.index\
+                and distance_map[initial_pos.index][i] > 0:
+                            self.add_path([initial_pos, board_map[i]], possible_paths)
+            except KeyError:    #Due to the difference in index, due to the different number of circles between levels
+                continue
+        return possible_paths

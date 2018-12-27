@@ -1,11 +1,18 @@
-import pygame, gradients, numpy
-from utility_box import UtilityBox
-from resizer import Resizer
-from colors import *
-from sprite import Sprite
-#from resizer import Resizer
+"""--------------------------------------------
+polygon module. Contains basic polygons that inherit from Sprite.
+Have the following classes, inheriting represented by tabs:
+    Polygon
+        ↑Circle
+        ↑Rectangle
+--------------------------------------------"""
 
-__all__ = ["Circle", "Rectangle"]
+__all__ = ['Circle', 'Rectangle']
+__version__ = '0.4'
+__author__ = 'David Flaity Pardo'
+
+import pygame
+from utility_box import UtilityBox
+from sprite import Sprite
 
 class Polygon(Sprite):
     """Superclass polygon. Subclasses are Rectangle and Circle.

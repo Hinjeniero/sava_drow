@@ -5,7 +5,7 @@ Have the following classes, inheriting represented by tabs:
     Board
 --------------------------------------------"""
 
-__all__ = ["Board"]
+__all__ = ['Board']
 __version__ = '0.8'
 __author__ = 'David Flaity Pardo'
 
@@ -573,8 +573,6 @@ class Board(Screen):
             mouse_movement( boolean, default=False):    True if there was mouse movement since the last call.
             mouse_position (:tuple: int, int, default=(0,0)):   Current mouse position. In pixels.
         """
-        mouse_sprite = UtilityBox.get_mouse_sprite(mouse_position)
-        
         if event.type == pygame.MOUSEBUTTONDOWN:  #On top of the char and clicking on it
             if self.active_char.sprite: self.pickup_character()
         elif event.type == pygame.MOUSEBUTTONUP:  #If we are dragging it we will have a char in here
@@ -583,6 +581,7 @@ class Board(Screen):
             self.drag_char.sprite.rect.center = mouse_position
 
         if mouse_movement:
+            mouse_sprite = UtilityBox.get_mouse_sprite()
             cell = pygame.sprite.spritecollideany(mouse_sprite, self.cells.sprites(), collided=pygame.sprite.collide_circle)
             if cell is not None and not self.active_cell.has(cell):  
                 cell.set_active(True)

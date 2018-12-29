@@ -1444,3 +1444,73 @@ if __name__ == "__main__":
             except KeyError:    #Due to the difference in index, due to the different number of circles between levels
                 continue
         return possible_paths
+
+#Quadrant
+    def __sort_cell(self, cell, *cells):
+        """Sort a Cell, and classify it in border or center. Checks the level and index of the Cell,
+        and check every other cell."""
+        self.cells.add(cell)
+        less_lvl, more_lvl, less_index, more_index = False, False, False, False
+        for other_cell in cells:
+            if all((less_lvl, more_lvl, less_index, more_index)): 
+                self.center.add(cell)
+                return
+            elif other_cell is not cell:
+                if other_cell.get_level() < cell.get_level():   less_lvl    = True
+                elif other_cell.get_level() > cell.get_level(): more_lvl    = True
+                if other_cell.get_index() < cell.get_index():   less_index  = True
+                elif other_cell.get_index() > cell.get_index(): more_index  = True
+        self.border.add(cell)
+
+#utility_box
+
+    @staticmethod
+    def set_curved_corners_rect(surface, radius=None):   #If we have the rect we use it, if we don't, we will get the parameters from the surface itself
+        if radius is None:  radius = int(surface.get_width*0.10)
+        clrkey = (254, 254, 254)                    #colorkey
+        surface.set_colorkey(clrkey)                #A strange color that will normally never get used. Using this instead of transparency per pixel cuz speed
+        width, height = surface.get_size()
+        UtilityBox.__set_corner_rect(surface, (0, 0), (radius, radius), radius, clrkey)                         #TOPLEFT corner
+        #UtilityBox.__set_corner_rect(surface, (width-radius, 0), (width, radius), radius, clrkey)               #TOPRIGHT corner
+        #UtilityBox.__set_corner_rect(surface, (0, height-radius), (radius, height), radius, clrkey)             #BOTTOMLEFT corner
+        #UtilityBox.__set_corner_rect(surface, (width-radius, height-radius), (width, height), radius, clrkey)   #BOTTOMRIGHT corner
+
+    @staticmethod  
+    def __set_corner_rect(surface, start_range, end_range, radius, clrkey):
+        step = [1 if start >= end else -1 for start, end in zip(start_range, end_range)]
+        x = start_range[1]
+        for i in range(start_range[0], end_range[0], step[0]):
+            for j in range(x, end_range[1], step[1]):
+                if UtilityBox.EUCLIDEAN_DISTANCES[i][j] < radius:
+                    surface.set_at((i, j), clrkey)
+                    surface.set_at((j, i), clrkey)
+            x+=step[1]
+
+#utilitybox
+
+    @staticmethod
+    def texturize_surface(size, source_surf, centered=False):
+        if type(source_surf) is pygame.Surface: surf = source_surf.copy()
+        elif type(source_surf) is str:          surf = pygame.image.load(source_surf)
+        else:                                   raise TypeError("Fill can only work with an image path or a surface")
+        ratios = [x/y for x, y in zip(size, surf.get_size())]
+        if any(ratio > 1 for ratio in ratios):
+            factor = max(ratios)
+            surf = pygame.transform.smoothscale(surf, tuple([int(axis*factor) for axis in surf.get_size()]))
+        result = pygame.Surface(size)
+        if centered:    result.blit(surf, (0, 0), pygame.Rect(surf.get_rect().center, size))
+        else:           result.blit(surf, (0, 0), pygame.Rect((0, 0), size))
+        return result
+
+    @staticmethod
+    def load_background(size, background=None):
+        """Returns a surface with the size of the screen. That surface can be a """
+        if background is None: 
+            return gradients.vertical(size, (255, 200, 200, 255), (255, 0, 0, 255)) 
+        return UtilityBox.texturize_surface(size, background)
+
+    @staticmethod
+    def texturize_surface(size, source_image):
+        if isinstance(source_image, str):
+            source_image = pygame.image.load(source_image) 
+        return Resizer.resize_same_aspect_ratio(source_image, size)

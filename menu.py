@@ -44,7 +44,6 @@ class Menu (Screen):
         #if self.have_dialog():      self.dialog.sprite.generate(rect=sprite.get_rect_if_canvas_size(resolution))
         self.generate(centering=self.params['do_align'], alignment=self.params['alignment'])
 
-
     def add_elements(self, *elements, overwrite_eventid = False):
         for element in elements:
             if type(element) is list:

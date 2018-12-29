@@ -1,100 +1,118 @@
-import numpy, math, time, pygame, gradients, random 
-from colors import *
-from PAdLib import draw as Drawing
+"""--------------------------------------------
+utility_box module. All the methods are utilities that will prove
+useful along the workspace. Their utility is miscellaneous.
+They aren't necessarily related to one common scope. 
+Have the following classes:
+    Resizer
+--------------------------------------------"""
+__all__ = ['UtilityBox']
+__version__ = '0.1'
+__author__ = 'David Flaity Pardo'
 
-def euclidean_generator(dimension=300, print_time=False): #100 will be plenty in our case
-    start = time.time()
-    matrix = numpy.empty([dimension+1, dimension+1])
-    x = 0
-    for i in range (0, dimension+1):
-        for j in range (x, dimension+1):
-            euclidean = math.sqrt(i*i + j*j)
-            matrix[i][j] = euclidean
-            matrix[j][i] = euclidean
-        x+=1
-    if print_time:  print ("Total time: "+str(time.time()-start)+" seconds") #TODO search a better one-liner for this
+#Python libraries
+import numpy
+import math
+import time
+import pygame
+import gradients
+import random 
+#External libraries
+from PAdLib import draw as Drawing
+#Selfmade libraries
+from colors import WHITE, RED, BLACK
+from decorators import time_it
+from resizer import Resizer
+
+@time_it
+def euclidean_generator(size=300): #100 will be plenty in our case
+    """Creates a LUT table of euclidean distances of a square size (i*i) between points.
+    The points themselves are tuple with two ints. In short, two dimensions/axises.
+    The euclidean distances are floats. (Euclidean = Square root(distance_x_axis^2 + distance_y_axis^2)).
+    Args:
+        size (int, default=300):    Maximum size of an axis. 
+                                    (If the size is 100, euclidean distances are processed for points going 0->100).
+    returns:
+        (:obj: numpy.matrix): Matrix of size*size that contains the euclidean distances.
+    """
+    matrix = numpy.empty([size+1, size+1])
+    for x in range (0, size+1):
+        for y in range (x, size+1):
+            euclidean = math.sqrt(x*x + y*y)
+            matrix[x][y] = euclidean
+            matrix[y][x] = euclidean
     return matrix
 
-class UtilityBox (object):
-    size = (2,2)
-    mouse_sprite = pygame.sprite.Sprite()
+def generate_mouse_sprite(size=(2, 2)):
+    """Generates a decoy sprite with a very small size, to simulate collisions with the mouse itself.
+    Args:
+        size (:tuple: int, int):    Size of the decoy sprite in pixels. Big sizes are discouraged.
+    Returns:
+        (:obj: pygame.sprite.Sprite): A sprite with the position related with the current mouse placement."""
+    mouse_sprite = pygame.sprite.Sprite()           #Creates the associated sprite.
     mouse_sprite.image = pygame.Surface(size)       #Creating surface of mouse sprite
-    mouse_sprite.image.fill((0, 0, 0))              #Filling surface with BLACK solid color
+    mouse_sprite.image.fill(BLACK)                  #Filling surface with BLACK solid color
     mouse_sprite.rect = pygame.Rect((0,0), size)    #Decoy sprite to check collision with mouse
-    mouse_sprite.mask = pygame.mask.Mask(size)      #Creating the mask to check collisions with masks
-    mouse_sprite.mask.fill()                        #Filling it with ones
-    EUCLIDEAN_DISTANCES = euclidean_generator(print_time=True)
+    mouse_sprite.mask = pygame.mask.from_surface(mouse_sprite.image)  #Creating the mask to check collisions with masks
+    return mouse_sprite      
+
+class UtilityBox (object):
+    """UtilityBox class.
+    General class Attributes:
+        MOUSE_SPRITE (:obj: pygame.sprite.Sprite):  Small sprite to simulate mouse collisions.
+        EUCLIDEAN_DISTANCES (:obj: numpy.matrix):   LUT table of euclidean distances of two dimensions points.
+    """
+    MOUSE_SPRITE        = generate_mouse_sprite()
+    EUCLIDEAN_DISTANCES = euclidean_generator()
 
     @staticmethod
-    def draw_hitboxes(surface, *sprites, color=(255, 0, 0)):
+    def draw_hitboxes(surface, *sprites, color=RED, width=2):
+        """Draw a squared-shaped border surrounding the input sprites.
+        Args:
+            surface (:obj: pygame.Surface): Surface to draw the hitboxes.
+            *sprites (:obj: pygame.sprite.Sprite):  The sprites that will be detected 
+                                                    to draw the surrounding square. Separated by commas.
+            color (:tuple: int, int, int, default=RED): Color of the drawn border.
+            width (int):    Width of the border.
+        Raises:
+            AttributeError: If there is an input element that is not of the pygame.sprite.Sprite class."""
         if isinstance(sprites, list, tuple): 
             for sprite in sprites: 
-                UtilityBox.draw_hitbox(surface, sprite, color)
-        else:   raise AttributeError("Bad *sprites attribute in UtilityBox")
+                pygame.draw.rect(surface, color, sprite.rect, width)
+        else:   
+            raise AttributeError("Bad input sprite")
 
     @staticmethod
-    def draw_hitbox(surface, sprite, color=(255, 0, 0)):
-        pygame.draw.rect(surface, color, sprite.rect, 2)
-
-    @staticmethod
-    def load_background(size, background_path=None, fill=True, centered=False):
-        if background_path is None: return gradients.vertical(size, (255, 200, 200, 255), (255, 0, 0, 255)) #Gradient from white-ish to red
-        if not fill:                return pygame.transform.smoothscale(pygame.image.load(background_path), size)
-        return UtilityBox.fill_surface(size, background_path, centered)
-
-    @staticmethod
-    def fill_surface(size, source_surf, centered=False):
-        if type(source_surf) is pygame.Surface: surf = source_surf.copy()
-        elif type(source_surf) is str:          surf = pygame.image.load(source_surf)
-        else:                                   raise TypeError("Fill can only work with an image path or a surface")
-        ratios = [x/y for x, y in zip(size, surf.get_size())]
-        if any(ratio > 1 for ratio in ratios):
-            factor = max(ratios)
-            surf = pygame.transform.smoothscale(surf, tuple([int(axis*factor) for axis in surf.get_size()]))
-        result = pygame.Surface(size)
-        if centered:    result.blit(surf, (0, 0), pygame.Rect(surf.get_rect().center, size))
-        else:           result.blit(surf, (0, 0), pygame.Rect((0, 0), size))
-        return result
-
-    @staticmethod
-    def get_mouse_sprite(mouse_position):
-        UtilityBox.mouse_sprite.rect.topleft = mouse_position
-        return UtilityBox.mouse_sprite
+    def get_mouse_sprite():
+        """Returns:
+            (:obj: pygame.sprite.Sprite):   A small sprite positioned in the current mouse position.
+                                            Useful for"""
+        UtilityBox.MOUSE_SPRITE.rect.topleft = pygame.mouse.get_pos()
+        return UtilityBox.MOUSE_SPRITE
 
     @staticmethod
     def random_rgb_color(*colors_to_exclude, start=0, end=255):
+        """Generates a random rgb color.
+        Args:
+            *colors_to_exclude (:tuple: int, int, int): The RGB colors that are banned. 
+                                                        Those cannot be returned as a result.
+                                                        Separated by commas.
+            start (int, default=0): Start of the interval for each RGB channel. Delimits the choice.    
+            end (int, default=255): End of the interval for each RGB channel. Delimits the choice.
+        Returns:
+            (:tuple: int, int, int):    Color in RGB format (3 channels).
+        """
         rand_color = (random.randint(start, end), random.randint(start, end), random.randint(start, end))
         while any(rand_color in excluded_color for excluded_color in colors_to_exclude):
             rand_color = (random.randint(start, end), random.randint(start, end), random.randint(start, end))
         return rand_color
 
     @staticmethod
-    def draw_fps(surface, clock):
-        fnt = pygame.font.Font(None, 60)
-        frames = fnt.render(str(int(clock.get_fps())), True, pygame.Color('white'))
-        surface.blit(frames, (50, 150))
-
-    @staticmethod
-    def set_curved_corners_rect(surface, radius=None):   #If we have the rect we use it, if we don't, we will get the parameters from the surface itself
-        if radius is None:  radius = int(surface.get_width*0.10)
-        clrkey = (254, 254, 254)                    #colorkey
-        surface.set_colorkey(clrkey)                #A strange color that will normally never get used. Using this instead of transparency per pixel cuz speed
-        width, height = surface.get_size()
-        UtilityBox.__set_corner_rect(surface, (0, 0), (radius, radius), radius, clrkey)                         #TOPLEFT corner
-        #UtilityBox.__set_corner_rect(surface, (width-radius, 0), (width, radius), radius, clrkey)               #TOPRIGHT corner
-        #UtilityBox.__set_corner_rect(surface, (0, height-radius), (radius, height), radius, clrkey)             #BOTTOMLEFT corner
-        #UtilityBox.__set_corner_rect(surface, (width-radius, height-radius), (width, height), radius, clrkey)   #BOTTOMRIGHT corner
-
-    @staticmethod  
-    def __set_corner_rect(surface, start_range, end_range, radius, clrkey):
-        step = [1 if start >= end else -1 for start, end in zip(start_range, end_range)]
-        x = start_range[1]
-        for i in range(start_range[0], end_range[0], step[0]):
-            for j in range(x, end_range[1], step[1]):
-                if UtilityBox.EUCLIDEAN_DISTANCES[i][j] < radius:
-                    surface.set_at((i, j), clrkey)
-                    surface.set_at((j, i), clrkey)
-            x+=step[1]
+    def draw_fps(surface, clock, font=None, size=(50, 50), color=WHITE, position=(50, 150)):
+        """Draws the current number of fps in a surface.
+        All the arguments have defaults with basic types because this method GOTTA GO FAST."""
+        fnt = pygame.font.Font(font, 60)
+        frames = fnt.render(str(int(clock.get_fps())), True, color)
+        surface.blit(frames, position)
 
     @staticmethod
     def join_dicts(dict_to_add_keys, dict_to_search_keys):

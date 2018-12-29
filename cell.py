@@ -159,9 +159,6 @@ class Quadrant(object):
         self.lvl, self.index = self.get_intervals(*cells)
         self.sort_cells(*cells)
 
-    def get_cell(self):
-        pass
-
     def get_random_cell(self, zone=None):
         """Gets a random cell from the quadrant, returns it and deletes it.
         Args:
@@ -190,33 +187,14 @@ class Quadrant(object):
 
     def sort_cells(self, *cells):
         """Sort all the input cells and separates them in center or border. Also adds them to the belonging Group.
+        The Cells have their references duplicated, since they are added to the general Cell groupm, ando to border or center.
         Args:
             *cells (:obj: Cell):    All the cells that belong to this quadrant. Separated by commas."""
-        for cell in cells:  self.__sort_cell(cell, *cells)
-    
-    def __sort_cell(self, cell):
-        self.cells.add(cell)
-        less_lvl, more_lvl, less_index, more_index = False, False, False, False
-        if cell.get_level() < self.lvl[1]:      less_lvl    = True
-        if cell.get_level() > cell.lvl[0]:      more_lvl    = True
-        if cell.get_index() < self.index[1]:    less_index  = True
-        if cell.get_index() > self.index[0]:    more_index  = True
-        self.border.add(cell) if all((less_lvl, more_lvl, less_index, more_index))\
-        else self.center.add(cell)
-
-    def __sort_cell(self, cell, *cells):
-        """Sort a Cell, and classify it in border or center. Checks the level and index of the Cell,
-        and check every other cell."""
-        self.cells.add(cell)
-        less_lvl, more_lvl, less_index, more_index = False, False, False, False
-        for other_cell in cells:
-            if all((less_lvl, more_lvl, less_index, more_index)): 
+        for cell in cells:
+            self.cells.add(cell)
+            if cell.get_level() < self.lvl[1] and cell.get_level() > self.lvl[0]\
+            and cell.get_index() < self.index[1] and cell.get_index() > self.index[0]:
                 self.center.add(cell)
-                return
-            elif other_cell is not cell:    #TODO CHANGE TO CHECK THE INTERVALS
-                if other_cell.get_level() < cell.get_level():   less_lvl    = True
-                elif other_cell.get_level() > cell.get_level(): more_lvl    = True
-                if other_cell.get_index() < cell.get_index():   less_index  = True
-                elif other_cell.get_index() > cell.get_index(): more_index  = True
-        self.border.add(cell)
+            else:
+                self.border.add(cell)
                         

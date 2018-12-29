@@ -4,8 +4,7 @@ Have the following classes, inheriting represented by tabs:
     Screen
         ↑LoadingScreen
 --------------------------------------------"""
-
-__all__ = ["Screen", "LoadingScreen"]
+__all__ = ['Screen', 'LoadingScreen']
 __version__ = '0.2'
 __author__ = 'David Flaity Pardo'
 
@@ -13,7 +12,8 @@ import pygame
 from paths import IMG_FOLDER, SOUND_FOLDER
 from utility_box import UtilityBox
 from ui_element import TextSprite
-from sprite import AnimatedSprite
+from sprite import Sprite, AnimatedSprite
+from exceptions import BadSpriteException
 
 class Screen(object):
     """Screen class. Controls an entire 'screen' (like a desktop).
@@ -24,7 +24,6 @@ class Screen(object):
             background_path (str):  Path to the background image.
             music_path (str):   Path to the music file.
             sound_path (str):   Path to the sound effect file.
-            dialog_active (boolean):    True if the Screen posseses a dialog of any type (confirm changes, exit...)
     Attributes:
         id (str):   Identifier of this screen.
         event_id (int): Event id associated with this screen. Can be used to overwrite the event ids of added elements.
@@ -39,11 +38,10 @@ class Screen(object):
     """
     __default_config = {'background_path'   : None,
                         'music_path'        : '\\music.mp3',
-                        'sound_path'        : '\\option.ogg',
-                        'dialog_active'     : False
+                        'sound_path'        : '\\option.ogg'
     }
 
-    def __init__(self, id_, event_id, resolution, dialog=None, **params):
+    def __init__(self, id_, event_id, resolution, dialog=None, *elements, **params):
         """Screen constructor.
         Args:
             id_ (str):  Identifier of the Screen.
@@ -57,37 +55,42 @@ class Screen(object):
         self.event_id   = event_id
         self.params     = Screen.__default_config.copy()
         self.params.update(params)
-        self.background = UtilityBox.load_background(resolution, self.params['background_path'])
+        self.background = Sprite(self.id+'_background', (0, 0), self.resolution,\
+                                self.resolution, texture=self.params['background_path']) 
         self.dialog     = pygame.sprite.GroupSingle()
         self.resolution = resolution
-        if dialog:  self.dialog.add(dialog)
         #Sprites
-        self.sprites = pygame.sprite.OrderedUpdates()
+        self.dialog     = dialog
+        self.sprites    = pygame.sprite.OrderedUpdates()
         #Sound & Music
-        self.music = pygame.mixer.music.load(SOUND_FOLDER+self.params['music_path'])
-        self.sound = pygame.mixer.Sound(file=SOUND_FOLDER+self.params['sound_path'])
+        self.music      = pygame.mixer.music.load(SOUND_FOLDER+self.params['music_path'])
+        self.sound      = pygame.mixer.Sound(file=SOUND_FOLDER+self.params['sound_path'])
         if self.sound is not None:  self.sound.set_volume(0.5)
         if self.music is not None:  self.music.set_volume(0.5)
         pygame.mixer.music.play() #TODO check how to change this to change everyt ime the screen changes
-        self.generate()
+        self.generate(*elements, **params)
 
     def have_dialog(self):
         """Returns:
             (boolean):  True if the screen has a Dialog, False otherwise."""
-        return False if self.dialog.sprite is None else True
+        return False if not self.dialog.sprite else True
 
-    def dialog_is_active(self):
+    def dialog_active(self):
         """Returns:
             (boolean):  True if the Screen Dialog is active, False otherwise"""
-        return self.params['dialog_active']
+        return self.dialog.active and self.dialog.visible
 
     def show_dialog(self):
         """Makes the Screen's Dialog visible. (If it exists)."""
-        if self.have_dialog():  self.params['dialog_active'] = True
+        if self.have_dialog():  
+            self.dialog.set_visible(True)
+            self.dialog.set_active(True)
 
     def hide_dialog(self):
         """Makes the Screen's Dialog invisible. (If it exists)."""
-        if self.have_dialog():  self.params['dialog_active'] = False
+        if self.have_dialog():  
+            self.dialog.set_visible(False)
+            self.dialog.set_active(False)
 
     def draw(self, surface):
         """Draws the screen in the input surface. This method in the Screen
@@ -105,15 +108,28 @@ class Screen(object):
             resolution (:tuple: int, int):  Resolution to set on the Screen."""
         if resolution != self.resolution:
             self.resolution = resolution
-            self.background = UtilityBox.load_background(resolution, self.params['background_path'])
+            self.background.set_canvas_size(resolution)
+            if self.dialog:
+                self.dialog.sprite.set_canvas_size(resolution)
             for sprite in self.sprites.sprites():
                 sprite.set_canvas_size(resolution)
 
-    def generate(self):
+    def generate(self, *args, **kwargs):
         """Empty method that will be called upon at the end of each constructor.
         The idea behind this method is to initiate every element needed for a correct
         Screen usage. Needs to be overloaded on the subclasses that inherit from Screen."""
         pass
+
+    def add_sprites(self, *sprites):
+        """Adds sprites to the screen. Those added sprites will be drawn automatically in the next execution.
+        Args:
+            *sprites (:obj: Sprites):   Sprites to add.
+        Raises:
+            BadSpriteException: If any of the input sprites it not of type Sprite or related."""
+        for sprite in sprites:
+            if not isinstance(sprite, Sprite):
+                raise BadSpriteException('An object of type '+str(type(sprite))+' can"t be added to a screen.')
+            self.sprites.add(sprite)
     
 class LoadingScreen(Screen):
     """LoadingScreen class. Inherits from Screen.

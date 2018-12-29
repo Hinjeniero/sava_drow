@@ -1,7 +1,7 @@
 """--------------------------------------------
 board module. Contains the entire logic and graphics to build
 the game's board.
-Have the following classes, inheriting represented by tabs:
+Have the following classes.
     Board
 --------------------------------------------"""
 
@@ -28,14 +28,14 @@ from players import Player
 from paths import IMG_FOLDER, Path
 from ui_element import TextSprite
 from logger import Logger as LOG
-from players import Character, Restrictions
+from players import Character, Restriction
 from sprite import Sprite
 
 #numpy.set_printoptions(threshold=numpy.nan)
 
 class Board(Screen):
-    """Board class. Have all the methods and attributes to make the execution
-    of a turn-based board game possible.
+    """Board class. Inherits from Screen.
+    Have all the methods and attributes to make the execution of a turn-based board game possible.
     The board consists of a platform in which the board will be drawn, and the board itself. 
     The board has 4 big circles or iterations, whose circumferences
     are paths that the characters can follow. Over them the cells will be created.
@@ -93,11 +93,11 @@ class Board(Screen):
     }
     #CHANGE MAYBE THE THREADS OF CHARACTER TO JOIN INSTEAD OF NUM PLAYERS AND SHIT
     def __init__(self, id_, event_id, resolution, *players, **params):
-        """Board constructor.
+        """Board constructor. Inherits from Screen.
         Args:
             id_ (str):  Identifier of the Screen.
             event_id (int): Identifier of the Screen event.
-            resolution  (:tuple: int,int):  Size of the Screen. In pixels.
+            resolution (:tuple: int,int):   Size of the Screen. In pixels.
             *players (:obj: Player):    All the players that will play on this board, separated by commas.
             **params (:dict:):  Dict of keywords and values as parameters to create the Screen.
                                 platform_proportion, platform_alignment, inter_path_frequency, circles_per_lvl,\
@@ -547,8 +547,6 @@ class Board(Screen):
             if hitboxes:    UtilityBox.draw_hitboxes(surface, self.cells.sprites())
         else:
             self.loading.draw(surface)
-        #self.temp_infoboard.draw(surface)
-        pygame.display.update()
         
     def event_handler(self, event, keys_pressed, mouse_buttons_pressed, mouse_movement=False, mouse_pos=(0, 0)):
         """Handles any pygame event. This allows for user interaction with the object.
@@ -557,7 +555,7 @@ class Board(Screen):
             keys_pressed (:dict: pygame.keys):  Dict in which the keys are keys and the items booleans.
                                                 Said booleans will be True if that specific key was pressed.
             mouse_buttons_pressed (:list: booleans):    List with 3 positions regarding the 3 normal buttons on a mouse.
-                                                        Will be True if that buttons was pressed.
+                                                        Each will be True if that button was pressed.
             mouse_movement (boolean, default=False):    True if there was mouse movement since the last call.
             mouse_pos (:tuple: int, int, default=(0,0)):Current mouse position. In pixels.
         """
@@ -568,6 +566,8 @@ class Board(Screen):
     #Does all the shit related to the mouse hovering an option
     def mouse_handler(self, event, mouse_movement, mouse_position):
         """Handles any mouse related pygame event. This allows for user interaction with the object.
+        Posibilities:
+        TODO
         Args:
             event (:obj: pygame.event): Event received from the pygame queue.
             mouse_movement( boolean, default=False):    True if there was mouse movement since the last call.
@@ -605,6 +605,8 @@ class Board(Screen):
     #TODO KEYBOARD DOES NOT CHANGE ACTIVE CELL, BUT ACTIVE CHARACTER. ACTIVE CELL CHANGE ONLY BY MOUSE
     def keyboard_handler(self, keys_pressed):
         """Handles any pygame keyboard related event. This allows for user interaction with the object.
+        Posibilities:
+        TODO
         Args:
             keys_pressed (:dict: pygame.keys):  Dict in which the keys are keys and the items booleans.
                                                 Said booleans will be True if that specific key was pressed.

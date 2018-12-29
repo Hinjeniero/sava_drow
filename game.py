@@ -1,3 +1,14 @@
+"""--------------------------------------------
+game module. It's the overseer of all the modules of the game.
+Highest level in the hierarchy.
+Have the following classes:
+    Game
+--------------------------------------------"""
+__all__ = ['Game']
+__version__ = '0.2'
+__author__ = 'David Flaity Pardo'
+
+#Python librariess
 import pygame
 import os
 import threading
@@ -5,15 +16,16 @@ import sys
 from pygame.locals import *
 from pygame.key import *
 from screen import Screen
+#Selfmade Libraries
 from board import Board
 from menu import Menu
-from ui_element import *
-from colors import *
+from ui_element import UIElement, TextSprite, InfoBoard
+from colors import RED, BLACK, WHITE
 from paths import IMG_FOLDER
-from decorators import run_async
-from exceptions import *
 from logger import Logger as LOG
 from utility_box import UtilityBox
+from exceptions import  NoScreensException, InvalidGameElementException,\
+                        EmptyCommandException, ScreenNotFoundException
 
 pygame.init()
 pygame.mixer.pre_init(44100, -16, 1, 512)
@@ -114,21 +126,23 @@ class Game(object):
         else:           LOG.log('DEBUG', "Changed to  ", self.__current_screen.id)
  
     def user_command_handler(self, event):
-        ''' Ou shit the user command handler, good luck m8
+        """Ou shit the user command handler, good luck m8
         USEREVENT when MENUS:           Change in settings
         UESREVENT+1 when MENUS:         Change of screen
         USEREVENT+2 when BOARD:         Action in them
         USEREVENT+3 when NOTIFICATIONS: popups and shit
-        '''
+        USEREVENT+4:                    Signal that forces drawing.
+        """
         if event.type < pygame.USEREVENT:       return False
         elif event.type is pygame.USEREVENT:    self.change_pygame_var(event.command, event.value)
         elif event.type is pygame.USEREVENT+1:  self.change_screen(*event.command.split('_'))
         elif event.type is pygame.USEREVENT+2:  pass    #Board actions
         elif event.type is pygame.USEREVENT+3:  pass    #Dialog actions
-        elif event.type is pygame.USEREVENT+4:          #Moment to draaaw
+        elif event.type is pygame.USEREVENT+4:          #Moment to draaaw, signal every fps/1sec
             self.__current_screen.draw(self.pygame_params['display'])
-            if self.show_fps:                   UtilityBox.draw_fps(self.pygame_params['display'], self.pygame_params['clock'])
-        #signal every fps/1sec
+            if self.show_fps:
+                UtilityBox.draw_fps(self.pygame_params['display'], self.pygame_params['clock'])
+            pygame.display.update()
 
     def start(self):
         LOG.log('INFO', "GAME STARTING!")

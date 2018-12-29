@@ -37,6 +37,8 @@ class StateNotFoundException(Exception):
 class BadPlayerTypeException(Exception):
     pass
 
+class BadSpriteException(Exception):
+    pass
 class PlayerNameExistsException(Exception):
     pass
 

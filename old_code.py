@@ -1514,3 +1514,39 @@ if __name__ == "__main__":
         if isinstance(source_image, str):
             source_image = pygame.image.load(source_image) 
         return Resizer.resize_same_aspect_ratio(source_image, size)
+
+#Menu
+    def set_resolution(self, resolution):
+        super().set_resolution(resolution)
+        #Regenerate elements
+        for sprite in self.static_sprites.sprites():    sprite.set_canvas_size(resolution)
+        for sprite in self.dynamic_sprites.sprites():   sprite.set_canvas_size(resolution)
+        #if self.have_dialog():      self.dialog.sprite.generate(rect=sprite.get_rect_if_canvas_size(resolution))
+        self.generate(centering=self.params['do_align'], alignment=self.params['alignment'])
+
+    def add_elements(self, *elements, overwrite_eventid = False):
+        for element in elements:
+            if type(element) is list:
+                for subelement in element:
+                    self.__add_element(subelement, overwrite_eventid=overwrite_eventid)
+            elif type(element) is dict:
+                for subelement in element.values():
+                    self.__add_element(subelement, overwrite_eventid=overwrite_eventid)
+            else:
+                self.__add_element(element, overwrite_eventid=overwrite_eventid)
+
+    def __add_element(self, element, overwrite_eventid = False):
+        '''Decides whether to add the element to the static or the dynamic elements
+        based on the type of the element. Afterwards addes it to the chosen one.
+        
+        Args: 
+            element: element to add'''
+        if overwrite_eventid is True:               element.set_event(self.event_id)
+        #After that
+        if issubclass(type(element), UIElement):    self.dynamic_sprites.add(element)
+        elif type(element) is pygame.Surface:       self.static_sprites.add(element) #TODO poorly done this one, surface cant be added to this shit
+        else:                                       raise TypeError("Elements should be a pygame.Surface, or an ui_element subclass.") 
+
+    def __center_elements(self, alignment='center'):
+        self.__center_sprites(self.static_sprites, alignment=alignment)
+        self.__center_sprites(self.dynamic_sprites, alignment=alignment)

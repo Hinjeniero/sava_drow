@@ -90,11 +90,11 @@ class Sprite(pygame.sprite.Sprite):
         #Basic stuff---------------------------------
         self.id             = id_
         self.rect           = pygame.Rect(position, size) 
-        self.image, self.overlay = Sprite.generate_surface(self.rect, **image_params)
-        self.mask           = pygame.mask.from_surface(self.image) 
+        self.image          = None  #Created in Sprite.generate
+        self.overlay        = None  #Created in Sprite.generate
+        self.mask           = None  #Created in Sprite.generate
         #Additions to interesting funcionality-------
-        self.real_rect      =   (tuple([x/y for x,y in zip(position, canvas_size)]),\
-                                tuple([x/y for x,y in zip(size, canvas_size)]))
+        self.real_rect      = None  #Created in Sprite.generate
         self.resolution     = canvas_size      
         #Animation and showing-----------------------
         self.animation_value= 0
@@ -104,13 +104,14 @@ class Sprite(pygame.sprite.Sprite):
         self.active         = False
         self.enabled        = True
         self.hover          = False
-        self.generate()
+        Sprite.generate(self)   #TO AVOID CALLING THE SUBCLASSES GENERATE WHEN THEIR ATTRIBUTES ARENT INITIALIZED YET.
 
+    @staticmethod
     def generate(self):
-        """Generates the object, executes all the actions that are needed upon calling of the init method.
-        A METHOD TO OVERLOAD, SUPERCLASS (UIELEMENT) DOES NOTHING.
-        """
-        pass
+        self.image, self.overlay = Sprite.generate_surface(self.rect, **self.params)
+        self.mask = pygame.mask.from_surface(self.image) 
+        self.real_rect =(tuple([x/y for x,y in zip(self.rect.topleft, self.resolution)]),\
+                         tuple([x/y for x,y in zip(self.rect.size, self.resolution)]))
 
     def draw(self, surface):
         """Draws the sprite over a surface. Draws the overlay too if use_overlay is True.
@@ -281,7 +282,8 @@ class Sprite(pygame.sprite.Sprite):
         size    = size.size if isinstance(size, pygame.rect.Rect) else size
         shape   = shape.lower()
         overlay = pygame.Surface(size)
-        if surface: return surface, overlay #If we creating the sprite from an already created surface
+        if surface: 
+            return surface, overlay #If we creating the sprite from an already created surface
         #GENERATING IMAGE
         if only_text:   #Special case: If we want a sprite object with all the methods, but with only a text with transparent background
             font_size   = Resizer.max_font_size(text, size, text_font)
@@ -337,11 +339,15 @@ class TextSprite(Sprite):
             params (:dict:):    Dict of keywords and values as parameters to create the self.image attribute.
                                 Includes attributes about the TextSprite, like the text color and the font used.            
         """
-        UtilityBox.join_dicts(params, TextSprite.__default_config)  #Adding missing keys of default config to params
         super().__init__(id_, position, size, canvas_size, only_text=True, text=text, **params)
-        self.rect.size  = self.image.get_size()  #The size can change in texts fromn the initial one
-        self.real_rect  = (self.real_rect[0], tuple([x/y for x,y in zip(self.rect.size, self.resolution)]))  #The size can change in texts fromn the initial one
-        self.text       = text
+        self.text = text
+        TextSprite.generate(self)
+
+    @staticmethod
+    def generate(self):
+        UtilityBox.join_dicts(self.params, TextSprite.__default_config)
+        self.rect.size  = self.image.get_size()  #←The size can change in texts from the initial one↓
+        self.real_rect  = (self.real_rect[0], tuple([x/y for x,y in zip(self.rect.size, self.resolution)]))
 
     def set_text(self, text):
         """Changes the text of the TextSprite, and regenerates the image to show the changes.
@@ -390,18 +396,24 @@ class AnimatedSprite(Sprite):
         self.counter            = 0
         self.next_frame_time    = animation_delay
         self.animation_index    = 0
-        #Generation
+        #Generatione
+        AnimatedSprite.generate(self, sprite_folder, *sprite_list)
+
+    @staticmethod
+    def generate(self, sprite_folder, *sprite_list):
+        self.use_overlay        = False
         self.load_sprites(sprite_folder) if sprite_folder else self.add_sprites(*sprite_list)
         self.image              = self.current_sprite()    #Assigning a logical sprite in place of the decoy one of the super()
         self.mask               = self.current_mask()       #Same shit to mask
-        self.use_overlay        = False
 
-    def id_exists(self, sprite_id):
+    def check_ids(self, sprite_id):
         """Check if a id or path has been already loaded.
         Returns:
-            (boolean):  True if sprite_id is already loaded, False otherwise."""
+            (:obj:pygame.sprite.Sprite||boolean):   The sprite associated if sprite_id is found, 
+                                                    False otherwise."""
         for i in range(0, len(self.ids)):
-            if sprite_id == self.ids[i]:    return self.original_sprites[i]
+            if sprite_id == self.ids[i]:    
+                return self.original_sprites[i]
         return False
 
     def surface_exists(self, sprite_surface):
@@ -421,9 +433,9 @@ class AnimatedSprite(Sprite):
         sprite_images = [folder+'\\'+f for f in listdir(folder) if isfile(join(folder, f))]
         for sprite_image in sprite_images:
             if sprite_image.lower().endswith(('.png', '.jpg', '.jpeg', 'bmp')):
-                if not self.__id_exists(sprite_image):
+                if sprite_image not in self.ids:
                     self.ids.append(sprite_image.lower())
-                    self.add_sprite(pygame.image.load(sprite_image))
+                    self.add_sprite(pygame.image.load(sprite_image).convert_alpha())
 
     def add_sprite(self, surface):
         """Check if a surface is loaded already, and adds it to the attribute lists.
@@ -449,8 +461,9 @@ class AnimatedSprite(Sprite):
         if len(sprite_surfaces) < 1:
             raise NotEnoughSpritesException("To create an animated sprite you have to at least add one.")
         for sprite_surf in sprite_surfaces:
-            if isinstance(sprite_surf, pygame.sprite.Sprite): sprite_surf = sprite_surf.image
-            if not self.__surface_exists(sprite_surf):
+            if isinstance(sprite_surf, pygame.sprite.Sprite): 
+                sprite_surf = sprite_surf.image
+            if not self.surface_exists(sprite_surf):
                 self.ids.append("no_id")
                 self.add_sprite(sprite_surf)
 
@@ -531,7 +544,7 @@ class MultiSprite(Sprite):
                                     Variety going from fill_color and use_gradient to text_only.
         """
         super().__init__(id_, position, size, canvas_size, **image_params)
-        self.sprites        = pygame.sprite.OrderedUpdates()    #Could use a normal list here, but bah
+        self.sprites        = pygame.sprite.OrderedUpdates()
 
     def add_sprite(self, sprite):
         """Add sprite to the Sprite list, and blit it to the image of the MultiSprite
@@ -587,7 +600,8 @@ class MultiSprite(Sprite):
         Returns:
             (Sprite | None):    The Sprite if its found, else None."""
         for sprite in self.sprites.sprites():
-            if all(kw in sprite.id for kw in keywords): return sprite
+            if all(kw in sprite.id for kw in keywords): 
+                return sprite
 
     def add_text_sprite(self, id_, text, alignment="center", text_size=None, **params): 
         '''Generates and adds sprite-based text object following the input parameters.

@@ -1550,3 +1550,9 @@ if __name__ == "__main__":
     def __center_elements(self, alignment='center'):
         self.__center_sprites(self.static_sprites, alignment=alignment)
         self.__center_sprites(self.dynamic_sprites, alignment=alignment)
+#Dunno lol
+    def generate(self):
+        """Empty method that will be called upon at the end of each constructor.
+        The idea behind this method is to initiate every element needed for a correct
+        Screen usage. Needs to be overloaded on the subclasses that inherit from Screen."""
+        pass

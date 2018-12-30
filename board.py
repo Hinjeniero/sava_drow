@@ -103,10 +103,10 @@ class Board(Screen):
                                 platform_proportion, platform_alignment, inter_path_frequency, circles_per_lvl,\
                                 max_levels, path_color, path_width.
         """
-        #Basic info saved
+        super().__init__(id_, event_id, resolution, **params)
         self.turn           = -1        
         #Graphic elements
-        self.loading        = LoadingScreen(id_, event_id, resolution, text="Loading, hang tight like a japanese pussy")
+        self.loading_screen = None  #Created in Board.generate
         self.cells          = pygame.sprite.Group()
         self.quadrants      = {}
 
@@ -121,13 +121,11 @@ class Board(Screen):
         self.active_char    = pygame.sprite.GroupSingle()
         self.drag_char      = pygame.sprite.GroupSingle()
 
-        self.platform       = None
-        self.temp_infoboard = None
+        self.platform       = None  #Created in Board.generate
         
         #Paths and maping
-        dimensions          = (self.params['circles_per_lvl']*self.params['max_levels'], self.params['circles_per_lvl']*self.params['max_levels'])
-        self.distances      = numpy.full(dimensions, -888, dtype=int)   #Says the distance between cells
-        self.enabled_paths  = numpy.zeros(dimensions, dtype=bool)       #Shows if the path exist
+        self.distances      = None  #Created in Board.generate
+        self.enabled_paths  = None  #Created in Board.generate
         self.current_map    = {}
         
         #Players 
@@ -135,10 +133,31 @@ class Board(Screen):
         self.loaded_players = 0
         self.players        = []
         self.player_index   = 0
-        self.add_players(*players)
+        Board.generate(self, *players)
+    
+    @staticmethod
+    def generate(self, *players):
+        UtilityBox.join_dicts(self.params, Board.__default_config)
+        #INIT
+        dimensions          = (self.params['circles_per_lvl']*self.params['max_levels'], self.params['circles_per_lvl']*self.params['max_levels'])
+        self.distances      = numpy.full(dimensions, -888, dtype=int)   #Says the distance between cells
+        self.enabled_paths  = numpy.zeros(dimensions, dtype=bool)       #Shows if the path exist
+        self.loading_screen = LoadingScreen(self.id+"_loading", self.event_id, self.resolution, text="Loading, hang tight like a japanese pussy")
+        #REST
+        platform_size   = tuple(min(self.resolution)*self.params['platform_proportion'] for _ in self.resolution)
+        centered_pos    = tuple(x//2-y//2 for x, y in zip(self.resolution, platform_size))
         
-        UtilityBox.join_dicts(params, Board.__default_config)
-        super().__init__(id_, event_id, resolution, **params)
+        platform_pos    = (0, centered_pos[1]) if 'left' in self.params['platform_alignment']\
+        else centered_pos if 'center' in self.params['platform_alignment']\
+        else (self.resolution[0]-platform_size[0], centered_pos[1])
+
+        self.platform   = Rectangle(self.id+"_platform", platform_pos, platform_size, self.resolution)
+        self.generate_all_cells()
+        self.assign_quadrants(*self.cells)
+        self.generate_paths(offset=True)
+        self.generate_inter_paths()
+        self.generate_map_board()
+        self.add_players(*players)
 
     def __adjust_number_of_paths(self):
         """Checks the inter path frequency. If the circles are not divisible by that frequency,
@@ -175,19 +194,6 @@ class Board(Screen):
             else:           return 0,    #Associated with first quadrant
         if rest is 0 and result is not 0: return result, result-1
         return result,
-
-    def generate(self):
-        platform_size   = tuple(min(self.resolution)*self.params['platform_proportion'] for _ in self.resolution)
-        centered_pos    = tuple(x//2-y//2 for x, y in zip(self.resolution, platform_size))
-        platform_pos    = (0, centered_pos[1]) if 'left' in self.params['platform_alignment']\
-        else centered_pos if 'center' in self.params['platform_alignment']\
-        else (self.resolution[0]-platform_size[0], centered_pos[1])
-        self.platform   = Rectangle(self.id+"_platform", platform_pos, platform_size, self.resolution)
-        self.generate_all_cells()
-        self.assign_quadrants(self.platform.rect.center, *self.cells)
-        self.generate_paths(offset=True)
-        self.generate_inter_paths()
-        self.generate_map_board()
 
     def generate_map_board(self):
         """Fills the essential graphs of the current board.
@@ -423,8 +429,8 @@ class Board(Screen):
         Args:
             resolution (:tuple: int, int):  Resolution to set. In pixels."""
         super().set_resolution(resolution)
-        self.loading.set_resolution(resolution)
-        self.generate() 
+        self.loading_screen.set_resolution(resolution)
+        #TODO RESIZE ELEMENTS 
 
     def ALL_PLAYERS_LOADED(self):
         """Returns:
@@ -539,14 +545,13 @@ class Board(Screen):
             active_sprite = self.active_cell.sprite
             if active_sprite is not None: 
                 pygame.draw.circle(surface, UtilityBox.random_rgb_color(), active_sprite.rect.center, active_sprite.rect.height//2) #Draws an overlay on the active cell 
-            for shit in self.possible_paths.sprites():
-                pygame.draw.circle(surface, WHITE, shit.center, shit.rect.width//2)
+            for dest in self.possible_dests.sprites():
+                pygame.draw.circle(surface, WHITE, dest.center, dest.rect.width//2)
             self.characters.update()
             self.characters.draw(surface)
-            #for char in self.characters: UtilityBox.draw_hitbox(surface, char) #TODO TESTING
             if hitboxes:    UtilityBox.draw_hitboxes(surface, self.cells.sprites())
         else:
-            self.loading.draw(surface)
+            self.loading_screen.draw(surface)
         
     def event_handler(self, event, keys_pressed, mouse_buttons_pressed, mouse_movement=False, mouse_pos=(0, 0)):
         """Handles any pygame event. This allows for user interaction with the object.

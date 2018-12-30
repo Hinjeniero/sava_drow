@@ -45,21 +45,21 @@ class Menu (Screen):
             **params (:dict:):  Dict of keywords and values as parameters to create the Screen.
                                 do_align, alignment.
         """
-        super().__init__(id_, event_id, resolution, *elements, **params)
-        UtilityBox.join_dicts(self.params, Menu.__default_config)
         #Graphic elements
+        super().__init__(id_, event_id, resolution, **params)
         self.active_sprite          = pygame.sprite.GroupSingle()       #Selected from dynamic_elements, only one at the same time
         self.active_sprite_index    = 0
+        Menu.generate(self, *elements)
 
-    def generate(self, *elements, **params):
+    @staticmethod
+    def generate(self, *elements):
         """Method that executes after the constructor of the superclass.
         Does all the needed work before fully deploying the menu.
         Args:
             *elements (:obj: Sprite):   Interactive elements/sprites of this menu. Usually buttons.
-            **params (:dict:):  Dict that the superclass passes as an input parameter.
-                                This could be useful on another overloaded method, in this one is unused.
         Raises:
             NotEnoughSpritesException:  If the menu doesn't have any sprites."""
+        UtilityBox.join_dicts(self.params, Menu.__default_config)
         if len(elements) > 0: 
             self.add_sprites(*elements)
             self.active_sprite.add(self.sprites.sprites()[0])

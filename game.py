@@ -35,7 +35,7 @@ pygame.display.set_mode((800, 600))
 CHANGES_WERE_MADE   = False
 
 class Game(object):
-    def __init__(self, *screens, resolution=(1280, 720), mouse_visible=True, fps=144, show_fps=True, title="Game"):
+    def __init__(self, *screens, resolution=(1280, 720), mouse_visible=True, fps=60, show_fps=True, title="Game"):
         self.pygame_params      = self.generate_pygame_vars(resolution=resolution, fps=fps)
         self.screens            = []
         self.players            = [] 
@@ -160,16 +160,19 @@ if __name__ == "__main__":
     pygame.display.set_mode(resolutions[0])
     res = resolutions[0]
     #Create elements, main menu buttons (POSITIONS AND SIZES ARE IN PERCENTAGES OF THE CANVAS_SIZE, can use absolute integers too)
-    buttonStart         = UIElement.factory('button_start', "start_game_go_main_board", pygame.USEREVENT+1, (0.05, 0.10), (0.90, 0.20), res, None, text="Start game", keep_aspect_ratio = False, texture=IMG_FOLDER+"//button.png")
-    buttonParamsMenu    = UIElement.factory('button_params_menu', "go_menu_params_config",    pygame.USEREVENT+1, (0.05, 0.40), (0.90, 0.20), res, None, text="Parameters", gradient = (RED, BLACK))
-    buttonSoundMenu     = UIElement.factory('button_sound', "go_menu_sound_music",      pygame.USEREVENT+1, (0.05, 0.70), (0.90, 0.20), res, None, text="Music menu", gradient = (RED, BLACK))
+    buttonStart         = UIElement.factory('button_start', "start_game_go_main_board", pygame.USEREVENT+1, (0.05, 0.10),\
+                                            (0.90, 0.20), res, text="Start game", keep_aspect_ratio = False, texture=IMG_FOLDER+"//button.png")
+    buttonParamsMenu    = UIElement.factory('button_params_menu', "go_menu_params_config", pygame.USEREVENT+1, (0.05, 0.40),\
+                                            (0.90, 0.20), res, text="Parameters", gradient = (RED, BLACK))
+    buttonSoundMenu     = UIElement.factory('button_sound', "go_menu_sound_music", pygame.USEREVENT+1, (0.05, 0.70), (0.90, 0.20),\
+                                            res, text="Music menu", gradient = (RED, BLACK))
     #buttons of parameters menu
-    buttonRes           = UIElement.factory('button_resolution',"change_resolution_screen_display", pygame.USEREVENT, (0.05, 0.05), (0.90, 0.10), res, resolutions, text="Resolution",     text_alignment = 'left')
-    buttonCountPlayers  = UIElement.factory('button_players', "change_number_count_players",      pygame.USEREVENT, (0.05, 0.20), (0.90, 0.10), res, (2, 3, 4),   text="Number of players",   text_alignment = 'left')
-    buttonNumPawns      = UIElement.factory('button_pawns', "change_number_count_pawns",        pygame.USEREVENT, (0.15, 0.35), (0.80, 0.10), res, (4, 8),      text="Number of pawns",     text_alignment = 'left')
-    buttonNumWarriors   = UIElement.factory('button_warriors', "change_number_count_warriors",     pygame.USEREVENT, (0.15, 0.50), (0.80, 0.10), res, (1, 2, 4),   text="Number of warriors",  text_alignment = 'left')
-    buttonNumWizards    = UIElement.factory('button_wizards', "change_number_count_wizards",      pygame.USEREVENT, (0.15, 0.65), (0.80, 0.10), res, (1, 2),      text="Number of wizards",   text_alignment = 'left')
-    buttonNumPriestess  = UIElement.factory('button_priestesses', "change_number_count_priestess",    pygame.USEREVENT, (0.15, 0.80), (0.80, 0.10), res, (1, 1),      text="Number of priestess", text_alignment = 'left')
+    buttonRes           = UIElement.factory('button_resolution',"change_resolution_screen_display", pygame.USEREVENT, (0.05, 0.05), (0.90, 0.10), res, default_values=resolutions, text="Resolution",     text_alignment = 'left')
+    buttonCountPlayers  = UIElement.factory('button_players', "change_number_count_players",      pygame.USEREVENT, (0.05, 0.20), (0.90, 0.10), res, default_values=(2, 3, 4),   text="Number of players",   text_alignment = 'left')
+    buttonNumPawns      = UIElement.factory('button_pawns', "change_number_count_pawns",        pygame.USEREVENT, (0.15, 0.35), (0.80, 0.10), res, default_values=(4, 8),      text="Number of pawns",     text_alignment = 'left')
+    buttonNumWarriors   = UIElement.factory('button_warriors', "change_number_count_warriors",     pygame.USEREVENT, (0.15, 0.50), (0.80, 0.10), res, default_values=(1, 2, 4),   text="Number of warriors",  text_alignment = 'left')
+    buttonNumWizards    = UIElement.factory('button_wizards', "change_number_count_wizards",      pygame.USEREVENT, (0.15, 0.65), (0.80, 0.10), res, default_values=(1, 2),      text="Number of wizards",   text_alignment = 'left')
+    buttonNumPriestess  = UIElement.factory('button_priestesses', "change_number_count_priestess",    pygame.USEREVENT, (0.15, 0.80), (0.80, 0.10), res, default_values=(1, 1),      text="Number of priestess", text_alignment = 'left')
     
     '''#Exit dialog and its buttons
     dialog_resolution   = tuple(x//2 for x in res)
@@ -179,11 +182,11 @@ if __name__ == "__main__":
     exitDialog          = UIElement.factory("exit_main_menu_notification",  pygame.USEREVENT+2, dialog_position, dialog_resolution, res, None, acceptButton, cancelButton, text="Exit this shit?")'''
     
     #Sliders of the music and sound menu
-    sliderMenuMusic     = UIElement.factory('slider_music_volume', "change_menu_music_volume", pygame.USEREVENT, (0.05, 0.10), (0.80, 0.15), res, (0.75), text="Menus music volume", slider_type='circular',\
+    sliderMenuMusic     = UIElement.factory('slider_music_volume', "change_menu_music_volume", pygame.USEREVENT, (0.05, 0.10), (0.80, 0.15), res, default_values=(0.75), text="Menus music volume", slider_type='circular',\
                         gradient = (RED, BLACK), slider_start_color = RED, slider_end_color = WHITE)
-    sliderMenuSounds    = UIElement.factory('slider_sound_volume', "change_menu_sound_volume", pygame.USEREVENT, (0.05, 0.30), (0.80, 0.15), res, (0.75), text="Menus sound volume", slider_type='elliptical')
-    sliderBoardMusic    = UIElement.factory('slider_board_music_volume', "change_board_music_volume",pygame.USEREVENT, (0.05, 0.50), (0.80, 0.15), res, (0.75), text="Board music volume", slider_type='rectangular')
-    sliderBoardSounds   = UIElement.factory('slider_board_sound_volume', "change_board_sound_volume",pygame.USEREVENT, (0.05, 0.70), (0.80, 0.15), res, (0.75), text="Board sound volume")
+    sliderMenuSounds    = UIElement.factory('slider_sound_volume', "change_menu_sound_volume", pygame.USEREVENT, (0.05, 0.30), (0.80, 0.15), res, default_values=(0.75), text="Menus sound volume", slider_type='elliptical')
+    sliderBoardMusic    = UIElement.factory('slider_board_music_volume', "change_board_music_volume",pygame.USEREVENT, (0.05, 0.50), (0.80, 0.15), res, default_values=(0.75), text="Board music volume", slider_type='rectangular')
+    sliderBoardSounds   = UIElement.factory('slider_board_sound_volume', "change_board_sound_volume",pygame.USEREVENT, (0.05, 0.70), (0.80, 0.15), res, default_values=(0.75), text="Board sound volume")
     
     #Create Menu and board
     main_menu   = Menu("main_menu",         pygame.USEREVENT,   res,\

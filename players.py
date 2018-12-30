@@ -53,7 +53,7 @@ class Player(object):
         self.name       = name
         self.order      = order
         self.characters = Character.factory(name, sprite_size, canvas_size, **character_params)
-        self.infoboard  = infoboard if infoboard else InfoBoard(self.name+'_infoboard') #TODO end this line
+        self.infoboard  = None #infoboard if infoboard else InfoBoard(self.name+'_infoboard') #TODO end this line
         self.turn       = -1
     
 class Character(AnimatedSprite):

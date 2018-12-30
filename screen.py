@@ -37,11 +37,11 @@ class Screen(object):
         sound (:obj: Sound):    Sound effect object.
     """
     __default_config = {'background_path'   : None,
-                        'music_path'        : '\\music.mp3',
-                        'sound_path'        : '\\option.ogg'
+                        'music_path'        : SOUND_FOLDER+'\\music.mp3',
+                        'sound_path'        : SOUND_FOLDER+'\\option.ogg'
     }
 
-    def __init__(self, id_, event_id, resolution, dialog=None, *elements, **params):
+    def __init__(self, id_, event_id, resolution, dialog=None, **params):
         """Screen constructor.
         Args:
             id_ (str):  Identifier of the Screen.
@@ -53,22 +53,32 @@ class Screen(object):
         """
         self.id         = id_
         self.event_id   = event_id
-        self.params     = Screen.__default_config.copy()
-        self.params.update(params)
-        self.background = Sprite(self.id+'_background', (0, 0), self.resolution,\
-                                self.resolution, texture=self.params['background_path']) 
+        self.params     = params
         self.dialog     = pygame.sprite.GroupSingle()
         self.resolution = resolution
         #Sprites
+        self.background = None
         self.dialog     = dialog
         self.sprites    = pygame.sprite.OrderedUpdates()
         #Sound & Music
-        self.music      = pygame.mixer.music.load(SOUND_FOLDER+self.params['music_path'])
-        self.sound      = pygame.mixer.Sound(file=SOUND_FOLDER+self.params['sound_path'])
-        if self.sound is not None:  self.sound.set_volume(0.5)
-        if self.music is not None:  self.music.set_volume(0.5)
+        self.music      = None
+        self.sound      = None
+        Screen.generate(self)
+
+    @staticmethod
+    def generate(self):
+        UtilityBox.join_dicts(self.params, Screen.__default_config.copy())
+        self.background = Sprite(self.id+'_background', (0, 0), self.resolution,\
+                                self.resolution, keep_aspect_ratio=False, texture=self.params['background_path'])
+        if self.params['music_path']:
+            #self.music = 
+            pygame.mixer.music.load(self.params['music_path'])
+            #self.music.set_volume(0.5)
+        if self.params['sound_path']:
+            #TODO if sound none bad path
+            self.sound = pygame.mixer.Sound(file=self.params['sound_path'])
+            self.sound.set_volume(0.5)
         pygame.mixer.music.play() #TODO check how to change this to change everyt ime the screen changes
-        self.generate(*elements, **params)
 
     def have_dialog(self):
         """Returns:
@@ -97,7 +107,7 @@ class Screen(object):
         superclass only draws the background, since the sprites group is empty.
         Args:
             surface (:obj: pygame.Surface): Surface to blit to."""
-        surface.blit(self.background, (0,0))
+        self.background.draw(surface)
         for sprite in self.sprites.sprites():
             sprite.draw(surface)
 
@@ -113,12 +123,6 @@ class Screen(object):
                 self.dialog.sprite.set_canvas_size(resolution)
             for sprite in self.sprites.sprites():
                 sprite.set_canvas_size(resolution)
-
-    def generate(self, *args, **kwargs):
-        """Empty method that will be called upon at the end of each constructor.
-        The idea behind this method is to initiate every element needed for a correct
-        Screen usage. Needs to be overloaded on the subclasses that inherit from Screen."""
-        pass
 
     def add_sprites(self, *sprites):
         """Adds sprites to the screen. Those added sprites will be drawn automatically in the next execution.
@@ -142,7 +146,7 @@ class LoadingScreen(Screen):
             text_proportion (str):  Tuple containing the text proportion vs the resolution.
                                     Default is (0.6, 0.1)
     """
-    __default_config = {'background_path': IMG_FOLDER+'loading_background.png',
+    __default_config = {'background_path': IMG_FOLDER+'//loading_background.png',
                         'loading_sprite_path': IMG_FOLDER+'//loading_circle.png', 
                         'text': 'Loading...',
                         'text_proportion': (0.6, 0.1)}
@@ -157,13 +161,16 @@ class LoadingScreen(Screen):
                                 background_path, music_path, sound_path, loading_sprite_path,
                                 text, text_proportion.
         """
-        UtilityBox.join_dicts(params, LoadingScreen.__default_config)
+        if 'background_path' not in params:   
+            params['background_path'] = LoadingScreen.__default_config['background_path']
         super().__init__(id_, event_id, resolution, **params)
-    
+        LoadingScreen.generate(self)
+
+    @staticmethod
     def generate(self):
         """Loads the loading sprite image, and renders the TextSprite.
         Then adds them to Screen."""
-        #The animated loading sprite
+        UtilityBox.join_dicts(self.params, LoadingScreen.__default_config)
         load_surfaces = self.generate_load_sprite(self.params['loading_sprite_path'])
         loading_sprite          = AnimatedSprite(self.id+'_loading_sprite', load_surfaces[0].rect.topleft,\
                                                 load_surfaces[0].rect.size, self.resolution, *(load_surfaces),\

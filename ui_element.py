@@ -49,11 +49,11 @@ class UIElement(MultiSprite):
             params (:dict:):    Dict of keywords and values as parameters to create the self.image attribute.
                                 Variety going from fill_color and use_gradient to text_only.
         """
-        super().__init__(id_, position, size, canvas_size, shape="rectangle", **params) 
+        params['shape'] = 'rectangle'
+        super().__init__(id_, position, size, canvas_size, **params) 
         #Basic parameters on top of those inherited from Sprite
         self.action       = command
         self.event_id     = user_event_id
-        self.generate()
 
     def get_id(self):
         """Returns:
@@ -80,7 +80,7 @@ class UIElement(MultiSprite):
             (int):  Id of the event that will be sent upon interaction."""
         return self.get_event()
     
-    def hitbox_action(self):
+    def hitbox_action(self, command, value):
         """Executes the associated action of the element. To be called when a click or key-press happens."""
         if self.active: self.send_event()
 
@@ -122,9 +122,10 @@ class UIElement(MultiSprite):
         if len(elements) > 0:
             if isinstance(elements[0], ButtonAction):   #Only interested in the first one, the following ones could vary
                 return Dialog(id_, command, user_event_id, position, size, canvas_size, *elements, **params)
-            elif isinstance(elements[0], TextSprite, pygame.sprite.Sprite):
+            elif isinstance(elements[0], (TextSprite, pygame.sprite.Sprite)):
                 return InfoBoard(id_, command, user_event_id, position, size, canvas_size, *elements, **params)
-            else:    raise BadUIElementInitException("Can't create an object with those *elements of type "+str(type(elements[0])))
+            else:    
+                raise BadUIElementInitException("Can't create an object with those *elements of type "+str(type(elements[0])))
         if isinstance(default_values, (list, tuple)):
             return ButtonValue(id_, command, user_event_id, position, size, canvas_size, tuple(default_values), **params)
         elif isinstance(default_values, (int, float)):
@@ -161,14 +162,15 @@ class ButtonAction(UIElement):
             params (:dict:):    Dict of keywords and values as parameters to create the self.image attribute.
                                 Variety going from fill_color and use_gradient to text_only.
             """
-        UtilityBox.join_dicts(self.params, ButtonAction.__default_config)
-        super().__init__(id_, command, user_event_id, position, size, canvas_size, **params)  
-        #No need to call generate here cuz THIS class generate is already called in the super()
-
+        super().__init__(id_, command, user_event_id, position, size, canvas_size, **params)
+        ButtonAction.generate(self)
+    
+    @staticmethod
     def generate(self):
         """Method that executes at the end of the constructor. Generates the base surface and
         adds the text with the params that we used in the init call.
         In short, build the MultiSprite adding the Sprites of ButtonAction."""
+        UtilityBox.join_dicts(self.params, ButtonAction.__default_config)
         text_size = [x//(1//self.params['text_proportion']) for x in self.rect.size]
         self.add_text_sprite(self.id+"_text", self.params['text'], text_size=text_size, alignment=self.params['text_alignment'])
 
@@ -206,16 +208,17 @@ class ButtonValue (UIElement):
             params (:dict:):    Dict of keywords and values as parameters to create the self.image attribute.
                                 Variety going from fill_color and use_gradient to text_only.
             """
-        UtilityBox.join_dicts(self.params, ButtonValue.__default_config)
+        super().__init__(id_, command, user_event_id, position, size, canvas_size, **params) 
         self.values             = set_of_values
         self.current_index      = 0  
-        super().__init__(id_, command, user_event_id, position, size, canvas_size, **params) 
+        ButtonValue.generate(self)
 
     def generate(self):
         """Method that executes at the end of the constructor. Generates the base surface and
         adds the text with the params that we used in the init call.
         Can blit the value text too, if shows_value is True.
         In short, build the MultiSprite adding the Sprites of ButtonValue."""
+        UtilityBox.join_dicts(self.params, ButtonValue.__default_config)
         text_size = [x//(1//self.params['text_proportion']) for x in self.rect.size]
         if self.params['shows_value']:
             self.add_text_sprite(self.id+"_text", self.params['text'], text_size=text_size, alignment='left')
@@ -273,7 +276,7 @@ class ButtonValue (UIElement):
 class Slider (UIElement):   #TODO CHANGE SLIDER NAMEs TO DIAL
     """Slider class. Inherits from UIElement.
     UIElement with text blitted on top. Have some interesting attributes to modify the way that text look.
-    Also has a dial blitted on top too. The slider can have numerous shapes.
+    Also has a dial blitted on top too. The dial can have numerous shapes.
     Has a current value that goes from 0 to 1, depending on the position of the slider dial itself.
     When clicked, will change the value and the dial if proceeds, and post an event with a payload containing 
     the command(.command) and the new set value (.value).
@@ -283,14 +286,14 @@ class Slider (UIElement):   #TODO CHANGE SLIDER NAMEs TO DIAL
             text_proportion (float):    Percentage that the text will occupy in the element
             text_alignment (str):   Alignment inside the element. Center, Left, Right.
             shows_value (boolean):  True if the current value is drawn in the MultiSprite.
-            slider_fill_color (:tuple: int, int, int):  RGB color of the surface background. 
-                                                        Used if slider_use_gradient is False.
-            slider_use_gradient (boolean):  True if we want a gradient instead of a solid color.
-            slider_gradient (:tuple of 2 tuples: int, int, int):    Interval of RGB colors of the gradient.
-            slider_border (boolean):    True if the slider dial generated has a border.
-            slider_border_color (:tuple: int, int, int):    Color of the dial border. RGBA/RGB format.
-            slider_border_width (int):  Size of the dial border in pixels.  
-            slider_shape (str): Shape of the dial itself. Options are circular, elliptical, rectangular.
+            dial_fill_color (:tuple: int, int, int):  RGB color of the surface background. 
+                                                        Used if dial_use_gradient is False.
+            dial_use_gradient (boolean):  True if we want a gradient instead of a solid color.
+            dial_gradient (:tuple of 2 tuples: int, int, int):    Interval of RGB colors of the gradient.
+            dial_border (boolean):    True if the slider dial generated has a border.
+            dial_border_color (:tuple: int, int, int):    Color of the dial border. RGBA/RGB format.
+            dial_border_width (int):  Size of the dial border in pixels.  
+            dial_shape (str): Shape of the dial itself. Options are circular, elliptical, rectangular.
     Attributes:
         value (float):  Value of the slider. Depends on the current position of the dial.
     """
@@ -298,13 +301,13 @@ class Slider (UIElement):   #TODO CHANGE SLIDER NAMEs TO DIAL
                         'text_proportion': 0.33,
                         'text_alignment': 'left',
                         'shows_value': True,
-                        'slider_fill_color': GREEN,
-                        'slider_use_gradient': True,
-                        'slider_gradient': (LIGHTGRAY, DARKGRAY),
-                        'slider_border': True, 
-                        'slider_border_color': BLACK,
-                        'slider_border_width': 2,
-                        'slider_shape': 'rectangular'
+                        'dial_fill_color': GREEN,
+                        'dial_use_gradient': True,
+                        'dial_gradient': (LIGHTGRAY, DARKGRAY),
+                        'dial_border': True, 
+                        'dial_border_color': BLACK,
+                        'dial_border_width': 2,
+                        'dial_shape': 'rectangular'
     }
 
     def __init__(self, id_, command, user_event_id, position, size, canvas_size, default_value, **params):
@@ -320,18 +323,20 @@ class Slider (UIElement):   #TODO CHANGE SLIDER NAMEs TO DIAL
             params (:dict:):    Dict of keywords and values as parameters to create the self.image attribute.
                                 Variety going from fill_color and use_gradient to text_only.
             """
-        UtilityBox.join_dicts(self.params, Slider.__default_config) 
-        self.value = default_value 
         super().__init__(id_, command, user_event_id, position, size, canvas_size, **params)
+        self.value = default_value 
+        Slider.generate(self)
 
+    @staticmethod
     def generate(self):
         """Method that executes at the end of the constructor. Generates the base surface and
         adds the text with the params that we used in the init call.
         In short, build the MultiSprite adding the Sprites of Slider.
         Blits the value too if shows_value is True.
-        In the end it generates the dial and blits it."""
-        super().generate()
-        _ = self.params  #For the sake of short code, params already have understandable names anyway
+        In the end it generates the dial and blits it.
+        """
+        UtilityBox.join_dicts(self.params, Slider.__default_config) 
+        _ = self.params  #For the sake of short code, params has keys with already understandable names anyway
         text_size = [x//(1//_['text_proportion']) for x in self.rect.size]
         #Text sprite
         self.add_text_sprite(self.id+"_text", _['text'], text_size=text_size, alignment=_['text_alignment'])
@@ -342,14 +347,14 @@ class Slider (UIElement):   #TODO CHANGE SLIDER NAMEs TO DIAL
         else:
             self.add_text_sprite(self.id+"_text", _['text'], text_size=text_size, alignment=_['text_alignment'])
         #Slider sprite
-        self.generate_dial(_['slider_fill_color'], _['slider_use_gradient'], _['slider_gradient'], _['slider_border'],\
-                            _['slider_border_color'], _['slider_border_width'], _['slider_shape'])
+        self.generate_dial(_['dial_fill_color'], _['dial_use_gradient'], _['dial_gradient'], _['dial_border'],\
+                            _['dial_border_color'], _['dial_border_width'], _['dial_shape'])
 
     def generate_dial (self, fill_color, use_gradient, gradient, border, border_color, border_width, shape):
         """Generates a dial (following the input arguments), that will be added and blitted to the element.
         Args:
             fill_color (:tuple: int, int, int):  RGB color of the surface background. 
-                                                        Used if slider_use_gradient is False.
+                                                        Used if dial_use_gradient is False.
             use_gradient (boolean): True if we want a gradient instead of a solid color.
             gradient (:tuple of 2 tuples: int, int, int):   Interval of RGB colors of the gradient.
             border (boolean):   True if the slider dial generated has a border.
@@ -360,35 +365,35 @@ class Slider (UIElement):   #TODO CHANGE SLIDER NAMEs TO DIAL
             InvalidSliderException: If the shape of the dial is not recognized. 
         """
         ratio = 3   #Ratio to resize square into rectangle and circle into ellipse
-        slider_size = (self.rect.height, self.rect.height)
-        slider_id   = self.id+"_dial"
+        dial_size = (self.rect.height, self.rect.height)
+        dial_id   = self.id+'_dial'
         if 'circ' in shape or 'ellip' in shape: 
-            slider = Circle(slider_id, (0, 0), slider_size, self.rect.size,\
+            dial = Circle(dial_id, (0, 0), dial_size, self.rect.size,\
                             fill_color=fill_color, fill_gradient=use_gradient, gradient=gradient,\
                             border=border, border_width=border_width, border_color=border_color)
             if 'ellip' in shape:
-                slider.rect.width //= ratio
-                slider.image = pygame.transform.smoothscale(slider.image, slider.rect.size)
+                dial.rect.width //= ratio
+                dial.image = pygame.transform.smoothscale(dial.image, dial.rect.size)
         elif 'rect' in shape:
-            slider = Rectangle( slider_id, (0, 0), (slider_size[0]//ratio, slider_size[1]), self.rect.size,\
+            dial = Rectangle( dial_id, (0, 0), (dial_size[0]//ratio, dial_size[1]), self.rect.size,\
                                 fill_color=fill_color, fill_gradient=use_gradient, gradient=gradient,\
                                 border=border, border_width=border_width, border_color=border_color)
         else:  
             raise InvalidSliderException('Slider of type '+str(shape)+' is not available')
-        slider.rect.center = (int(self.get_value()*self.rect.width), self.rect.height//2)
-        slider.set_position(slider.rect.topleft)
-        self.add_sprite(slider)
+        dial.rect.center = (int(self.get_value()*self.rect.width), self.rect.height//2)
+        dial.set_position(dial.rect.topleft)
+        self.add_sprite(dial)
 
-    def set_slider_position(self, position):
+    def set_dial_position(self, position):
         """Changes the dial position to the input parameter. Changes the graphics and the value accordingly.
         Distinguises between values between 0 and 1 (position in value), and values over 1 (position in pixels).
         Args:
             position (float||int): Position of the dial to set."""
-        slider = self.get_sprite("dial")
-        slider_position = int(self.rect.width*position) if (0 <= position <= 1) else int(position)                                      #Converting the slider position to pixels.
-        slider_position = 0 if slider_position < 0 else self.rect.width if slider_position > self.rect.width else slider_position       #Checking if it's out of bounds 
-        slider.rect.x = slider_position-(slider.rect.width//2)
-        value_text = self.get_sprite("value")
+        dial = self.get_sprite('dial')
+        dial_position = int(self.rect.width*position) if (0 <= position <= 1) else int(position)                                      #Converting the dial position to pixels.
+        dial_position = 0 if dial_position < 0 else self.rect.width if dial_position > self.rect.width else dial_position       #Checking if it's out of bounds 
+        dial.rect.x = dial_position-(dial.rect.width//2)
+        value_text = self.get_sprite('value')
         value_text.set_text(str(round(self.get_value(), 2)))
         self.regenerate_image()                                                                    #To compensate the graphical offset of managing center/top-left
 
@@ -405,7 +410,7 @@ class Slider (UIElement):   #TODO CHANGE SLIDER NAMEs TO DIAL
         if      (self.value is 0 and value<0):  self.value = 1              #It goes all the way around from 0 to 1
         elif    (self.value is 1 and value>1):  self.value = 0              #It goes all the way around from 1 to 0
         else:   self.value = 0 if value < 0 else 1 if value > 1 else value  #The value it not yet absolute 1 or 0.
-        self.set_slider_position(self.value)
+        self.set_dial_position(self.value)
 
     def hitbox_action(self, command, value):
         """Decrement or increment the value if a keyboard key is pressed, or set a value
@@ -427,9 +432,9 @@ class Slider (UIElement):   #TODO CHANGE SLIDER NAMEs TO DIAL
             elif isinstance(value, pygame.Rect):    mouse_x = value.x
             else:                                   raise InvalidCommandValueException("Value in slider hitbox can't be of type "+str(type(value)))
 
-            pixels = mouse_x-self.rect.x        #Pixels into the bar, that the slider position has.
+            pixels = mouse_x-self.rect.x        #Pixels into the bar, that the dial position has.
             value = pixels/self.rect.width      #Converting to float value between 0-1
-            if value != self.get_value:         #If its a new value, we create another slider and value and blit it.
+            if value != self.get_value:         #If its a new value, we create another dial and value and blit it.
                 self.set_value(value)
         self.send_event()
 
@@ -450,12 +455,12 @@ class Slider (UIElement):   #TODO CHANGE SLIDER NAMEs TO DIAL
         Args:
             surface (:obj: pygame.Surface): Surface in which to draw the dial overlay."""
         color   = UtilityBox.random_rgb_color()
-        slider  = self.get_sprite('button')
+        dial    = self.get_sprite('dial')
         _       = self.params
-        slider_rect = pygame.Rect(self.get_sprite_abs_position(slider), slider.rect.size)
-        if 'circ' in _['slider_type']:      pygame.draw.circle(surface, color, slider_rect.center, slider.rect.height//2)
-        elif 'ellip' in _['slider_type']:   pygame.draw.ellipse(surface, color, slider_rect)
-        else:                               pygame.draw.rect(surface, color, slider_rect)
+        dial_rect = pygame.Rect(self.get_sprite_abs_position(dial), dial.rect.size)
+        if 'circ' in _['dial_shape']:       pygame.draw.circle(surface, color, dial_rect.center, dial.rect.height//2)
+        elif 'ellip' in _['dial_shape']:    pygame.draw.ellipse(surface, color, dial_rect)
+        else:                               pygame.draw.rect(surface, color, dial_rect)
 
 class InfoBoard (UIElement):
     """InfoBoard class. Inherits from UIElement.
@@ -489,13 +494,26 @@ class InfoBoard (UIElement):
             **params (:dict:):  Dict of keywords and values as parameters to create the self.image attribute.
                                 Variety going from fill_color and use_gradient to text_only.
             """
-        super().__init__(id_, "Infoboard_no_command_bro", user_event_id, position, size, canvas_size, **params)    
-        UtilityBox.join_dicts(self.params, InfoBoard.__default_config)
-        self.spaces         = self.params['rows']*self.params['cols']
+        super().__init__(id_, "Infoboard_dont_have_commands_bro", user_event_id, position, size, canvas_size, **params)    
+        self.spaces         = 0 #Created in InfoBoard.generate
         self.taken_spaces   = 0
+        InfoBoard.generate(self, *elements)
+
+    @staticmethod
+    def generate(self, *elements):
+        """Raises:
+            InvalidUIElementException:  If one of the elements doesn't follow the tuple schema (uielement, spaces_taken)"""
         UtilityBox.join_dicts(self.params, InfoBoard.__default_config)
-        self.add_and_adjust_sprites(*elements)
+        self.spaces = self.params['rows']*self.params['cols']
         self.use_overlay = False
+        #TEST
+        if len(elements) < 1:
+            raise BadUIElementInitException("Can't create a InfoBoard without elements.")
+        for element in elements:
+            if not isinstance(element, tuple) or not isinstance(element[1], int):  
+                raise InvalidUIElementException("Elements of infoboard must follow the [(element, spaces_to_occupy), ...] scheme.")
+        #Test passed
+        self.add_and_adjust_sprites(*elements)
     
     #Modify to also add elements when there are elements inside already
     def add_and_adjust_sprites(self, *elements, scale=0.95):
@@ -507,8 +525,6 @@ class InfoBoard (UIElement):
             *elements (:tuple: UI_Element, int):    Subelements to be added, separated by commas. Usually TextSprites.
                                                     The tuple follows the schema (UIElement, infoboard spaces taken).
             scale (float):  Percent of the spaces that the Sprite will take. Default is 0.95.
-        Raises:
-            InvalidUIElementException:  If one of the elements doesn't follow the tuple schema (uielement, spaces_taken)
         """
         UtilityBox.draw_grid(self.image, 6, 3)
         rows, columns       = self.params['rows'], self.params['cols']
@@ -516,8 +532,6 @@ class InfoBoard (UIElement):
         for element in elements:
             current_pos         = ((self.taken_spaces%columns)*size_per_element[0], (self.taken_spaces//columns)*size_per_element[1])
             spaces = element[1]
-            if not isinstance(element, tuple) or not isinstance(element[1], float):  
-                raise InvalidUIElementException("Elements of infoboard must follow the [(element, spaces_to_occupy), ...] scheme")
             if spaces > columns:    spaces = columns*math.ceil(spaces/columns) #Other type of occupied spaces are irreal
             #if spaces%columns = 0 FULL WIDTH
             height_ratio = columns if spaces>=columns else spaces%columns

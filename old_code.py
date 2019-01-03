@@ -1556,3 +1556,37 @@ if __name__ == "__main__":
         The idea behind this method is to initiate every element needed for a correct
         Screen usage. Needs to be overloaded on the subclasses that inherit from Screen."""
         pass
+
+#Old dialog
+class Dialog (InfoBoard):
+    #The default config of a subclass contains only those parameters that the superclass does not mention
+    __default_config = {'text'          : 'dialog',
+                        'font'          : None,
+                        'max_font_size' : 50,
+                        'font_size'     : 0,
+                        'text_color'    : WHITE,
+                        'auto_center'   : True,
+    }
+
+    def __init__(self, id_, user_event_id, element_position, element_size, canvas_size, **params):
+        for button in buttons:  
+            self.buttons.add(button)
+        super().__init__(id_, user_event_id, element_position, element_size, canvas_size, **params)
+        self.spaces         = 0 #Created in InfoBoard.generate
+        self.taken_spaces   = 0
+
+    def add_button(self, size, **button_params):
+        pass
+
+    @staticmethod
+    def generate(self, rect=None, generate_image=True):
+        super().generate(rect=rect, generate_image=False)
+        UtilityBox.check_missing_keys_in_dict(self.params, Dialog.__default_config)
+        #self.adjust_buttons()
+        self.pieces.add(UIElement.close_button(self.get_id()+"_close_exit_button", self.get_event_id(), self.rect))
+        self.params['font_size'] = Resizer.max_font_size(self.params['text'], self.rect.size, self.params['max_font_size'], self.params['font'])//2
+        self.add_text(self.params['text'], self.params['font'], self.rect, [x//1.5 for x in self.rect.size], self.params['max_font_size'], self.params['text_color'], 0)    
+        if self.params['auto_center']:  self.rect.topleft = [(x//2-y//2) for x, y in zip(self.get_canvas_size(), self.rect.size)]
+        if generate_image:    
+            self.image = self.generate_image() 
+            self.save_state()

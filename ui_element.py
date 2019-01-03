@@ -23,7 +23,7 @@ from resizer import Resizer
 from pygame_test import PygameSuite
 from colors import WHITE, RED, DARKGRAY, LIGHTGRAY, GREEN, BLACK
 from exceptions import  InvalidUIElementException, BadUIElementInitException, InvalidCommandValueException,\
-                        TooManyElementsException, InvalidSliderException
+                        TooManyElementsException, InvalidSliderException, NotEnoughSpaceException
 from utility_box import UtilityBox
 from sprite import Sprite, MultiSprite, TextSprite
 from logger import Logger as LOG
@@ -82,7 +82,7 @@ class UIElement(MultiSprite):
     
     def hitbox_action(self, command, value):
         """Executes the associated action of the element. To be called when a click or key-press happens."""
-        if self.active: self.send_event()
+        if self.active and self.enabled: self.send_event()
 
     def send_event(self):
         """Post (send) the event associated with this element, along with the command.
@@ -243,7 +243,7 @@ class ButtonValue (UIElement):
                                 inc, add, right, first && mouse -> increment index.
             value (int):    Value to be sent in the payload.
         """
-        if self.active:
+        if self.active and self.enabled:
             if 'dec' in command or 'min' in command or 'left' in command or ("mouse" in command and "sec" in command):      self.dec_index()
             elif 'inc' in command or 'add' in command or 'right' in command or ("mouse" in command and "first" in command): self.inc_index()
             self.send_event()
@@ -273,7 +273,7 @@ class ButtonValue (UIElement):
         my_event = pygame.event.Event(self.get_event_id(), command=self.get_action(), value=self.get_value())
         pygame.event.post(my_event)
 
-class Slider (UIElement):   #TODO CHANGE SLIDER NAMEs TO DIAL
+class Slider (UIElement):
     """Slider class. Inherits from UIElement.
     UIElement with text blitted on top. Have some interesting attributes to modify the way that text look.
     Also has a dial blitted on top too. The dial can have numerous shapes.
@@ -425,6 +425,7 @@ class Slider (UIElement):   #TODO CHANGE SLIDER NAMEs TO DIAL
         Raises:
             InvalidCommandValueException:   If the value input argument is not a tuple nor a rect.
         """
+        if not self.enabled:    return  #Element is not enabled, byebye, no action from this one.
         if 'dec' in command or 'min' in command or 'left' in command:       self.set_value(self.get_value()-0.1)
         elif 'inc' in command or 'add' in command or 'right' in command:    self.set_value(self.get_value()+0.1)
         elif ('mouse' in command and ('click' in command or 'button' in command)):
@@ -477,7 +478,7 @@ class InfoBoard (UIElement):
         taken_spaces (int)
     """    
     __default_config = {'rows'  : 6,
-                        'cols'  : 3 
+                        'cols'  : 2 
     }
 
     def __init__(self, id_, user_event_id, position, size, canvas_size, *elements, **params):
@@ -494,27 +495,59 @@ class InfoBoard (UIElement):
             **params (:dict:):  Dict of keywords and values as parameters to create the self.image attribute.
                                 Variety going from fill_color and use_gradient to text_only.
             """
-        super().__init__(id_, "Infoboard_dont_have_commands_bro", user_event_id, position, size, canvas_size, **params)    
-        self.spaces         = 0 #Created in InfoBoard.generate
+        super().__init__(id_,  id_+'command', user_event_id, position, size, canvas_size, **params)    
+        self.spaces         = 0     #Created in InfoBoard.generate
         self.taken_spaces   = 0
+        self.element_size   = (0, 0)#Created in InfoBoard.generate
         InfoBoard.generate(self, *elements)
 
     @staticmethod
     def generate(self, *elements):
         """Raises:
             InvalidUIElementException:  If one of the elements doesn't follow the tuple schema (uielement, spaces_taken)"""
+        self.clear()
         UtilityBox.join_dicts(self.params, InfoBoard.__default_config)
         self.spaces = self.params['rows']*self.params['cols']
+        self.element_size = (int(self.rect.width//self.params['cols']), int(self.rect.height//self.params['rows'])) 
         self.use_overlay = False
         #TEST
-        if len(elements) < 1:
-            raise BadUIElementInitException("Can't create a InfoBoard without elements.")
         for element in elements:
             if not isinstance(element, tuple) or not isinstance(element[1], int):  
                 raise InvalidUIElementException("Elements of infoboard must follow the [(element, spaces_to_occupy), ...] scheme.")
         #Test passed
         self.add_and_adjust_sprites(*elements)
     
+    def add_text_element(self, id_, text, spaces, scale=0.95):
+        if spaces > self.spaces-self.taken_spaces:
+            raise NotEnoughSpaceException("There is not enough space in the infoboard to add that sprite")
+        spaces = self.parse_element_spaces(spaces)
+        size        = self.get_element_size(spaces, scale)
+        text        = TextSprite(id_, (0, 0), size, self.resolution, text)
+        position    = self.get_element_position(spaces, text.rect.size)
+        text.set_position(position)
+        self.add_sprite(text)
+        self.taken_spaces += spaces
+    
+    def get_element_size(self, spaces, scale):
+        cols = self.params['cols']
+        width_element = self.element_size[0]*spaces%cols if spaces < cols else self.rect.width
+        height_element = math.ceil(spaces/cols)*self.element_size[1]
+        return (int(width_element*scale), int(height_element*scale))
+
+    def get_element_position(self, spaces, size):
+        cols = self.params['cols']
+        if self.taken_spaces%cols + spaces > cols: #Modifies taken spaces to align again
+            self.taken_spaces = int(math.ceil*(self.taken_spaces/cols)*cols)
+        x_axis = (self.taken_spaces%cols*self.element_size[0])   #Basic offset
+        if spaces >= 3:
+            x_axis += (self.rect.width-size[0])//2
+        else:
+            x_axis += ((spaces*self.element_size[0])-size[0])//2
+
+        y_axis = ((self.taken_spaces//cols)*self.element_size[1])\
+        + (((math.ceil(spaces/cols)*self.element_size[1])//2)-(size[1]//2))
+        return (x_axis, y_axis)
+
     #Modify to also add elements when there are elements inside already
     def add_and_adjust_sprites(self, *elements, scale=0.95):
         """Adds all the UIElements to the Infoboard, adjusting and placing them.
@@ -530,9 +563,11 @@ class InfoBoard (UIElement):
         rows, columns       = self.params['rows'], self.params['cols']
         size_per_element    = (self.rect.width//columns, self.rect.height//rows)
         for element in elements:
-            current_pos         = ((self.taken_spaces%columns)*size_per_element[0], (self.taken_spaces//columns)*size_per_element[1])
-            spaces = element[1]
-            if spaces > columns:    spaces = columns*math.ceil(spaces/columns) #Other type of occupied spaces are irreal
+            #(x_axis, y_axis)
+            #TODO CHECK IN CASE THERE ARE ALREADY ELEMENTS OCUPPYING UNEVEN SPACES 
+            current_pos         = ((self.taken_spaces%columns)*size_per_element[0],\
+                                    (self.taken_spaces//columns)*size_per_element[1])
+            spaces = self.parse_element_spaces(element[1])
             #if spaces%columns = 0 FULL WIDTH
             height_ratio = columns if spaces>=columns else spaces%columns
             ratios              = (height_ratio, math.ceil(spaces/columns)) #Width, height
@@ -545,49 +580,36 @@ class InfoBoard (UIElement):
             self.taken_spaces   += spaces 
             if self.taken_spaces > self.spaces: raise TooManyElementsException("Too many elements in infoboard") 
 
-class Dialog (UIElement):
-    #The default config of a subclass contains only those parameters that the superclass does not mention
-    __default_config = {'text'          : 'exit_dialog',
-                        'font'          : None,
-                        'max_font_size' : 50,
-                        'font_size'     : 0,
-                        'text_color'    : WHITE,
-                        'auto_center'   : True,
-                        'rows'          : 1,
-                        'cols'          : 1
+    def parse_element_spaces(self, spaces):
+        return self.params['cols']*math.ceil(spaces/self.params['cols']) if spaces > self.params['cols'] else spaces
+
+    def get_cols(self):
+        return self.params['cols']
+
+    def get_rows(self):
+        return self.params['rows']
+
+    def clear(self):
+        self.sprites.empty()
+
+class Dialog (InfoBoard):
+    __default_config = {'rows'  : 4,
+                        'cols'  : 2 
     }
 
-    def __init__(self, id_, user_event_id, element_position, element_size, canvas_size, *buttons, **params):
-        pass
-        '''self.buttons            = pygame.sprite.Group()
-        for button in buttons:  self.buttons.add(button)
+    def __init__(self, id_, user_event_id, element_position, element_size, canvas_size, *elements, **params):
+        UtilityBox.join_dicts(params, Dialog.__default_config)
         super().__init__(id_, user_event_id, element_position, element_size, canvas_size, **params)
+        Dialog.generate(self)
 
-    def generate(self, rect=None, generate_image=True):
-        super().generate(rect=rect, generate_image=False)
-        UtilityBox.check_missing_keys_in_dict(self.params, Dialog.__default_config)
-        #self.adjust_buttons()
-        self.pieces.add(UIElement.close_button(self.get_id()+"_close_exit_button", self.get_event_id(), self.rect))
-        self.params['font_size'] = Resizer.max_font_size(self.params['text'], self.rect.size, self.params['max_font_size'], self.params['font'])//2
-        self.add_text(self.params['text'], self.params['font'], self.rect, [x//1.5 for x in self.rect.size], self.params['max_font_size'], self.params['text_color'], 0)    
-        if self.params['auto_center']:  self.rect.topleft = [(x//2-y//2) for x, y in zip(self.get_canvas_size(), self.rect.size)]
-        if generate_image:    
-            self.image = self.generate_image() 
-            self.save_state()   
+    @staticmethod
+    def generate(self):
+        self.clear()
+        self.add_text_element(self.id+'_text', self.params['text'], self.params['rows']*self.params['cols']//2)
 
-    def update(self):
-        pass
-
-    def adjust_buttons(self, button_percentage=0.50):
-        if len(self.buttons.sprites()) > self.params['rows']*self.params['cols']:  
-            self.params['rows'] = math.ceil(len(self.buttons.sprites())//self.params['cols'])
-        size    = (self.rect.width//self.params['cols'], (self.rect.height*button_percentage)//self.params['rows'])     #Size per element
-        pos     = [0, 0]
-        buttons = self.buttons.sprites()
-        for i in range(0, self.params['rows']):
-            pos[0]  = 0
-            for j in range(0, self.params['cols']):
-                index = i*self.params['cols']+j
-                buttons[index].generate(pygame.Rect(size, pos), True)
-                pos[0] += size[0]
-            pos[1]  += size[1]'''
+    def add_button(self, spaces, text, command, user_event, scale=1, **button_params):
+        spaces = self.parse_element_spaces(spaces)
+        size = self.get_element_size(spaces, scale)
+        position = self.get_element_position(spaces, size)
+        button = ButtonAction(self.id+"_button", command, user_event, position, size, text=text, **button_params)
+        self.sprites.add(button)

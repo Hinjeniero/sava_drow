@@ -62,12 +62,14 @@ class Menu (Screen):
         UtilityBox.join_dicts(self.params, Menu.__default_config)
         if len(elements) > 0: 
             self.add_sprites(*elements)
-            self.active_sprite.add(self.sprites.sprites()[0])
-            self.adjust_sprites()
-            if self.params['do_align']:   
-                self.center_sprites(alignment=self.params['alignment'])
         else:   
             raise NotEnoughSpritesException("A menu needs at least one element prior to the generation.")
+        self.active_sprite.add(self.sprites.sprites()[0])
+        self.active_sprite.sprite.set_hover(True)
+        self.active_sprite.sprite.set_active(True)
+        self.adjust_sprites()
+        if self.params['do_align']:   
+            self.center_sprites(alignment=self.params['alignment'])
 
     def adjust_sprites(self):
         """Adjust the current sprites of the Menu, to make them all fit within the Screen.
@@ -127,13 +129,14 @@ class Menu (Screen):
             keys_pressed (:dict: pygame.keys):  Dict in which the keys are keys and the items booleans.
                                                 Said booleans will be True if that specific key was pressed.
         """
+        self.play_sound()
         if keys_pressed[pygame.K_DOWN]:         self.change_active_sprite(self.active_sprite_index+1)
         if keys_pressed[pygame.K_UP]:           self.change_active_sprite(self.active_sprite_index-1)
-        if keys_pressed[pygame.K_LEFT]:         self.active_sprite.sprite.hitbox_action('left_arrow')
-        if keys_pressed[pygame.K_RIGHT]:        self.active_sprite.sprite.hitbox_action('right_arrow')
+        if keys_pressed[pygame.K_LEFT]:         self.active_sprite.sprite.hitbox_action('left_arrow', -1)
+        if keys_pressed[pygame.K_RIGHT]:        self.active_sprite.sprite.hitbox_action('right_arrow', -1)
         if keys_pressed[pygame.K_RETURN]\
             or keys_pressed[pygame.K_KP_ENTER]\
-            or keys_pressed[pygame.K_SPACE]:    self.active_sprite.sprite.hitbox_action('do_action_or_add_value')
+            or keys_pressed[pygame.K_SPACE]:    self.active_sprite.sprite.hitbox_action('do_action_or_add_value', -1)
 
     def mouse_handler(self, event, mouse_buttons, mouse_movement, mouse_position):
         """Handles any mouse related pygame event. This allows for user interaction with the object.

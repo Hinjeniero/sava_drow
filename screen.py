@@ -7,7 +7,8 @@ Have the following classes, inheriting represented by tabs:
 __all__ = ['Screen', 'LoadingScreen']
 __version__ = '0.2'
 __author__ = 'David Flaity Pardo'
-
+from os import listdir
+from os.path import isfile, join, dirname
 import pygame
 from paths import IMG_FOLDER, SOUND_FOLDER
 from utility_box import UtilityBox
@@ -37,9 +38,10 @@ class Screen(object):
         sound (:obj: Sound):    Sound effect object.
     """
     __default_config = {'background_path'   : None,
-                        'music_path'        : SOUND_FOLDER+'\\music.mp3',
-                        'sound_path'        : SOUND_FOLDER+'\\option.ogg'
+                        'songs_paths'      : [SOUND_FOLDER+'\\default\\running90s.ogg'],
+                        'sound_path'        : SOUND_FOLDER+'\\default\\option.ogg'
     }
+    STATES = ['idle', 'stopped', 'cutscene']
 
     def __init__(self, id_, event_id, resolution, dialog=None, **params):
         """Screen constructor.
@@ -57,28 +59,69 @@ class Screen(object):
         self.dialog     = pygame.sprite.GroupSingle()
         self.resolution = resolution
         #Sprites
-        self.background = None
+        self.background = None  #Created in generate
         self.dialog     = dialog
         self.sprites    = pygame.sprite.OrderedUpdates()
         #Sound & Music
-        self.music      = None
-        self.sound      = None
+        self.songs      = []    #Created in generate, unused rn
+        self.song_index = 0
+        self.lengths    = []    #Created in generate
+        self.playback   = 0.00
+        self.sound      = None  #Created in generate
+        #State machine
+        self.state      = Screen.STATES[0]
         Screen.generate(self)
 
     @staticmethod
-    def generate(self):
+    def generate(self, load_songs=False):
         UtilityBox.join_dicts(self.params, Screen.__default_config.copy())
         self.background = Sprite(self.id+'_background', (0, 0), self.resolution,\
                                 self.resolution, keep_aspect_ratio=False, texture=self.params['background_path'])
-        if self.params['music_path']:
-            #self.music = 
-            pygame.mixer.music.load(self.params['music_path'])
-            #self.music.set_volume(0.5)
+        if self.params['songs_paths']:
+            for song_path in self.params['songs_paths']:
+                song = pygame.mixer.Sound(file=song_path)
+                self.lengths.append(song.get_length())
+                if load_songs:
+                    song.set_volume(0.25)
+                    self.songs.append(song)
+
         if self.params['sound_path']:
-            #TODO if sound none bad path
             self.sound = pygame.mixer.Sound(file=self.params['sound_path'])
-            self.sound.set_volume(0.5)
-        pygame.mixer.music.play() #TODO check how to change this to change everyt ime the screen changes
+            self.sound.set_volume(1)
+
+    def play_music(self, volume=0.25):
+        #self.music.play(-1)
+        pygame.mixer.music.load(self.params['songs_paths'][self.song_index])
+        pygame.mixer.music.set_volume(volume)
+        pygame.mixer.music.play(loops=-1, start=self.playback)   #Infinite loops
+
+    def stop_music(self):   #TODO what to do when playback > than song
+        length_played = pygame.mixer.music.get_pos()/1000
+        if self.playback+length_played > self.lengths[self.song_index]:
+            self.playback = 0
+        else:
+            self.playback += pygame.mixer.music.get_pos()/1000
+        pygame.mixer.music.stop()
+
+    def set_volume(self, volume, sound=False, music=True):
+        if sound:   self.sound.set_volume(volume)
+        if music:   
+            pygame.mixer.music.set_volume(volume)
+            for song in self.songs:
+                song.set_volume(volume)
+
+    def change_song(self, song_path):
+        index = 0
+        for song in self.params['songs_paths']:
+            if song_path in song:
+                pygame.mixer.music.load(song)
+                pygame.mixer.music.play(loops=-1)
+                self.song_index = index
+                self.playback = 0
+                return
+
+    def play_sound(self):
+        self.sound.play()
 
     def have_dialog(self):
         """Returns:
@@ -134,7 +177,25 @@ class Screen(object):
             if not isinstance(sprite, Sprite):
                 raise BadSpriteException('An object of type '+str(type(sprite))+' can"t be added to a screen.')
             self.sprites.add(sprite)
-    
+
+    def disable_sprite(self, *keywords):
+        sprite = None
+        count = 0
+        sprites = self.sprites.sprites()
+        for i in range(0, len(sprites)):
+            matches = len([True for j in keywords if j in sprites[i].id])
+            if matches > count:   
+                sprite = sprites[i]
+                count = matches
+        if count is not 0:
+            sprite.set_enabled(False)
+            return True
+        return False
+
+    def disable_all_sprites(self):
+        for sprite in self.sprites.sprites():
+            sprite.set_enabled(False)
+            
 class LoadingScreen(Screen):
     """LoadingScreen class. Inherits from Screen.
     Its purpose it's pretty obvious, being a middle screen until whatever

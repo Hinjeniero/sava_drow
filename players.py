@@ -53,9 +53,27 @@ class Player(object):
         self.name       = name
         self.order      = order
         self.characters = Character.factory(name, sprite_size, canvas_size, **character_params)
-        self.infoboard  = None #infoboard if infoboard else InfoBoard(self.name+'_infoboard') #TODO end this line
+        self.infoboard  = None  #Created in generate
         self.turn       = -1
-    
+        Player.generate(self, canvas_size, **character_params)
+
+    @staticmethod
+    def generate(self, canvas_size, **character_params):
+        infoboard = InfoBoard(self.name+'_infoboard', pygame.USEREVENT+3, (0, 0), (200, 600), canvas_size)
+        cols = infoboard.get_cols()
+        infoboard.add_text_element('player_name', self.name, cols)   #Player name
+        infoboard.add_text_element('player_number', 'id: '+str(self.order), cols)   #Player order
+        infoboard.add_text_element('player_chars', 'characters: '+str(len(self.characters)), cols)   #Player total ammount of chars
+        """infoboard.add_element('player_name', self.name, cols)   #Player ammount of pawns
+        infoboard.add_element('player_name', self.name, cols)   #Player ammount of warriors
+        infoboard.add_element('player_name', self.name, cols)   #Player ammount of wizards
+        infoboard.add_element('player_name', self.name, cols)   #Player ammount of priestesses
+        infoboard.add_element('player_name', self.name, cols)   #Player ammount of matronmothers"""
+        self.infoboard = infoboard
+
+    def draw(self, surface):
+        self.infoboard.draw(surface)
+
 class Character(AnimatedSprite):
     """Character class. Inherits from AnimatedSprite.
     Each moving character is a subclass or class related to this one.
@@ -119,7 +137,7 @@ class Character(AnimatedSprite):
                             Each path is composed by all the steps to take (all the cell indexes from start until destiny)."""
         result = Movements.get_movements(hash(movement_restriction))
         if not result:
-            self.set_paths(graph, distances, level_size, movement_restriction)
+            self.set_paths(graph, distances, movement_restriction, level_size)
             result = Movements.get_movements(hash(movement_restriction))
         return result[index]
     
@@ -444,25 +462,28 @@ class Pawn(Character):
             (:list: tuple): List with all the possible paths to take if Pawn is in the index cell.
                             Each path is composed by all the steps to take (all the cell indexes from start until destiny).
         """
-        unfiltered_paths = super().get_paths(graph, distances, current_map, index, level_size, Pawn.RESTRICTIONS)
+        unfiltered_paths = super().get_paths(graph, distances, current_map, index, level_size, Pawn.CHECK_ENEMIES)
         results = []
         enemies = {}
+        print(unfiltered_paths)
         for path in unfiltered_paths:
             #If the destiny has an enemy and there is no ally in the middle. Those don't need to be checked again
-            if current_map[path[-1]].has_enemy(self.my_master)\
-            and not any(path[i].has_ally(self.my_master) for i in range(1, len(path)-1)):
-                enemies[path[-1]] = distances[index][path[-1]]  #Distance to the enemy. The key is the destiny
+            if current_map[path[-1]].has_enemy(): #Checking if in the end of this path tehre is an enemy
+                if not any(path[i].has_ally() for i in range(1, len(path)-1)): #Checking if in the middle steps there is an ally
+                    enemies[path[-1]] = distances[index][path[-1]]  #Distance to the enemy. The key is the destiny index
         #Now, we compare the enemies distance to those that we would have in the 2-4 possible positions
-        for new_index in unfiltered_paths[index]:
-            for enemy_index, enemy_dist in enemies.items():
-                if distances[new_index][enemy_index] < enemy_dist:  
-                    results.append((index,new_index))
-                    break   #breaking the first loop
-        print("PAWN, CHECKING RESULTS FOR "+str(index)+" -> "+str(results))
+        destinies = super().get_paths(graph, distances, current_map, index, level_size, Pawn.RESTRICTIONS)
+        if len(enemies) > 0: #If there is an enemy in any of the direct paths.
+            for new_path in destinies:
+                for enemy_index, enemy_dist in enemies.items(): #We will check the new distances to enemies in each of the destinies
+                    if distances[new_path[-1]][enemy_index] < enemy_dist:  
+                        results.append((index, new_path[-1]))
+                        break   #breaking the first loop
+        else:
+            print("NOT ENEMIES FOUND IN THE PROXIMITIES")
+            for new_path in destinies:
+                results.append((index, new_path[-1])) #Copying herethe paths because I dont want to modify tuples from gods know where.
         return results
-
-    def get_enemies_distances(self, initial_pos, distances):
-        pass
             
 class MatronMother(Character):
     """MatronMother class. Inherits from Character.

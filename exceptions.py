@@ -39,6 +39,7 @@ class BadPlayerTypeException(Exception):
 
 class BadSpriteException(Exception):
     pass
+    
 class PlayerNameExistsException(Exception):
     pass
 
@@ -52,4 +53,7 @@ class InvalidSliderException(Exception):
     pass
 
 class NotEnoughSpritesException(Exception):
+    pass
+    
+class NotEnoughSpaceException(Exception):
     pass

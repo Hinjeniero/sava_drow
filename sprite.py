@@ -22,8 +22,11 @@ import gradients
 from colors import WHITE, RED, LIGHTGRAY, DARKGRAY
 from resizer import Resizer
 from utility_box import UtilityBox
-from exceptions import ShapeNotFoundException, NotEnoughSpritesException
+from exceptions import  ShapeNotFoundException, NotEnoughSpritesException,\
+                        BadSpriteException
 from logger import Logger as LOG
+from synch_dict import Dictionary
+from utility_box import UtilityBox
 
 #Global variables, read-only
 ANIMATION_INTERVAL      = (0.00, 1.00)  #Real interval
@@ -109,7 +112,7 @@ class Sprite(pygame.sprite.Sprite):
     @staticmethod
     def generate(self):
         self.image, self.overlay = Sprite.generate_surface(self.rect, **self.params)
-        self.mask = pygame.mask.from_surface(self.image) 
+        self.mask = pygame.mask.from_surface(self.image)
         self.real_rect =(tuple([x/y for x,y in zip(self.rect.topleft, self.resolution)]),\
                          tuple([x/y for x,y in zip(self.rect.size, self.resolution)]))
 
@@ -165,7 +168,7 @@ class Sprite(pygame.sprite.Sprite):
         self.rect       = pygame.rect.Rect(self.rect.topleft, size)
         self.real_rect  =  (self.real_rect[0], tuple([x/y for x,y in zip(size, self.resolution)]))
         self.regenerate_image()
-        LOG.log('debug', "Succesfully changed sprite ", self.id, " size to ",size)
+        #LOG.log('debug', "Succesfully changed sprite ", self.id, " size to ",size)
 
     def set_position(self, position):
         """Changes the position of the Sprite. Updates rect and real_rect.
@@ -174,7 +177,7 @@ class Sprite(pygame.sprite.Sprite):
         """
         self.rect       = pygame.rect.Rect(position, self.rect.size)
         self.real_rect  =  (tuple([x/y for x,y in zip(position, self.resolution)]), self.real_rect[1])
-        LOG.log('debug', "Succesfully changed sprite ",self.id, " position to ",position)
+        #LOG.log('debug', "Succesfully changed sprite ",self.id, " position to ",position)
 
     def set_rect(self, rect):
         """Sets a new Rect as the Sprite rect. Uses the rect.size and rect.topleft to change size and position
@@ -210,13 +213,13 @@ class Sprite(pygame.sprite.Sprite):
         Args:
             enabled (boolean): The value to set.
         """
-        if enabled and not self.enabled:      #Deactivating button
+        if not enabled and self.enabled:      #Deactivating button
             self.overlay.fill(DARKGRAY)
-            self.overlay.set_alpha(128)
+            self.overlay.set_alpha(180)
             self.image.blit(self.overlay, (0, 0))
             self.enabled        = False
             self.use_overlay    = False
-        elif not enabled and self.enabled:    #Activating button
+        elif enabled and not self.enabled:    #Activating button
             self.enabled        = True
             self.use_overlay    = True
             self.regenerate_image()         #Restoring image and overlay too
@@ -362,6 +365,8 @@ class TextSprite(Sprite):
 class AnimatedSprite(Sprite):
     """Class AnimatedSprite. Inherits from Sprite. Adds all the attributes and methods needed to support
     the funcionality of a classic animated sprite, like a list of surfaces and a setted delay to change between them.
+    General class sprites:
+
     Args:
         sprites (:list: pygame.Surface):    List of surfaces. Normal size.
         hover_sprites (:list: pygame.Surface):  List of surfaces to use when hover is True. Size is normal*2
@@ -373,6 +378,7 @@ class AnimatedSprite(Sprite):
         animation_index (int):  Current index in the sprites and mask lists.
     """
 
+    SPRITES_DICT = Dictionary()
     def __init__(self, id_, position, size, canvas_size, *sprite_list, sprite_folder=None, animation_delay=5, **image_params):
         """Constructor of AnimatedSprite. 
         Args:
@@ -430,18 +436,30 @@ class AnimatedSprite(Sprite):
         Only load images.
         Args:
             folder(str):    Path of the folder that contains the surfacess (images) to be loaded."""
-        sprite_images = [folder+'\\'+f for f in listdir(folder) if isfile(join(folder, f))]
-        for sprite_image in sprite_images:
-            if sprite_image.lower().endswith(('.png', '.jpg', '.jpeg', 'bmp')):
-                if sprite_image not in self.ids:
-                    self.ids.append(sprite_image.lower())
-                    self.add_sprite(pygame.image.load(sprite_image).convert_alpha())
+        for sprite_image in UtilityBox.get_all_files(folder, '.png', '.jpg', '.jpeg', 'bmp'):
+            if sprite_image not in self.ids:
+                self.ids.append(sprite_image.lower())
+                self.add_sprite(sprite_image)
 
-    def add_sprite(self, surface):
+    def add_sprite(self, image): #TODO update documentation
         """Check if a surface is loaded already, and adds it to the attribute lists.
         Args:
-            surface (:obj: pygame.Surface): Surface to add."""
-        if surface not in self.original_sprites:    self.original_sprites.append(surface)
+            surface (str||:obj: pygame.Surface): Surface to add, or path to the image to load."""
+        #CHECKING THE LUT SPRITE TABLES
+        if isinstance(image, str):
+            result = AnimatedSprite.SPRITES_DICT.get_item(image)
+            if result:
+                surface = result
+            else:
+                surface = pygame.image.load(image).convert_alpha()
+                AnimatedSprite.SPRITES_DICT.add_item(image, surface)
+        elif isinstance(image, pygame.Surface):
+            surface = image
+        else:
+            raise BadSpriteException("Can't add a sprite of type "+str(type(image)))
+        #Doing the actual work
+        if surface not in self.original_sprites:    
+            self.original_sprites.append(surface)
         self.resize_and_add_sprite(surface, self.rect.size)
 
     def resize_and_add_sprite(self, surface, size):
@@ -475,7 +493,8 @@ class AnimatedSprite(Sprite):
         """
         super().set_canvas_size(canvas_size)    #Changing the sprite size and position to the proper place
         self.clear_lists()
-        for surface in self.original_sprites:   self.resize_and_add_sprite(surface, self.rect.size)
+        for surface in self.original_sprites:   
+            self.resize_and_add_sprite(surface, self.rect.size)
 
     def clear_lists(self):
         """Empty all the internal lists of surfaces and masks, except the original ones (The non-resized).
@@ -494,7 +513,8 @@ class AnimatedSprite(Sprite):
             size(:tuple: int, int): New size of the surfaces."""
         super().set_size(size)
         self.clear_lists()
-        for surface in self.original_sprites:   self.resize_and_add_sprite(surface, size)
+        for surface in self.original_sprites:   
+            self.resize_and_add_sprite(surface, size)
         self.image = self.sprites[0]
 
     def current_sprite(self):

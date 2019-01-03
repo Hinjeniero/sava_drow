@@ -114,6 +114,7 @@ class Board(Screen):
         self.inter_paths    = pygame.sprite.GroupSingle()
         self.paths          = pygame.sprite.Group()
         self.characters     = pygame.sprite.OrderedUpdates()
+        self.current_player = None  #Created in add_player
 
         self.active_cell    = pygame.sprite.GroupSingle()
         self.last_cell      = pygame.sprite.GroupSingle()
@@ -157,6 +158,7 @@ class Board(Screen):
         self.generate_paths(offset=True)
         self.generate_inter_paths()
         self.generate_map_board()
+        self.generate_map('test')
         self.add_players(*players)
 
     def __adjust_number_of_paths(self):
@@ -416,13 +418,10 @@ class Board(Screen):
         """Generates the current map, changing enemies and allies of each Cell according to which player is asking.
         Args:
             to_who (str): Player who is asking.
-        Returns
-            (:list: Cell):  """ 
-        paths = []
-        for cell in self.cells: paths.append(cell.to_path(to_who))
-        paths.sort()
+        """ 
+        for cell in self.cells: 
+            self.current_map[cell.get_real_index()]=cell.to_path(to_who)
         LOG.log('DEBUG', "Generated the map of paths in ", self.id)
-        return paths
 
     def set_resolution(self, resolution):
         """Changes the resolution of the Screen. It also resizes all the Screen elements.
@@ -448,7 +447,8 @@ class Board(Screen):
         """
         self.total_players          += 1
         for player in self.players:
-            if name == player.name: raise PlayerNameExistsException("The player name "+name+" already exists")
+            if name == player.name: 
+                raise PlayerNameExistsException("The player name "+name+" already exists")
         self.__create_player(name, number, chars_size, **player_settings)
         LOG.log('DEBUG', "Queue'd player to load, total players ", self.total_players, " already loaded ", self.loaded_players)
 
@@ -491,38 +491,8 @@ class Board(Screen):
         Returns:
             (:obj:Threading.thread):    The thread doing the work. It is returned by the decorator."""
         self.__add_player(Player(player_name, player_number, chars_size, self.resolution, **player_params))
-
-    def __current_player(self):
-        """Returns:
-            (:obj: Player): Current playing player."""
-        return self.players[self.player_index]
-
-    def pickup_character(self):
-        """Picks up a character. Adds it to the drag char Group, and check in the LUT table
-        the movements that are possible taking into account the character restrictions.
-        Then it draws an overlay on the possible destinations."""
-        LOG.log('INFO', 'Selected ', self.active_char.sprite.id)
-        self.drag_char.add(self.active_char.sprite)
-        self.drag_char.sprite.set_selected(True)
-        self.last_cell.add(self.active_cell.sprite)
-        destinations = self.drag_char.sprite.get_paths(self.active_cell.sprite.index, self.current_map) 
-        for cell_index in destinations:
-            self.possible_dests.add(self.get_cell_by_real_index(cell_index[-1]))       
-
-    def drop_character(self):
-        """Drops a character. Deletes it from the drag char Group, and checks if the place in which
-        has been dropped is a possible destination. If it is, it drops the character in that cell.
-        Otherwise, the character will be returned to the last Cell it was in."""
-        LOG.log('INFO', 'Dropped ', self.drag_char.sprite.id)
-        self.drag_char.sprite.set_selected(False)
-        if self.possible_dests.has(self.active_cell.sprite):
-            LOG.log('debug', 'The choosen cell is possible, moving')
-            self.drag_char.sprite.rect.center = self.active_cell.sprite.center
-        else:
-            self.drag_char.sprite.rect.center = self.last_cell.sprite.center
-            LOG.log('debug', 'Cant move the char there')
-        self.drag_char.empty()
-        self.possible_dests.empty()
+        if not self.current_player:
+            self.current_player = self.players[self.player_index] 
 
     def draw(self, surface, hitboxes=False):
         """Draws the board and all of its elements on the surface.
@@ -549,6 +519,7 @@ class Board(Screen):
                 pygame.draw.circle(surface, WHITE, dest.center, dest.rect.width//2)
             self.characters.update()
             self.characters.draw(surface)
+            self.current_player.draw(surface)   #This draws the player's infoboard
             if hitboxes:    UtilityBox.draw_hitboxes(surface, self.cells.sprites())
         else:
             self.loading_screen.draw(surface)
@@ -587,25 +558,57 @@ class Board(Screen):
 
         if mouse_movement:
             mouse_sprite = UtilityBox.get_mouse_sprite()
+            #Checking collision with cells
             cell = pygame.sprite.spritecollideany(mouse_sprite, self.cells.sprites(), collided=pygame.sprite.collide_circle)
             if cell is not None and not self.active_cell.has(cell):  
                 cell.set_active(True)
                 cell.set_hover(True)
                 self.active_cell.add(cell)
                 LOG.log('debug', 'hovering cell ', self.active_cell.sprite.pos)
-            
+            #Checking collision with paths
             path = pygame.sprite.spritecollideany(mouse_sprite, self.paths.sprites(), collided=pygame.sprite.collide_mask)
-            if path is not None:    self.active_path.add(path)
-
-            char = pygame.sprite.spritecollideany(mouse_sprite, self.__current_player().characters.sprites(), collided=pygame.sprite.collide_mask)
-            if char is not None:    
+            if path is not None:    
+                self.active_path.add(path)
+            #Checking collision with characters
+            char = pygame.sprite.spritecollideany(mouse_sprite, self.current_player.characters.sprites(), collided=pygame.sprite.collide_mask)
+            if char is not None:  
                 char.set_hover(True)
                 self.active_char.add(char)
-            else:                   
+            else:               
                 if self.active_char.sprite is not None:
                     self.active_char.sprite.set_hover(False)
-                    self.active_char.sprite.set_active(False)
                     self.active_char.empty()
+
+    def pickup_character(self):
+        """Picks up a character. Adds it to the drag char Group, and check in the LUT table
+        the movements that are possible taking into account the character restrictions.
+        Then it draws an overlay on the possible destinations."""
+        print("PICKUP")
+        LOG.log('INFO', 'Selected ', self.active_char.sprite.id)
+        self.drag_char.add(self.active_char.sprite)
+        self.drag_char.sprite.set_selected(True)
+        self.drag_char.sprite.set_active(True)
+        self.last_cell.add(self.active_cell.sprite)
+        destinations = self.drag_char.sprite.get_paths( self.enabled_paths, self.distances, self.current_map,\
+                                                        self.active_cell.sprite.index, self.params['circles_per_lvl']) 
+        for cell_index in destinations:
+            self.possible_dests.add(self.get_cell_by_real_index(cell_index[-1]))       
+
+    def drop_character(self):
+        """Drops a character. Deletes it from the drag char Group, and checks if the place in which
+        has been dropped is a possible destination. If it is, it drops the character in that cell.
+        Otherwise, the character will be returned to the last Cell it was in."""
+        LOG.log('INFO', 'Dropped ', self.drag_char.sprite.id)
+        self.drag_char.sprite.set_selected(False)
+        self.drag_char.sprite.set_active(False)
+        if self.possible_dests.has(self.active_cell.sprite):
+            LOG.log('debug', 'The choosen cell is possible, moving')
+            self.drag_char.sprite.rect.center = self.active_cell.sprite.center
+        else:
+            self.drag_char.sprite.rect.center = self.last_cell.sprite.center
+            LOG.log('debug', 'Cant move the char there')
+        self.drag_char.empty()
+        self.possible_dests.empty()
 
     #TODO KEYBOARD DOES NOT CHANGE ACTIVE CELL, BUT ACTIVE CHARACTER. ACTIVE CELL CHANGE ONLY BY MOUSE
     def keyboard_handler(self, keys_pressed):

@@ -102,6 +102,11 @@ class Path(object):
         self.ally   = ally
         self.enemy  = enemy
     
+    def is_empty(self):
+        """Returns:
+            (boolean):  True if there are not characters in this index."""
+        return True if not self.ally and not self.enemy else False
+
     def get_lvl(self):
         """Returns:
             (int): Circumference of the corresponding Cell."""

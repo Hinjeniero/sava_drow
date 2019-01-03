@@ -16,6 +16,8 @@ import time
 import pygame
 import gradients
 import random 
+from os import listdir
+from os.path import isfile, join, dirname
 #External libraries
 from PAdLib import draw as Drawing
 #Selfmade libraries
@@ -52,7 +54,8 @@ def generate_mouse_sprite(size=(2, 2)):
     mouse_sprite.image = pygame.Surface(size)       #Creating surface of mouse sprite
     mouse_sprite.image.fill(BLACK)                  #Filling surface with BLACK solid color
     mouse_sprite.rect = pygame.Rect((0,0), size)    #Decoy sprite to check collision with mouse
-    mouse_sprite.mask = pygame.mask.from_surface(mouse_sprite.image)  #Creating the mask to check collisions with masks
+    mouse_sprite.mask = pygame.mask.Mask(size)      #Creating the mask to check collisions with masks
+    mouse_sprite.mask.fill()                        #Filling the mask with ones.
     return mouse_sprite      
 
 class UtilityBox (object):
@@ -226,3 +229,12 @@ class UtilityBox (object):
         if any(len(point)>2 for point in points): raise TypeError("The tuples must have 2 dimensions")
         point_list = tuple(point for point in points)
         if len(points)>1:   Drawing.bezier(surface, color, point_list, steps, width)
+
+    @staticmethod
+    def get_all_files(root_folder, *extensions):
+        result = []
+        files = [root_folder+'\\'+f for f in listdir(root_folder) if isfile(join(root_folder, f))]
+        for file in files:
+            if file.lower().endswith(tuple(extensions)):
+                result.append(file)
+        return result

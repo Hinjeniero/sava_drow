@@ -106,7 +106,6 @@ class Game(object):
                 for board in self.get_all_screens('board'):
                     board.set_volume(value, sound, music)
 
-
     def __set_resolution(self, resolution):
         self.pygame_params['display'] = pygame.display.set_mode(resolution)
         for screen in self.screens:     screen.set_resolution(resolution)
@@ -126,13 +125,45 @@ class Game(object):
                     self.esc_handler()
                 else:                                   
                     self.last_inputs.append(pygame.key.name(event.key))
-                    print(self.last_inputs)
+                    self.check_easter_eggs()
             elif event.type >= pygame.USEREVENT:        
                 self.user_command_handler(event)
             #For every event we will call this tho
             self.current_screen.event_handler(event, all_keys, all_mouse_buttons, mouse_movement=mouse_mvnt, mouse_pos=mouse_pos)
         return True
 
+    def process_last_input(self, event):
+        if len(self.last_inputs) > 20:
+            del self.last_inputs[0]
+        self.last_inputs.append(pygame.key.name(event.key))
+        self.check_easter_eggs()
+
+    def check_easter_eggs(self):
+        secret = None
+        easter_egg_sound = False
+        easter_egg_music = False
+        if len(self.last_inputs) > 3:
+            if 'acho' in ''.join(self.last_inputs).lower():
+                LOG.log('INFO', 'SECRET DISCOVERED! From now on all the sfxs on all the screens will be achos.')
+                secret = 'acho.ogg'
+                easter_egg_sound = True
+            elif 'running' in ''.join(self.last_inputs).lower():
+                LOG.log('INFO', 'SECRET DISCOVERED! From now on the music in all your screens will be Running in the 90s.')
+                secret = 'running90s.ogg'
+                easter_egg_music = True
+            elif 'dejavu' in ''.join(self.last_inputs).lower():
+                LOG.log('INFO', 'SECRET DISCOVERED! From now on the music in all your screens will be Dejavu!')
+                secret = 'dejavu.ogg'
+                easter_egg_music = True
+
+            if secret:
+                for screen in self.screens:
+                    if easter_egg_sound:
+                        screen.hijack_sound(SOUND_FOLDER+'\\secret\\'+secret)
+                    elif easter_egg_music:
+                        screen.hijack_music(SOUND_FOLDER+'\\secret\\'+secret)
+                    self.last_inputs.clear()
+            
     def esc_handler(self):
         LOG.log('DEBUG', "Pressed esc in ", self.current_screen.id)
         id_screen = self.current_screen.id.lower()
@@ -253,13 +284,6 @@ if __name__ == "__main__":
     buttonNumWarriors   = UIElement.factory('button_warriors', "ammount_warriors", pygame.USEREVENT, (0.15, 0.50), (0.80, 0.10), res, default_values=(1, 2, 4),   text="Number of warriors",  text_alignment = 'left')
     buttonNumWizards    = UIElement.factory('button_wizards', "ammount_wizards", pygame.USEREVENT, (0.15, 0.65), (0.80, 0.10), res, default_values=(1, 2),      text="Number of wizards",   text_alignment = 'left')
     buttonNumPriestess  = UIElement.factory('button_priestesses', "ammount_priestess", pygame.USEREVENT, (0.15, 0.80), (0.80, 0.10), res, default_values=(1, 1),      text="Number of priestess", text_alignment = 'left')
-    
-    '''#Exit dialog and its buttons
-    dialog_resolution   = tuple(x//2 for x in res)
-    dialog_position     = tuple(x//2-y//2 for x, y in zip(res, dialog_resolution))
-    acceptButton        = UIElement.factory("accept_notification",          pygame.USEREVENT+2, (0.00, 0.80), (0.50, 0.20), dialog_resolution, None, text="ACCEPT") #Could do this in realtion with the total canvas size
-    cancelButton        = UIElement.factory("cancel_notification",          pygame.USEREVENT+2, (0.50, 0.80), (0.50, 0.20), dialog_resolution, None, text="CANCEL")
-    exitDialog          = UIElement.factory("exit_main_menu_notification",  pygame.USEREVENT+2, dialog_position, dialog_resolution, res, None, acceptButton, cancelButton, text="Exit this shit?")'''
     
     #Sliders/buttons of the music and sound menu
     sliderMenuMusic     = UIElement.factory('slider_music_volume', "set_menu_music_volume", pygame.USEREVENT, (0.05, 0.10), (0.70, 0.10), res, default_values=(0.75), text="Menus music volume", slider_type='circular',\

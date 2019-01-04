@@ -109,6 +109,24 @@ class Screen(object):
         if music:
             self.music_chan.set_volume(volume)
 
+    def hijack_music(self, song_path):
+        """For easter eggs"""
+        song = pygame.mixer.Sound(file=song_path)
+        self.music_chan.play(song, loops=-1)
+        if not self.playing:
+            self.music_chan.pause()      
+
+    def add_sound(self, sound_path):
+        """For easter eggs"""
+        sound = pygame.mixer.Sound(file=sound_path)
+        self.sounds[sound_path] = sound
+
+    def hijack_sound(self, sound_path):
+        """For easter eggs, substitutes everything"""
+        sound = pygame.mixer.Sound(file=sound_path)
+        for key in self.sounds.keys():
+            self.sounds[key] = sound
+
     def change_song(self, song_path):
         index = 0
         for song in self.params['songs_paths']:
@@ -120,7 +138,7 @@ class Screen(object):
                     self.music_chan.pause()
                 self.song_index = index
                 return
-        LOG.log('debug', 'Didn`t find the ', song_path,' song in ', self.id)
+        LOG.log('debug', 'Didn`t find ', song_path,' in ', self.id)
 
     def play_sound(self, sound_id):
         for sound in self.sounds.keys():

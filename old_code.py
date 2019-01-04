@@ -1590,3 +1590,13 @@ class Dialog (InfoBoard):
         if generate_image:    
             self.image = self.generate_image() 
             self.save_state()
+
+        #OLD SCREEn
+
+   def stop_music(self):   #TODO what to do when playback > than song
+        length_played = pygame.mixer.music.get_pos()/1000
+        if self.playback+length_played > self.lengths[self.song_index]:
+            self.playback = 0
+        else:
+            self.playback += pygame.mixer.music.get_pos()/1000
+        pygame.mixer.music.stop()

@@ -129,7 +129,7 @@ class Menu (Screen):
             keys_pressed (:dict: pygame.keys):  Dict in which the keys are keys and the items booleans.
                                                 Said booleans will be True if that specific key was pressed.
         """
-        self.play_sound()
+        self.play_sound('key')
         if keys_pressed[pygame.K_DOWN]:         self.change_active_sprite(self.active_sprite_index+1)
         if keys_pressed[pygame.K_UP]:           self.change_active_sprite(self.active_sprite_index-1)
         if keys_pressed[pygame.K_LEFT]:         self.active_sprite.sprite.hitbox_action('left_arrow', -1)

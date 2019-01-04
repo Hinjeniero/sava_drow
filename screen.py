@@ -15,6 +15,7 @@ from utility_box import UtilityBox
 from ui_element import TextSprite
 from sprite import Sprite, AnimatedSprite
 from exceptions import BadSpriteException
+from logger import Logger as LOG
 
 class Screen(object):
     """Screen class. Controls an entire 'screen' (like a desktop).
@@ -38,8 +39,8 @@ class Screen(object):
         sound (:obj: Sound):    Sound effect object.
     """
     __default_config = {'background_path'   : None,
-                        'songs_paths'      : [SOUND_FOLDER+'\\default\\running90s.ogg'],
-                        'sound_path'        : SOUND_FOLDER+'\\default\\option.ogg'
+                        'songs_paths'       : [],
+                        'sounds_paths'      : [SOUND_FOLDER+'\\common\\keypressed.ogg']
     }
     STATES = ['idle', 'stopped', 'cutscene']
 
@@ -64,64 +65,70 @@ class Screen(object):
         self.sprites    = pygame.sprite.OrderedUpdates()
         #Sound & Music
         self.songs      = []    #Created in generate, unused rn
+        self.music_chan = None  #Created in generate
         self.song_index = 0
-        self.lengths    = []    #Created in generate
-        self.playback   = 0.00
-        self.sound      = None  #Created in generate
+
+        self.sounds     = {}    #Created in generate
+        self.sound_chan = None  #Created in generate
+        self.playing    = False #Playing music?
         #State machine
         self.state      = Screen.STATES[0]
         Screen.generate(self)
 
     @staticmethod
-    def generate(self, load_songs=False):
+    def generate(self):
         UtilityBox.join_dicts(self.params, Screen.__default_config.copy())
         self.background = Sprite(self.id+'_background', (0, 0), self.resolution,\
                                 self.resolution, keep_aspect_ratio=False, texture=self.params['background_path'])
         if self.params['songs_paths']:
+            self.music_chan = UtilityBox.get_sound_channel()
+            self.music_chan.set_volume(0.75)
             for song_path in self.params['songs_paths']:
-                song = pygame.mixer.Sound(file=song_path)
-                self.lengths.append(song.get_length())
-                if load_songs:
-                    song.set_volume(0.25)
-                    self.songs.append(song)
+                self.songs.append(song_path)
+        if self.params['sounds_paths']:   #We load the sounds objects cuz sounds are way lighter than songs
+            self.sound_chan = UtilityBox.get_sound_channel()
+            self.sound_chan.set_volume(0.75)
+            for sound_path in self.params['sounds_paths']:
+                self.sounds[sound_path] = pygame.mixer.Sound(file=sound_path)
 
-        if self.params['sound_path']:
-            self.sound = pygame.mixer.Sound(file=self.params['sound_path'])
-            self.sound.set_volume(1)
-
-    def play_music(self, volume=0.25):
-        #self.music.play(-1)
-        pygame.mixer.music.load(self.params['songs_paths'][self.song_index])
-        pygame.mixer.music.set_volume(volume)
-        pygame.mixer.music.play(loops=-1, start=self.playback)   #Infinite loops
-
-    def stop_music(self):   #TODO what to do when playback > than song
-        length_played = pygame.mixer.music.get_pos()/1000
-        if self.playback+length_played > self.lengths[self.song_index]:
-            self.playback = 0
+    def play_music(self):
+        if self.music_chan.get_busy():
+            self.music_chan.unpause()
         else:
-            self.playback += pygame.mixer.music.get_pos()/1000
-        pygame.mixer.music.stop()
+            song = pygame.mixer.Sound(file=self.songs[self.song_index])
+            self.music_chan.play(song, loops=-1)
+        self.playing = True
+
+    def pause_music(self):
+        self.music_chan.pause()
+        self.playing = False
 
     def set_volume(self, volume, sound=False, music=True):
-        if sound:   self.sound.set_volume(volume)
-        if music:   
-            pygame.mixer.music.set_volume(volume)
-            for song in self.songs:
-                song.set_volume(volume)
+        if sound:   
+            self.sound_chan.set_volume(volume)
+        if music:
+            self.music_chan.set_volume(volume)
 
     def change_song(self, song_path):
         index = 0
         for song in self.params['songs_paths']:
             if song_path in song:
-                pygame.mixer.music.load(song)
-                pygame.mixer.music.play(loops=-1)
+                LOG.log('debug', 'Changing song to ', song,' in ', self.id)
+                song = pygame.mixer.Sound(file=song)
+                self.music_chan.play(song, loops=-1)
+                if not self.playing:
+                    self.music_chan.pause()
                 self.song_index = index
-                self.playback = 0
                 return
+        LOG.log('debug', 'Didn`t find the ', song_path,' song in ', self.id)
 
-    def play_sound(self):
-        self.sound.play()
+    def play_sound(self, sound_id):
+        for sound in self.sounds.keys():
+            if sound_id in sound or sound in sound_id:
+                self.sound_chan.play(self.sounds[sound])
+                return True
+        LOG.log('debug', 'Didn`t find a sound that matched with ',sound_id)
+        return False
 
     def have_dialog(self):
         """Returns:

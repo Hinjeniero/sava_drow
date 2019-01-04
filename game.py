@@ -33,8 +33,7 @@ pygame.mouse.set_visible(True)
 pygame.display.set_caption('sava drow')
 #flags = pygame.DOUBLEBUF #| FULLSCREEN
 pygame.display.set_mode((1280, 720), pygame.DOUBLEBUF)
-CHANGES_WERE_MADE   = False
-
+CHANGES_WERE_MADE   = False      
 class Game(object):
     def __init__(self, *screens, resolution=(1280, 720), mouse_visible=True, fps=60, show_fps=True, title="Game"):
         self.pygame_params  = {}    #Created in Game.generate()
@@ -77,15 +76,37 @@ class Game(object):
 
     def change_pygame_var(self, command, value):
         LOG.log('DEBUG', "Requested change of pygame params: ", command, "->", value)
+        SOUND_KEYWORDS = ['sound', 'music', 'song']
         global CHANGES_WERE_MADE
         CHANGES_WERE_MADE   = True
         cmd                 = command.lower()
         if len(cmd) <= 0:           raise EmptyCommandException("Received an empty command string")
         elif 'fps' in cmd:          self.pygame_params['clock'].tick(value)
         elif 'resolution' in cmd:   self.__set_resolution(value)
-        elif 'music' in cmd:        pass
-        elif 'sound' in cmd:        pass
-    
+        elif any(kw in command for kw in SOUND_KEYWORDS):
+            self.sound_change_handler(cmd, value)
+
+    def sound_change_handler(self, command, value):
+        #Getting the affected screens:
+        sound = True if 'sound' in command else False
+        music = True if 'song' in command or 'music' in command else False
+        if 'change' in command:
+            if music:
+                if 'menu' in command:
+                    for menu in self.get_all_screens('menu'):
+                        menu.change_song(value)
+                if 'board' in command:
+                    for board in self.get_all_screens('board'):
+                        board.change_song(value)
+        if 'volume' in command:
+            if 'menu' in command:
+                for menu in self.get_all_screens('menu'):
+                    menu.set_volume(value, sound, music)
+            if 'board' in command:
+                for board in self.get_all_screens('board'):
+                    board.set_volume(value, sound, music)
+
+
     def __set_resolution(self, resolution):
         self.pygame_params['display'] = pygame.display.set_mode(resolution)
         for screen in self.screens:     screen.set_resolution(resolution)
@@ -140,6 +161,13 @@ class Game(object):
                 count = matches
         return screen
 
+    def get_all_screens(self, keyword):
+        screens = []
+        for screen in self.screens:
+            if keyword in screen.id:
+                screens.append(screen) 
+        return screens
+
     def change_screen(self, *keywords):
         LOG.log('DEBUG', "Requested change of screen to ", keywords)
         count = 0
@@ -152,7 +180,7 @@ class Game(object):
         if count is 0:  
             raise ScreenNotFoundException("A screen with those keywords wasn't found")
         else:          
-            self.current_screen.stop_music()
+            self.current_screen.pause_music()
             self.current_screen = self.screens[new_index]
             self.current_screen.play_music() 
             LOG.log('DEBUG', "Changed to  ", self.current_screen.id)
@@ -169,16 +197,9 @@ class Game(object):
         USEREVENT+3 when NOTIFICATIONS: popups and shit
         USEREVENT+4:                    Signal that forces drawing.
         """
-        print("USER COMMANd")
-        print(event.__dict__)
-        print("USERVENT "+str(pygame.USEREVENT))
-        print(event.type)
         if event.type < pygame.USEREVENT:       
             return False
         elif event.type is pygame.USEREVENT:
-            print(event.command)
-            print(event.value)
-            print("-----")    
             self.change_pygame_var(event.command, event.value)
         elif event.type is pygame.USEREVENT+1:
             self.change_screen(*event.command.split('_'))
@@ -206,6 +227,7 @@ class Game(object):
         except Exception as exc:
             raise exc
 
+#TODO START USING YIELD, maybe?
 #List of (ids, text)
 if __name__ == "__main__":
     resolutions = ((1280, 720), (1366, 768), (1600, 900), (1920, 1080), (640, 480), (800, 600), (1024, 768), (1280, 1024))
@@ -240,25 +262,27 @@ if __name__ == "__main__":
     exitDialog          = UIElement.factory("exit_main_menu_notification",  pygame.USEREVENT+2, dialog_position, dialog_resolution, res, None, acceptButton, cancelButton, text="Exit this shit?")'''
     
     #Sliders/buttons of the music and sound menu
-    sliderMenuMusic     = UIElement.factory('slider_music_volume', "change_menu_music_volume", pygame.USEREVENT, (0.05, 0.10), (0.70, 0.10), res, default_values=(0.75), text="Menus music volume", slider_type='circular',\
+    sliderMenuMusic     = UIElement.factory('slider_music_volume', "set_menu_music_volume", pygame.USEREVENT, (0.05, 0.10), (0.70, 0.10), res, default_values=(0.75), text="Menus music volume", slider_type='circular',\
                         gradient = (RED, BLACK), slider_start_color = RED, slider_end_color = WHITE)
-    sliderMenuSounds    = UIElement.factory('slider_sound_volume', "change_menu_sound_volume", pygame.USEREVENT, (0.05, 0.25), (0.70, 0.10), res, default_values=(0.75), text="Menus sound volume", slider_type='elliptical')
-    sliderBoardMusic    = UIElement.factory('slider_board_music_volume', "change_board_music_volume", pygame.USEREVENT, (0.05, 0.40), (0.70, 0.10), res, default_values=(0.75), text="Board music volume", slider_type='rectangular')
-    sliderBoardSounds   = UIElement.factory('slider_board_sound_volume', "change_board_sound_volume", pygame.USEREVENT, (0.05, 0.55), (0.70, 0.10), res, default_values=(0.75), text="Board sound volume")
-    buttonBoardSongs    = UIElement.factory('button_board_song', 'change_board_song', pygame.USEREVENT, (0.05, 0.70), (0.70, 0.10), res, default_values=board_cropped_songs, text='Selected board song →')
-    buttonMenusSongs    = UIElement.factory('button_menu_song', 'change_menu_song', pygame.USEREVENT, (0.05, 0.85), (0.70, 0.10), res, default_values=menu_cropped_songs, text='Selected menus song →')
+    sliderMenuSounds    = UIElement.factory('slider_sound_volume', "set_menu_sound_volume", pygame.USEREVENT, (0.05, 0.25), (0.70, 0.10), res, default_values=(0.75), text="Menus sound volume", slider_type='elliptical')
+    sliderBoardMusic    = UIElement.factory('slider_board_music_volume', "set_board_music_volume", pygame.USEREVENT, (0.05, 0.40), (0.70, 0.10), res, default_values=(0.75), text="Board music volume", slider_type='rectangular')
+    sliderBoardSounds   = UIElement.factory('slider_board_sound_volume', "set_board_sound_volume", pygame.USEREVENT, (0.05, 0.55), (0.70, 0.10), res, default_values=(0.75), text="Board sound volume")
+    buttonBoardSongs    = UIElement.factory('button_board_song', 'change_board_song', pygame.USEREVENT, (0.05, 0.70), (0.70, 0.10), res, default_values=board_cropped_songs,\
+                                            text='Selected board song', text_proportion = 0.50)
+    buttonMenusSongs    = UIElement.factory('button_menu_song', 'change_menu_song', pygame.USEREVENT, (0.05, 0.85), (0.70, 0.10), res, default_values=menu_cropped_songs,\
+                                            text='Selected menus song', text_proportion = 0.50)
     
     #Create Menus and board
     main_menu   = Menu( "main_menu", pygame.USEREVENT, res, buttonStart, buttonParamsMenu, buttonSoundMenu,\
-                        background_path=IMG_FOLDER+'\\background.jpg', music_paths=menu_songs)
+                        background_path=IMG_FOLDER+'\\background.jpg', songs_paths=menu_songs)
     sound_menu  = Menu( "menu_volume_music", pygame.USEREVENT+1, res, sliderMenuMusic, sliderMenuSounds,\
                         sliderBoardMusic, sliderBoardSounds, buttonBoardSongs, buttonMenusSongs,\
-                        background_path=IMG_FOLDER+'\\background.jpg', music_paths=menu_songs)
+                        background_path=IMG_FOLDER+'\\background.jpg', songs_paths=menu_songs)
     params_menu = Menu( "menu_params_config",pygame.USEREVENT+1, res, buttonRes, buttonCountPlayers, buttonNumPawns,\
                         buttonNumWarriors, buttonNumWizards, buttonNumPriestess,\
-                        background_path=IMG_FOLDER+'\\background.jpg', music_paths=menu_songs)
+                        background_path=IMG_FOLDER+'\\background.jpg', songs_paths=menu_songs)
 
-    main_board = Board("main_board", pygame.USEREVENT+7, res, background_path = IMG_FOLDER+'\\board_2.jpg', music_paths=board_songs)
+    main_board = Board("main_board", pygame.USEREVENT+7, res, background_path = IMG_FOLDER+'\\board_2.jpg', songs_paths=board_songs)
 
     character_settings = {'pawn':{'number': 1, 'aliases':{'pickup': 'running'}},
                         'warrior':{'number': 0, 'aliases':{'pickup': 'run'}},

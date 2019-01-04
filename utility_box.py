@@ -18,6 +18,7 @@ import gradients
 import random 
 from os import listdir
 from os.path import isfile, join, dirname
+from wrapt import synchronized
 #External libraries
 from PAdLib import draw as Drawing
 #Selfmade libraries
@@ -66,7 +67,7 @@ class UtilityBox (object):
     """
     MOUSE_SPRITE        = generate_mouse_sprite()
     EUCLIDEAN_DISTANCES = euclidean_generator()
-
+    CHANNEL_SOUND_INDEX = 0
     @staticmethod
     def draw_hitboxes(surface, *sprites, color=RED, width=2):
         """Draw a squared-shaped border surrounding the input sprites.
@@ -238,3 +239,12 @@ class UtilityBox (object):
             if file.lower().endswith(tuple(extensions)):
                 result.append(file)
         return result
+
+    @synchronized
+    @staticmethod
+    def get_sound_channel():
+        if UtilityBox.CHANNEL_SOUND_INDEX is pygame.mixer.get_num_channels():
+            pygame.mixer.set_num_channels(pygame.mixer.get_num_channels()+1)
+        channel = pygame.mixer.Channel(UtilityBox.CHANNEL_SOUND_INDEX)
+        UtilityBox.CHANNEL_SOUND_INDEX += 1
+        return channel

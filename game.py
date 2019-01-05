@@ -19,7 +19,7 @@ from screen import Screen
 #Selfmade Libraries
 from board import Board
 from menu import Menu
-from ui_element import UIElement, TextSprite, InfoBoard
+from ui_element import UIElement, TextSprite, InfoBoard, Dialog
 from colors import RED, BLACK, WHITE
 from paths import IMG_FOLDER, SOUND_FOLDER
 from logger import Logger as LOG
@@ -118,18 +118,17 @@ class Game(object):
         mouse_mvnt          = (pygame.mouse.get_rel() != (0,0)) #True if get_rel returns non zero vaalues
 
         for event in events:
+            #For every event we will call this
+            self.current_screen.event_handler(event, all_keys, all_mouse_buttons, mouse_movement=mouse_mvnt, mouse_pos=mouse_pos)
             if event.type == pygame.QUIT:               
                 return False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:        
                     self.esc_handler()
                 else:                                   
-                    self.last_inputs.append(pygame.key.name(event.key))
-                    self.check_easter_eggs()
+                    self.process_last_input(event)
             elif event.type >= pygame.USEREVENT:        
                 self.user_command_handler(event)
-            #For every event we will call this tho
-            self.current_screen.event_handler(event, all_keys, all_mouse_buttons, mouse_movement=mouse_mvnt, mouse_pos=mouse_pos)
         return True
 
     def process_last_input(self, event):
@@ -157,6 +156,7 @@ class Game(object):
                 easter_egg_music = True
 
             if secret:
+                self.current_screen.play_sound('secret')
                 for screen in self.screens:
                     if easter_egg_sound:
                         screen.hijack_sound(SOUND_FOLDER+'\\secret\\'+secret)
@@ -179,8 +179,10 @@ class Game(object):
         else:                   self.change_screen("main", "menu")
 
     def __esc_main_menu(self):
-        if self.current_screen.have_dialog() and not self.current_screen.dialog_is_active():        self.current_screen.show_dialog()   
-        elif self.current_screen.have_dialog() and self.current_screen.dialog_is_active():  self.current_screen.hide_dialog()  
+        if self.current_screen.have_dialog() and not self.current_screen.dialog_active():
+            self.current_screen.show_dialog()   
+        elif self.current_screen.have_dialog() and self.current_screen.dialog_active():  
+            self.current_screen.hide_dialog()  
 
     def get_screen(self, *keywords):
         screen = None
@@ -208,13 +210,13 @@ class Game(object):
             if matches > count:   
                 count = matches
                 new_index = i
-        if count is 0:  
-            raise ScreenNotFoundException("A screen with those keywords wasn't found")
-        else:          
+        if count is not 0:
             self.current_screen.pause_music()
             self.current_screen = self.screens[new_index]
-            self.current_screen.play_music() 
+            self.current_screen.play_music()
             LOG.log('DEBUG', "Changed to  ", self.current_screen.id)
+        else:  
+            raise ScreenNotFoundException('A screen with any of the keywords'+ str(keywords)+'wasn`t found')
 
     def disable_params(self):
         #self.get_screen('main', 'menu').disable_sprite('params', 'button')
@@ -259,7 +261,6 @@ class Game(object):
             raise exc
 
 #TODO START USING YIELD, maybe?
-#List of (ids, text)
 if __name__ == "__main__":
     resolutions = ((1280, 720), (1366, 768), (1600, 900), (1920, 1080), (640, 480), (800, 600), (1024, 768), (1280, 1024))
     pygame.display.set_mode(resolutions[0])
@@ -295,26 +296,31 @@ if __name__ == "__main__":
                                             text='Selected board song', text_proportion = 0.50)
     buttonMenusSongs    = UIElement.factory('button_menu_song', 'change_menu_song', pygame.USEREVENT, (0.05, 0.85), (0.70, 0.10), res, default_values=menu_cropped_songs,\
                                             text='Selected menus song', text_proportion = 0.50)
-    
+
+    #Dialog
+    dialog = Dialog('dialog', pygame.USEREVENT, (500, 200), res, text="You sure you want to exit?")
+    dialog.add_button(dialog.get_cols()//2, 'ok', 'whatever', gradient=((0, 0, 255, 255),(128, 128, 255, 255)))
+
     #Create Menus and board
     main_menu   = Menu( "main_menu", pygame.USEREVENT, res, buttonStart, buttonParamsMenu, buttonSoundMenu,\
-                        background_path=IMG_FOLDER+'\\background.jpg', songs_paths=menu_songs)
+                        background_path=IMG_FOLDER+'\\background.jpg', songs_paths=menu_songs, dialog=dialog)
     sound_menu  = Menu( "menu_volume_music", pygame.USEREVENT+1, res, sliderMenuMusic, sliderMenuSounds,\
                         sliderBoardMusic, sliderBoardSounds, buttonBoardSongs, buttonMenusSongs,\
-                        background_path=IMG_FOLDER+'\\background.jpg', songs_paths=menu_songs)
+                        background_path=IMG_FOLDER+'\\background.jpg')
     params_menu = Menu( "menu_params_config",pygame.USEREVENT+1, res, buttonRes, buttonCountPlayers, buttonNumPawns,\
                         buttonNumWarriors, buttonNumWizards, buttonNumPriestess,\
-                        background_path=IMG_FOLDER+'\\background.jpg', songs_paths=menu_songs)
+                        background_path=IMG_FOLDER+'\\background.jpg')
 
     main_board = Board("main_board", pygame.USEREVENT+7, res, background_path = IMG_FOLDER+'\\board_2.jpg', songs_paths=board_songs)
 
     character_settings = {'pawn':{'number': 1, 'aliases':{'pickup': 'running'}},
-                        'warrior':{'number': 0, 'aliases':{'pickup': 'run'}},
+                        'warrior':{'number': 1, 'aliases':{'pickup': 'run'}},
                         'wizard':{'number': 0, 'aliases':{'pickup': 'pick'}},
                         'priestess':{'number': 0, 'aliases':{'pickup': 'run'}},
                         'matron_mother':{'number': 0, 'path': IMG_FOLDER+'\\priestess', 'aliases':{'pickup': 'pick'}},
     }
-    main_board.create_player("Zippotudo", 0, (100, 100), **character_settings)
+    main_board.create_player("Zippotudo", 0, (200, 200), **character_settings)
+    main_board.create_player("Rabudo", 1, (200, 200), **character_settings)
     #TODO EACH PLAYERS GETS HIS INFOBOARD
     game = Game(main_menu, sound_menu, params_menu, main_board, title="Sava Drow", resolution=res)
     game.start()

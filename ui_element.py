@@ -516,6 +516,7 @@ class InfoBoard (UIElement):
                 raise InvalidUIElementException("Elements of infoboard must follow the [(element, spaces_to_occupy), ...] scheme.")
         #Test passed
         self.add_and_adjust_sprites(*elements)
+        UtilityBox.draw_grid(self.image, self.params['rows'], self.params['cols'])
     
     def add_text_element(self, id_, text, spaces, scale=0.95):
         if spaces > self.spaces-self.taken_spaces:
@@ -530,14 +531,14 @@ class InfoBoard (UIElement):
     
     def get_element_size(self, spaces, scale):
         cols = self.params['cols']
-        width_element = self.element_size[0]*spaces%cols if spaces < cols else self.rect.width
+        width_element = spaces%cols*self.element_size[0] if spaces < cols else self.rect.width
         height_element = math.ceil(spaces/cols)*self.element_size[1]
         return (int(width_element*scale), int(height_element*scale))
 
     def get_element_position(self, spaces, size):
         cols = self.params['cols']
         if self.taken_spaces%cols + spaces > cols: #Modifies taken spaces to align again
-            self.taken_spaces = int(math.ceil*(self.taken_spaces/cols)*cols)
+            self.taken_spaces = int(math.ceil(self.taken_spaces/cols)*cols)
         x_axis = (self.taken_spaces%cols*self.element_size[0])   #Basic offset
         if spaces >= 3:
             x_axis += (self.rect.width-size[0])//2
@@ -559,7 +560,6 @@ class InfoBoard (UIElement):
                                                     The tuple follows the schema (UIElement, infoboard spaces taken).
             scale (float):  Percent of the spaces that the Sprite will take. Default is 0.95.
         """
-        UtilityBox.draw_grid(self.image, 6, 3)
         rows, columns       = self.params['rows'], self.params['cols']
         size_per_element    = (self.rect.width//columns, self.rect.height//rows)
         for element in elements:
@@ -591,25 +591,28 @@ class InfoBoard (UIElement):
 
     def clear(self):
         self.sprites.empty()
-
+        
 class Dialog (InfoBoard):
-    __default_config = {'rows'  : 4,
-                        'cols'  : 2 
+    __default_config = {'rows'  : 3,
+                        'cols'  : 4 
     }
 
-    def __init__(self, id_, user_event_id, element_position, element_size, canvas_size, *elements, **params):
+    def __init__(self, id_, user_event_id, element_size, canvas_size, *elements, **params):
         UtilityBox.join_dicts(params, Dialog.__default_config)
-        super().__init__(id_, user_event_id, element_position, element_size, canvas_size, **params)
+        super().__init__(id_, user_event_id, (0, 0), element_size, canvas_size, **params)
         Dialog.generate(self)
 
     @staticmethod
     def generate(self):
-        self.clear()
-        self.add_text_element(self.id+'_text', self.params['text'], self.params['rows']*self.params['cols']//2)
+        self.clear()    #To delete the text fromn the button
+        position = tuple(x//2 - y//2 for x, y in zip(self.resolution, self.rect.size))
+        self.set_position(position)
+        self.add_text_element(self.id+'_text', self.params['text'], (self.params['rows']*self.params['cols'])-self.params['cols'])
 
-    def add_button(self, spaces, text, command, user_event, scale=1, **button_params):
+    def add_button(self, spaces, text, command, scale=1, **button_params):
         spaces = self.parse_element_spaces(spaces)
         size = self.get_element_size(spaces, scale)
+        print(size)
         position = self.get_element_position(spaces, size)
-        button = ButtonAction(self.id+"_button", command, user_event, position, size, text=text, **button_params)
-        self.sprites.add(button)
+        button = ButtonAction(self.id+"_button", command, self.event_id, position, size, self.rect.size, text=text, **button_params)
+        self.add_sprite(button)

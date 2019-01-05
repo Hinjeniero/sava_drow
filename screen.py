@@ -16,6 +16,7 @@ from ui_element import TextSprite
 from sprite import Sprite, AnimatedSprite
 from exceptions import BadSpriteException
 from logger import Logger as LOG
+from decorators import run_async
 
 class Screen(object):
     """Screen class. Controls an entire 'screen' (like a desktop).
@@ -39,11 +40,12 @@ class Screen(object):
         sound (:obj: Sound):    Sound effect object.
     """
     __default_config = {'background_path'   : None,
-                        'songs_paths'       : [],
-                        'sounds_paths'      : [SOUND_FOLDER+'\\common\\keypressed.ogg']
+                        'songs_paths'       : []
     }
     STATES = ['idle', 'stopped', 'cutscene']
-
+    SOUND_CHANNELS_AMMOUNT = 8  #Sound channels are shared between Screens
+    SOUND_CHANNELS = []
+    SOUNDS_FOLDER = SOUND_FOLDER+"\\common\\"
     def __init__(self, id_, event_id, resolution, dialog=None, **params):
         """Screen constructor.
         Args:
@@ -64,12 +66,11 @@ class Screen(object):
         self.dialog     = dialog
         self.sprites    = pygame.sprite.OrderedUpdates()
         #Sound & Music
-        self.songs      = []    #Created in generate, unused rn
+        self.songs      = []    #Created in generate
         self.music_chan = None  #Created in generate
         self.song_index = 0
-
+        self.sound_vol  = 0     #Created in generate
         self.sounds     = {}    #Created in generate
-        self.sound_chan = None  #Created in generate
         self.playing    = False #Playing music?
         #State machine
         self.state      = Screen.STATES[0]
@@ -85,47 +86,50 @@ class Screen(object):
             self.music_chan.set_volume(0.75)
             for song_path in self.params['songs_paths']:
                 self.songs.append(song_path)
-        if self.params['sounds_paths']:   #We load the sounds objects cuz sounds are way lighter than songs
-            self.sound_chan = UtilityBox.get_sound_channel()
-            self.sound_chan.set_volume(0.75)
-            for sound_path in self.params['sounds_paths']:
-                self.sounds[sound_path] = pygame.mixer.Sound(file=sound_path)
-
+        self.sound_vol = 0.75
+        for sound in UtilityBox.get_all_files(Screen.SOUNDS_FOLDER, '.ogg', '.wav'):
+            self.sounds[sound] = pygame.mixer.Sound(file=sound)
+        if len(Screen.SOUND_CHANNELS) is 0:
+            for _ in range (0, Screen.SOUND_CHANNELS_AMMOUNT):
+                Screen.SOUND_CHANNELS.append(UtilityBox.get_sound_channel())
+            
     def play_music(self):
-        if self.music_chan.get_busy():
-            self.music_chan.unpause()
-        else:
-            song = pygame.mixer.Sound(file=self.songs[self.song_index])
-            self.music_chan.play(song, loops=-1)
-        self.playing = True
+        if len(self.songs) is not 0 and not self.playing:
+            if self.music_chan.get_busy():
+                self.music_chan.unpause()
+            else:
+                song = pygame.mixer.Sound(file=self.songs[self.song_index])
+                self.music_chan.play(song, loops=-1)
+            self.playing = True
 
     def pause_music(self):
-        self.music_chan.pause()
-        self.playing = False
+        if self.playing:
+            self.music_chan.pause()
+            self.playing = False
 
     def set_volume(self, volume, sound=False, music=True):
-        if sound:   
-            self.sound_chan.set_volume(volume)
-        if music:
+        if sound:
+            self.sound_vol = volume
+        if music and self.music_chan:
             self.music_chan.set_volume(volume)
 
+    @run_async
     def hijack_music(self, song_path):
         """For easter eggs"""
-        song = pygame.mixer.Sound(file=song_path)
-        self.music_chan.play(song, loops=-1)
-        if not self.playing:
-            self.music_chan.pause()      
+        if self.music_chan:
+            self.music_chan.stop() 
+            song = pygame.mixer.Sound(file=song_path)
+            self.music_chan.play(song, loops=-1)
+            if not self.playing:    #Continue playing if it was playing before
+                self.music_chan.pause()      
 
-    def add_sound(self, sound_path):
-        """For easter eggs"""
-        sound = pygame.mixer.Sound(file=sound_path)
-        self.sounds[sound_path] = sound
-
+    @run_async
     def hijack_sound(self, sound_path):
-        """For easter eggs, substitutes everything"""
+        """For easter eggs, substitutes everything except secret sounds"""
         sound = pygame.mixer.Sound(file=sound_path)
         for key in self.sounds.keys():
-            self.sounds[key] = sound
+            if 'secret' not in key:
+                self.sounds[key] = sound
 
     def change_song(self, song_path):
         index = 0
@@ -143,20 +147,23 @@ class Screen(object):
     def play_sound(self, sound_id):
         for sound in self.sounds.keys():
             if sound_id in sound or sound in sound_id:
-                self.sound_chan.play(self.sounds[sound])
-                return True
-        LOG.log('debug', 'Didn`t find a sound that matched with ',sound_id)
+                channel = None
+                for channel in Screen.SOUND_CHANNELS:
+                    if not channel.get_busy():
+                        channel.set_volume(self.sound_vol)
+                        channel.play(self.sounds[sound])
+                        return True
         return False
 
     def have_dialog(self):
         """Returns:
             (boolean):  True if the screen has a Dialog, False otherwise."""
-        return False if not self.dialog.sprite else True
+        return False if not self.dialog else True
 
     def dialog_active(self):
         """Returns:
             (boolean):  True if the Screen Dialog is active, False otherwise"""
-        return self.dialog.active and self.dialog.visible
+        return (self.dialog.active and self.dialog.visible)
 
     def show_dialog(self):
         """Makes the Screen's Dialog visible. (If it exists)."""
@@ -178,6 +185,8 @@ class Screen(object):
         self.background.draw(surface)
         for sprite in self.sprites.sprites():
             sprite.draw(surface)
+        if self.have_dialog() and self.dialog_active():
+            self.dialog.draw(surface)
 
     def set_resolution(self, resolution):
         """Changes the resolution of the screen to input argument.

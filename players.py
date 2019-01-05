@@ -54,7 +54,7 @@ class Player(object):
         self.order      = order
         self.characters = Character.factory(name, sprite_size, canvas_size, **character_params)
         self.infoboard  = None  #Created in generate
-        self.turn       = -1
+        self.turn       = 0
         Player.generate(self, canvas_size, **character_params)
 
     @staticmethod

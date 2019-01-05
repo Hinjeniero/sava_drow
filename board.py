@@ -104,7 +104,7 @@ class Board(Screen):
                                 max_levels, path_color, path_width.
         """
         super().__init__(id_, event_id, resolution, **params)
-        self.turn           = -1        
+        self.turn           = 0        
         #Graphic elements
         self.loading_screen = None  #Created in Board.generate
         self.cells          = pygame.sprite.Group()
@@ -520,7 +520,8 @@ class Board(Screen):
             self.characters.update()
             self.characters.draw(surface)
             self.current_player.draw(surface)   #This draws the player's infoboard
-            if hitboxes:    UtilityBox.draw_hitboxes(surface, self.cells.sprites())
+            if hitboxes:    
+                UtilityBox.draw_hitboxes(surface, self.cells.sprites())
         else:
             self.loading_screen.draw(surface)
         
@@ -550,6 +551,7 @@ class Board(Screen):
             mouse_position (:tuple: int, int, default=(0,0)):   Current mouse position. In pixels.
         """
         if event.type == pygame.MOUSEBUTTONDOWN:  #On top of the char and clicking on it
+            self.play_sound('')
             if self.active_char.sprite: self.pickup_character()
         elif event.type == pygame.MOUSEBUTTONUP:  #If we are dragging it we will have a char in here
             if self.drag_char.sprite:   self.drop_character()
@@ -602,13 +604,36 @@ class Board(Screen):
         self.drag_char.sprite.set_selected(False)
         self.drag_char.sprite.set_active(False)
         if self.possible_dests.has(self.active_cell.sprite):
-            LOG.log('debug', 'The choosen cell is possible, moving')
-            self.drag_char.sprite.rect.center = self.active_cell.sprite.center
+            self.move_character()
         else:
             self.drag_char.sprite.rect.center = self.last_cell.sprite.center
             LOG.log('debug', 'Cant move the char there')
         self.drag_char.empty()
         self.possible_dests.empty()
+
+    def move_character(self):
+        LOG.log('debug', 'The choosen cell is possible, moving')
+        self.drag_char.sprite.rect.center = self.active_cell.sprite.center
+        self.kill_character(self.active_cell.sprite, self.drag_char.sprite)
+        self.current_player.turn += 1
+        while True:
+            #TODO DO LOGS HERE
+            self.player_index += 1
+            if self.player_index is len(self.players):
+                self.player_index = 0
+                self.turn += 1
+            if self.players[self.player_index] is self.turn:
+                self.current_player = self.players[self.player_index]
+                break
+
+
+    def kill_character(self, cell, killer): #TODO complete
+        #Badass Animation
+        corpse = cell.kill_char(self.drag_char.sprite)
+        self.characters.remove(corpse)
+        #Search for it in players to delete it :)
+        #Player_kill:_char
+        #player_kill
 
     #TODO KEYBOARD DOES NOT CHANGE ACTIVE CELL, BUT ACTIVE CHARACTER. ACTIVE CELL CHANGE ONLY BY MOUSE
     def keyboard_handler(self, keys_pressed):

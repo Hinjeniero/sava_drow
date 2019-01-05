@@ -1591,8 +1591,6 @@ class Dialog (InfoBoard):
             self.image = self.generate_image() 
             self.save_state()
 
-        #OLD SCREEn
-
    def stop_music(self):   #TODO what to do when playback > than song
         length_played = pygame.mixer.music.get_pos()/1000
         if self.playback+length_played > self.lengths[self.song_index]:
@@ -1600,3 +1598,17 @@ class Dialog (InfoBoard):
         else:
             self.playback += pygame.mixer.music.get_pos()/1000
         pygame.mixer.music.stop()
+
+#Scren play soudn with force
+    def play_sound(self, sound_id):
+        for sound in self.sounds.keys():
+            if sound_id in sound or sound in sound_id:
+                channel = None
+                for channel in Screen.SOUND_CHANNELS:
+                    if not channel.get_busy():
+                        channel.play(self.sounds[sound])
+                        return True
+                '''if not channel: #Didn't find an empty one, force it
+                    Screen.SOUND_CHANNELS[0].play(self.sounds[sound])
+                return True'''
+        return False

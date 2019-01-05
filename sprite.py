@@ -1,4 +1,3 @@
-
 """--------------------------------------------
 sprite module. Contains classes that work as a layer over the pygame.Sprite.sprite class.
 Have the following classes, inheriting represented by tabs:

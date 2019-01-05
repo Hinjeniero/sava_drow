@@ -177,8 +177,10 @@ class UtilityBox (object):
             columns (int): Number of columns of the grid.
             color (:tuple: int, int, int, default=RED): Color of the grid borders.
         """
-        for i in range(0, surface.get_height(), surface.get_height()//rows):    pygame.draw.line(surface, color, (0, i), (surface.get_width(), i))
-        for i in range(0, surface.get_width(), surface.get_width()//columns):   pygame.draw.line(surface, color, (i, 0), (i, surface.get_height()))
+        for i in range(0, surface.get_height(), surface.get_height()//rows):    
+            pygame.draw.line(surface, color, (0, i), (surface.get_width(), i))
+        for i in range(0, surface.get_width(), surface.get_width()//columns):   
+            pygame.draw.line(surface, color, (i, 0), (i, surface.get_height()))
 
     @staticmethod
     def add_transparency(surface, *excluded_colors, use_color=None):
@@ -232,6 +234,10 @@ class UtilityBox (object):
         if len(points)>1:   Drawing.bezier(surface, color, point_list, steps, width)
 
     @staticmethod
+    def round_borders(surface):
+        pass
+
+    @staticmethod
     def get_all_files(root_folder, *extensions):
         result = []
         files = [root_folder+'\\'+f for f in listdir(root_folder) if isfile(join(root_folder, f))]
@@ -248,3 +254,4 @@ class UtilityBox (object):
         channel = pygame.mixer.Channel(UtilityBox.CHANNEL_SOUND_INDEX)
         UtilityBox.CHANNEL_SOUND_INDEX += 1
         return channel
+

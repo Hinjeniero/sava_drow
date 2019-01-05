@@ -43,7 +43,7 @@ class Cell(MultiSprite):
         super().__init__("cell_"+str(real_index), position, size, canvas_size, **params)
         self.pos    = grid_position
         self.index  = real_index
-        self.chars  = pygame.sprite.Group()
+        self.chars  = pygame.sprite.GroupSingle()
         self.center = self.rect.center
         self.add_text_sprite(self.id+"_text", str(self.pos))
     
@@ -97,6 +97,11 @@ class Cell(MultiSprite):
         for character in self.chars:
             if character.get_master() == who_asking: return True
         return False
+
+    def kill_char(self, killer_char):
+        sprite = self.chars.sprite
+        self.chars.add(killer_char)
+        return sprite
 
     def to_path(self, who_asking):
         """Convers this Cell to a corresponding Path object that has the same info as this Cell (In a more static fashion).

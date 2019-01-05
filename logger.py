@@ -37,7 +37,7 @@ class Parser:
             text (str): Text that will be parsed.
         Returns:
             (str):  A totally compatible ASCII text. Some characters may have been removed."""
-        return str(str(text).encode("ascii", "ignore")).replace("\\n","\n")
+        return str(str(text).encode("ascii", "ignore")).replace("\\n","\n").replace("b'","")
 
     @staticmethod
     def to_string(obj):

@@ -1612,3 +1612,33 @@ class Dialog (InfoBoard):
                     Screen.SOUND_CHANNELS[0].play(self.sounds[sound])
                 return True'''
         return False
+
+#Game
+    def sound_handler(self, command, value):
+        #Getting the affected screens:
+        sound = True if 'sound' in command else False
+        music = True if 'song' in command or 'music' in command else False
+        if self.current_screen:
+            if 'change' in command:
+                if music:
+                    if 'menu' in command:
+                        for menu in self.get_all_screens('menu'):
+                            menu.change_song(value)
+                    if 'board' in command:
+                        for board in self.get_all_screens('board'):
+                            board.change_song(value)
+            if 'volume' in command:
+                if 'menu' in command:
+                    for menu in self.get_all_screens('menu'):
+                        menu.set_volume(value, sound, music)
+                if 'board' in command:
+                    for board in self.get_all_screens('board'):
+                        board.set_volume(value, sound, music)
+
+#Game
+    def get_all_screens(self, keyword):
+        screens = []
+        for screen in self.screens:
+            if keyword in screen.id:
+                screens.append(screen) 
+        return screens

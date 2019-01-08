@@ -17,3 +17,6 @@ class Animation(AnimatedSprite):
     """Assciate a signal at the end of it. Could be threaded."""
     def __init__(self):
         pass
+
+    def draw(self):
+        pass

@@ -540,6 +540,77 @@ class Board(Screen):
             if event.type == pygame.KEYDOWN:    self.keyboard_handler(keys_pressed)
             else:                               self.mouse_handler(event, mouse_movement, mouse_pos)  
 
+    def pickup_character(self):
+        """Picks up a character. Adds it to the drag char Group, and check in the LUT table
+        the movements that are possible taking into account the character restrictions.
+        Then it draws an overlay on the possible destinations."""
+        print("PICKUP")
+        LOG.log('INFO', 'Selected ', self.active_char.sprite.id)
+        self.drag_char.add(self.active_char.sprite)
+        self.drag_char.sprite.set_selected(True)
+        self.drag_char.sprite.set_active(True)
+        self.last_cell.add(self.active_cell.sprite)
+        destinations = self.drag_char.sprite.get_paths( self.enabled_paths, self.distances, self.current_map,\
+                                                        self.active_cell.sprite.index, self.params['circles_per_lvl']) 
+        for cell_index in destinations:
+            self.possible_dests.add(self.get_cell_by_real_index(cell_index[-1]))       
+
+    def drop_character(self):
+        """Drops a character. Deletes it from the drag char Group, and checks if the place in which
+        has been dropped is a possible destination. If it is, it drops the character in that cell.
+        Otherwise, the character will be returned to the last Cell it was in."""
+        LOG.log('INFO', 'Dropped ', self.drag_char.sprite.id)
+        self.drag_char.sprite.set_selected(False)
+        self.drag_char.sprite.set_active(False)
+        if self.possible_dests.has(self.active_cell.sprite):
+            self.move_character()
+        else:
+            self.drag_char.sprite.rect.center = self.last_cell.sprite.center
+            LOG.log('debug', 'Cant move the char there')
+        self.drag_char.empty()
+        self.possible_dests.empty()
+
+    def move_character(self):
+        LOG.log('debug', 'The choosen cell is possible, moving')
+        self.drag_char.sprite.rect.center = self.active_cell.sprite.center
+        self.kill_character(self.active_cell.sprite, self.drag_char.sprite)
+        self.next_turn()
+    
+    def next_turn(self):
+        self.current_player.turn += 1
+        while True:
+            self.player_index += 1
+            if self.player_index is len(self.players):
+                self.player_index = 0
+                self.turn += 1
+            if self.players[self.player_index].turn is self.turn:
+                self.current_player = self.players[self.player_index]
+                break
+
+    def kill_character(self, cell, killer): #TODO complete
+        #Badass Animation
+        corpse = cell.kill_char(self.drag_char.sprite)
+        self.characters.remove(corpse)
+        #Search for it in players to delete it :)
+        #Player_kill:_char
+        #player_kill
+
+    #TODO KEYBOARD DOES NOT CHANGE ACTIVE CELL, BUT ACTIVE CHARACTER. ACTIVE CELL CHANGE ONLY BY MOUSE
+    def keyboard_handler(self, keys_pressed):
+        """Handles any pygame keyboard related event. This allows for user interaction with the object.
+        Posibilities:
+        TODO
+        Args:
+            keys_pressed (:dict: pygame.keys):  Dict in which the keys are keys and the items booleans.
+                                                Said booleans will be True if that specific key was pressed.
+        """
+        if keys_pressed[pygame.K_DOWN]:         LOG.log('DEBUG', "down arrow in board")
+        if keys_pressed[pygame.K_UP]:           LOG.log('DEBUG', "up arrow in board")
+        if keys_pressed[pygame.K_LEFT]:         LOG.log('DEBUG', "left arrow in board")
+        if keys_pressed[pygame.K_RIGHT]:        LOG.log('DEBUG', "right arrow in board")
+        if keys_pressed[pygame.K_KP_ENTER]\
+            or keys_pressed[pygame.K_SPACE]:    LOG.log('DEBUG', "space/enter")
+
     #Does all the shit related to the mouse hovering an option
     def mouse_handler(self, event, mouse_movement, mouse_position):
         """Handles any mouse related pygame event. This allows for user interaction with the object.
@@ -580,73 +651,3 @@ class Board(Screen):
                 if self.active_char.sprite is not None:
                     self.active_char.sprite.set_hover(False)
                     self.active_char.empty()
-
-    def pickup_character(self):
-        """Picks up a character. Adds it to the drag char Group, and check in the LUT table
-        the movements that are possible taking into account the character restrictions.
-        Then it draws an overlay on the possible destinations."""
-        print("PICKUP")
-        LOG.log('INFO', 'Selected ', self.active_char.sprite.id)
-        self.drag_char.add(self.active_char.sprite)
-        self.drag_char.sprite.set_selected(True)
-        self.drag_char.sprite.set_active(True)
-        self.last_cell.add(self.active_cell.sprite)
-        destinations = self.drag_char.sprite.get_paths( self.enabled_paths, self.distances, self.current_map,\
-                                                        self.active_cell.sprite.index, self.params['circles_per_lvl']) 
-        for cell_index in destinations:
-            self.possible_dests.add(self.get_cell_by_real_index(cell_index[-1]))       
-
-    def drop_character(self):
-        """Drops a character. Deletes it from the drag char Group, and checks if the place in which
-        has been dropped is a possible destination. If it is, it drops the character in that cell.
-        Otherwise, the character will be returned to the last Cell it was in."""
-        LOG.log('INFO', 'Dropped ', self.drag_char.sprite.id)
-        self.drag_char.sprite.set_selected(False)
-        self.drag_char.sprite.set_active(False)
-        if self.possible_dests.has(self.active_cell.sprite):
-            self.move_character()
-        else:
-            self.drag_char.sprite.rect.center = self.last_cell.sprite.center
-            LOG.log('debug', 'Cant move the char there')
-        self.drag_char.empty()
-        self.possible_dests.empty()
-
-    def move_character(self):
-        LOG.log('debug', 'The choosen cell is possible, moving')
-        self.drag_char.sprite.rect.center = self.active_cell.sprite.center
-        self.kill_character(self.active_cell.sprite, self.drag_char.sprite)
-        self.current_player.turn += 1
-        while True:
-            #TODO DO LOGS HERE
-            self.player_index += 1
-            if self.player_index is len(self.players):
-                self.player_index = 0
-                self.turn += 1
-            if self.players[self.player_index] is self.turn:
-                self.current_player = self.players[self.player_index]
-                break
-
-
-    def kill_character(self, cell, killer): #TODO complete
-        #Badass Animation
-        corpse = cell.kill_char(self.drag_char.sprite)
-        self.characters.remove(corpse)
-        #Search for it in players to delete it :)
-        #Player_kill:_char
-        #player_kill
-
-    #TODO KEYBOARD DOES NOT CHANGE ACTIVE CELL, BUT ACTIVE CHARACTER. ACTIVE CELL CHANGE ONLY BY MOUSE
-    def keyboard_handler(self, keys_pressed):
-        """Handles any pygame keyboard related event. This allows for user interaction with the object.
-        Posibilities:
-        TODO
-        Args:
-            keys_pressed (:dict: pygame.keys):  Dict in which the keys are keys and the items booleans.
-                                                Said booleans will be True if that specific key was pressed.
-        """
-        if keys_pressed[pygame.K_DOWN]:         LOG.log('DEBUG', "down arrow in board")
-        if keys_pressed[pygame.K_UP]:           LOG.log('DEBUG', "up arrow in board")
-        if keys_pressed[pygame.K_LEFT]:         LOG.log('DEBUG', "left arrow in board")
-        if keys_pressed[pygame.K_RIGHT]:        LOG.log('DEBUG', "right arrow in board")
-        if keys_pressed[pygame.K_KP_ENTER]\
-            or keys_pressed[pygame.K_SPACE]:    LOG.log('DEBUG', "space/enter")

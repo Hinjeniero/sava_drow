@@ -101,11 +101,13 @@ class Sprite(pygame.sprite.Sprite):
         #Animation and showing-----------------------
         self.animation_value= 0
         self.animation_step = ANIMATION_STEP
-        self.visible        = True
-        self.use_overlay    = True
+        #States
         self.active         = False
-        self.enabled        = True
         self.hover          = False
+        self.enabled        = True
+        self.use_overlay    = True
+        self.visible        = True
+        #Generation
         Sprite.generate(self)   #TO AVOID CALLING THE SUBCLASSES GENERATE WHEN THEIR ATTRIBUTES ARENT INITIALIZED YET.
 
     @staticmethod
@@ -184,12 +186,12 @@ class Sprite(pygame.sprite.Sprite):
         if self.rect.topleft != rect.topleft:   self.set_position(rect.topleft)
         if self.rect.size != rect.size:         self.set_size(rect.size)
 
-    def set_visible(self, visible):
-        """Sets the visible attribute. This attribute is used to draw or not the Sprite.
+    def set_active(self, active):
+        """Sets the visible attribute. Can be used for differen purposes.
         Args:
-            visible (boolean): The value to set.
+            active (boolean): The value to set.
         """
-        self.visible = visible
+        self.active = active
 
     def set_hover(self, hover):
         """Sets the active attribute. Should be True if the mouse is hovering the Sprite.
@@ -197,14 +199,7 @@ class Sprite(pygame.sprite.Sprite):
             hover (boolean): The value to set.
         """
         self.hover = hover
-
-    def set_active(self, active):
-        """Sets the visible attribute. Can be used for differen purposes.
-        Args:
-            active (boolean): The value to set.
-        """
-        self.active = active
-    
+          
     def set_enabled(self, enabled):
         """Sets the enabled attribute. If enabled is False, the element will be deactivated.
         No event or action will be sent or registered. Also, a semitransparent grey color will be blitted.
@@ -223,6 +218,13 @@ class Sprite(pygame.sprite.Sprite):
             self.use_overlay    = True
             self.regenerate_image()         #Restoring image and overlay too
 
+    def set_visible(self, visible):
+        """Sets the visible attribute. This attribute is used to draw or not the Sprite.
+        Args:
+            visible (boolean): The value to set.
+        """
+        self.visible = visible
+        
     def enable_overlay(self, enabled):
         """Sets the use_overlay attribute. If True, the overlay will be used.
         Args:

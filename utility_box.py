@@ -254,4 +254,21 @@ class UtilityBox (object):
         channel = pygame.mixer.Channel(UtilityBox.CHANNEL_SOUND_INDEX)
         UtilityBox.CHANNEL_SOUND_INDEX += 1
         return channel
+    
+    @staticmethod
+    def get_size_and_positions_ui_elements(ammount_elements, width, inter_element_space, initial_offset=0.05, final_offset=0):
+        """Returns a generator thyat provides the values
+        First value is the size. The rest of them are the positions.
+        The final_offset is the same as the interelemental space. If you want 0 final offset, you have to compensate with a negative number."""
+        size = (width, ((1-initial_offset-final_offset)/ammount_elements)-inter_element_space)
+        yield size
+        for index in range (0, ammount_elements):
+            position = ((1-width)//2, initial_offset+(index*(size[1]+inter_element_space)))
+            yield position
+
+    @staticmethod
+    def get_rainbow(gradient, number_elements):
+        """To generate the desired colors"""
+        pass
+
 

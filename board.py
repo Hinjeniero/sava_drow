@@ -564,6 +564,7 @@ class Board(Screen):
         self.drag_char.sprite.set_active(False)
         if self.possible_dests.has(self.active_cell.sprite):
             self.move_character()
+            self.next_turn()
         else:
             self.drag_char.sprite.rect.center = self.last_cell.sprite.center
             LOG.log('debug', 'Cant move the char there')
@@ -572,9 +573,11 @@ class Board(Screen):
 
     def move_character(self):
         LOG.log('debug', 'The choosen cell is possible, moving')
-        self.drag_char.sprite.rect.center = self.active_cell.sprite.center
-        self.kill_character(self.active_cell.sprite, self.drag_char.sprite)
-        self.next_turn()
+        self.last_cell.sprite.empty_cell() #Emptying to delete the active char from there
+        self.drag_char.sprite.rect.center = self.active_cell.sprite.center  #Adding to next cell
+        if not self.active_cell.sprite.is_empty():
+            self.kill_character(self.active_cell.sprite, self.drag_char.sprite) #Killing char if there is one
+        self.last_cell.empty()  #Not last cell anymore, char was droppped succesfully
     
     def next_turn(self):
         self.current_player.turn += 1
@@ -586,14 +589,16 @@ class Board(Screen):
             if self.players[self.player_index].turn is self.turn:
                 self.current_player = self.players[self.player_index]
                 break
+        self.current_player.update()    #To update state if there has been some char death
 
     def kill_character(self, cell, killer): #TODO complete
         #Badass Animation
         corpse = cell.kill_char(self.drag_char.sprite)
-        self.characters.remove(corpse)
+        self.characters.remove(corpse)  #To delete it from the char list in board. It's dead.
         #Search for it in players to delete it :)
-        #Player_kill:_char
-        #player_kill
+        for player in self.players:
+            if player.has_char(corpse):
+                player.remove_char(corpse)
 
     #TODO KEYBOARD DOES NOT CHANGE ACTIVE CELL, BUT ACTIVE CHARACTER. ACTIVE CELL CHANGE ONLY BY MOUSE
     def keyboard_handler(self, keys_pressed):

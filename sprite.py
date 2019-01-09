@@ -254,9 +254,9 @@ class Sprite(pygame.sprite.Sprite):
         self.image, self.overlay    = Sprite.generate_surface(self.rect, **self.params)
         self.update_mask()
 
-    @staticmethod
-    def generate_surface(size, surface=None, texture=None, keep_aspect_ratio=True, shape="Rectangle", transparent=False,\
-                        only_text=False, text="default_text", text_color=WHITE, text_font=None,\
+    @staticmethod   #TODO UPDATE DOCUMENTATION
+    def generate_surface(size, surface=None, texture=None, keep_aspect_ratio=True, resize_mode='fit', shape="Rectangle",\
+                        transparent=False, only_text=False, text="default_text", text_color=WHITE, text_font=None,\
                         fill_color=RED, fill_gradient=True, gradient=(LIGHTGRAY, DARKGRAY), gradient_type="horizontal",\
                         overlay_color=WHITE, border=True, border_color=WHITE, border_width=2, **unexpected_kwargs):
         """Generates a pygame surface according to input arguments.
@@ -293,8 +293,8 @@ class Sprite(pygame.sprite.Sprite):
             font_size   = Resizer.max_font_size(text, size, text_font)
             return pygame.font.Font(text_font, font_size).render(text, True, text_color), overlay 
         if texture:     #If we get a string with the path of a texture to load onto the surface
-            surf = Resizer.resize_same_aspect_ratio(pygame.image.load(texture).convert_alpha(), size) if keep_aspect_ratio\
-            else pygame.transform.smoothscale(pygame.image.load(texture).convert_alpha(), size)
+            image = pygame.image.load(texture).convert_alpha()
+            surf = Resizer.resize(image, size, mode=resize_mode) if keep_aspect_ratio else pygame.transform.smoothscale(image, size)
             return surf, overlay
         #In the case that we are still running this code and didn't return, means we dont have a texture nor a text, and have to generate the shape
         radius  = size[0]//2
@@ -311,7 +311,7 @@ class Sprite(pygame.sprite.Sprite):
                 pygame.draw.circle(surf, border_color, (radius, radius), radius, border_width)
                 pygame.draw.circle(overlay, overlay_color, (radius, radius), radius, 0)
         elif shape == 'rectangle':
-            if fill_gradient:   surf = gradients.vertical(size, gradient[0], gradient[1]) if gradient_type == 0 \
+            if fill_gradient:   surf = gradients.vertical(size, gradient[0], gradient[1]) if 'vertical' in gradient_type\
                                 else gradients.horizontal(size, gradient[0], gradient[1])
             else:               surf.fill(fill_color)
             if border:          pygame.draw.rect(surf, border_color, pygame.rect.Rect((0,0), size), border_width)
@@ -343,7 +343,9 @@ class TextSprite(Sprite):
             params (:dict:):    Dict of keywords and values as parameters to create the self.image attribute.
                                 Includes attributes about the TextSprite, like the text color and the font used.            
         """
-        super().__init__(id_, position, size, canvas_size, only_text=True, text=text, **params)
+        params['only_text']=True
+        params['text'] = text
+        super().__init__(id_, position, size, canvas_size, **params)
         self.text = text
         TextSprite.generate(self)
 
@@ -468,8 +470,8 @@ class AnimatedSprite(Sprite):
         Args:
             surface (:obj: pygame.Surface): Surface to resize and add.
             size (:tuple: int, int):    Size to resize the surface to."""
-        self.sprites.append(Resizer.resize_same_aspect_ratio(surface, size))
-        self.hover_sprites.append(Resizer.resize_same_aspect_ratio(surface, [int(x*1.5) for x in size]))
+        self.sprites.append(Resizer.resize(surface, size))
+        self.hover_sprites.append(Resizer.resize(surface, [int(x*1.5) for x in size]))
         self.masks.append(pygame.mask.from_surface(surface))
 
     def add_sprites(self, *sprite_surfaces):

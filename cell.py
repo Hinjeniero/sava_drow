@@ -98,6 +98,12 @@ class Cell(MultiSprite):
             if character.get_master() == who_asking: return True
         return False
 
+    def is_empty(self):
+        return True if not self.chars.sprite else False
+
+    def empty_cell(self):
+        self.chars.empty()
+
     def kill_char(self, killer_char):
         sprite = self.chars.sprite
         self.chars.add(killer_char)

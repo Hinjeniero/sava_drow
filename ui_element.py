@@ -400,15 +400,15 @@ class Slider (UIElement):
     def get_value(self):
         """Returns:
             (float):    Current value of the slider"""
-        return self.value
+        return round(self.value, 2)
 
     def set_value(self, value):
         """Set a value as the current value of the slider. It also changes the slider position and graphics
         to show the change.
         Args:
             value (float):  Value to set. Must be between 0 and 1, will be parsed otherwise."""
-        if      (self.value is 0 and value<0):  self.value = 1              #It goes all the way around from 0 to 1
-        elif    (self.value is 1 and value>1):  self.value = 0              #It goes all the way around from 1 to 0
+        if      (self.value == 0 and value<0):  self.value = 1              #It goes all the way around from 0 to 1
+        elif    (self.value == 1 and value>1):  self.value = 0              #It goes all the way around from 1 to 0
         else:   self.value = 0 if value < 0 else 1 if value > 1 else value  #The value it not yet absolute 1 or 0.
         self.set_dial_position(self.value)
 

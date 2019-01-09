@@ -1,4 +1,5 @@
 /__pycache__/
+/PAdLib/__pycache__/
 .vscode
 /out/
 history.log

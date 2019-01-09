@@ -31,7 +31,8 @@ from exceptions import  NoScreensException, InvalidGameElementException,\
 class Game(object):
     SOUND_KEYWORDS = ['sound', 'music', 'song']
     GRAPHIC_KEYWORDS = ['resolution', 'display', 'fps']
-    CONFIG_KEYWORDS = ['char', 'player', 'mode', 'game']
+    CONFIG_KEYWORDS = ['char', 'player', 'mode', 'game', 'ammount', 'pawn', 'warrior',
+                        'wizard', 'matron', 'priest']
 
     def __init__(self, id_, resolution, fps, **board_params):
         self.id             = id_
@@ -134,7 +135,7 @@ class Game(object):
             #For every event we will call this
             self.current_screen.event_handler(event, all_keys, all_mouse_buttons, mouse_movement=mouse_mvnt, mouse_pos=mouse_pos)
             if event.type == pygame.QUIT:               
-                return False
+                return True
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:        
                     self.esc_handler()
@@ -142,7 +143,7 @@ class Game(object):
                     self.process_last_input(event)
             elif event.type >= pygame.USEREVENT:        
                 self.user_command_handler(event)
-        return True
+        return False
 
     def process_last_input(self, event):
         self.current_screen.hide_popups()
@@ -153,15 +154,16 @@ class Game(object):
 
     def set_easter_eggs(self):
         res = self.resolution
-        size = (800, 150)
+        size = (900, 200)
         position = tuple(x//2 - y//2 for x, y in zip(res, size))
         image = IMG_FOLDER+'\\pixel_panel.png'
+        text_size = 0.90
         popup_acho = UIElement.factory( 'secret_acho', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
-                                        text='Gz, you found a secret! all your SFXs will be achos now.')
+                                        text='Gz, you found a secret! all your SFXs will be achos now.', text_proportion=text_size)
         popup_running = UIElement.factory( 'secret_running', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
-                                        text='Gz, you found a secret! The background music is now Running in the 90s.')
+                                        text='Gz, you found a secret! The background music is now Running in the 90s.', text_proportion=text_size)
         popup_dejavu = UIElement.factory( 'secret_dejavu', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
-                                        text='Gz, you found a secret! The background music is now Dejavu.')
+                                        text='Gz, you found a secret! The background music is now Dejavu.', text_proportion=text_size)
         for screen in self.screens:
             screen.add_popups(popup_acho, popup_running, popup_dejavu)
 
@@ -257,7 +259,7 @@ class Game(object):
 
     def disable_params(self):
         #self.get_screen('main', 'menu').disable_sprite('params', 'button')
-        self.get_screen('params', 'menu').disable_all_sprites()
+        self.get_screen('params', 'menu', 'config').disable_all_sprites()
 
     def user_command_handler(self, event):
         """Ou shit the user command handler, good luck m8
@@ -272,9 +274,9 @@ class Game(object):
         elif event.type is pygame.USEREVENT:
             self.command_handler(event.command, event.value)
         elif event.type is pygame.USEREVENT+1:
+            if 'start' in event.command and not self.started:
+                self.initiate()
             self.change_screen(*event.command.split('_'))
-            if 'start' in event.command:
-                self.disable_params()
         elif event.type is pygame.USEREVENT+2:  
             pass    #Board actions
         elif event.type is pygame.USEREVENT+3:  
@@ -284,7 +286,7 @@ class Game(object):
         if len(self.screens) > 0:
             if any(isinstance(screen, Menu) and 'main' in screen.id for screen in self.screens):
                 return True
-        raise NoScreensException('A game needs at least a main menu and a main board to work.')
+        raise NoScreensException('A game needs at least a main menu to start.')
 
     def first_log(self):
         LOG.log('INFO', "GAME STARTING!")
@@ -292,26 +294,27 @@ class Game(object):
         LOG.log('INFO', "Game initial frames per second: ", self.fps)
         LOG.log('INFO', "RESOLUTION: ", self.display.get_size())
 
-    def start_board(self):
-        print("TODO")
-
     def update_board_params(self, **params):
         self.board_generator.set_board_params(**params)
 
+    def initiate(self):
+        self.started = True
+        self.screens.append(self.board_generator.generate_board(self.resolution))
+
     def start(self):
-        self.current_screen = self.screens[0]
-        self.start_board()
-        self.check_state()
-        self.first_log()
-        self.set_easter_eggs()
         try:
-            loop = True
+            self.set_easter_eggs()
+            self.check_state()
+            self.first_log()
+            self.current_screen = self.screens[0]
             self.current_screen.play_music()
-            while loop:
+            while True:
                 self.clock.tick(self.fps)
-                loop = self.event_handler(pygame.event.get())
+                end = self.event_handler(pygame.event.get())
                 self.current_screen.draw(self.display)
                 pygame.display.update()
+                if end:
+                    break
             sys.exit()
         except Exception as exc:
             raise exc

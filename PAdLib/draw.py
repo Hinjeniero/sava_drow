@@ -6,8 +6,8 @@ from . import _padlib_polygon
 
 def bezier(surface, color, controlpointslist, steps, width=1):
     _padlib_bezier.draw(surface, color, controlpointslist, steps, False, width, False)
-def aabezier(surface, color, controlpointslist, steps, blend=True):
-    _padlib_bezier.draw(surface, color, controlpointslist, steps, True, 1, blend)
+def aabezier(surface, color, controlpointslist, steps, blend=True, width=1):
+    _padlib_bezier.draw(surface, color, controlpointslist, steps, True, width, blend)
 
 def spline(surface, color, closed, pointslist, steps, t=0.0,b=0.0,c=0.0, width=1):
     _padlib_spline.draw(surface, color, closed, pointslist, steps, t,b,c, False, width, False)

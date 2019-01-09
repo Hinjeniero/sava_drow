@@ -68,6 +68,16 @@ class UtilityBox (object):
     MOUSE_SPRITE        = generate_mouse_sprite()
     EUCLIDEAN_DISTANCES = euclidean_generator()
     CHANNEL_SOUND_INDEX = 0
+    
+    @synchronized
+    @staticmethod
+    def get_sound_channel():
+        if UtilityBox.CHANNEL_SOUND_INDEX is pygame.mixer.get_num_channels():
+            pygame.mixer.set_num_channels(pygame.mixer.get_num_channels()+1)
+        channel = pygame.mixer.Channel(UtilityBox.CHANNEL_SOUND_INDEX)
+        UtilityBox.CHANNEL_SOUND_INDEX += 1
+        return channel
+    
     @staticmethod
     def draw_hitboxes(surface, *sprites, color=RED, width=2):
         """Draw a squared-shaped border surrounding the input sprites.
@@ -245,18 +255,9 @@ class UtilityBox (object):
             if file.lower().endswith(tuple(extensions)):
                 result.append(file)
         return result
-
-    @synchronized
-    @staticmethod
-    def get_sound_channel():
-        if UtilityBox.CHANNEL_SOUND_INDEX is pygame.mixer.get_num_channels():
-            pygame.mixer.set_num_channels(pygame.mixer.get_num_channels()+1)
-        channel = pygame.mixer.Channel(UtilityBox.CHANNEL_SOUND_INDEX)
-        UtilityBox.CHANNEL_SOUND_INDEX += 1
-        return channel
     
     @staticmethod
-    def get_size_and_positions_ui_elements(ammount_elements, width, inter_element_space, initial_offset=0.05, final_offset=0):
+    def size_position_generator(ammount_elements, width, inter_element_space, initial_offset=0.05, final_offset=0):
         """Returns a generator thyat provides the values
         First value is the size. The rest of them are the positions.
         The final_offset is the same as the interelemental space. If you want 0 final offset, you have to compensate with a negative number."""
@@ -267,8 +268,14 @@ class UtilityBox (object):
             yield position
 
     @staticmethod
-    def get_rainbow(gradient, number_elements):
-        """To generate the desired colors"""
-        pass
-
+    def rainbow_gradient_generator(gradient, ammount_elements, transparency=255):
+        """To generate the desired colors."""
+        transparency = (transparency,)  #Converting to tuple to join in the yields
+        start, end = gradient[0], gradient[1]
+        step = tuple((end_-start_)//ammount_elements for end_, start_ in zip(end, start))
+        start_gradient = start
+        for i in range (1, ammount_elements+1):
+            end_gradient = tuple(x + i*y for x, y in zip(start, step))
+            yield (start_gradient+transparency, end_gradient+transparency)
+            start_gradient = end_gradient
 

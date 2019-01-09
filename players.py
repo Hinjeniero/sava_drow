@@ -71,8 +71,20 @@ class Player(object):
         infoboard.add_element('player_name', self.name, cols)   #Player ammount of matronmothers"""
         self.infoboard = infoboard
 
+    def update(self):
+        print(self.name+"UPDATIIING")
+        self.infoboard.get_sprite('char').set_text(str(len(self.characters.sprites())))
+        print(len(self.characters))
+
     def draw(self, surface):
         self.infoboard.draw(surface)
+
+    def has_char(self, char):
+        return self.characters.has(char)
+
+    def remove_char(self, char):
+        if self.has_char(char):
+            self.characters.remove(char)
 
 class Character(AnimatedSprite):
     """Character class. Inherits from AnimatedSprite.

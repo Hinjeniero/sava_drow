@@ -80,8 +80,8 @@ class Screen(object):
     @staticmethod
     def generate(self):
         UtilityBox.join_dicts(self.params, Screen.__default_config.copy())
-        self.background = Sprite(self.id+'_background', (0, 0), self.resolution,\
-                                self.resolution, keep_aspect_ratio=False, texture=self.params['background_path'])
+        self.background = Sprite(self.id+'_background', (0, 0), self.resolution, self.resolution,\
+                                resize_mode='fill', texture=self.params['background_path'])
         if self.params['songs_paths']:
             self.music_chan = UtilityBox.get_sound_channel()
             self.music_chan.set_volume(0.75)
@@ -292,9 +292,9 @@ class LoadingScreen(Screen):
         Then adds them to Screen."""
         UtilityBox.join_dicts(self.params, LoadingScreen.__default_config)
         load_surfaces = self.generate_load_sprite(self.params['loading_sprite_path'])
-        loading_sprite          = AnimatedSprite(self.id+'_loading_sprite', load_surfaces[0].rect.topleft,\
-                                                load_surfaces[0].rect.size, self.resolution, *(load_surfaces),\
-                                                animation_delay=60)
+        loading_sprite = AnimatedSprite(self.id+'_loading_sprite', load_surfaces[0].rect.topleft,\
+                                        load_surfaces[0].rect.size, self.resolution, *(load_surfaces),\
+                                        animation_delay=60)
         #The text sprite in the middle of the screen
         text_size   = tuple(x*ratio for x,ratio in zip(self.resolution, self.params['text_proportion']))
         text_pos    = tuple(x//2-y//2 for x, y in zip(self.resolution, text_size))

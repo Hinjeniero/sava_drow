@@ -44,24 +44,26 @@ def create_dialog(text='You sure?'):
 
 def create_main_menu():
     #Create elements, main menu buttons (POSITIONS AND SIZES ARE IN PERCENTAGES OF THE CANVAS_SIZE, can use absolute integers too)
-    positions       = UtilityBox.get_size_and_positions_ui_elements(4, 0.90, 0.05, 0.20, 0)
+    gradients       = UtilityBox.rainbow_gradient_generator(((255, 0, 0),(0, 0, 255)), 4)
+    positions       = UtilityBox.size_position_generator(4, 0.90, 0.05, 0.20, 0)
     button_size     = next(positions)
-    print(button_size)
+    #texture=IMG_FOLDER+"//button.png" #TO USE IN THE FIUTUR
     buttonStart     = UIElement.factory('button_start', "start_game_go_main_board", pygame.USEREVENT+1, next(positions), button_size,\
-                                        INITIAL_RESOLUTION, text="Start game", keep_aspect_ratio = False, texture=IMG_FOLDER+"//button.png")
+                                        INITIAL_RESOLUTION, text="Start game", keep_aspect_ratio = False,\
+                                        gradient=next(gradients), gradient_type='vertical')
     buttonConfig    = UIElement.factory('button_params_menu', "go_menu_params_config", pygame.USEREVENT+1, next(positions),button_size,\
-                                        INITIAL_RESOLUTION, text="Parameters", gradient = (RED, BLACK))
+                                        INITIAL_RESOLUTION, text="Parameters", gradient = next(gradients), gradient_type='vertical')
     buttonSound     = UIElement.factory('button_sound', "go_menu_sound_music", pygame.USEREVENT+1, next(positions), button_size,\
-                                        INITIAL_RESOLUTION, text="Music menu", gradient = (RED, BLACK))
+                                        INITIAL_RESOLUTION, text="Music menu", gradient = next(gradients), gradient_type='vertical')
     buttonGraphics  = UIElement.factory('button_graphics', "go_menu_graphics_display", pygame.USEREVENT+1, next(positions), button_size,\
-                                        INITIAL_RESOLUTION, text="Graphics menu", gradient = (RED, BLACK))
+                                        INITIAL_RESOLUTION, text="Graphics menu", gradient = next(gradients), gradient_type='vertical')
     #Create Menu
     main_menu   = Menu('main_menu', pygame.USEREVENT, INITIAL_RESOLUTION, buttonStart, buttonConfig, buttonSound, buttonGraphics,\
                         background_path=IMG_FOLDER+'\\background.jpg', songs_paths=MENU_SONGS, dialog=create_dialog())
     return main_menu
 
 def create_config_menu():
-    positions           = UtilityBox.get_size_and_positions_ui_elements(6, 0.80, 0.05)
+    positions           = UtilityBox.size_position_generator(6, 0.80, 0.05)
     button_size         = next(positions)
     buttonGameModes     = UIElement.factory('button_game_mode', "change_game_mode", pygame.USEREVENT, next(positions), button_size,\
                                             INITIAL_RESOLUTION, default_values=GAMEMODES, text="Game Mode", text_alignment='left', gradient = (RED, BLACK))
@@ -81,7 +83,7 @@ def create_config_menu():
 
 def create_sound_menu():
     #Sliders/buttons of the music and sound menu
-    positions           = UtilityBox.get_size_and_positions_ui_elements(6, 0.80, 0.05)
+    positions           = UtilityBox.size_position_generator(6, 0.80, 0.05)
     button_size         = next(positions)
     #TODO create method in utilitybox for this shit
     sliderMenuMusic     = UIElement.factory('slider_music_volume', "set_menu_music_volume", pygame.USEREVENT, next(positions), button_size,\
@@ -103,7 +105,7 @@ def create_sound_menu():
 
 def create_video_menu():
     resolutions = (INITIAL_RESOLUTION, (1366, 768), (1600, 900), (1920, 1080), (640, 480), (800, 600), (1024, 768), (1280, 1024))
-    positions           = UtilityBox.get_size_and_positions_ui_elements(2, 0.80, 0.15, 0.15)
+    positions           = UtilityBox.size_position_generator(2, 0.80, 0.15, 0.15)
     button_size         = next(positions)
     buttonRes   = UIElement.factory('button_resolution',"change_resolution_screen_display", pygame.USEREVENT, next(positions), button_size,\
                                     INITIAL_RESOLUTION, default_values=resolutions, text="Resolution",text_alignment='left')
@@ -122,7 +124,7 @@ def main():
     start_pygame()
     game = Game('sava_drow', INITIAL_RESOLUTION, 60)
     game.add_screens(create_main_menu(), create_sound_menu(), create_config_menu(), create_video_menu())
-    game.update_board_params(create_board_params)
+    game.update_board_params(**create_board_params())
     game.start()
 
 if __name__ == "__main__":

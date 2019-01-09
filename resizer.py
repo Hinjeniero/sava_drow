@@ -63,9 +63,9 @@ class Resizer (object):
             current_size = font.size(text) #Getting the needed size to render this text with i size
             font_size *= 2
         return Resizer.max_font_size_limited(text, size, font_size, font_type=font_type)
-        
+
     @staticmethod 
-    def resize_same_aspect_ratio(element, new_size):
+    def resize(element, new_size, mode='fit'): #TODO UPDATE DOCUMENTATION
         """Resizes a surface to the closest size achievable to the input
         without changing the original object aspect ratio relation.
         This way the modified object looks way more natural than just a stretched wretch.
@@ -74,37 +74,24 @@ class Resizer (object):
             element (:obj: pygame.Surface||pygame.sprite.Sprite):   Element to resize.
             new_size (:tuple: int, int):    New desired size for the input element.
         Returns:
-            (pygame.Surface||:tuple:int):   The resized Surface if the input was a surface.
-                                            A tuple of the ratios used to resize if the input was a sprite.
+            (:tuple: int, int):   A tuple with the resultant size.
         """
-        if isinstance(element, pygame.sprite.Sprite):   return Resizer.__sprite_resize(element, new_size)
-        elif isinstance(element, pygame.Surface):       return Resizer.__surface_resize(element, new_size)
-        else:                                           BadResizerParamException("Can't resize element of type "+str(type(element)))
-
-    #Resizing the surface to fit in the hitbox preserving the ratio, instead of fuckin it up
-    @staticmethod
-    def __surface_resize(surface, new_size):
-        """Resizes a surface to the closest size achievable to the input
-        without changing the original aspect ratio relation.
-        Args:
-            surface (:obj: pygame.Surface): Surface to resize.
-            new_size (:tuple: int, int):    New desired size for the input element.
-        Returns:
-            (pygame.Surface):   The resized Surface."""
-        ratio = min([new/old for new, old in zip(new_size, surface.get_size())])
-        return pygame.transform.smoothscale(surface, tuple([int(ratio*size) for size in surface.get_size()])) #Resizing the surface
-    
-    @staticmethod
-    def __sprite_resize(sprite, new_size):
-        """Resizes a Sprite to the closest size achievable to the input
-        without changing the original aspect ratio relation.
-        The changes are made in the sprite itself.
-        Args:
-            sprite (:obj: pygame.sprite.Sprite):    Sprite to resize.
-            new_size (:tuple: int, int):    New desired size for the input element.
-        Returns:
-            (:tuple:int):   A tuple of the ratios used to resize if the input was a sprite."""
-        ratio = min([new/old for new, old in zip(new_size, sprite.rect.size)])
-        sprite.rect.size = tuple([int(ratio*size) for size in sprite.rect.size])
-        sprite.image = pygame.transform.smoothscale(sprite.image, sprite.rect.size)
-        return ratio
+        #Getting old size
+        if isinstance(element, pygame.Surface):         old_size = element.get_size()
+        elif isinstance(element, pygame.sprite.Sprite): old_size = element.rect.size
+        else:                                           raise BadResizerParamException("Can't resize element of type "+str(type(element)))
+        #Getting the ratio
+        if 'fit' in mode:                              
+            ratio = min([new/old for new, old in zip(new_size, old_size)])
+        elif 'fill' in mode:                         
+            ratio = max([new/old for new, old in zip(new_size, old_size)])
+        else:                                           raise BadResizerParamException('Mode '+mode+' is not a recognized resizing mode')
+        #Multiplyyyying
+        result_size = tuple([int(ratio*size) for size in old_size])
+        #And returning either a surface or True if success
+        if isinstance(element, pygame.Surface):         
+            return pygame.transform.smoothscale(element, result_size)
+        else:   #Its a sprite
+            element.image = pygame.transform.smoothscale(element.image, result_size)
+            element.rect.size = result_size
+        return True                                    

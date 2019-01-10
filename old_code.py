@@ -1688,3 +1688,23 @@ class Dialog (InfoBoard):
         sprite.rect.size = tuple([int(ratio*size) for size in sprite.rect.size])
         sprite.image = pygame.transform.smoothscale(sprite.image, sprite.rect.size)
         return ratio
+
+#AnimatedSprite
+    def check_path(self, surface_path):
+        """Check if a id or path has been already loaded.
+        Returns:
+            (:obj:pygame.sprite.Sprite||boolean):   The sprite associated if sprite_id is found, 
+                                                    False otherwise."""
+        for i in range(0, len(self.ids)):
+            if surface_path == self.surface_paths[i]:    
+                return self.original_surfaces[i]
+        return False
+
+    def surface_exists(self, sprite_surface):
+        """Check if a surface or image has been already loaded.
+        Returns:
+            (boolean):  True if sprite_surface is already loaded, False otherwise."""
+        for i in range(0, len(self.original_surfaces)):
+            if sprite_surface == self.original_surfaces[i]:    
+                return self.original_surfaces[i]
+        return False

@@ -55,3 +55,15 @@ class Dictionary:
             (any):  Deleted element."""
         self.is_empty = True if len(self.dict) is 1 else False
         return self.dict.pop(key)
+
+    @synchronized
+    def keys(self):
+        return self.dict.keys()
+
+    @synchronized
+    def items(self):
+        return self.dict.items()
+
+    @synchronized
+    def values(self):
+        return self.dict.values()

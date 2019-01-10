@@ -26,6 +26,7 @@ from exceptions import  ShapeNotFoundException, NotEnoughSpritesException,\
 from logger import Logger as LOG
 from synch_dict import Dictionary
 from utility_box import UtilityBox
+from surface_loader import SurfaceLoader
 
 #Global variables, read-only
 ANIMATION_INTERVAL      = (0.00, 1.00)  #Real interval
@@ -368,20 +369,19 @@ class TextSprite(Sprite):
 class AnimatedSprite(Sprite):
     """Class AnimatedSprite. Inherits from Sprite. Adds all the attributes and methods needed to support
     the funcionality of a classic animated sprite, like a list of surfaces and a setted delay to change between them.
-    General class sprites:
+    General class surfaces:
 
     Args:
-        sprites (:list: pygame.Surface):    List of surfaces. Normal size.
-        hover_sprites (:list: pygame.Surface):  List of surfaces to use when hover is True. Size is normal*2
-        original_sprites (:list: pygame.Surface):   List of surfaces without resizing. Kept original image size.
+        surfaces (:list: pygame.Surface):    List of surfaces. Normal size.
+        hover_surfaces (:list: pygame.Surface):  List of surfaces to use when hover is True. Size is normal*2
+        original_surfaces (:list: pygame.Surface):   List of surfaces without resizing. Kept original image size.
         ids (:list: strings):   List of paths of the loaded images.
-        masks (:list: pygame.Mask): List of masks to control collision. Match with sprites following the list order.
+        masks (:list: pygame.Mask): List of masks to control collision. Match with surfaces following the list order.
         counter (int):  Counter that controls when to change to the next surface. Works together with next_frame_time.
         next_frame_time (int):  Number of times that draw is called before changing surface to the next one.
-        animation_index (int):  Current index in the sprites and mask lists.
+        animation_index (int):  Current index in the surfaces and mask lists.
     """
 
-    SPRITES_DICT = Dictionary()
     def __init__(self, id_, position, size, canvas_size, *sprite_list, sprite_folder=None, animation_delay=5, **image_params):
         """Constructor of AnimatedSprite. 
         Args:
@@ -395,98 +395,63 @@ class AnimatedSprite(Sprite):
             image_params TODO
         """
         super().__init__(id_, position, size, canvas_size)
-        #Adding parameters to control a lot of sprites instead of only one
-        self.sprites            = []    #Not really sprites, only surfaces
-        self.hover_sprites      = []    #Not really sprites, only surfaces
-        self.original_sprites   = []    #Not really sprites, only surfaces
-        self.ids                = []    
+        #Adding parameters to control a lot of surfaces instead of only one
+        self.names              = []    #To use the names of the surfaces when needed
+        self.original_surfaces  = []    #To read when resizing. List of references from a LUT table.
+        self.surfaces           = []
+        self.hover_surfaces     = []
         self.masks              = []
         #Animation
         self.counter            = 0
         self.next_frame_time    = animation_delay
         self.animation_index    = 0
-        #Generatione
+        #Generation
         AnimatedSprite.generate(self, sprite_folder, *sprite_list)
 
     @staticmethod
-    def generate(self, sprite_folder, *sprite_list):
+    def generate(self, surfaces_folder, *surfaces):
         self.use_overlay        = False
-        self.load_sprites(sprite_folder) if sprite_folder else self.add_sprites(*sprite_list)
+        self.load_surfaces(surfaces_folder) if surfaces_folder else self.add_surfaces(*surfaces)
         self.image              = self.current_sprite()    #Assigning a logical sprite in place of the decoy one of the super()
         self.mask               = self.current_mask()       #Same shit to mask
 
-    def check_ids(self, sprite_id):
-        """Check if a id or path has been already loaded.
-        Returns:
-            (:obj:pygame.sprite.Sprite||boolean):   The sprite associated if sprite_id is found, 
-                                                    False otherwise."""
-        for i in range(0, len(self.ids)):
-            if sprite_id == self.ids[i]:    
-                return self.original_sprites[i]
-        return False
-
-    def surface_exists(self, sprite_surface):
-        """Check if a surface or image has been already loaded.
-        Returns:
-            (boolean):  True if sprite_surface is already loaded, False otherwise."""
-        for i in range(0, len(self.original_sprites)):
-            if sprite_surface == self.original_sprites[i]:    
-                return self.original_sprites[i]
-        return False
-
-    def load_sprites(self, folder):
-        """Load all the sprites from a folder, and inserts them in the 3 lists of surfaces that are attributes.
+    def load_surfaces(self, folder):
+        """Load all the sprites from a folder, and inserts them in the 2 lists of surfaces that are attributes.
         Only load images.
         Args:
-            folder(str):    Path of the folder that contains the surfacess (images) to be loaded."""
-        for sprite_image in UtilityBox.get_all_files(folder, '.png', '.jpg', '.jpeg', 'bmp'):
-            if sprite_image not in self.ids:
-                self.ids.append(sprite_image.lower())
-                self.add_sprite(sprite_image)
+            folder(str):    Path of the folder that contains the surfaces (images) to be loaded."""
+        for path, surface in SurfaceLoader.load_surfaces(folder).items():
+            self.names.append(path)
+            self.add_surfaces(surface)
 
-    def add_sprite(self, image): #TODO update documentation
+    def add_surfaces(self, *images): #TODO update documentation
         """Check if a surface is loaded already, and adds it to the attribute lists.
         Args:
             surface (str||:obj: pygame.Surface): Surface to add, or path to the image to load."""
-        #CHECKING THE LUT SPRITE TABLES
-        if isinstance(image, str):
-            result = AnimatedSprite.SPRITES_DICT.get_item(image)
-            if result:
-                surface = result
-            else:
-                surface = pygame.image.load(image).convert_alpha()
-                AnimatedSprite.SPRITES_DICT.add_item(image, surface)
-        elif isinstance(image, pygame.Surface):
-            surface = image
-        else:
-            raise BadSpriteException("Can't add a sprite of type "+str(type(image)))
-        #Doing the actual work
-        if surface not in self.original_sprites:    
-            self.original_sprites.append(surface)
-        self.resize_and_add_sprite(surface, self.rect.size)
+        #CHECKING the type
+        for image in images:
+            if isinstance(image, str):  #It's a path
+                surface = SurfaceLoader.SURFACES_LOADED.get_item(image)
+            elif isinstance(image, pygame.Surface): #It's a surface
+                surface = image
+            elif isinstance(image, pygame.sprite.Sprite):   #It's a sprite
+                surface = image.image
+            else:   #The fuck is this
+                raise BadSpriteException("Can't add a sprite of type "+str(type(image)))
+            #Doing the actual work
+            if surface not in self.original_surfaces:    
+                self.original_surfaces.append(surface)
+                self.add_surface(surface)
 
-    def resize_and_add_sprite(self, surface, size):
+    def add_surface(self, surface):
         """Resizes a surface to a size, and adds it to the non-original surfaces lists.
         Args:
             surface (:obj: pygame.Surface): Surface to resize and add.
             size (:tuple: int, int):    Size to resize the surface to."""
-        self.sprites.append(Resizer.resize(surface, size))
-        self.hover_sprites.append(Resizer.resize(surface, [int(x*1.5) for x in size]))
+        size = self.rect.size
+        self.surfaces.append(Resizer.resize(surface, size))
+        self.hover_surfaces.append(Resizer.resize(surface, [int(x*1.5) for x in size]))
         self.masks.append(pygame.mask.from_surface(surface))
-
-    def add_sprites(self, *sprite_surfaces):
-        """Gets all the input surfaces, and adds them to the internal lists of surfaces 
-        after resizing them. Not the same as load_sprites, this one needs the surfaces already, not a path.
-        Args:
-            *sprite_surfaces (:obj: pygame.Surface): Surfaces that are to be added separated by commas."""
-        if len(sprite_surfaces) < 1:
-            raise NotEnoughSpritesException("To create an animated sprite you have to at least add one.")
-        for sprite_surf in sprite_surfaces:
-            if isinstance(sprite_surf, pygame.sprite.Sprite): 
-                sprite_surf = sprite_surf.image
-            if not self.surface_exists(sprite_surf):
-                self.ids.append("no_id")
-                self.add_sprite(sprite_surf)
 
     def set_canvas_size(self, canvas_size):
         """Set an internal resolution (NOT SIZE). Updates self.real_rect and self.resolution.
@@ -494,21 +459,22 @@ class AnimatedSprite(Sprite):
         Args:
             canvas_size (:tuple: int,int): Resolution to set.
         """
-        super().set_canvas_size(canvas_size)    #Changing the sprite size and position to the proper place
+        #Changing the sprite size and position to the proper place.
+        super().set_canvas_size(canvas_size)    
         self.clear_lists()
-        for surface in self.original_sprites:   
-            self.resize_and_add_sprite(surface, self.rect.size)
+        for surface in self.original_surfaces:   
+            self.add_surface(surface)
 
     def clear_lists(self):
         """Empty all the internal lists of surfaces and masks, except the original ones (The non-resized).
-        To be used after a change in size or something that required new/changed sprites."""
-        self.sprites.clear()
-        self.hover_sprites.clear()              
+        To be used after a change in size or something that required new/changed surfaces."""
+        self.surfaces.clear()
+        self.hover_surfaces.clear()              
         self.masks.clear()
 
     def animation_frame(self):
         """Changes the current showing surface (changing the index) to the next one."""
-        self.animation_index = self.animation_index+1 if self.animation_index < (len(self.sprites)-1) else 0
+        self.animation_index = self.animation_index+1 if self.animation_index < (len(self.surfaces)-1) else 0
 
     def set_size(self, size):
         """Changes the size of all the surfaces that this Sprite contains (except the original ones).
@@ -516,21 +482,21 @@ class AnimatedSprite(Sprite):
             size(:tuple: int, int): New size of the surfaces."""
         super().set_size(size)
         self.clear_lists()
-        for surface in self.original_sprites:   
-            self.resize_and_add_sprite(surface, size)
-        self.image = self.sprites[0]
+        for surface in self.original_surfaces:   
+            self.add_surface(surface)
+        self.image = self.surfaces[0]
 
     def current_sprite(self):
         """Returns the current surface that will be shown if there are no special states in effect.
         Returns:
             (pygame.Surface):   Surface that should be drawn right now."""
-        return self.sprites[self.animation_index]
+        return self.surfaces[self.animation_index]
 
     def current_hover_sprite(self):
         """Returns the current surface that will be shown if the hover state is True.
         Returns:
             (pygame.Surface):   Hover surface that should be drawn right now."""
-        return self.hover_sprites[self.animation_index]
+        return self.hover_surfaces[self.animation_index]
 
     def current_mask(self):
         """Returns the current surface that will be shown if there are no special states in effect.

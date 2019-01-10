@@ -183,8 +183,8 @@ class Character(AnimatedSprite):
         Searchs in the list of sprites the following one of the current sprite, that matches with the state of the character."""
         index = self.animation_index
         while True:
-            index=index+1 if index < len(self.ids)-1 else 0  #going back to start
-            if self.state in self.ids[index].lower():
+            index=index+1 if index < len(self.names)-1 else 0  #going back to start
+            if self.state in self.names[index].lower():
                 self.animation_index = index
                 break
             if index is self.animation_index:           #A complete loop with no matches, only one sprite of the action in self.state

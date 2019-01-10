@@ -1,4 +1,6 @@
 /__pycache__/
+/old/
+/old_img/
 /PAdLib/__pycache__/
 .vscode
 /out/

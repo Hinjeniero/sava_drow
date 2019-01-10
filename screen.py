@@ -43,7 +43,7 @@ class Screen(object):
                         'songs_paths'       : []
     }
     STATES = ['idle', 'stopped', 'cutscene']
-    SOUND_CHANNELS_AMMOUNT = 8  #Sound channels are shared between Screens
+    SOUND_CHANNELS_AMMOUNT = 32  #Sound channels are shared between Screens
     SOUND_CHANNELS = []
     SOUNDS_FOLDER = SOUND_FOLDER+"\\common\\"
     def __init__(self, id_, event_id, resolution, dialog=None, **params):

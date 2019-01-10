@@ -72,9 +72,8 @@ class Player(object):
         self.infoboard = infoboard
 
     def update(self):
-        print(self.name+"UPDATIIING")
-        self.infoboard.get_sprite('char').set_text(str(len(self.characters.sprites())))
-        print(len(self.characters))
+        self.infoboard.get_sprite('char').set_text('characters: '+str(len(self.characters.sprites())))
+        self.infoboard.regenerate_image()
 
     def draw(self, surface):
         self.infoboard.draw(surface)
@@ -85,6 +84,7 @@ class Player(object):
     def remove_char(self, char):
         if self.has_char(char):
             self.characters.remove(char)
+            self.update()
 
 class Character(AnimatedSprite):
     """Character class. Inherits from AnimatedSprite.
@@ -477,7 +477,7 @@ class Pawn(Character):
         unfiltered_paths = super().get_paths(graph, distances, current_map, index, level_size, Pawn.CHECK_ENEMIES)
         results = []
         enemies = {}
-        print(unfiltered_paths)
+        #print(unfiltered_paths) TODO delete
         for path in unfiltered_paths:
             #If the destiny has an enemy and there is no ally in the middle. Those don't need to be checked again
             if current_map[path[-1]].has_enemy(): #Checking if in the end of this path tehre is an enemy
@@ -492,7 +492,7 @@ class Pawn(Character):
                         results.append((index, new_path[-1]))
                         break   #breaking the first loop
         else:
-            print("NOT ENEMIES FOUND IN THE PROXIMITIES")
+            #print("NOT ENEMIES FOUND IN THE PROXIMITIES") TODO delete
             for new_path in destinies:
                 results.append((index, new_path[-1])) #Copying herethe paths because I dont want to modify tuples from gods know where.
         return results

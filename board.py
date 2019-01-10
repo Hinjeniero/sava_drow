@@ -562,6 +562,7 @@ class Board(Screen):
         LOG.log('INFO', 'Dropped ', self.drag_char.sprite.id)
         self.drag_char.sprite.set_selected(False)
         self.drag_char.sprite.set_active(False)
+        self.drag_char.sprite.set_hover(False)
         if self.possible_dests.has(self.active_cell.sprite):
             self.move_character()
             self.next_turn()
@@ -572,11 +573,14 @@ class Board(Screen):
         self.possible_dests.empty()
 
     def move_character(self):
-        LOG.log('debug', 'The choosen cell is possible, moving')
+        LOG.log('debug', 'The chosen cell is possible, moving')
+        character = self.drag_char.sprite
+        active_cell = self.active_cell.sprite
         self.last_cell.sprite.empty_cell() #Emptying to delete the active char from there
-        self.drag_char.sprite.rect.center = self.active_cell.sprite.center  #Adding to next cell
-        if not self.active_cell.sprite.is_empty():
-            self.kill_character(self.active_cell.sprite, self.drag_char.sprite) #Killing char if there is one
+        character.rect.center = active_cell.center  #Positioning the char
+        if not active_cell.is_empty():
+            self.kill_character(active_cell) #Killing char if there is one 
+        active_cell.add_char(character)
         self.last_cell.empty()  #Not last cell anymore, char was droppped succesfully
     
     def next_turn(self):
@@ -589,11 +593,10 @@ class Board(Screen):
             if self.players[self.player_index].turn is self.turn:
                 self.current_player = self.players[self.player_index]
                 break
-        self.current_player.update()    #To update state if there has been some char death
 
-    def kill_character(self, cell, killer): #TODO complete
+    def kill_character(self, cell): #TODO complete
         #Badass Animation
-        corpse = cell.kill_char(self.drag_char.sprite)
+        corpse = cell.kill_char()
         self.characters.remove(corpse)  #To delete it from the char list in board. It's dead.
         #Search for it in players to delete it :)
         for player in self.players:

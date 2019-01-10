@@ -171,7 +171,7 @@ class ButtonAction(UIElement):
         adds the text with the params that we used in the init call.
         In short, build the MultiSprite adding the Sprites of ButtonAction."""
         UtilityBox.join_dicts(self.params, ButtonAction.__default_config)
-        text_size = [x//(1//self.params['text_proportion']) for x in self.rect.size]
+        text_size = [int(x*self.params['text_proportion']) for x in self.rect.size]
         self.add_text_sprite(self.id+"_text", self.params['text'], text_size=text_size, alignment=self.params['text_alignment'])
 
 class ButtonValue (UIElement):
@@ -219,7 +219,7 @@ class ButtonValue (UIElement):
         Can blit the value text too, if shows_value is True.
         In short, build the MultiSprite adding the Sprites of ButtonValue."""
         UtilityBox.join_dicts(self.params, ButtonValue.__default_config)
-        text_size = [x//(1//self.params['text_proportion']) for x in self.rect.size]
+        text_size = [int(x*self.params['text_proportion']) for x in self.rect.size]
         if self.params['shows_value']:
             self.add_text_sprite(self.id+"_text", self.params['text'], text_size=text_size, alignment='left')
             self.add_text_sprite(self.id+"_value", str(self.get_value()), text_size=text_size, alignment='right')
@@ -337,7 +337,7 @@ class Slider (UIElement):
         """
         UtilityBox.join_dicts(self.params, Slider.__default_config) 
         _ = self.params  #For the sake of short code, params has keys with already understandable names anyway
-        text_size = [x//(1//_['text_proportion']) for x in self.rect.size]
+        text_size = [int(x*_['text_proportion']) for x in self.rect.size]
         #Text sprite
         self.add_text_sprite(self.id+"_text", _['text'], text_size=text_size, alignment=_['text_alignment'])
         #Value sprite

@@ -157,7 +157,7 @@ class Game(object):
         size = (900, 200)
         position = tuple(x//2 - y//2 for x, y in zip(res, size))
         image = IMG_FOLDER+'\\pixel_panel.png'
-        text_size = 0.90
+        text_size = 0.80
         popup_acho = UIElement.factory( 'secret_acho', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
                                         text='Gz, you found a secret! all your SFXs will be achos now.', text_proportion=text_size)
         popup_running = UIElement.factory( 'secret_running', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,

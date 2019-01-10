@@ -23,11 +23,12 @@ from utility_box import UtilityBox
 from game import Game
 
 INITIAL_RESOLUTION = (1280, 720)
+INITIAL_FPS = 30
 MENU_SONGS = UtilityBox.get_all_files(SOUND_FOLDER+'\\menu', '.ogg', '.mp3')
 BOARD_SONGS = UtilityBox.get_all_files(SOUND_FOLDER+'\\board', '.ogg', '.mp3')
 MENU_CROPPED_SONGS = [song.split('\\')[-1].split('.')[0] for song in MENU_SONGS]
 BOARD_CROPPED_SONGS = [song.split('\\')[-1].split('.')[0] for song in BOARD_SONGS]
-GAMEMODES = ('Normal', 'Lite', 'Small', 'Extra', 'Huge')
+GAMEMODES = ('Normal', 'Lite', 'Small', 'Extra', 'Huge', 'Insane', 'MemoryError')
 
 def start_pygame(resolution=INITIAL_RESOLUTION):
     pygame.mixer.pre_init(44100, -16, 2, 2048)
@@ -110,7 +111,7 @@ def create_video_menu():
     buttonRes   = UIElement.factory('button_resolution',"change_resolution_screen_display", pygame.USEREVENT, next(positions), button_size,\
                                     INITIAL_RESOLUTION, default_values=resolutions, text="Resolution",text_alignment='left')
     buttonFps   = UIElement.factory('button_fps', "change_fps_frames_per_second", pygame.USEREVENT, next(positions), button_size,\
-                                    INITIAL_RESOLUTION, default_values=(30, 60, 144), text="Frames per second",text_alignment='left')
+                                    INITIAL_RESOLUTION, default_values=(INITIAL_FPS, 60, 144), text="Frames per second",text_alignment='left')
     graphics_menu  = Menu("menu_graphics_display", pygame.USEREVENT+1, INITIAL_RESOLUTION, buttonRes, buttonFps, background_path=IMG_FOLDER+'\\background.jpg')
     return graphics_menu
 
@@ -122,7 +123,7 @@ def create_board_params():
 
 def main():
     start_pygame()
-    game = Game('sava_drow', INITIAL_RESOLUTION, 60)
+    game = Game('sava_drow', INITIAL_RESOLUTION, 30)
     game.add_screens(create_main_menu(), create_sound_menu(), create_config_menu(), create_video_menu())
     game.update_board_params(**create_board_params())
     game.start()

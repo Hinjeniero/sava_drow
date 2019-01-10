@@ -61,7 +61,8 @@ class Cell(MultiSprite):
     def add_char(self, character):
         """Args:
             character (:obj: Character):    Character to add to the Cell when it arrives."""
-        self.chars.add(character)
+        if not self.chars.has(character):
+            self.chars.add(character)
 
     def get_level(self):
         """Returns:
@@ -104,9 +105,9 @@ class Cell(MultiSprite):
     def empty_cell(self):
         self.chars.empty()
 
-    def kill_char(self, killer_char):
+    def kill_char(self):
         sprite = self.chars.sprite
-        self.chars.add(killer_char)
+        self.chars.empty()
         return sprite
 
     def to_path(self, who_asking):

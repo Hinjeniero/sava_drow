@@ -157,7 +157,7 @@ class Path(object):
             (:dict: key=cell.index, item=:list:tuple):  A dict in which for every cell(Key), contains all the possible
                                                         destinies in a list of tuples (Those tuples are the complete paths).
         """
-        print("RESTRICIONS DIST IS "+str(restrictions.dist))
+        #print("RESTRICIONS DIST IS "+str(restrictions.dist))  TODO delete
         destinations    = {}
         length          = len(graph[0]) #Want to know how many indexes the map has
         if restrictions.dist is 1:          #No need to check much, only if the immediate path exists

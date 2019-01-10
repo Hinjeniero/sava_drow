@@ -583,7 +583,8 @@ class MultiSprite(Sprite):
         Intended to be used after changing an important attribute in rect or image.
         Those changes propagate through all the sprites."""
         super().regenerate_image()
-        for sprite in self.sprites.sprites():   self.image.blit(sprite.image, sprite.rect)
+        for sprite in self.sprites.sprites():   
+            self.image.blit(sprite.image, sprite.rect)
 
     def set_size(self, size):
         """Changes the size of the MultiSprite. All the internal Sprites are resized too as result.

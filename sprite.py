@@ -382,7 +382,7 @@ class AnimatedSprite(Sprite):
         animation_index (int):  Current index in the surfaces and mask lists.
     """
 
-    def __init__(self, id_, position, size, canvas_size, *sprite_list, sprite_folder=None, animation_delay=5, **image_params):
+    def __init__(self, id_, position, size, canvas_size, *sprite_list, sprite_folder=None, animation_delay=5):
         """Constructor of AnimatedSprite. 
         Args:
             id_ (str):  Identifier of the Sprite.
@@ -392,7 +392,6 @@ class AnimatedSprite(Sprite):
             *sprite_list (:obj: pygame.Surface):    Surfaces that are to be added separated by commas.
             sprite_folder (str):    Path of the folder that contains the surfaces to be loaded.
             animation_delay (int):  Frames that occur between each animatino (Change of surface).
-            image_params TODO
         """
         super().__init__(id_, position, size, canvas_size)
         #Adding parameters to control a lot of surfaces instead of only one

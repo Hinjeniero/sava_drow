@@ -24,6 +24,7 @@ from game import Game
 
 INITIAL_RESOLUTION = (1280, 720)
 INITIAL_FPS = 30
+ALL_FPS = (INITIAL_FPS, 60, 144)
 MENU_SONGS = UtilityBox.get_all_files(SOUND_FOLDER+'\\menu', '.ogg', '.mp3')
 BOARD_SONGS = UtilityBox.get_all_files(SOUND_FOLDER+'\\board', '.ogg', '.mp3')
 MENU_CROPPED_SONGS = [song.split('\\')[-1].split('.')[0] for song in MENU_SONGS]
@@ -111,7 +112,7 @@ def create_video_menu():
     buttonRes   = UIElement.factory('button_resolution',"change_resolution_screen_display", pygame.USEREVENT, next(positions), button_size,\
                                     INITIAL_RESOLUTION, default_values=resolutions, text="Resolution",text_alignment='left')
     buttonFps   = UIElement.factory('button_fps', "change_fps_frames_per_second", pygame.USEREVENT, next(positions), button_size,\
-                                    INITIAL_RESOLUTION, default_values=(INITIAL_FPS, 60, 144), text="Frames per second",text_alignment='left')
+                                    INITIAL_RESOLUTION, default_values=ALL_FPS, text="Frames per second",text_alignment='left')
     graphics_menu  = Menu("menu_graphics_display", pygame.USEREVENT+1, INITIAL_RESOLUTION, buttonRes, buttonFps, background_path=IMG_FOLDER+'\\background.jpg')
     return graphics_menu
 

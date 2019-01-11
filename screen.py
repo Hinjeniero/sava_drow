@@ -292,9 +292,8 @@ class LoadingScreen(Screen):
         Then adds them to Screen."""
         UtilityBox.join_dicts(self.params, LoadingScreen.__default_config)
         load_surfaces = self.generate_load_sprite(self.params['loading_sprite_path'])
-        
-        print("LAODUSRFACES LOADING SCREEN")
-        print(load_surfaces)
+        print("FSASF")
+        print(load_surfaces[0].rect.size)
         loading_sprite = AnimatedSprite(self.id+'_loading_sprite', load_surfaces[0].rect.topleft,\
                                         load_surfaces[0].rect.size, self.resolution, *load_surfaces,\
                                         animation_delay=60)

@@ -169,7 +169,8 @@ class UtilityBox (object):
         orig_rect       = sprite.rect
         curr_angle      = angle+offset
         for _ in range (0, iterations):
-            surf = pygame.transform.rotate(orig_surface, curr_angle)
+            surf = pygame.transform.rotozoom(orig_surface, curr_angle, 1)
+            #surf = pygame.transform.smoothscale(surf, orig_rect.size)
             rect = surf.get_rect()
             rect.center = orig_rect.center
             sprite = pygame.sprite.Sprite()

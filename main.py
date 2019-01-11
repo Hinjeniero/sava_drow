@@ -21,6 +21,7 @@ from paths import IMG_FOLDER, SOUND_FOLDER
 from logger import Logger as LOG
 from utility_box import UtilityBox
 from game import Game
+from animation_generator import AnimationGenerator
 
 INITIAL_RESOLUTION = (1280, 720)
 INITIAL_FPS = 30
@@ -62,6 +63,9 @@ def create_main_menu():
     #Create Menu
     main_menu   = Menu('main_menu', pygame.USEREVENT, INITIAL_RESOLUTION, buttonStart, buttonConfig, buttonSound, buttonGraphics,\
                         background_path=IMG_FOLDER+'\\background.jpg', songs_paths=MENU_SONGS, dialog=create_dialog())
+
+    #Animations
+    main_menu.add_animation(AnimationGenerator.characters_crossing_screen(INITIAL_RESOLUTION, *ALL_FPS))
     return main_menu
 
 def create_config_menu():

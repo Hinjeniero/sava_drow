@@ -366,7 +366,7 @@ class TextSprite(Sprite):
             self.params['text'] = text
             self.regenerate_image()
         
-class AnimatedSprite(Sprite):
+class AnimatedSprite(Sprite): #TODO CHANGE ANIMATION DELAY ACCORDING TO FPS
     """Class AnimatedSprite. Inherits from Sprite. Adds all the attributes and methods needed to support
     the funcionality of a classic animated sprite, like a list of surfaces and a setted delay to change between them.
     General class surfaces:

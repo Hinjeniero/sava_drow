@@ -2,11 +2,14 @@
 import pygame
 from synch_dict import Dictionary
 from utility_box import UtilityBox
+from decorators import time_it
+from logger import Logger as LOG
 
 class SurfaceLoader(object):
     SURFACES_LOADED = Dictionary()
     
     @staticmethod
+    @time_it
     def load_surfaces(folder):
         """Load all the images from a folder, and returns the matching surfaces.
         For each image, if its already loaded we will retrieve the surface from a LUT table,
@@ -15,6 +18,7 @@ class SurfaceLoader(object):
         Args:
             folder(str):    Path of the folder that contains the surfacess (images) to be loaded."""
         surfaces = {}
+        LOG.log('INFO', 'Checking LUT and loading all the images in ', folder)
         for image_path in UtilityBox.get_all_files(folder, '.png', '.jpg', '.jpeg', 'bmp'):
             surfaces[image_path] = SurfaceLoader.get_surface(image_path)
         return surfaces

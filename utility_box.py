@@ -25,6 +25,7 @@ from PAdLib import draw as Drawing
 from colors import WHITE, RED, BLACK
 from decorators import time_it
 from resizer import Resizer
+from logger import Logger as LOG
 
 @time_it
 def euclidean_generator(size=300): #100 will be plenty in our case
@@ -151,7 +152,8 @@ class UtilityBox (object):
                 dict_to_add_keys[key] = dict_to_search_keys[key]
 
     @staticmethod
-    def rotate(sprite, angle, iterations, offset=0, include_original=False):
+    @time_it
+    def rotate(sprite, angle, iterations, offset=0, include_original=False, name=''):
         """Generates a list with the input sprite image rotated a fixated number of times,
         each rotation contained in another sprite.
         Args:
@@ -164,6 +166,7 @@ class UtilityBox (object):
             (:list:):   List with all the transformed sprites.
         """
         #TODO implement difference between sprite and surface, to make it a valid method for both
+        LOG.log('INFO', 'Rotating sprite ', name)
         sprites         = [sprite] 
         orig_surface    = sprite.image
         orig_rect       = sprite.rect

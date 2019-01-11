@@ -36,16 +36,15 @@ class ScriptedSprite(AnimatedSprite):
             for frame_index in range(0, total_frames):
                 frame_pos = tuple(int(init+(frame_index*mvnt/total_frames)) for init, mvnt in zip(init_pos, vector_mvnt))
                 self.frames[fps].append(frame_pos)
-                print(frame_pos)
         self.time += time
 
     def draw(self, surface):
         super().draw(surface)
-        if self.index is len(self.frames[self.fps]):
-            self.restart()
-            return False
         self.rect.topleft = self.frames[self.fps][self.index]
         self.index += 1
+        if self.index == len(self.frames[self.fps]):
+            self.restart()
+            return False
         return True
 
     def set_refresh_rate(self, fps):
@@ -55,19 +54,18 @@ class ScriptedSprite(AnimatedSprite):
         self.fps = fps
 
     def restart(self):
-        print("RESTART")
         self.index = 0
         self.rect.topleft = self.starting_pos
 
 class Animation(object):
     """Assciate a signal at the end of it. Could be threaded."""
-    def __init__(self, name, end_event):
+    def __init__(self, name, end_event, loops=1):
         self.id                 = name
         self.total_time         = 0
         self.init_time          = 0
         self.scripted_sprites   = []
         self.end_event          = end_event
-        self.loops              = 1
+        self.loops              = loops
 
     def add_sprite(self, sprite):
         self.scripted_sprites.append(sprite)
@@ -79,7 +77,6 @@ class Animation(object):
         self.loops = loops
 
     def end_loop(self):
-        print("END LOOP")
         self.loops -= 1
         self.init_time = 0
         for sprite in self.scripted_sprites:
@@ -95,3 +92,7 @@ class Animation(object):
             self.end_loop()
         for sprite in self.scripted_sprites:
             sprite.draw(surface)
+
+    def set_fps(self, fps):
+        for sprite in self.scripted_sprites:
+            sprite.set_refresh_rate(fps)

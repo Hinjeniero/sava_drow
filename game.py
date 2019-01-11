@@ -27,7 +27,6 @@ from utility_box import UtilityBox
 from board_generator import BoardGenerator
 from exceptions import  NoScreensException, InvalidGameElementException,\
                         EmptyCommandException, ScreenNotFoundException
-from animation_generator import AnimationGenerator
 
 class Game(object):
     SOUND_KEYWORDS = ['sound', 'music', 'song']
@@ -95,6 +94,8 @@ class Game(object):
     def graphic_handler(self, command, value):
         if 'fps' in command:          
             self.fps = value
+            for screen in self.screens:
+                screen.update_fps(value)
         elif 'res' in command:   
             self.resolution = value
             self.set_resolution(value)
@@ -309,14 +310,10 @@ class Game(object):
             self.first_log()
             self.current_screen = self.screens[0]
             self.current_screen.play_music()
-            '''TODO DELETE LATER'''
-            ANIMATION = AnimationGenerator.pawn_crossing_screen((1280, 720), 10, 30, 60, 144)
-            ''''''
             while True:
                 self.clock.tick(self.fps)
                 end = self.event_handler(pygame.event.get())
                 self.current_screen.draw(self.display)
-                ANIMATION.play(self.display)
                 pygame.display.update()
                 if end:
                     break

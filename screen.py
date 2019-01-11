@@ -75,6 +75,9 @@ class Screen(object):
         self.playing    = False #Playing music?
         #State machine
         self.state      = Screen.STATES[0]
+        #Animations
+        self.animations = []
+        self.animation  = None  #The current playing animation
         Screen.generate(self)
 
     @staticmethod
@@ -93,6 +96,24 @@ class Screen(object):
         if len(Screen.SOUND_CHANNELS) is 0:
             for _ in range (0, Screen.SOUND_CHANNELS_AMMOUNT):
                 Screen.SOUND_CHANNELS.append(UtilityBox.get_sound_channel())
+
+    def add_animation(self, animation):
+        """Sets the animatino and linlks it with a specific staet"""
+        if not any(animation.id in contained_anim.id for contained_anim in self.animations):
+            self.animations.append(animation) 
+            self.animation = animation
+
+    def play_animation(self, animation_id):
+        for animation in self.animations:
+            if animation.id in self.animations:
+                self.animation = animation
+                return True
+        LOG.log('WARNING', 'The animation ', animation_id, 'was not found in ', self.id)
+        return False
+
+    def update_fps(self, fps):
+        for animation in self.animations:
+            animation.set_fps(fps)
 
     def set_state(self, state):
         state = state.lower()
@@ -213,6 +234,8 @@ class Screen(object):
             popup.draw(surface)
         if self.have_dialog() and self.dialog_active():
             self.dialog.draw(surface)
+        if self.animation:
+            self.animation.play(surface)
 
     def set_resolution(self, resolution):
         """Changes the resolution of the screen to input argument.
@@ -298,8 +321,6 @@ class LoadingScreen(Screen):
         Then adds them to Screen."""
         UtilityBox.join_dicts(self.params, LoadingScreen.__default_config)
         load_surfaces = self.generate_load_sprite(self.params['loading_sprite_path'])
-        print("FSASF")
-        print(load_surfaces[0].rect.size)
         loading_sprite = AnimatedSprite(self.id+'_loading_sprite', load_surfaces[0].rect.topleft,\
                                         load_surfaces[0].rect.size, self.resolution, *load_surfaces,\
                                         animation_delay=60)
@@ -321,4 +342,4 @@ class LoadingScreen(Screen):
         sprite.image        = pygame.image.load(path)
         sprite.rect         = sprite.image.get_rect()
         sprite.rect.topleft = (self.resolution[0]//2-sprite.rect.width//2, self.resolution[1]-sprite.rect.height*1.5)
-        return UtilityBox.rotate(sprite, degrees, 360//degrees, include_original=True)
+        return UtilityBox.rotate(sprite, degrees, 360//degrees, include_original=True, name='loading_sprite')

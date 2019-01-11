@@ -14,7 +14,7 @@ from paths import IMG_FOLDER, SOUND_FOLDER
 from utility_box import UtilityBox
 from ui_element import TextSprite
 from sprite import Sprite, AnimatedSprite
-from exceptions import BadSpriteException
+from exceptions import BadSpriteException, BadStateException
 from logger import Logger as LOG
 from decorators import run_async
 
@@ -93,7 +93,13 @@ class Screen(object):
         if len(Screen.SOUND_CHANNELS) is 0:
             for _ in range (0, Screen.SOUND_CHANNELS_AMMOUNT):
                 Screen.SOUND_CHANNELS.append(UtilityBox.get_sound_channel())
-            
+
+    def set_state(self, state):
+        state = state.lower()
+        if state not in Screen.STATES:
+            raise BadStateException('The state '+state+' doesn`t exist in '+self.id)
+        self.state = state
+
     def has_music(self):
         return True if self.music_chan else False
 

@@ -57,3 +57,6 @@ class NotEnoughSpritesException(Exception):
     
 class NotEnoughSpaceException(Exception):
     pass
+
+class BadStateException(Exception):
+    pass

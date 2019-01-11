@@ -410,7 +410,10 @@ class AnimatedSprite(Sprite):
     @staticmethod
     def generate(self, surfaces_folder, *surfaces):
         self.use_overlay        = False
-        self.load_surfaces(surfaces_folder) if surfaces_folder else self.add_surfaces(*surfaces)
+        if surfaces_folder:
+            self.load_surfaces(surfaces_folder)
+        else:
+            self.add_surfaces(*surfaces)
         self.image              = self.current_sprite()    #Assigning a logical sprite in place of the decoy one of the super()
         self.mask               = self.current_mask()       #Same shit to mask
 

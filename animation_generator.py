@@ -1,17 +1,35 @@
+"""--------------------------------------------
+animation_generator module. Contains classes to generate
+generic useful animations
+Have the following classes:
+    AnimationGenerator
+--------------------------------------------"""
+
+__all__ = ['AnimationGenerator']
+__version__ = '0.1'
+__author__ = 'David Flaity Pardo'
+
+#Python libraries
+import pygame
+import random
+#Selfmade libraries
 from animation import ScriptedSprite, Animation
 from paths import IMG_FOLDER
 from decorators import time_it
-import pygame
-import random
 
+"""Global variables, read_only:
+    PYGAME_EVENT:
+    SPRITE_PATHS:
+    SPRITE_NAMES:
+    MOVE_KEYWORDS:
+"""
 PYGAME_EVENT = pygame.USEREVENT+6
-#Choosable sprites
 SPRITE_PATHS = (IMG_FOLDER+'\\Pawn', IMG_FOLDER+'\\Warrior', IMG_FOLDER+'\\Wizard',
                 IMG_FOLDER+'\\Priestess')
 SPRITE_NAMES = ('Manolo', 'Eustaquio', 'Zimamamio')
-MOVE_KEYWORDS = ('walk',)
+MOVE_KEYWORDS = ('walk', )
+
 class AnimationGenerator(object):
-    
     @staticmethod
     @time_it
     def characters_crossing_screen(resolution, *fps, ammount=10, time_interval=(4, 15)):

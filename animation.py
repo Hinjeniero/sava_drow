@@ -18,10 +18,11 @@ class ScriptedSprite(AnimatedSprite):
     def __init__(self, id_, position, size, canvas_size, fps, fps_modes, *sprite_list, sprite_folder=None, animation_delay=5):
         super().__init__(id_, position, size, canvas_size, *sprite_list, sprite_folder=sprite_folder, animation_delay=animation_delay)
         self.starting_pos = position
-        self.frames = {}    #Distinct positions according to time
+        self.frames = {}            #Distinct positions according to time
         self.index  = 0
-        self.fps    = fps   #Current frames per second value of animations
-        self.fps_modes = fps_modes  #All the possible fps modes
+        self.fps    = fps           #Current frames per second value of animations
+        self.fps_modes  = fps_modes  #All the possible fps modes
+        self.frame_jump = 1         #To speedup the animation
         self.time   = 0
 
     def add_movement(self, init_pos, end_pos, time):
@@ -43,8 +44,8 @@ class ScriptedSprite(AnimatedSprite):
     def draw(self, surface):
         super().draw(surface)
         self.rect.topleft = self.frames[self.fps][self.index]
-        self.index += 1
-        if self.index == len(self.frames[self.fps]):
+        self.index += self.frame_jump
+        if self.index >= len(self.frames[self.fps]):
             self.restart()
             return False
         return True
@@ -100,8 +101,14 @@ class Animation(object):
     def set_fps(self, fps):
         for sprite in self.scripted_sprites:
             sprite.set_refresh_rate(fps)
-
+    
     def shrink_time(self, ratio):
+        ratio = int(ratio)
+        for sprite in self.scripted_sprites:
+            sprite.time /= ratio
+            sprite.frame_jump = ratio
+
+    def shrink_time_deleting_frames(self, ratio):
         """Divides the time of the animation by the ratio, getting a shorter animation by a factor of x"""
         ratio = int(ratio)
         print("RATIO "+str(ratio))

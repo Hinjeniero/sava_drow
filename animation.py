@@ -12,6 +12,7 @@ __author__ = 'David Flaity Pardo'
 
 import time, pygame
 from sprite import AnimatedSprite, MultiSprite
+from decorators import time_it
 
 class ScriptedSprite(AnimatedSprite):
     def __init__(self, id_, position, size, canvas_size, fps, fps_modes, *sprite_list, sprite_folder=None, animation_delay=5):
@@ -24,6 +25,7 @@ class ScriptedSprite(AnimatedSprite):
         self.time   = 0
 
     def add_movement(self, init_pos, end_pos, time):
+        self.starting_pos = init_pos
         if not isinstance(self.fps_modes, tuple):
             self.fps_modes = self.fps_modes,
         vector_mvnt = tuple(end-init for end, init in zip(end_pos, init_pos))
@@ -48,6 +50,8 @@ class ScriptedSprite(AnimatedSprite):
         return True
 
     def set_refresh_rate(self, fps):
+        draws_per_second = self.fps/self.next_frame_time
+        self.next_frame_time = int(fps//draws_per_second)
         if self.index is not 0: #If it has started
             ratio = fps/self.fps
             self.index = int(ratio*self.index)
@@ -96,3 +100,17 @@ class Animation(object):
     def set_fps(self, fps):
         for sprite in self.scripted_sprites:
             sprite.set_refresh_rate(fps)
+
+    def shrink_time(self, ratio):
+        """Divides the time of the animation by the ratio, getting a shorter animation by a factor of x"""
+        ratio = int(ratio)
+        print("RATIO "+str(ratio))
+        for sprite in self.scripted_sprites:
+            sprite.index //= ratio
+            sprite.time /= ratio
+            for key in sprite.frames.keys():
+                new_frame_list = []
+                for i in range(0, len(sprite.frames[key])):
+                    if i%ratio != 0:
+                        new_frame_list.append(sprite.frames[key][i])
+                sprite.frames[key] = new_frame_list

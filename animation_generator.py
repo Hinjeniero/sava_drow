@@ -1,5 +1,6 @@
 from animation import ScriptedSprite, Animation
 from paths import IMG_FOLDER
+from decorators import time_it
 import pygame
 import random
 
@@ -12,6 +13,7 @@ SPRITE_NAMES = ['Manolo', 'Eustaquio', 'Zimamamio']
 class AnimationGenerator(object):
     
     @staticmethod
+    @time_it
     def characters_crossing_screen(resolution, *fps, ammount=10, time_interval=(4, 15)):
         animation = AnimationGenerator.sprite_crossing_screen(resolution, random.randint(time_interval[0],\
                                                             time_interval[1]), random.choice(SPRITE_PATHS), *fps)

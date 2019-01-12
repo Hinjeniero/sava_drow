@@ -366,7 +366,7 @@ class TextSprite(Sprite):
             self.params['text'] = text
             self.regenerate_image()
         
-class AnimatedSprite(Sprite): #TODO CHANGE ANIMATION DELAY ACCORDING TO FPS
+class AnimatedSprite(Sprite):
     """Class AnimatedSprite. Inherits from Sprite. Adds all the attributes and methods needed to support
     the funcionality of a classic animated sprite, like a list of surfaces and a setted delay to change between them.
     General class surfaces:
@@ -382,7 +382,7 @@ class AnimatedSprite(Sprite): #TODO CHANGE ANIMATION DELAY ACCORDING TO FPS
         animation_index (int):  Current index in the surfaces and mask lists.
     """
 
-    def __init__(self, id_, position, size, canvas_size, *sprite_list, sprite_folder=None, animation_delay=5):
+    def __init__(self, id_, position, size, canvas_size, *sprite_list, sprite_folder=None, animation_delay=10):
         """Constructor of AnimatedSprite. 
         Args:
             id_ (str):  Identifier of the Sprite.
@@ -511,7 +511,7 @@ class AnimatedSprite(Sprite): #TODO CHANGE ANIMATION DELAY ACCORDING TO FPS
         it changes surfaces. To be called each time the sprite is drawn.
         Overloaded method."""
         self.counter += 1
-        if self.counter is self.next_frame_time:
+        if self.counter >= self.next_frame_time:
             self.counter = 0 
             self.animation_frame()
             self.image = self.current_sprite() if not self.hover else self.current_hover_sprite()

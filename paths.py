@@ -15,6 +15,7 @@ import os
 import functools
 from logger import Logger as LOG
 from synch_dict import Dictionary
+from decorators import time_it
 
 GAME_FOLDER = os.path.dirname(__file__)
 IMG_FOLDER = os.path.join(GAME_FOLDER, 'img')
@@ -143,6 +144,7 @@ class Path(object):
         return all(mine == his for mine, his in zip (self.pos, path.pos))
         
     @staticmethod
+    @time_it
     def all_paths_factory(graph, distances, level_size, restrictions):
         """Generates all the possible paths from every cell, taking into account some restrictions.
         Its a general method that works for pretty much everything. 
@@ -265,6 +267,7 @@ class Path(object):
         return final_paths
 
     @staticmethod
+    @time_it
     def generate_paths(graph, initial_index, restrictions):
         """Generates all the possible routes from an initial index.
         Uses a backtracking approach, and works for every distance and for linked spaces too.

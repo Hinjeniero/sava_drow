@@ -544,7 +544,6 @@ class Board(Screen):
         """Picks up a character. Adds it to the drag char Group, and check in the LUT table
         the movements that are possible taking into account the character restrictions.
         Then it draws an overlay on the possible destinations."""
-        print("PICKUP")
         LOG.log('INFO', 'Selected ', self.active_char.sprite.id)
         self.drag_char.add(self.active_char.sprite)
         self.drag_char.sprite.set_selected(True)

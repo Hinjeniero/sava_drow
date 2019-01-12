@@ -382,7 +382,7 @@ class AnimatedSprite(Sprite):
         animation_index (int):  Current index in the surfaces and mask lists.
     """
 
-    def __init__(self, id_, position, size, canvas_size, *sprite_list, sprite_folder=None, animation_delay=10):
+    def __init__(self, id_, position, size, canvas_size, *sprite_list, sprite_folder=None, keywords=None, animation_delay=10):
         """Constructor of AnimatedSprite. 
         Args:
             id_ (str):  Identifier of the Sprite.
@@ -405,26 +405,31 @@ class AnimatedSprite(Sprite):
         self.next_frame_time    = animation_delay
         self.animation_index    = 0
         #Generation
-        AnimatedSprite.generate(self, sprite_folder, *sprite_list)
+        AnimatedSprite.generate(self, sprite_folder, keywords, *sprite_list)
 
     @staticmethod
-    def generate(self, surfaces_folder, *surfaces):
+    def generate(self, surfaces_folder, keywords, *surfaces):
         self.use_overlay        = False
         if surfaces_folder:
-            self.load_surfaces(surfaces_folder)
+            self.load_surfaces(surfaces_folder, keywords=keywords)
         else:
             self.add_surfaces(*surfaces)
         self.image              = self.current_sprite()    #Assigning a logical sprite in place of the decoy one of the super()
         self.mask               = self.current_mask()       #Same shit to mask
 
-    def load_surfaces(self, folder):
+    def load_surfaces(self, folder, keywords=None):
         """Load all the sprites from a folder, and inserts them in the 2 lists of surfaces that are attributes.
         Only load images.
         Args:
             folder(str):    Path of the folder that contains the surfaces (images) to be loaded."""
-        for path, surface in SurfaceLoader.load_surfaces(folder).items():
-            self.names.append(path)
-            self.add_surfaces(surface)
+        if not keywords:
+            for path, surface in SurfaceLoader.load_surfaces(folder).items():
+                self.names.append(path)
+                self.add_surfaces(surface)
+        else:
+            for path, surface in SurfaceLoader.load_surfaces_keywords(folder, *keywords).items():
+                self.names.append(path)
+                self.add_surfaces(surface)
 
     def add_surfaces(self, *images): #TODO update documentation
         """Check if a surface is loaded already, and adds it to the attribute lists.

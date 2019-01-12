@@ -15,8 +15,8 @@ from sprite import AnimatedSprite, MultiSprite
 from decorators import time_it
 
 class ScriptedSprite(AnimatedSprite):
-    def __init__(self, id_, position, size, canvas_size, fps, fps_modes, *sprite_list, sprite_folder=None, animation_delay=5):
-        super().__init__(id_, position, size, canvas_size, *sprite_list, sprite_folder=sprite_folder, animation_delay=animation_delay)
+    def __init__(self, id_, position, size, canvas_size, fps, fps_modes, *sprite_list, sprite_folder=None, keywords=None, animation_delay=5):
+        super().__init__(id_, position, size, canvas_size, *sprite_list, sprite_folder=sprite_folder, keywords=keywords, animation_delay=animation_delay)
         self.starting_pos = position
         self.frames = {}            #Distinct positions according to time
         self.index  = 0
@@ -102,13 +102,13 @@ class Animation(object):
         for sprite in self.scripted_sprites:
             sprite.set_refresh_rate(fps)
     
-    def shrink_time(self, ratio):
+    def speedup(self, ratio):
         ratio = int(ratio)
         for sprite in self.scripted_sprites:
             sprite.time /= ratio
             sprite.frame_jump = ratio
 
-    def shrink_time_deleting_frames(self, ratio):
+    def shrink_time(self, ratio):
         """Divides the time of the animation by the ratio, getting a shorter animation by a factor of x"""
         ratio = int(ratio)
         print("RATIO "+str(ratio))

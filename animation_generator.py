@@ -6,10 +6,10 @@ import random
 
 PYGAME_EVENT = pygame.USEREVENT+6
 #Choosable sprites
-SPRITE_PATHS = [IMG_FOLDER+'\\Pawn', IMG_FOLDER+'\\Warrior', IMG_FOLDER+'\\Wizard',
-                IMG_FOLDER+'\\Priestess',]
-SPRITE_NAMES = ['Manolo', 'Eustaquio', 'Zimamamio']
-
+SPRITE_PATHS = (IMG_FOLDER+'\\Pawn', IMG_FOLDER+'\\Warrior', IMG_FOLDER+'\\Wizard',
+                IMG_FOLDER+'\\Priestess')
+SPRITE_NAMES = ('Manolo', 'Eustaquio', 'Zimamamio')
+MOVE_KEYWORDS = ('walk',)
 class AnimationGenerator(object):
     
     @staticmethod
@@ -21,10 +21,11 @@ class AnimationGenerator(object):
         size = tuple(res * ratio_size for res in resolution)
         for _ in range(0, ammount-1):
             sprite = ScriptedSprite(random.choice(SPRITE_NAMES), (0, 0), size, resolution, fps[0], fps,\
-                                    sprite_folder=random.choice(SPRITE_PATHS))
+                                    sprite_folder=random.choice(SPRITE_PATHS), keywords=MOVE_KEYWORDS)
             init_pos = (0, resolution[1]-sprite.rect.height)
             end_pos = (resolution[0], resolution[1]-sprite.rect.height)
-            sprite.add_movement(init_pos, end_pos, random.randint(time_interval[0], time_interval[1]))
+            time = time_interval[0]+(random.random()*(time_interval[1]-time_interval[0]))
+            sprite.add_movement(init_pos, end_pos, time)
             animation.add_sprite(sprite)
         return animation
 
@@ -50,7 +51,7 @@ class AnimationGenerator(object):
             fps = fps,
         ratio_size = 0.10
         size = tuple(res * ratio_size for res in resolution)
-        sprite = ScriptedSprite('sprite_crossing', (0, 0), size, resolution, fps[0], fps, sprite_folder=folder)
+        sprite = ScriptedSprite('sprite_crossing', (0, 0), size, resolution, fps[0], fps, sprite_folder=folder, keywords=MOVE_KEYWORDS)
         init_pos = (0, resolution[1]-sprite.rect.height)
         end_pos = (resolution[0], resolution[1]-sprite.rect.height)
         sprite.add_movement(init_pos, end_pos, time)

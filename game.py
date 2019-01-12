@@ -156,16 +156,19 @@ class Game(object):
 
     def set_easter_eggs(self):
         res = self.resolution
-        size = (900, 200)
+        size = (900, 80)
         position = tuple(x//2 - y//2 for x, y in zip(res, size))
-        image = IMG_FOLDER+'\\pixel_panel.png'
-        text_size = 0.80
+        image = IMG_FOLDER+'\\pixel_panel_2.png'
+        text_size = 0.95
         popup_acho = UIElement.factory( 'secret_acho', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
                                         text='Gz, you found a secret! all your SFXs will be achos now.', text_proportion=text_size)
+        popup_acho.use_overlay = False
         popup_running = UIElement.factory( 'secret_running', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
                                         text='Gz, you found a secret! The background music is now Running in the 90s.', text_proportion=text_size)
+        popup_running.use_overlay = False
         popup_dejavu = UIElement.factory( 'secret_dejavu', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
                                         text='Gz, you found a secret! The background music is now Dejavu.', text_proportion=text_size)
+        popup_dejavu.use_overlay = False
         for screen in self.screens:
             screen.add_popups(popup_acho, popup_running, popup_dejavu)
 
@@ -199,7 +202,7 @@ class Game(object):
                         screen.hijack_music(SOUND_FOLDER+'\\secret\\'+secret)
                         for screen in self.screens:
                             for animation in screen.animations:
-                                animation.shrink_time(2)
+                                animation.speedup(3)
                     self.last_inputs.clear()
             
     def esc_handler(self):

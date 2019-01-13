@@ -61,9 +61,15 @@ class ScriptedSprite(AnimatedSprite):
         self.fps    = fps           #Current frames per second value of animations
         self.fps_modes  = fps_modes #All the possible fps modes
         self.frame_jump = 1         #To speedup the animation
-        self.time   = 0
-        self.init_time = 0
-        self.end_time = 0
+        self.time       = 0
+        self.init_time  = 0
+        self.end_time   = 0
+        ScriptedSprite.generate(self)
+
+    @staticmethod
+    def generate(self):
+        for fps in self.fps_modes:
+            self.frames[fps] = []
 
     def add_movement(self, init_pos, end_pos, time):
         """Adds a linear movement to the sprite. A complex movement
@@ -77,10 +83,6 @@ class ScriptedSprite(AnimatedSprite):
             self.fps_modes = self.fps_modes,
         vector_mvnt = tuple(end-init for end, init in zip(end_pos, init_pos))
         for fps in self.fps_modes:
-            try:
-                self.frames[fps]
-            except KeyError:
-                self.frames[fps] = []
             total_frames = int(time*fps)
             for frame_index in range(0, total_frames):
                 frame_pos = tuple(int(init+(frame_index*mvnt/total_frames)) for init, mvnt in zip(init_pos, vector_mvnt))
@@ -101,8 +103,13 @@ class ScriptedSprite(AnimatedSprite):
             return True
         return False   
 
+    def restart(self):
+        """Restarts the movement's attributes and the position to the initial ones."""
+        self.index = 0
+        self.rect.topleft = self.starting_pos
+
     def set_refresh_rate(self, fps):
-        """Updates the refresh rate and the number of frames of the movements of this sprite.
+        """Updates the refresh rate and the number of frames of the movements of this sprite. Also fix the frame index if the sprite was active.
         An higher fps will end in a smoother movement, with the counter of a heavier method. #TODO find some better way to describe this shit.
         Args:
             fps(int):   Frames per second to set as refresh rate."""
@@ -112,11 +119,6 @@ class ScriptedSprite(AnimatedSprite):
             ratio = fps/self.fps
             self.index = int(ratio*self.index)
         self.fps = fps
-
-    def restart(self):
-        """Restarts the movement's attributes and the position to the initial ones."""
-        self.index = 0
-        self.rect.topleft = self.starting_pos
 
 class Animation(object):
     """Animation class. Inherits from object.
@@ -146,8 +148,10 @@ class Animation(object):
         self.total_time         = 0
         self.init_time          = 0
         self.current_time       = 0
-        self.scripted_sprites   = []
-        self.currently_playing  = []
+        self.all_sprites        = []    #To make methods to all the sprites in one line
+        self.idle_sprites       = []
+        self.playing_sprites    = []
+        self.done_sprites       = []
         self.end_event          = end_event
         self.loops              = loops
 
@@ -160,7 +164,9 @@ class Animation(object):
             end_time(float):    Ending time of the sprite's animation."""
         sprite.init_time = init_time
         sprite.end_time = end_time
-        self.scripted_sprites.append(sprite)
+        self.all_sprites.append(sprite)
+        self.idle_sprites.append(sprite)
+        self.sort_sprites()
         if end_time > self.total_time:
             self.total_time = end_time
 
@@ -179,11 +185,25 @@ class Animation(object):
         self.loops -= 1
         self.init_time = 0
         self.current_time = 0
-        for sprite in self.scripted_sprites:
-            sprite.restart()
+        self.restart()
         if self.loops is 0:
             event = pygame.event.Event(self.end_event, command=self.id+"_end_animation")
             pygame.event.post(event)
+
+    def sort_sprites(self, idle=True, playing=False):
+        """sorts by init time or end itme, the idle sprites and the playing sprites."""
+        if idle:
+            self.idle_sprites.sort(key=lambda spr: spr.init_time)
+        if playing:
+            self.playing_sprites.sort(key=lambda spr: spr.end_time)
+
+    def restart(self):
+        for sprite in self.playing_sprites:
+            sprite.restart()
+            self.idle_sprites.append(sprite)
+        for sprite in self.done_sprites:
+            self.idle_sprites.append(sprite)
+        self.sort_sprites()
 
     def play(self, surface):
         """Plays the animation. Draws a frame of it and updates the attributes to
@@ -191,15 +211,12 @@ class Animation(object):
         Args:
             (:obj: pygame.Surface): Surface to draw the animation frame on."""
         self.update_clocks()
+        self.trigger_sprites()
         if self.current_time > self.total_time:
             self.end_loop()
         else:
-            for sprite in self.currently_playing:
+            for sprite in self.playing_sprites:
                 sprite.draw(surface)
-            for sprite in self.scripted_sprites:    #WIth a for range i, could be deleted in a more efficient manner
-                if self.current_time > sprite.init_time: 
-                    self.currently_playing.append(sprite)
-                    self.scripted_sprites.remove(sprite) #TODO check with init time, have naother list with all of the sprites
 
     def update_clocks(self):
         """Updates the time attributes. Called along with the play() method."""
@@ -208,11 +225,29 @@ class Animation(object):
         if self.init_time is 0: #First time playing this loop
             self.init_time = time_now
 
+    def trigger_sprites(self):
+        #Checking sprites that have completer their animation to end them.
+        while len(self.playing_sprites) > 0: #They are sorted, if the first one is not a hit, no need to keep checking.
+            if self.current_time > self.playing_sprites[0].end_time: 
+                self.playing_sprites[0].restart()    
+                self.done_sprites.append(self.playing_sprites[0])
+                del self.playing_sprites[0]
+                continue
+            break
+        #Checking sprites to trigger/start. They are sorted, sooo...
+        while len(self.idle_sprites) > 0:
+            if self.current_time > self.idle_sprites[0].init_time: 
+                self.playing_sprites.append(self.idle_sprites[0])
+                del self.idle_sprites[0]
+                self.sort_sprites(idle=False, playing=True)
+                continue
+            break
+
     def set_fps(self, fps):
         """Sets the refresh rate of the animation.
         Args:
             fps(int):   Frames per second to set as refresh rate."""
-        for sprite in self.scripted_sprites:
+        for sprite in self.all_sprites:
             sprite.set_refresh_rate(fps)
     
     def speedup(self, ratio):
@@ -221,7 +256,7 @@ class Animation(object):
             ratio(int|float):   The factor to speed up the animation.
                                 e.g: A ratio 2 makes the animation go double the speed."""
         ratio = int(ratio)
-        for sprite in self.scripted_sprites:
+        for sprite in self.all_sprites:
             sprite.time /= ratio
             sprite.frame_jump = ratio
 
@@ -235,7 +270,7 @@ class Animation(object):
                                 A ratio 3 deletes 2/3 the sprites, thus making the animation one third
                                 the duration."""
         ratio = int(ratio)
-        for sprite in self.scripted_sprites:
+        for sprite in self.all_sprites:
             sprite.index //= ratio
             sprite.time /= ratio
             for key in sprite.frames.keys():

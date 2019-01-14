@@ -33,11 +33,14 @@ class SurfaceLoader(object):
         Args:
             folder(str):    Path of the folder that contains the surfacess (images) to be loaded."""
         surfaces = {}
+        if not isinstance(keywords, tuple):
+            keywords = (keywords,)
         LOG.log('INFO', 'Checking LUT and loading some of the images in ', folder, ' with keywords ', keywords)
         for image_path in UtilityBox.get_all_files(folder, '.png', '.jpg', '.jpeg', 'bmp'):
             if (not strict and any(kw.lower() in image_path.lower() for kw in keywords))\
             or (strict and all(kw.lower() in image_path.lower() for kw in keywords)):
                 surfaces[image_path] = SurfaceLoader.get_surface(image_path)
+        print("KEYWORDS "+str(keywords)+" IN "+folder+" HAD "+str(len(surfaces))+" MATCHES")
         return surfaces
 
     @staticmethod

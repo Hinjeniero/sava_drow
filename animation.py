@@ -182,11 +182,12 @@ class Animation(object):
         """Ends a loop/replay on the animation. Decreases the loops in 1,
         and if after that the loops equal 0, sends the associated end event.
         Restarts the time attributes too."""
-        self.loops -= 1
+        if self.loops >= 0:
+            self.loops -= 1
         self.init_time = 0
         self.current_time = 0
         self.restart()
-        if self.loops is 0:
+        if self.loops is 0: #Only will end for self.loops over zero.
             event = pygame.event.Event(self.end_event, command=self.id+"_end_animation")
             pygame.event.post(event)
 
@@ -197,13 +198,18 @@ class Animation(object):
         if playing:
             self.playing_sprites.sort(key=lambda spr: spr.end_time)
 
-    def restart(self):
+    def restart(self):  #TODO CHECK OUT THIS METHOD
         for sprite in self.playing_sprites:
             sprite.restart()
             self.idle_sprites.append(sprite)
         for sprite in self.done_sprites:
             self.idle_sprites.append(sprite)
+        self.clear_animation_cache()
         self.sort_sprites()
+
+    def clear_animation_cache(self):
+        del self.playing_sprites[:]
+        del self.done_sprites[:]
 
     def play(self, surface):
         """Plays the animation. Draws a frame of it and updates the attributes to
@@ -221,14 +227,15 @@ class Animation(object):
     def update_clocks(self):
         """Updates the time attributes. Called along with the play() method."""
         time_now = time.time()
-        self.current_time = self.init_time - time.time()
         if self.init_time is 0: #First time playing this loop
             self.init_time = time_now
+        self.current_time = time_now-self.init_time
 
     def trigger_sprites(self):
         #Checking sprites that have completer their animation to end them.
         while len(self.playing_sprites) > 0: #They are sorted, if the first one is not a hit, no need to keep checking.
-            if self.current_time > self.playing_sprites[0].end_time: 
+            if self.current_time > self.playing_sprites[0].end_time:
+                #print("YES, ENDS: "+str(self.current_time)+">"+str(self.playing_sprites[0].end_time))
                 self.playing_sprites[0].restart()    
                 self.done_sprites.append(self.playing_sprites[0])
                 del self.playing_sprites[0]
@@ -236,7 +243,7 @@ class Animation(object):
             break
         #Checking sprites to trigger/start. They are sorted, sooo...
         while len(self.idle_sprites) > 0:
-            if self.current_time > self.idle_sprites[0].init_time: 
+            if self.current_time > self.idle_sprites[0].init_time:
                 self.playing_sprites.append(self.idle_sprites[0])
                 del self.idle_sprites[0]
                 self.sort_sprites(idle=False, playing=True)
@@ -252,13 +259,26 @@ class Animation(object):
     
     def speedup(self, ratio):
         """Speeds up the animation by increasing the frame jump attribute.
+        If wanted to speed down, a number between 0 and 1 must be used.
         Args:
             ratio(int|float):   The factor to speed up the animation.
-                                e.g: A ratio 2 makes the animation go double the speed."""
+                                e.g: A ratio 2 makes the animation go double the speed.
+                                ratio 0.5 makes it go half the speed."""
         ratio = int(ratio)
         for sprite in self.all_sprites:
             sprite.time /= ratio
-            sprite.frame_jump = ratio
+            sprite.frame_jump *= ratio
+
+    def set_speed(self, speed):
+        """Sets the speed of the animation by setting the frame jump attribute and time.
+        A speed of 1 is the default speedof the animation.
+        Args:
+            ratio(int|float):   The factor to speed up the animation.
+                                e.g: A ratio 2 makes the animation go double the speed."""
+        speed = int(speed)
+        for sprite in self.all_sprites:
+            sprite.time /= (speed/sprite.frame_jump)
+            sprite.frame_jump = speed    
 
     def shrink_time(self, ratio):
         """Divides the time of the animation by the ratio, getting a shorter animation by a factor of x
@@ -279,3 +299,24 @@ class Animation(object):
                     if i%ratio != 0:
                         new_frame_list.append(sprite.frames[key][i])
                 sprite.frames[key] = new_frame_list
+
+class LoopedAnimation(Animation):
+    """LoopedAnimation class. Inherits from Animation.
+    The sprites in this animation will loop back as soon as they are done.
+    In this way specific sprites can be restarted before than others.
+    Has no loops funcionality, plays forever.
+    All the sprites are called from the get-go, no triggering based in time.
+    It's like a basic and lite version of Animation, perfect for menu animations and such.
+    If you want an infinite animation, but with different trigger times for sprites, use Animation
+    with loops set to 0 or a negative number.
+    """
+    def __init__(self, name, loops=1):
+        super().__init__(name, -1, -1)
+
+    def play(self, surface):
+        """Plays the animation. Draws a frame of it and updates the attributes to
+        continue the animation the next time this method is called.
+        Args:
+            (:obj: pygame.Surface): Surface to draw the animation frame on."""
+        for sprite in self.all_sprites:
+            sprite.draw(surface)

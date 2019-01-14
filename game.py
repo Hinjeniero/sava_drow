@@ -200,9 +200,8 @@ class Game(object):
                         screen.hijack_sound(SOUND_FOLDER+'\\secret\\'+secret)
                     elif easter_egg_music:
                         screen.hijack_music(SOUND_FOLDER+'\\secret\\'+secret)
-                        for screen in self.screens:
-                            for animation in screen.animations:
-                                animation.speedup(3)
+                        for animation in screen.animations:
+                            animation.speedup(2)
                     self.last_inputs.clear()
             
     def esc_handler(self):

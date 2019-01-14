@@ -118,6 +118,7 @@ def create_video_menu():
     buttonFps   = UIElement.factory('button_fps', "change_fps_frames_per_second", pygame.USEREVENT, next(positions), button_size,\
                                     INITIAL_RESOLUTION, default_values=ALL_FPS, text="Frames per second",text_alignment='left')
     graphics_menu  = Menu("menu_graphics_display", pygame.USEREVENT+1, INITIAL_RESOLUTION, buttonRes, buttonFps, background_path=IMG_FOLDER+'\\background.jpg')
+    graphics_menu.add_animation(AnimationGenerator.character_teleporting_screen(INITIAL_RESOLUTION, *ALL_FPS))
     return graphics_menu
 
 def create_board_params():

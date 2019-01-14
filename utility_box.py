@@ -136,6 +136,22 @@ class UtilityBox (object):
         fnt = pygame.font.Font(font, 60)
         frames = fnt.render(str(int(clock.get_fps())), True, color)
         surface.blit(frames, position)
+        return frames
+    
+    @staticmethod
+    def generate_fps(clock, font=None, size=(50, 50), color=WHITE):
+        """Generates a font surface with the current number of fps (frames per second).
+        All the arguments have defaults with basic types because this method GOTTA GO FAST.
+        Args:
+            surface (:obj: pygame.Surface): Surface to draw the fps.
+            clock (:obj: pygame.clock): Clock of the system.
+            font (:obj: pygame.font, default=None): Font used to render the fps number.
+            size (:tuple: int, int, default=(50, 50)):  Size of the fps drawing. In pixels
+            color (:tuple: int, int, int, default=WHITE):   Color of the fps text.
+            position (:tuple: int, int, default=(50, 50)):  Position of the fps on the surface. In pixels.
+        """
+        fnt = pygame.font.Font(font, 50)
+        return fnt.render(str(int(clock.get_fps())), True, color)
 
     @staticmethod
     def join_dicts(dict_to_add_keys, dict_to_search_keys):

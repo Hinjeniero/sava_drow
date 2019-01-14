@@ -115,6 +115,8 @@ class ScriptedSprite(AnimatedSprite):
             fps(int):   Frames per second to set as refresh rate."""
         draws_per_second = self.fps/self.next_frame_time
         self.next_frame_time = int(fps//draws_per_second)
+        if self.next_frame_time < 1:
+            self.next_frame_time = 1
         if self.index is not 0: #If it has started
             ratio = fps/self.fps
             self.index = int(ratio*self.index)

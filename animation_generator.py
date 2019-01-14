@@ -96,7 +96,7 @@ class AnimationGenerator(object):
                                     keywords=('opening',), animation_delay=20)
         end_door = ScriptedSprite(  'door', (0, 0), size, resolution, fps[0], fps, sprite_folder=DOOR_PATH,\
                                     keywords=('opening',), animation_delay=20)
-        sprite = ScriptedSprite('sprite_crossing', (0, 0), size, resolution, fps[0], fps, sprite_folder=folder, keywords=MOVE_KEYWORDS)
+        sprite = ScriptedSprite('sans', (0, 0), size, resolution, fps[0], fps, sprite_folder=IMG_FOLDER+'\\sans_hd', animation_delay=1)
         #params
         init_pos = (start_pos*resolution[0], resolution[1]-sprite.rect.height)
         end_pos = (end_pos*resolution[0], resolution[1]-sprite.rect.height)

@@ -5,6 +5,7 @@ from utility_box import UtilityBox
 from decorators import time_it
 from logger import Logger as LOG
 
+IMAGE_FORMATS = ('.png', '.jpg', '.jpeg', 'bmp', '.gif', '.tga', '.pcx', '.tif', '.lbm', '.pbm', '.xbm')
 class SurfaceLoader(object):
     SURFACES_LOADED = Dictionary()
     
@@ -18,9 +19,9 @@ class SurfaceLoader(object):
         Args:
             folder(str):    Path of the folder that contains the surfacess (images) to be loaded."""
         surfaces = {}
-        LOG.log('INFO', 'Checking LUT and loading all the images in ', folder)
-        for image_path in UtilityBox.get_all_files(folder, '.png', '.jpg', '.jpeg', 'bmp'):
+        for image_path in UtilityBox.get_all_files(folder, *IMAGE_FORMATS):
             surfaces[image_path] = SurfaceLoader.get_surface(image_path)
+        LOG.log('debug', 'Loaded ', len(surfaces), ' surface from ', folder)
         return surfaces
     
     @staticmethod
@@ -35,12 +36,11 @@ class SurfaceLoader(object):
         surfaces = {}
         if not isinstance(keywords, tuple):
             keywords = (keywords,)
-        LOG.log('INFO', 'Checking LUT and loading some of the images in ', folder, ' with keywords ', keywords)
-        for image_path in UtilityBox.get_all_files(folder, '.png', '.jpg', '.jpeg', 'bmp'):
+        for image_path in UtilityBox.get_all_files(folder, *IMAGE_FORMATS):
             if (not strict and any(kw.lower() in image_path.lower() for kw in keywords))\
             or (strict and all(kw.lower() in image_path.lower() for kw in keywords)):
                 surfaces[image_path] = SurfaceLoader.get_surface(image_path)
-        print("KEYWORDS "+str(keywords)+" IN "+folder+" HAD "+str(len(surfaces))+" MATCHES")
+        LOG.log('debug', 'Loaded ', len(surfaces), ' surfaces with the keywords ', keywords, ' in the folder ', folder)
         return surfaces
 
     @staticmethod

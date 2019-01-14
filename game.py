@@ -42,6 +42,7 @@ class Game(object):
         self.started        = False
         self.resolution     = resolution
         self.fps            = fps
+        self.fps_text       = None
         self.last_inputs    = []    #Easter Eggs  
         self.game_config    = {}    #Created in Game.generate()
         self.current_screen = None  #Created in Game.start()
@@ -53,7 +54,10 @@ class Game(object):
         pygame.display.set_mode(self.resolution)
         self.display = pygame.display.get_surface()
         self.board_generator = BoardGenerator()
-        #pygame.time.set_timer(pygame.USEREVENT+4, 1000//params['fps'])
+        self.set_timers()
+
+    def set_timers(self):
+        pygame.time.set_timer(pygame.USEREVENT+7, 1000) #Each second
 
     def add_screens(self, *screens):
         for screen in screens:
@@ -163,10 +167,10 @@ class Game(object):
         popup_acho = UIElement.factory( 'secret_acho', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
                                         text='Gz, you found a secret! all your SFXs will be achos now.', text_proportion=text_size)
         popup_acho.use_overlay = False
-        popup_running = UIElement.factory( 'secret_running', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
+        popup_running = UIElement.factory('secret_running', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
                                         text='Gz, you found a secret! The background music is now Running in the 90s.', text_proportion=text_size)
         popup_running.use_overlay = False
-        popup_dejavu = UIElement.factory( 'secret_dejavu', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
+        popup_dejavu = UIElement.factory('secret_dejavu', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
                                         text='Gz, you found a secret! The background music is now Dejavu.', text_proportion=text_size)
         popup_dejavu.use_overlay = False
         for screen in self.screens:
@@ -192,7 +196,7 @@ class Game(object):
                 LOG.log('INFO', 'SECRET DISCOVERED! From now on the music in all your screens will be Dejavu!')
                 secret = 'dejavu.ogg'
                 easter_egg_music = True
-
+            #If an easter egg was triggered:
             if secret:
                 self.current_screen.play_sound('secret')
                 for screen in self.screens:
@@ -288,6 +292,8 @@ class Game(object):
             pass    #Board actions
         elif event.type is pygame.USEREVENT+3:  
             pass    #Dialog actions
+        elif event.type is pygame.USEREVENT+7:  #Called every second
+            self.fps_text = UtilityBox.generate_fps(self.clock)
 
     def check_state(self):
         if len(self.screens) > 0:
@@ -317,8 +323,10 @@ class Game(object):
             self.current_screen.play_music()
             while True:
                 self.clock.tick(self.fps)
-                end = self.event_handler(pygame.event.get())
                 self.current_screen.draw(self.display)
+                end = self.event_handler(pygame.event.get())
+                if self.fps_text:
+                    self.display.blit(self.fps_text, (50, 150))
                 pygame.display.update()
                 if end:
                     break

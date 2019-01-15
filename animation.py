@@ -57,6 +57,7 @@ class ScriptedSprite(AnimatedSprite):
         super().__init__(id_, position, size, canvas_size, *sprite_list, sprite_folder=sprite_folder, keywords=keywords, animation_delay=animation_delay)
         self.starting_pos = position
         self.frames = {}            #Distinct positions according to time
+        self.real_frames = {}       #Real position (0->1 in the screen)
         self.index  = 0
         self.fps    = fps           #Current frames per second value of animations
         self.fps_modes  = fps_modes #All the possible fps modes
@@ -69,7 +70,8 @@ class ScriptedSprite(AnimatedSprite):
     @staticmethod
     def generate(self):
         for fps in self.fps_modes:
-            self.frames[fps] = []
+            self.frames[fps]        = []
+            self.real_frames[fps]   = []
 
     def add_movement(self, init_pos, end_pos, time):
         """Adds a linear movement to the sprite. A complex movement
@@ -87,7 +89,15 @@ class ScriptedSprite(AnimatedSprite):
             for frame_index in range(0, total_frames):
                 frame_pos = tuple(int(init+(frame_index*mvnt/total_frames)) for init, mvnt in zip(init_pos, vector_mvnt))
                 self.frames[fps].append(frame_pos)
+                self.real_frames[fps].append(tuple(frame_axis/res for frame_axis, res in zip(frame_pos, self.resolution)))
         self.time += time
+
+    def set_canvas_size(self, resolution):
+        super().set_canvas_size(resolution)
+        for fps in self.fps_modes:
+            del self.frames[fps][:]
+            for real_frame in self.real_frames[fps]:
+                self.frames[fps].append(tuple(real_axis*res for real_axis, res in zip(real_frame, self.resolution)))
 
     def update(self):
         """Changes the image to the next surface when its time.
@@ -156,6 +166,10 @@ class Animation(object):
         self.done_sprites       = []
         self.end_event          = end_event
         self.loops              = loops
+
+    def set_resolution(self, resolution):
+        for sprite in self.all_sprites:
+            sprite.set_canvas_size(resolution)
 
     def add_sprite(self, sprite, init_time, end_time):
         """Adds a sprite/component to the animation, with the starting time and 
@@ -226,6 +240,10 @@ class Animation(object):
             for sprite in self.playing_sprites:
                 sprite.draw(surface)
 
+    def draw(self, surface):
+        """Acronym"""
+        self.play(surface)
+
     def update_clocks(self):
         """Updates the time attributes. Called along with the play() method."""
         time_now = time.time()
@@ -246,6 +264,7 @@ class Animation(object):
         #Checking sprites to trigger/start. They are sorted, sooo...
         while len(self.idle_sprites) > 0:
             if self.current_time > self.idle_sprites[0].init_time:
+                print("YES, STARTS: "+str(self.current_time)+">"+str(self.idle_sprites[0].init_time))
                 self.playing_sprites.append(self.idle_sprites[0])
                 del self.idle_sprites[0]
                 self.sort_sprites(idle=False, playing=True)

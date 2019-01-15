@@ -90,8 +90,6 @@ class Resizer (object):
         result_size = tuple([int(ratio*size) for size in old_size])
         #And returning either a surface or True if success
         if isinstance(element, pygame.Surface):   
-            #print(result_size)
-            #print("END")      
             return pygame.transform.smoothscale(element, result_size)
         else:   #Its a sprite
             element.image = pygame.transform.smoothscale(element.image, result_size)

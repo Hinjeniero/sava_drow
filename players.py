@@ -59,11 +59,13 @@ class Player(object):
 
     @staticmethod
     def generate(self, canvas_size, **character_params):
-        infoboard = InfoBoard(self.name+'_infoboard', pygame.USEREVENT+3, (0, 0), (200, 600), canvas_size)
+        infoboard = InfoBoard(self.name+'_infoboard', pygame.USEREVENT+3, (0, 0), (0.15*canvas_size[0], canvas_size[1]),\
+                            canvas_size, texture=IMG_FOLDER+'\\infoboard.png', keep_aspect_ratio = False, cols=6)
         cols = infoboard.get_cols()
-        infoboard.add_text_element('player_name', self.name, cols)   #Player name
-        infoboard.add_text_element('player_number', 'id: '+str(self.order), cols)   #Player order
-        infoboard.add_text_element('player_chars', 'characters: '+str(len(self.characters)), cols)   #Player total ammount of chars
+        infoboard.add_text_element('initial_padding', '', cols)
+        infoboard.add_text_element('player_name', self.name, cols-2)   #Player name
+        infoboard.add_text_element('player_number', 'id: '+str(self.order), cols-2)   #Player order
+        infoboard.add_text_element('player_chars', 'characters: '+str(len(self.characters)), cols-2)   #Player total ammount of chars
         """infoboard.add_element('player_name', self.name, cols)   #Player ammount of pawns
         infoboard.add_element('player_name', self.name, cols)   #Player ammount of warriors
         infoboard.add_element('player_name', self.name, cols)   #Player ammount of wizards
@@ -77,6 +79,17 @@ class Player(object):
 
     def draw(self, surface):
         self.infoboard.draw(surface)
+
+    def set_resolution(self, resolution):
+        """Resizes the infoboard and the player's characters"""
+        if self.infoboard:
+            self.infoboard.set_canvas_size(resolution)
+        for char in self.characters:
+            print("OLD real pos "+str(char.real_rect[0]))
+            print("OLD pos "+str(char.rect.topleft))
+            char.set_canvas_size(resolution)
+            print("NEW pos "+str(char.rect.topleft))
+            print("new real pos "+str(char.real_rect[0]))
 
     def has_char(self, char):
         return self.characters.has(char)

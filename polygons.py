@@ -12,9 +12,10 @@ __author__ = 'David Flaity Pardo'
 
 import pygame
 from utility_box import UtilityBox
-from sprite import Sprite
+from sprite import MultiSprite
+from colors import RED
 
-class Polygon(Sprite):
+class Polygon(MultiSprite):
     """Superclass polygon. Subclasses are Rectangle and Circle.
     This class consists of a basic pygame polygon that inherits from 
     pygame.Sprite that has a surface associated.
@@ -67,12 +68,21 @@ class Polygon(Sprite):
 
 class Circle(Polygon):
     '''TODO'''
-    def __init__(self, _id, position, size, canvas_size, **params):
-        #Hierarchy from sprite
-        super().__init__(_id, position, size, canvas_size, shape="circle", **params)
-        self.radius = size[0]//2 if type(size) is tuple else size//2
+    def __init__(self, id_, position, size, canvas_size, **params):
+        params['shape'] = 'circle'
+        super().__init__(id_, position, size, canvas_size, **params)
+        self.radius = min(x for x in size)//2
         self.center = self.rect.center
     
+    def set_size(self, size):
+        super().set_size(size)
+        self.radius = min(x for x in size)//2
+        self.center = self.rect.center
+    
+    def set_position(self, position):
+        super().set_position(position)
+        self.center = self.rect.center
+
     def collision(self, rect):
         """Returns if a collision has ocurred.
         Detects the collision getting the euclidean distance using
@@ -104,6 +114,22 @@ class Circle(Polygon):
     def collidepoint(self, point):
         pass
 
+class Circumference(Circle):
+    '''TODO'''
+    def __init__(self, id_, position, size, canvas_size, active_color=RED, **params):
+        params['transparent'] = True
+        params['border'] = True
+        super().__init__(id_, position, size, canvas_size, **params)
+        self.active_color = active_color
+
+    def draw(self, surface):
+        if self.active:
+            pygame.draw.circle(surface, self.active_color, self.center, self.radius, self.params['border_width'])
+        else:
+            super().draw(surface)
+
+
 class Rectangle(Polygon):
     def __init__(self, _id, position, size, canvas_size, **params):
-        super().__init__(_id, position, size, canvas_size, shape="rectangle", **params)
+        params['shape'] = 'rectangle'
+        super().__init__(_id, position, size, canvas_size, **params)

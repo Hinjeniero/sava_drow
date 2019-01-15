@@ -18,7 +18,7 @@ import random
 #Selfmade libraries
 from utility_box import UtilityBox
 from pygame.locals import *
-from polygons import Circle, Rectangle
+from polygons import Circle, Rectangle, Circumference
 from colors import RED, WHITE, DARKGRAY, LIGHTGRAY, TRANSPARENT_GRAY
 from screen import Screen, LoadingScreen
 from cell import Cell, Quadrant
@@ -160,6 +160,14 @@ class Board(Screen):
         self.generate_map_board()
         self.generate_map('test')
         self.add_players(*players)
+        self.save_sprites()
+
+    def save_sprites(self):
+        """Copies all the references of the sprites to the sprites list declared on the superclass.
+        Do this to modify all the graphical elements at once when needed in a more seamless manner.
+        Also because the super().draw method only draws the self.sprites.
+        Only adds the graphics regarding the board, the characters and player addons will be drawn later."""
+        self.sprites.add(self.platform, self.inter_paths.sprite, *self.paths.sprites(), *self.cells.sprites())
 
     def __adjust_number_of_paths(self):
         """Checks the inter path frequency. If the circles are not divisible by that frequency,
@@ -307,8 +315,8 @@ class Board(Screen):
         ratio       = self.platform.rect.height//(2*self.params['max_levels'])
         radius      = 0
         small_radius= ratio//4 if not custom_cell_radius else int(custom_cell_radius)
-        cell_sprite = Circle('cell', tuple(x-small_radius for x in self.platform.rect.center),\
-                    (small_radius*2, small_radius*2), self.resolution)
+        #cell_sprite = Circle('cell', tuple(x-small_radius for x in self.platform.rect.center),\
+                    #(small_radius*2, small_radius*2), self.resolution)
         #cell        = Cell(cell_sprite, (-1, 0), -1)
         #self.cells.add(cell)
         for i in range (0, self.params['max_levels']):
@@ -356,9 +364,9 @@ class Board(Screen):
         ratio = self.platform.rect.height//self.params['max_levels']
         radius = ratio//2-ratio//6 if offset else ratio//2
         for _ in range (0, self.params['max_levels']): #Lvl circles
-            out_circle = Circle('circular_path', tuple(x-radius for x in self.platform.rect.center),\
-                        (radius*2, radius*2), self.resolution, fill_gradient=False,\
-                        border_color=self.params['path_color'], border_width=self.params['path_width'], transparent=True)
+            out_circle = Circumference('circular_path', tuple(x-radius for x in self.platform.rect.center),\
+                        (radius*2, radius*2), self.resolution, fill_gradient=False, overlay=False,\
+                        border_color=self.params['path_color'], border_width=self.params['path_width'])
             self.paths.add(out_circle)
             radius+=ratio//2
         LOG.log('DEBUG', "Generated circular paths in ", self.id)
@@ -429,7 +437,8 @@ class Board(Screen):
             resolution (:tuple: int, int):  Resolution to set. In pixels."""
         super().set_resolution(resolution)
         self.loading_screen.set_resolution(resolution)
-        #TODO RESIZE ELEMENTS 
+        for player in self.players:
+            player.set_resolution(resolution)
 
     def ALL_PLAYERS_LOADED(self):
         """Returns:
@@ -465,7 +474,7 @@ class Board(Screen):
                 character.set_size(self.cells.sprites()[0].rect.size)
                 cell = self.quadrants[player.order].get_random_cell()
                 cell.add_char(character)
-                character.rect.center = cell.rect.center
+                character.set_center(cell.rect.center)
                 self.characters.add(character)
                 LOG.log('DEBUG', "Character ", character.id, " spawned with position ", cell.pos)
             self.loaded_players += 1
@@ -494,36 +503,22 @@ class Board(Screen):
         if not self.current_player:
             self.current_player = self.players[self.player_index] 
 
-    def draw(self, surface, hitboxes=False):
+    def draw(self, surface):
         """Draws the board and all of its elements on the surface.
         Blits them all and then updates the display.
         Args:
             surface (:obj: pygame.Surface): Surface to draw the board.
-            hitboxes(boolean, default=False):   True if we want to draw the hitboxes of the cells.
         """
-        if self.ALL_PLAYERS_LOADED():
-            super().draw(surface)                                                                           #Draws background
-            surface.blit(self.platform.image, self.platform.rect)                                           #Draws board
-            self.inter_paths.draw(surface) 
-            self.paths.draw(surface)                                                                        #Draws paths between cells
-
-            active_path = self.active_path.sprite
-            if active_path is not None: 
-                pygame.draw.circle(surface, RED, active_path.rect.center, active_path.radius, 4)            #Draw active path
-            self.cells.draw(surface)                                                                        #Draws cells    
-            
-            active_sprite = self.active_cell.sprite
-            if active_sprite is not None: 
-                pygame.draw.circle(surface, UtilityBox.random_rgb_color(), active_sprite.rect.center, active_sprite.rect.height//2) #Draws an overlay on the active cell 
-            for dest in self.possible_dests.sprites():
-                pygame.draw.circle(surface, WHITE, dest.center, dest.rect.width//2)
-            self.characters.update()
-            self.characters.draw(surface)
-            self.current_player.draw(surface)   #This draws the player's infoboard
-            if hitboxes:    
-                UtilityBox.draw_hitboxes(surface, self.cells.sprites())
-        else:
+        if not self.ALL_PLAYERS_LOADED():
             self.loading_screen.draw(surface)
+            return
+        super().draw(surface)                                                                           #Draws background
+        for dest in self.possible_dests.sprites():
+            pygame.draw.circle(surface, WHITE, dest.center, dest.radius)
+        for char in self.characters:
+            char.draw(surface)
+        self.current_player.draw(surface)   #This draws the player's infoboard
+            
         
     def event_handler(self, event, keys_pressed, mouse_buttons_pressed, mouse_movement=False, mouse_pos=(0, 0)):
         """Handles any pygame event. This allows for user interaction with the object.
@@ -576,7 +571,7 @@ class Board(Screen):
         character = self.drag_char.sprite
         active_cell = self.active_cell.sprite
         self.last_cell.sprite.empty_cell() #Emptying to delete the active char from there
-        character.rect.center = active_cell.center  #Positioning the char
+        character.set_center(active_cell.center)  #Positioning the char
         if not active_cell.is_empty():
             self.kill_character(active_cell) #Killing char if there is one 
         active_cell.add_char(character)
@@ -618,6 +613,33 @@ class Board(Screen):
         if keys_pressed[pygame.K_KP_ENTER]\
             or keys_pressed[pygame.K_SPACE]:    LOG.log('DEBUG', "space/enter")
 
+    def set_active_cell(self, cell):
+        if self.active_cell.sprite: #If there is already an sprite in active_cell
+            if cell is not self.active_cell.sprite: #If its not the same cell that is already active, or is None
+                self.active_cell.sprite.set_active(False)
+                self.active_cell.sprite.set_active(False)
+                self.active_cell.empty()
+            else:   #If its the same one (Hovering or mouse still)
+                return
+        if cell:    #If its not None
+            cell.set_active(True)
+            cell.set_hover(True)
+            self.active_cell.add(cell)
+            LOG.log('debug', 'New cell active: ', self.active_cell.sprite.pos)
+
+    def set_active_path(self, path):
+        if self.active_path.sprite: #If there is already an sprite in active_cell
+            if path is not self.active_path.sprite: #If its not the same cell that is already active, or is None
+                self.active_path.sprite.set_active(False)
+                self.active_path.sprite.set_active(False)
+                self.active_path.empty()
+            else:   #If its the same one (Hovering or mouse still)
+                return
+        if path:    #If its not None
+            path.set_active(True)
+            path.set_hover(True)
+            self.active_path.add(path)   
+
     #Does all the shit related to the mouse hovering an option
     def mouse_handler(self, event, mouse_movement, mouse_position):
         """Handles any mouse related pygame event. This allows for user interaction with the object.
@@ -638,17 +660,14 @@ class Board(Screen):
 
         if mouse_movement:
             mouse_sprite = UtilityBox.get_mouse_sprite()
+            
             #Checking collision with cells
-            cell = pygame.sprite.spritecollideany(mouse_sprite, self.cells.sprites(), collided=pygame.sprite.collide_circle)
-            if cell is not None and not self.active_cell.has(cell):  
-                cell.set_active(True)
-                cell.set_hover(True)
-                self.active_cell.add(cell)
-                LOG.log('debug', 'hovering cell ', self.active_cell.sprite.pos)
+            collided_cell = pygame.sprite.spritecollideany(mouse_sprite, self.cells.sprites(), collided=pygame.sprite.collide_circle)
+            self.set_active_cell(collided_cell)
+
             #Checking collision with paths
             path = pygame.sprite.spritecollideany(mouse_sprite, self.paths.sprites(), collided=pygame.sprite.collide_mask)
-            if path is not None:    
-                self.active_path.add(path)
+            self.set_active_path(path)
             #Checking collision with characters
             char = pygame.sprite.spritecollideany(mouse_sprite, self.current_player.characters.sprites(), collided=pygame.sprite.collide_mask)
             if char is not None:  

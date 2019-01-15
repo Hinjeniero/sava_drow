@@ -40,6 +40,7 @@ class Screen(object):
         sound (:obj: Sound):    Sound effect object.
     """
     __default_config = {'background_path'   : None,
+                        'animated_background': None,
                         'songs_paths'       : []
     }
     STATES = ['idle', 'stopped', 'cutscene']
@@ -78,13 +79,18 @@ class Screen(object):
         #Animations
         self.animations = []
         self.animation  = None  #The current playing animation
+        self.animated_background = False
         Screen.generate(self)
 
     @staticmethod
     def generate(self):
         UtilityBox.join_dicts(self.params, Screen.__default_config.copy())
-        self.background = Sprite(self.id+'_background', (0, 0), self.resolution, self.resolution,\
-                                resize_mode='fill', texture=self.params['background_path'])
+        if self.params['animated_background']:
+            self.background = self.params['animated_background']
+            self.animated_background = True
+        else:
+            self.background = Sprite(self.id+'_background', (0, 0), self.resolution, self.resolution,\
+                                    resize_mode='fill', texture=self.params['background_path'])
         if self.params['songs_paths']:
             self.music_chan = UtilityBox.get_sound_channel()
             self.music_chan.set_volume(0.75)
@@ -227,7 +233,10 @@ class Screen(object):
         superclass only draws the background, since the sprites group is empty.
         Args:
             surface (:obj: pygame.Surface): Surface to blit to."""
-        self.background.draw(surface)
+        if self.animated_background:
+            self.background.play(surface)
+        else:
+            self.background.draw(surface)
         for sprite in self.sprites.sprites():
             sprite.draw(surface)
         for popup in self.popups.sprites():
@@ -244,11 +253,18 @@ class Screen(object):
             resolution (:tuple: int, int):  Resolution to set on the Screen."""
         if resolution != self.resolution:
             self.resolution = resolution
-            self.background.set_canvas_size(resolution)
+            if self.animated_background:
+                self.background.set_resolution(resolution)
+            else:
+                self.background.set_canvas_size(resolution)
             if self.dialog:
                 self.dialog.set_canvas_size(resolution)
             for sprite in self.sprites.sprites():
                 sprite.set_canvas_size(resolution)
+            for popup in self.popups.sprites():
+                popup.set_canvas_size(resolution)
+            for animation in self.animations:
+                animation.set_resolution(resolution)
                 
 
     def add_sprites(self, *sprites):

@@ -15,10 +15,10 @@ import pygame
 import random
 from paths import Path
 from utility_box import UtilityBox
-from sprite import MultiSprite
+from polygons import Circle
 
 @functools.total_ordering
-class Cell(MultiSprite):
+class Cell(Circle):
     """Cell class. Inherits from MultiSprite.
     It's the most basic unit of the mapping of a board (Square).
     Has the position on said board and some info, like the characters, 
@@ -39,14 +39,17 @@ class Cell(MultiSprite):
             canvas_size (:tuple: int,int):  Size of the display/Screen in which to draw this Cell. In pixels.
             params (:dict:):    Dict of keywords and values as parameters to create the Circle associated.
                                 Variety going from fill_color and use_gradient to fill_color."""
-        params['shape'] = 'circle'
+        params['overlay'] = False
         super().__init__("cell_"+str(real_index), position, size, canvas_size, **params)
         self.pos    = grid_position
         self.index  = real_index
         self.chars  = pygame.sprite.GroupSingle()
-        self.center = self.rect.center
-        self.add_text_sprite(self.id+"_text", str(self.pos))
-    
+        Cell.generate(self)
+
+    @staticmethod
+    def generate(self):
+        self.add_text_sprite(self.id+"_text", str(self.pos[0])+"-"+str(self.pos[1]), text_size=tuple(x*0.75 for x in self.rect.size))
+
     def draw(self, surface):
         """Draws the Cell on the surface, with the index blitted on top (already done in self.image).
         If the cell is in the active state, an overlay of a random RGB color is also blitted.

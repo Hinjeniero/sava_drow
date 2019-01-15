@@ -127,7 +127,8 @@ class Sprite(pygame.sprite.Sprite):
         if self.visible:
             surface.blit(self.image, self.rect)
             if self.enabled:
-                if self.use_overlay and self.active:    self.draw_overlay(surface)               
+                if self.overlay and self.use_overlay and self.active:    
+                    self.draw_overlay(surface)               
                 self.update()
 
     def update_mask(self):
@@ -170,7 +171,6 @@ class Sprite(pygame.sprite.Sprite):
         """
         self.rect       = pygame.rect.Rect(self.rect.topleft, size)
         self.real_rect  =  (self.real_rect[0], tuple([x/y for x,y in zip(size, self.resolution)]))
-        print("CALLING REGENERATE "+self.id)
         self.regenerate_image()
         #LOG.log('debug', "Succesfully changed sprite ", self.id, " size to ",size)
 
@@ -188,6 +188,11 @@ class Sprite(pygame.sprite.Sprite):
         Only executes set_position and set_size if the position or size of the rect is different from the original one. """
         if self.rect.topleft != rect.topleft:   self.set_position(rect.topleft)
         if self.rect.size != rect.size:         self.set_size(rect.size)
+
+    def set_center(self, center):
+        if self.rect.topleft != center:
+            new_pos = tuple(x-y//2 for x,y in zip(center, self.rect.size))
+            self.set_position(new_pos)    #To update the real rect
 
     def set_active(self, active):
         """Sets the visible attribute. Can be used for differen purposes.
@@ -233,7 +238,13 @@ class Sprite(pygame.sprite.Sprite):
         Args:
             enabled (boolean): The value to set.
         """
-        self.use_overlay    = enabled
+        self.use_overlay = enabled
+
+    def delete_overlay(self):
+        """To save memory. Only to use if we won't use it in any case.
+        Can be generated again using regenerate."""
+        self.overlay = None
+        self.use_overlay = False
 
     def animation_frame(self):
         """Makes the changes to advance the animation one frame. This method is intended to be overloaded.
@@ -254,14 +265,14 @@ class Sprite(pygame.sprite.Sprite):
     def regenerate_image(self):
         """Generates the image and overlay again, following the params when the constructor executed.
         Also updates the mask. Intended to be used after changing an important attribute in rect or image."""
-        self.image, self.overlay    = Sprite.generate_surface(self.rect, **self.params)
+        self.image, self.overlay = Sprite.generate_surface(self.rect, **self.params)
         self.update_mask()
 
     @staticmethod   #TODO UPDATE DOCUMENTATION
     def generate_surface(size, surface=None, texture=None, keep_aspect_ratio=True, resize_mode='fit', shape="Rectangle",\
                         transparent=False, only_text=False, text="default_text", text_color=WHITE, text_font=None,\
                         fill_color=RED, fill_gradient=True, gradient=(LIGHTGRAY, DARKGRAY), gradient_type="horizontal",\
-                        overlay_color=WHITE, border=True, border_color=WHITE, border_width=2, **unexpected_kwargs):
+                        overlay=True, overlay_color=WHITE, border=True, border_color=WHITE, border_width=2, **unexpected_kwargs):
         """Generates a pygame surface according to input arguments.
         Args:
             size (:obj: pygame.Rect||:tuple: int,int):  Dimensions of the surface (width, height)
@@ -287,41 +298,48 @@ class Sprite(pygame.sprite.Sprite):
         Returns:
             (:obj: pygame.Surface): Surface generated following the keywords"""
         size    = size.size if isinstance(size, pygame.rect.Rect) else size
-        shape   = shape.lower()
-        overlay = pygame.Surface(size)
-        if surface: 
-            return surface, overlay #If we creating the sprite from an already created surface
-        #GENERATING IMAGE
-        if only_text:   #Special case: If we want a sprite object with all the methods, but with only a text with transparent background
-            font_size   = Resizer.max_font_size(text, size, text_font)
-            return pygame.font.Font(text_font, font_size).render(text, True, text_color), overlay 
-        if texture:     #If we get a string with the path of a texture to load onto the surface
-            image = pygame.image.load(texture).convert_alpha()
-            surf = Resizer.resize(image, size, mode=resize_mode) if keep_aspect_ratio else pygame.transform.smoothscale(image, size)
-            return surf, overlay
-        #In the case that we are still running this code and didn't return, means we dont have a texture nor a text, and have to generate the shape
-        radius  = size[0]//2
-        surf    = pygame.Surface(size)
-        if shape == 'circle':
-            if fill_gradient:   surf = gradients.radial(radius, gradient[0], gradient[1])
-            else:  
-                if transparent: #Dont draw the circle itself, only border
-                    UtilityBox.add_transparency(surf, border_color)
-                else:           #Draw the circle insides too
-                    UtilityBox.add_transparency(surf, fill_color, border_color)
-                    pygame.draw.circle(surf, fill_color, (radius, radius), radius, 0)
-            if border:          
-                pygame.draw.circle(surf, border_color, (radius, radius), radius, border_width)
-                pygame.draw.circle(overlay, overlay_color, (radius, radius), radius, 0)
-        elif shape == 'rectangle':
-            if fill_gradient:   surf = gradients.vertical(size, gradient[0], gradient[1]) if 'vertical' in gradient_type\
-                                else gradients.horizontal(size, gradient[0], gradient[1])
-            else:               surf.fill(fill_color)
-            if border:          pygame.draw.rect(surf, border_color, pygame.rect.Rect((0,0), size), border_width)
+        if surface:     #If we creating the sprite from an already created surface
+            surf    = Resizer.resize(surface, size)  
+        elif only_text: #If the surface is only a text with transparent background
+            surf    = pygame.font.Font(text_font, Resizer.max_font_size(text, size, text_font)).render(text, True, text_color)
+        elif texture:   #If we get a string with the path of a texture to load onto the surface
+            image   = pygame.image.load(texture).convert_alpha()
+            surf    = Resizer.resize(image, size, mode=resize_mode) if keep_aspect_ratio else pygame.transform.smoothscale(image, size)
+        else:           #In the case of this else, means we dont have a texture nor a text, and have to generate the shape
+            shape   = shape.lower()
+            surf    = pygame.Surface(size)
+            if 'circ' in shape:
+                radius  = size[0]//2
+                #Gradient
+                if fill_gradient:   
+                    surf = gradients.radial(radius, gradient[0], gradient[1])
+                else:  
+                    if transparent: #Dont draw the circle itself, only border
+                        UtilityBox.add_transparency(surf, border_color)
+                    else:           #Draw the circle insides too
+                        UtilityBox.add_transparency(surf, fill_color, border_color)
+                        pygame.draw.circle(surf, fill_color, (radius, radius), radius, 0)
+                #Border
+                if border:          
+                    pygame.draw.circle(surf, border_color, (radius, radius), radius, border_width)
+                    #pygame.draw.circle(overlay, overlay_color, (radius, radius), radius, 0)
+            elif 'rect' in shape:
+                if fill_gradient:   
+                    surf = gradients.vertical(size, gradient[0], gradient[1]) if 'vertical' in gradient_type\
+                    else gradients.horizontal(size, gradient[0], gradient[1])
+                else:               
+                    surf.fill(fill_color)
+                if border:          
+                    pygame.draw.rect(surf, border_color, pygame.rect.Rect((0,0), size), border_width)
+            else:
+                raise ShapeNotFoundException("Available shapes: Rectangle, Circle. "+shape+" is not recognized")
+        #End of the generation/specification of the pygame.Surface surf.
+        if overlay:
+            overlay = pygame.Surface(size)
             overlay.fill(overlay_color)
+            return surf, overlay
         else:
-            raise ShapeNotFoundException("Available shapes: Rectangle, Circle. "+shape+" is not accepted")
-        return surf, overlay
+            return surf, None
 
 class TextSprite(Sprite):
     """Class TextSprite. Inherits from Sprite, and the main surface is a text, from pygame.font.render.
@@ -407,7 +425,6 @@ class AnimatedSprite(Sprite):
         self.next_frame_time    = animation_delay
         self.animation_index    = 0
         #Generation
-        print("-----------------------"+self.id+"------------------------")
         AnimatedSprite.generate(self, sprite_folder, keywords, *sprite_list)
 
     @staticmethod
@@ -464,7 +481,7 @@ class AnimatedSprite(Sprite):
             size (:tuple: int, int):    Size to resize the surface to."""
         size = self.rect.size
         self.surfaces.append(Resizer.resize(surface, size))
-        self.hover_surfaces.append(Resizer.resize(surface, [int(x*1.5) for x in size]))
+        self.hover_surfaces.append(Resizer.resize(surface, tuple(int(x*1.5) for x in size)))
         self.masks.append(pygame.mask.from_surface(surface))
 
     def set_canvas_size(self, canvas_size):
@@ -613,7 +630,7 @@ class MultiSprite(Sprite):
             id_ (str):  Identifier of the TextSprite
             text (str): Text to add
             alignment (str):   To set type of centering for the text. Center, Left, Right.
-            text_size (int):    Size of the font (height in pixels).
+            text_size (:tuple: int, int):    Size of the text in pixels.
             params (:dict:):    Dict of keywords and values as parameters to create the TextSprite
                                 text_color, e.g.
         '''

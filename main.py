@@ -62,7 +62,7 @@ def create_main_menu():
                                         INITIAL_RESOLUTION, text="Graphics menu", gradient = next(gradients), gradient_type='vertical')
     #Create Menu
     main_menu   = Menu('main_menu', pygame.USEREVENT, INITIAL_RESOLUTION, buttonStart, buttonConfig, buttonSound, buttonGraphics,\
-                        background_path=IMG_FOLDER+'\\background.jpg', songs_paths=MENU_SONGS, dialog=create_dialog())
+                        background_path=IMG_FOLDER+'\\background.jpg', songs_paths=MENU_SONGS, dialog=create_dialog(), do_align=False)
 
     #Animations
     main_menu.add_animation(AnimationGenerator.characters_crossing_screen(INITIAL_RESOLUTION, *ALL_FPS))
@@ -84,7 +84,7 @@ def create_config_menu():
     buttonNumPriestesses= UIElement.factory('button_priestesses', "set_ammount_priestess", pygame.USEREVENT, next(positions), button_size,\
                                             INITIAL_RESOLUTION, default_values=(1, 1), text="Number of priestess", text_alignment='left')
     params_menu = Menu("menu_params_config", pygame.USEREVENT+1, INITIAL_RESOLUTION, buttonGameModes, buttonCountPlayers, buttonNumPawns,\
-                        buttonNumWarriors, buttonNumWizards, buttonNumPriestesses, background_path=IMG_FOLDER+'\\background.jpg')
+                        buttonNumWarriors, buttonNumWizards, buttonNumPriestesses, background_path=IMG_FOLDER+'\\background.jpg', do_align=False)
     return params_menu
 
 def create_sound_menu():
@@ -106,7 +106,7 @@ def create_sound_menu():
     buttonMenusSongs    = UIElement.factory('button_menu_song', 'change_menu_song', pygame.USEREVENT, next(positions), button_size,\
                                             INITIAL_RESOLUTION, default_values=MENU_CROPPED_SONGS, text='Selected menus song', text_proportion = 0.50)
     sound_menu          = Menu("menu_volume_music", pygame.USEREVENT+1, INITIAL_RESOLUTION, sliderMenuMusic, sliderMenuSounds, sliderBoardMusic, sliderBoardSounds,\
-                                buttonBoardSongs, buttonMenusSongs, background_path=IMG_FOLDER+'\\background.jpg')
+                                buttonBoardSongs, buttonMenusSongs, background_path=IMG_FOLDER+'\\background.jpg', do_align=False)
     return sound_menu
 
 def create_video_menu():
@@ -117,7 +117,8 @@ def create_video_menu():
                                     INITIAL_RESOLUTION, default_values=resolutions, text="Resolution",text_alignment='left')
     buttonFps   = UIElement.factory('button_fps', "change_fps_frames_per_second", pygame.USEREVENT, next(positions), button_size,\
                                     INITIAL_RESOLUTION, default_values=ALL_FPS, text="Frames per second",text_alignment='left')
-    graphics_menu  = Menu("menu_graphics_display", pygame.USEREVENT+1, INITIAL_RESOLUTION, buttonRes, buttonFps, background_path=IMG_FOLDER+'\\background.jpg')
+    graphics_menu  = Menu(  "menu_graphics_display", pygame.USEREVENT+1, INITIAL_RESOLUTION, buttonRes, buttonFps,\
+                            background_path=IMG_FOLDER+'\\background.jpg', do_align=False)
     graphics_menu.add_animation(AnimationGenerator.character_teleporting_screen(INITIAL_RESOLUTION, *ALL_FPS))
     return graphics_menu
 

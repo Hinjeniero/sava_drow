@@ -26,14 +26,14 @@ from decorators import time_it
 PYGAME_EVENT = pygame.USEREVENT+6
 SPRITE_PATHS = (IMG_FOLDER+'\\Pawn', IMG_FOLDER+'\\Warrior', IMG_FOLDER+'\\Wizard',
                 IMG_FOLDER+'\\Priestess')
-DOOR_PATH = (IMG_FOLDER+'\\Door')
+DOOR_PATH = (IMG_FOLDER+'\\Portal')
 SPRITE_NAMES = ('Manolo', 'Eustaquio', 'Zimamamio')
 MOVE_KEYWORDS = ('walk', )
 
 class AnimationGenerator(object):
     @staticmethod
     @time_it
-    def characters_crossing_screen(resolution, *fps, ammount=10, time_interval=(4, 10)):
+    def characters_crossing_screen(resolution, *fps, ammount=1, time_interval=(4, 10)):
         animation = AnimationGenerator.sprite_crossing_screen(resolution, random.randint(time_interval[0],\
                                                             time_interval[1]), random.choice(SPRITE_PATHS), *fps)
         ratio_size = 0.10
@@ -89,13 +89,11 @@ class AnimationGenerator(object):
     def sprite_teleporting_screen(resolution, time, folder, *fps, start_pos=0.20, end_pos=0.80):
         if not isinstance(fps, tuple):
             fps = fps,
-        ratio_size = 0.10
+        ratio_size = 0.20
         size = tuple(res * ratio_size for res in resolution)
         #Sprites
-        start_door = ScriptedSprite('door', (0, 0), size, resolution, fps[0], fps, sprite_folder=DOOR_PATH,\
-                                    keywords=('opening',), animation_delay=20)
-        end_door = ScriptedSprite(  'door', (0, 0), size, resolution, fps[0], fps, sprite_folder=DOOR_PATH,\
-                                    keywords=('opening',), animation_delay=20)
+        start_door = ScriptedSprite('door', (0, 0), size, resolution, fps[0], fps, sprite_folder=DOOR_PATH, animation_delay=1)
+        end_door = ScriptedSprite(  'door', (0, 0), size, resolution, fps[0], fps, sprite_folder=DOOR_PATH, animation_delay=1)
         sprite = ScriptedSprite('sans', (0, 0), size, resolution, fps[0], fps, sprite_folder=IMG_FOLDER+'\\sans_hd', animation_delay=1)
         #params
         init_pos = (start_pos*resolution[0], resolution[1]-sprite.rect.height)

@@ -103,9 +103,10 @@ class Menu (Screen):
             alignment (str):    Alignment mode of the elements. Center, Left, Right."""
         screen_width = self.resolution[0]
         for sprite in self.sprites.sprites():
-            sprite.rect.x = (screen_width-sprite.rect.width)//2 if 'center' in alignment\
+            x = (screen_width-sprite.rect.width)//2 if 'center' in alignment\
             else (0.05*screen_width) if 'left' in alignment\
             else (screen_width-sprite.rect.width-0.05*screen_width)
+            sprite.set_position((x, sprite.rect.y))
 
     def event_handler(self, event, keys_pressed, mouse_buttons_pressed, mouse_movement=False, mouse_pos=(0, 0)):
         """Handles any pygame event. This allows for user interaction with the object.

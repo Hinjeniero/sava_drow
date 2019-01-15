@@ -4,8 +4,12 @@ from synch_dict import Dictionary
 from utility_box import UtilityBox
 from decorators import time_it
 from logger import Logger as LOG
+from resizer import Resizer
+#from memory_profiler import profile
 
 IMAGE_FORMATS = ('.png', '.jpg', '.jpeg', 'bmp', '.gif', '.tga', '.pcx', '.tif', '.lbm', '.pbm', '.xbm')
+MAX_SIZE = 256
+
 class SurfaceLoader(object):
     SURFACES_LOADED = Dictionary()
     
@@ -50,13 +54,15 @@ class SurfaceLoader(object):
             surfaces[image_path] = SurfaceLoader.get_surface(image_path)
         return surfaces
 
-    @staticmethod       
+    @staticmethod     
     def get_surface(image_path):
         """Image_path can be an id too"""
         if image_path in SurfaceLoader.SURFACES_LOADED.keys():
             return SurfaceLoader.SURFACES_LOADED.get_item(image_path)
         else:
             surface = pygame.image.load(image_path).convert_alpha()
+            if any(x>MAX_SIZE for x in surface.get_size()):
+                surface = Resizer.resize(surface, (MAX_SIZE, MAX_SIZE))
             SurfaceLoader.SURFACES_LOADED.add_item(image_path, surface)
             return surface
         

@@ -246,9 +246,10 @@ class Screen(object):
             self.resolution = resolution
             self.background.set_canvas_size(resolution)
             if self.dialog:
-                self.dialog.sprite.set_canvas_size(resolution)
+                self.dialog.set_canvas_size(resolution)
             for sprite in self.sprites.sprites():
                 sprite.set_canvas_size(resolution)
+                
 
     def add_sprites(self, *sprites):
         """Adds sprites to the screen. Those added sprites will be drawn automatically in the next execution.

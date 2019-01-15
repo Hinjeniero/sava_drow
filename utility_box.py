@@ -284,7 +284,7 @@ class UtilityBox (object):
         size = (width, ((1-initial_offset-final_offset)/ammount_elements)-inter_element_space)
         yield size
         for index in range (0, ammount_elements):
-            position = ((1-width)//2, initial_offset+(index*(size[1]+inter_element_space)))
+            position = ((1-width)/2, initial_offset+(index*(size[1]+inter_element_space)))
             yield position
 
     @staticmethod

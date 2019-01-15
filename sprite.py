@@ -27,6 +27,7 @@ from logger import Logger as LOG
 from synch_dict import Dictionary
 from utility_box import UtilityBox
 from surface_loader import SurfaceLoader
+#from memory_profiler import profile
 
 #Global variables, read-only
 ANIMATION_INTERVAL      = (0.00, 1.00)  #Real interval
@@ -160,7 +161,7 @@ class Sprite(pygame.sprite.Sprite):
         new_position    = tuple([int(x*y) for x,y in zip(self.real_rect[0], canvas_size)]) 
         new_size        = tuple([int(x*y) for x,y in zip(self.real_rect[1], canvas_size)])
         self.set_rect(pygame.Rect(new_position, new_size))
-        LOG.log('debug', "Succesfully changed sprite ", self.id, " to ", self.rect.size, ", due to the change to resolution ", canvas_size)
+        #LOG.log('debug', "Succesfully changed sprite ", self.id, " to ", self.rect.size, ", due to the change to resolution ", canvas_size)
 
     def set_size(self, size):
         """Changes the size of the Sprite. Updates rect and real_rect, and changes image and mask to match the size.
@@ -169,6 +170,7 @@ class Sprite(pygame.sprite.Sprite):
         """
         self.rect       = pygame.rect.Rect(self.rect.topleft, size)
         self.real_rect  =  (self.real_rect[0], tuple([x/y for x,y in zip(size, self.resolution)]))
+        print("CALLING REGENERATE "+self.id)
         self.regenerate_image()
         #LOG.log('debug', "Succesfully changed sprite ", self.id, " size to ",size)
 
@@ -405,6 +407,7 @@ class AnimatedSprite(Sprite):
         self.next_frame_time    = animation_delay
         self.animation_index    = 0
         #Generation
+        print("-----------------------"+self.id+"------------------------")
         AnimatedSprite.generate(self, sprite_folder, keywords, *sprite_list)
 
     @staticmethod
@@ -416,6 +419,10 @@ class AnimatedSprite(Sprite):
             self.add_surfaces(*surfaces)
         self.image              = self.current_sprite()    #Assigning a logical sprite in place of the decoy one of the super()
         self.mask               = self.current_mask()       #Same shit to mask
+        #print("-----------------------"+self.id+"------------------------")
+        #print("AT THE END OF GENERATE; THE SIZE OF THE SURFACES IS "+str(MemoryProfiler.get_size(self.surfaces)/1000000)+" MB")
+        #print("AT THE END OF GENERATE; THE SIZE OF THE HOVER SURFACES IS "+str(MemoryProfiler.get_size(self.hover_surfaces)/1000000)+" MB")
+        #print("AT THE END OF GENERATE; THE SIZE OF THE MASKS IS "+str(MemoryProfiler.get_size(self.masks)/1000000)+" MB")
 
     def load_surfaces(self, folder, keywords=None):
         """Load all the sprites from a folder, and inserts them in the 2 lists of surfaces that are attributes.

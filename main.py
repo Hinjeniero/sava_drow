@@ -25,7 +25,7 @@ from animation_generator import AnimationGenerator
 
 INITIAL_RESOLUTION = (1280, 720)
 INITIAL_FPS = 30
-ALL_FPS = (INITIAL_FPS, 60, 144)
+ALL_FPS = (INITIAL_FPS, 60, 120, 144, 20)
 MENU_SONGS = UtilityBox.get_all_files(SOUND_FOLDER+'\\menu', '.ogg', '.mp3')
 BOARD_SONGS = UtilityBox.get_all_files(SOUND_FOLDER+'\\board', '.ogg', '.mp3')
 MENU_CROPPED_SONGS = [song.split('\\')[-1].split('.')[0] for song in MENU_SONGS]
@@ -62,10 +62,10 @@ def create_main_menu():
                                         INITIAL_RESOLUTION, text="Graphics menu", gradient = next(gradients), gradient_type='vertical')
     #Create Menu
     anim = AnimationGenerator.industrial_moving_background(INITIAL_RESOLUTION, 20, *ALL_FPS)
-    '''main_menu   = Menu('main_menu', pygame.USEREVENT, INITIAL_RESOLUTION,  buttonGraphics,\
-                        background_path=IMG_FOLDER+'\\background.jpg', animated_background=anim, songs_paths=MENU_SONGS, dialog=create_dialog(), do_align=False)'''
-    main_menu   = Menu('main_menu', pygame.USEREVENT, INITIAL_RESOLUTION, buttonStart, buttonConfig, buttonSound, buttonGraphics,\
-                        background_path=IMG_FOLDER+'\\background.jpg', songs_paths=MENU_SONGS, dialog=create_dialog(), do_align=False)
+    main_menu   = Menu('main_menu', pygame.USEREVENT, INITIAL_RESOLUTION,  buttonGraphics,\
+                        background_path=IMG_FOLDER+'\\background.jpg', animated_background=anim, songs_paths=MENU_SONGS, dialog=create_dialog(), do_align=False)
+    '''main_menu   = Menu('main_menu', pygame.USEREVENT, INITIAL_RESOLUTION, buttonStart, buttonConfig, buttonSound, buttonGraphics,\
+                        background_path=IMG_FOLDER+'\\background.jpg', songs_paths=MENU_SONGS, dialog=create_dialog(), do_align=False)'''
 
     #Animations
     main_menu.add_animation(AnimationGenerator.characters_crossing_screen(INITIAL_RESOLUTION, *ALL_FPS))

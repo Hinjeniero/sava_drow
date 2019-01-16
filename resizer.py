@@ -81,15 +81,13 @@ class Resizer (object):
         elif isinstance(element, pygame.sprite.Sprite): old_size = element.rect.size
         else:                                           raise BadResizerParamException("Can't resize element of type "+str(type(element)))
         #Getting the ratio
-        if 'fit' in mode:                              
-            ratio = min([new/old for new, old in zip(new_size, old_size)])
-        elif 'fill' in mode:                         
-            ratio = max([new/old for new, old in zip(new_size, old_size)])
+        if 'fit' in mode.lower():                       ratio = min([new/old for new, old in zip(new_size, old_size)])
+        elif 'fill' in mode.lower():                    ratio = max([new/old for new, old in zip(new_size, old_size)])
         else:                                           raise BadResizerParamException('Mode '+mode+' is not a recognized resizing mode')
         #Multiplyyyying
         result_size = tuple([int(ratio*size) for size in old_size])
         #And returning either a surface or True if success
-        if isinstance(element, pygame.Surface):   
+        if isinstance(element, pygame.Surface):
             return pygame.transform.smoothscale(element, result_size)
         else:   #Its a sprite
             element.image = pygame.transform.smoothscale(element.image, result_size)

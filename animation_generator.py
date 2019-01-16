@@ -33,7 +33,7 @@ MOVE_KEYWORDS = ('walk', )
 class AnimationGenerator(object):
     @staticmethod
     @time_it
-    def characters_crossing_screen(resolution, *fps, ammount=1, time_interval=(4, 10)):
+    def characters_crossing_screen(resolution, *fps, ammount=0, time_interval=(4, 10)):
         animation = AnimationGenerator.sprite_crossing_screen(resolution, random.randint(time_interval[0],\
                                                             time_interval[1]), random.choice(SPRITE_PATHS), *fps)
         ratio_size = 0.10
@@ -50,21 +50,22 @@ class AnimationGenerator(object):
 
     @staticmethod
     def industrial_moving_background(resolution, time, *fps):
-        animation       = Animation('Moving background bro', -1, -1)
+        animation       = LoopedAnimation('Moving background bro')
         #Loading
-        background      = ScriptedSprite('sprite_crossing', (0, 0), resolution, resolution, fps[0], fps,\
-                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('background',)) 
-        far_buildings_1 = ScriptedSprite('start_far_buildings', (0, 0), resolution, resolution, fps[0], fps,\
+        initial_out_of_screen = tuple(-x for x in resolution)   #If I dont do this, there is one frame after every loop in which the graphcis appear i the mioddle of the screen
+        background      = ScriptedSprite('sprite_crossing', initial_out_of_screen, resolution, resolution, fps[0], fps,\
+                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('background',), resize_mode='fill') 
+        far_buildings_1 = ScriptedSprite('start_far_buildings', initial_out_of_screen, resolution, resolution, fps[0], fps,\
                                         sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('far',))
-        far_buildings_2 = ScriptedSprite('end_far_buildings', (0, 0), resolution, resolution, fps[0], fps,\
+        far_buildings_2 = ScriptedSprite('end_far_buildings', initial_out_of_screen, resolution, resolution, fps[0], fps,\
                                         sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('far',))
-        buildings_1     = ScriptedSprite('start_buildings', (0, 0), resolution, resolution, fps[0], fps,\
+        buildings_1     = ScriptedSprite('start_buildings', initial_out_of_screen, resolution, resolution, fps[0], fps,\
                                         sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('front',))
-        buildings_2     = ScriptedSprite('end_buildings', (0, 0), resolution, resolution, fps[0], fps,\
+        buildings_2     = ScriptedSprite('end_buildings', initial_out_of_screen, resolution, resolution, fps[0], fps,\
                                         sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('front',))
-        foreground_1    = ScriptedSprite('start_foreground', (0, 0), resolution, resolution, fps[0], fps,\
+        foreground_1    = ScriptedSprite('start_foreground', initial_out_of_screen, resolution, resolution, fps[0], fps,\
                                         sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('foreground',))
-        foreground_2    = ScriptedSprite('end_foreground', (0, 0), resolution, resolution, fps[0], fps,\
+        foreground_2    = ScriptedSprite('end_foreground', initial_out_of_screen, resolution, resolution, fps[0], fps,\
                                         sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('foreground',))
         #Params
         init_pos = (-resolution[0], resolution[1])
@@ -75,12 +76,6 @@ class AnimationGenerator(object):
         build_end_pos = (end_pos[0], end_pos[1]-buildings_1.rect.height)
         fore_init_pos = (init_pos[0], init_pos[1]-foreground_1.rect.height)
         fore_end_pos = (end_pos[0], end_pos[1]-foreground_1.rect.height)
-        print("FAR "+str(far_init_pos))
-        print("BUILD "+str(build_init_pos))
-        print("FORE "+str(fore_init_pos))
-        print("SIZE FAR "+str(far_buildings_1.rect.size))
-        print("SIZE BILD "+str(buildings_1.rect.size))
-        print("SIZE FORE "+str(foreground_1.rect.size))
         #Timers
         building_time = time*2
         far_building_time = time*3
@@ -94,13 +89,13 @@ class AnimationGenerator(object):
         foreground_1.add_movement(fore_init_pos, fore_end_pos, foreground_time)
         foreground_2.add_movement(fore_init_pos, fore_end_pos, foreground_time)
         #Adding to animation
-        animation.add_sprite(background, 0, time)
-        animation.add_sprite(far_buildings_1, 0, far_building_time)
-        animation.add_sprite(far_buildings_2, 0.5*far_building_time, 1.5*far_building_time)
-        animation.add_sprite(buildings_1, 0, building_time)
-        animation.add_sprite(buildings_2, 0.5*building_time, 1.5*building_time)
-        animation.add_sprite(foreground_1, 0, foreground_time)
-        animation.add_sprite(foreground_2, 0.5*foreground_time, 1.5*foreground_time) #How to not repeat this shit
+        animation.add_sprite(background, 0, time, 0)
+        animation.add_sprite(far_buildings_1, 0, far_building_time, 1)
+        animation.add_sprite(far_buildings_2, 0.5*far_building_time, 1.5*far_building_time, 1)
+        animation.add_sprite(buildings_1, 0, building_time, 2)
+        animation.add_sprite(buildings_2, 0.5*building_time, 1.5*building_time, 2)
+        animation.add_sprite(foreground_1, 0, foreground_time, 3)
+        animation.add_sprite(foreground_2, 0.5*foreground_time, 1.5*foreground_time, 3) #How to not repeat this shit
         return animation
 
     @staticmethod

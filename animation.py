@@ -38,7 +38,8 @@ class ScriptedSprite(AnimatedSprite):
         end_time(float):   The time in seconds at which this sprite animation ends. It's used when added to an animation.
     """
 
-    def __init__(self, id_, position, size, canvas_size, fps, fps_modes, *sprite_list, sprite_folder=None, keywords=None, animation_delay=5):
+    def __init__(self, id_, position, size, canvas_size, fps, fps_modes, *sprite_list, sprite_folder=None, keywords=None,
+                animation_delay=5, resize_mode='fit'):
         """ScriptedSprite constructor.
         Args:
             id_ (str):  Identifier of the Sprite.
@@ -54,7 +55,8 @@ class ScriptedSprite(AnimatedSprite):
                                                     that we don't want all of the contained ones.
             animation_delay (int):  Frames that occur between each animatino (Change of surface).
         """
-        super().__init__(id_, position, size, canvas_size, *sprite_list, sprite_folder=sprite_folder, keywords=keywords, animation_delay=animation_delay)
+        super().__init__(id_, position, size, canvas_size, *sprite_list, sprite_folder=sprite_folder, keywords=keywords,\
+                        animation_delay=animation_delay, resize_mode=resize_mode)
         self.starting_pos = position
         self.frames = {}            #Distinct positions according to time
         self.real_frames = {}       #Real position (0->1 in the screen)
@@ -63,8 +65,9 @@ class ScriptedSprite(AnimatedSprite):
         self.fps_modes  = fps_modes #All the possible fps modes
         self.frame_jump = 1         #To speedup the animation
         self.time       = 0
-        self.init_time  = 0
-        self.end_time   = 0
+        self.init_time  = 0         #Used when added to an animation
+        self.end_time   = 0         #Used when added to an animation
+        self.layer      = 0         #Used when added to an animation
         ScriptedSprite.generate(self)
 
     @staticmethod
@@ -171,15 +174,17 @@ class Animation(object):
         for sprite in self.all_sprites:
             sprite.set_canvas_size(resolution)
 
-    def add_sprite(self, sprite, init_time, end_time):
+    def add_sprite(self, sprite, init_time, end_time, layer=0):
         """Adds a sprite/component to the animation, with the starting time and 
         the ending time in seconds.
         Args:
             sprite(:obj: ScriptedSprite): Sprite to add.
             init_time(float):   Starting time of the animated sprite.
-            end_time(float):    Ending time of the sprite's animation."""
+            end_time(float):    Ending time of the sprite's animation.
+            layer(int, default=0):  Layer in which the sprite will be drawn."""
         sprite.init_time = init_time
         sprite.end_time = end_time
+        sprite.layer = layer
         self.all_sprites.append(sprite)
         self.idle_sprites.append(sprite)
         self.sort_sprites()
@@ -212,7 +217,7 @@ class Animation(object):
         if idle:
             self.idle_sprites.sort(key=lambda spr: spr.init_time)
         if playing:
-            self.playing_sprites.sort(key=lambda spr: spr.end_time)
+            self.playing_sprites.sort(key=lambda sprite: (sprite.layer, sprite.end_time))
 
     def restart(self):  #TODO CHECK OUT THIS METHOD
         for sprite in self.playing_sprites:
@@ -227,14 +232,14 @@ class Animation(object):
         del self.playing_sprites[:]
         del self.done_sprites[:]
 
-    def play(self, surface):
+    def play(self, surface, infinite=False):
         """Plays the animation. Draws a frame of it and updates the attributes to
         continue the animation the next time this method is called.
         Args:
             (:obj: pygame.Surface): Surface to draw the animation frame on."""
         self.update_clocks()
         self.trigger_sprites()
-        if self.current_time > self.total_time:
+        if not infinite and (self.current_time > self.total_time):
             self.end_loop()
         else:
             for sprite in self.playing_sprites:
@@ -252,24 +257,37 @@ class Animation(object):
         self.current_time = time_now-self.init_time
 
     def trigger_sprites(self):
-        #Checking sprites that have completer their animation to end them.
-        while len(self.playing_sprites) > 0: #They are sorted, if the first one is not a hit, no need to keep checking.
+        #Checking sprites that have completed their animation to end them.
+        indexes_to_end = []
+        for index in range (0, len(self.playing_sprites)):
             if self.current_time > self.playing_sprites[0].end_time:
-                #print("YES, ENDS: "+str(self.current_time)+">"+str(self.playing_sprites[0].end_time))
-                self.playing_sprites[0].restart()    
-                self.done_sprites.append(self.playing_sprites[0])
-                del self.playing_sprites[0]
-                continue
-            break
-        #Checking sprites to trigger/start. They are sorted, sooo...
-        while len(self.idle_sprites) > 0:
-            if self.current_time > self.idle_sprites[0].init_time:
-                print("YES, STARTS: "+str(self.current_time)+">"+str(self.idle_sprites[0].init_time))
-                self.playing_sprites.append(self.idle_sprites[0])
-                del self.idle_sprites[0]
-                self.sort_sprites(idle=False, playing=True)
-                continue
-            break
+                indexes_to_end.append(index)
+        self.end_sprites(*indexes_to_end)
+
+        #Checking sprites to trigger/start.
+        indexes_to_start = []
+        for index in range (0, len(self.idle_sprites)):
+            if self.current_time > self.idle_sprites[index].init_time:
+                indexes_to_start.append(index)
+        self.init_sprites(*indexes_to_start)
+
+    def init_sprites(self, *indexes):
+        offset = 0
+        for index in indexes:
+            sprite = self.idle_sprites[index-offset]
+            self.playing_sprites.append(sprite)
+            del self.idle_sprites[index-offset]
+            offset+=1
+        self.sort_sprites(idle=True, playing=True)
+
+    def end_sprites(self, *indexes):
+        offset = 0
+        for index in indexes:
+            sprite = self.playing_sprites[index-offset]
+            sprite.restart()
+            self.done_sprites.append(sprite)
+            del self.playing_sprites[index-offset]
+            offset+=1
 
     def set_fps(self, fps):
         """Sets the refresh rate of the animation.
@@ -334,10 +352,19 @@ class LoopedAnimation(Animation):
     def __init__(self, name, loops=1):
         super().__init__(name, -1, -1)
 
+    def trigger_sprites(self):
+        #Checking sprites to trigger/start. They are sorted, sooo...
+        indexes_to_start = []
+        for index in range (0, len(self.idle_sprites)):
+            if self.current_time > self.idle_sprites[index].init_time:
+                indexes_to_start.append(index)
+                continue    #Next iteration
+            self.init_sprites(*indexes_to_start)
+            break
+
     def play(self, surface):
         """Plays the animation. Draws a frame of it and updates the attributes to
         continue the animation the next time this method is called.
         Args:
             (:obj: pygame.Surface): Surface to draw the animation frame on."""
-        for sprite in self.all_sprites:
-            sprite.draw(surface)
+        super().play(surface, infinite=True)

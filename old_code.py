@@ -1708,3 +1708,253 @@ class Dialog (InfoBoard):
             if sprite_surface == self.original_surfaces[i]:    
                 return self.original_surfaces[i]
         return False
+
+#OLD ANIMATION
+class Animation(object):
+    """Animation class. Inherits from object.
+    Its the frame that contains the sprites that make up an entire animation/cutscene.
+    Controls the time at which each sprite triggers and ends, and when to stop the animation itself.
+    Also has implemented the logic to replay a couple of times, forever or only play 1 time.
+    Attributes:
+        id(str):
+        total_time(float):  Total duration of this animation. In seconds.
+        init_time(float):   Initial time at which the animation started. In seconds from the UNIX 0.
+        current_time(float):Time that the animation has been playing. In seconds.
+        scripted_sprites(:list: ScriptedSprites):
+        currently_playing(:list: ScriptedSprites):
+        end_event(:obj: pygame.event):  Event that will be sent when the animation ends all of its loops. Notifies the end.
+        loops(int): Number of times that the animation will play. If the input argument is 0/negative, it will continue decreasing.
+                    No problem, it always compares to zero to end, so with those inputs the animation will play 'forever'.  
+        """
+
+    def __init__(self, name, end_event, loops=1):
+        """Animation constructor.
+        Args:
+            name(str):
+            end_event(:obj: pygame.event):
+            loops(int, default=1):
+        """
+        self.id                 = name
+        self.total_time         = 0
+        self.init_time          = 0
+        self.current_time       = 0
+        self.all_sprites        = []    #To make methods to all the sprites in one line
+        self.idle_sprites       = []
+        self.playing_sprites    = {}    #Layers will be effective here
+        self.done_sprites       = []
+        self.end_event          = end_event
+        self.loops              = loops
+
+    def set_resolution(self, resolution):
+        for sprite in self.all_sprites:
+            sprite.set_canvas_size(resolution)
+
+    def add_sprite(self, sprite, init_time, end_time, layer=0):
+        """Adds a sprite/component to the animation, with the starting time and 
+        the ending time in seconds.
+        Args:
+            sprite(:obj: ScriptedSprite): Sprite to add.
+            init_time(float):   Starting time of the animated sprite.
+            end_time(float):    Ending time of the sprite's animation.
+            layer(int, default=0):  Layer in which the sprite will be drawn."""
+        sprite.init_time = init_time
+        sprite.end_time = end_time
+        sprite.layer = layer
+        self.all_sprites.append(sprite)
+        self.idle_sprites.append(sprite)
+        self.sort_sprites()
+        if end_time > self.total_time:
+            self.total_time = end_time
+
+    def set_loops(self, loops):
+        """Sets the number of replays of this animation.
+        If the input argument is 0 or negative, the animation plays forever.
+        Args:
+            loops(int): Number of replays for this animation. 0/negative makes it
+                        play forever."""
+        self.loops = loops
+
+    def end_loop(self):
+        """Ends a loop/replay on the animation. Decreases the loops in 1,
+        and if after that the loops equal 0, sends the associated end event.
+        Restarts the time attributes too."""
+        if self.loops >= 0:
+            self.loops -= 1
+        self.init_time = 0
+        self.current_time = 0
+        self.restart()
+        if self.loops is 0: #Only will end for self.loops over zero.
+            event = pygame.event.Event(self.end_event, command=self.id+"_end_animation")
+            pygame.event.post(event)
+
+    def sort_sprites(self, idle=True, playing=False):
+        """sorts by init time or end itme, the idle sprites and the playing sprites."""
+        if idle:
+            self.idle_sprites.sort(key=lambda spr: spr.init_time)
+        if playing:
+            for layer in self.playing_sprites.keys():
+                self.playing_sprites[layer].sort(key=lambda sprite: sprite.end_time)
+                #This line is to use to sort by two parameters
+                #self.playing_sprites.sort(key=lambda sprite: (sprite.layer, sprite.end_time))
+
+    def restart(self):  #TODO CHECK OUT THIS METHOD
+        for sprite in self.playing_sprites:
+            sprite.restart()
+            self.idle_sprites.append(sprite)
+        for sprite in self.done_sprites:
+            self.idle_sprites.append(sprite)
+        self.clear_animation_cache()
+        self.sort_sprites()
+
+    def clear_animation_cache(self):
+        for layer in self.playing_sprites.keys():
+            del self.playing_sprites[layer][:]
+        del self.done_sprites[:]
+
+    def play(self, surface, infinite=False):
+        """Plays the animation. Draws a frame of it and updates the attributes to
+        continue the animation the next time this method is called.
+        Args:
+            (:obj: pygame.Surface): Surface to draw the animation frame on."""
+        self.update_clocks()
+        self.trigger_sprites()
+        if not infinite and (self.current_time > self.total_time):
+            self.end_loop()
+        else:
+            for layer in self.playing_sprites.keys():
+                for sprite in self.playing_sprites[layer]:
+                    sprite.draw(surface)
+
+    def draw(self, surface):
+        """Acronym"""
+        self.play(surface)
+
+    def update_clocks(self):
+        """Updates the time attributes. Called along with the play() method."""
+        time_now = time.time()
+        if self.init_time is 0: #First time playing this loop
+            self.init_time = time_now
+        self.current_time = time_now-self.init_time
+
+    def trigger_sprites(self):
+        #Checking sprites that have completed their animation to end them.
+        for layer in self.playing_sprites.keys():
+            indexes_to_end = []
+            for index in range (0, len(self.playing_sprites[layer])): #They are sorted, if the first one is not a hit, no need to keep checking.
+                if self.current_time > self.playing_sprites[0].end_time:
+                    indexes_to_end.append(index)
+                    continue
+                self.end_sprites(layer, *indexes_to_end)
+                break
+        #Checking sprites to trigger/start. They are sorted, sooo...
+        indexes_to_start = []
+        for index in range (0, len(self.idle_sprites)):
+            #print("NOT TRUE "+str(self.current_time) +" NOT GREATER THAN "+str(self.idle_sprites[index].init_time))
+            if self.current_time > self.idle_sprites[index].init_time:
+                indexes_to_start.append(index)
+                continue    #Next iteration
+            self.init_sprites(*indexes_to_start)
+            break
+
+    def init_sprites(self, *indexes):
+        offset = 0
+        for index in indexes:
+            sprite = self.idle_sprites[index]
+            layer = sprite.layer
+            try:
+                self.playing_sprites[layer].append(sprite)
+            except KeyError:
+                self.playing_sprites[layer] = [sprite]
+                self.playing_sprites = sorted(self.playing_sprites.items())
+            del self.idle_sprites[index-offset]
+            offset+=1
+        self.sort_sprites(idle=True, playing=True)
+
+    def end_sprites(self, layer, *indexes):
+        offset = 0
+        for index in indexes:
+            sprite = self.playing_sprites[layer][index]
+            sprite.restart()
+            self.done_sprites.append(sprite)
+            del self.playing_sprites[layer][index-offset]
+            offset+=1
+
+    def set_fps(self, fps):
+        """Sets the refresh rate of the animation.
+        Args:
+            fps(int):   Frames per second to set as refresh rate."""
+        for sprite in self.all_sprites:
+            sprite.set_refresh_rate(fps)
+    
+    def speedup(self, ratio):
+        """Speeds up the animation by increasing the frame jump attribute.
+        If wanted to speed down, a number between 0 and 1 must be used.
+        Args:
+            ratio(int|float):   The factor to speed up the animation.
+                                e.g: A ratio 2 makes the animation go double the speed.
+                                ratio 0.5 makes it go half the speed."""
+        ratio = int(ratio)
+        for sprite in self.all_sprites:
+            sprite.time /= ratio
+            sprite.frame_jump *= ratio
+
+    def set_speed(self, speed):
+        """Sets the speed of the animation by setting the frame jump attribute and time.
+        A speed of 1 is the default speedof the animation.
+        Args:
+            ratio(int|float):   The factor to speed up the animation.
+                                e.g: A ratio 2 makes the animation go double the speed."""
+        speed = int(speed)
+        for sprite in self.all_sprites:
+            sprite.time /= (speed/sprite.frame_jump)
+            sprite.frame_jump = speed    
+
+    def shrink_time(self, ratio):
+        """Divides the time of the animation by the ratio, getting a shorter animation by a factor of x
+        Deletes frames in the process, irreversible method. This leads to a speed up animation.
+        Args:
+            ratio(int|float):   The factor to shrink the frames lists.
+                                e.g: A ratio 2 deletes half the sprites, thus making the animation
+                                half the duration.
+                                A ratio 3 deletes 2/3 the sprites, thus making the animation one third
+                                the duration."""
+        ratio = int(ratio)
+        for sprite in self.all_sprites:
+            sprite.index //= ratio
+            sprite.time /= ratio
+            for key in sprite.frames.keys():
+                new_frame_list = []
+                for i in range(0, len(sprite.frames[key])):
+                    if i%ratio != 0:
+                        new_frame_list.append(sprite.frames[key][i])
+                sprite.frames[key] = new_frame_list
+
+class LoopedAnimation(Animation):
+    """LoopedAnimation class. Inherits from Animation.
+    The sprites in this animation will loop back as soon as they are done.
+    In this way specific sprites can be restarted before than others.
+    Has no loops funcionality, plays forever.
+    All the sprites are called from the get-go, no triggering based in time.
+    It's like a basic and lite version of Animation, perfect for menu animations and such.
+    If you want an infinite animation, but with different trigger times for sprites, use Animation
+    with loops set to 0 or a negative number.
+    """
+    def __init__(self, name, loops=1):
+        super().__init__(name, -1, -1)
+
+    def trigger_sprites(self):
+        #Checking sprites to trigger/start. They are sorted, sooo...
+        indexes_to_start = []
+        for index in range (0, len(self.idle_sprites)):
+            if self.current_time > self.idle_sprites[index].init_time:
+                indexes_to_start.append(index)
+                continue    #Next iteration
+            self.init_sprites(*indexes_to_start)
+            break
+
+    def play(self, surface):
+        """Plays the animation. Draws a frame of it and updates the attributes to
+        continue the animation the next time this method is called.
+        Args:
+            (:obj: pygame.Surface): Surface to draw the animation frame on."""
+        super().play(surface, infinite=True)

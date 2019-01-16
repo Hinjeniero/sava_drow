@@ -107,7 +107,7 @@ class AnimationGenerator(object):
             time = time_interval[0]+(random.random()*(time_interval[1]-time_interval[0]))
             sprite.add_movement(init_pos, end_pos, time)
             animation.add_sprite(sprite, 0, time)
-        return animation
+        return animation 
 
     @staticmethod
     def pawn_crossing_screen(resolution, time, *fps):

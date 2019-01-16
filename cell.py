@@ -188,7 +188,9 @@ class Quadrant(object):
         else random.choice(self.border.sprites()) if 'bord' in zone.lower()\
         else random.choice(self.center.sprites()) if 'cent' in zone.lower()\
         else None
-        self.cells.remove(cell), self.center.remove(cell), self.border.remove(cell)
+        self.cells.remove(cell)
+        self.center.remove(cell)
+        self.border.remove(cell)
         return cell
 
     def get_intervals(self, *cells):

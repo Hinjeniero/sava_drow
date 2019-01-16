@@ -28,26 +28,9 @@ SPRITE_PATHS = (IMG_FOLDER+'\\Pawn', IMG_FOLDER+'\\Warrior', IMG_FOLDER+'\\Wizar
                 IMG_FOLDER+'\\Priestess')
 DOOR_PATH = (IMG_FOLDER+'\\Portal')
 SPRITE_NAMES = ('Manolo', 'Eustaquio', 'Zimamamio')
-MOVE_KEYWORDS = ('walk', )
+MOVE_KEYWORDS = ('run', )
 
 class AnimationGenerator(object):
-    @staticmethod
-    @time_it
-    def characters_crossing_screen(resolution, *fps, ammount=0, time_interval=(4, 10)):
-        animation = AnimationGenerator.sprite_crossing_screen(resolution, random.randint(time_interval[0],\
-                                                            time_interval[1]), random.choice(SPRITE_PATHS), *fps)
-        ratio_size = 0.10
-        size = tuple(res * ratio_size for res in resolution)
-        for _ in range(0, ammount-1):
-            sprite = ScriptedSprite(random.choice(SPRITE_NAMES), (0, 0), size, resolution, fps[0], fps,\
-                                    sprite_folder=random.choice(SPRITE_PATHS), keywords=MOVE_KEYWORDS)
-            init_pos = (0, resolution[1]-sprite.rect.height)
-            end_pos = (resolution[0], resolution[1]-sprite.rect.height)
-            time = time_interval[0]+(random.random()*(time_interval[1]-time_interval[0]))
-            sprite.add_movement(init_pos, end_pos, time)
-            animation.add_sprite(sprite, 0, time)
-        return animation
-
     @staticmethod
     def industrial_moving_background(resolution, time, *fps):
         animation       = LoopedAnimation('Moving background bro')
@@ -76,13 +59,20 @@ class AnimationGenerator(object):
         build_end_pos = (end_pos[0], end_pos[1]-buildings_1.rect.height)
         fore_init_pos = (init_pos[0], init_pos[1]-foreground_1.rect.height)
         fore_end_pos = (end_pos[0], end_pos[1]-foreground_1.rect.height)
+        ##
+        '''far_init_pos = (-far_buildings_1.rect.width, resolution[1]-far_buildings_1.rect.height) 
+        far_end_pos = (resolution[0]+far_buildings_1.rect.width, resolution[1]-far_buildings_1.rect.height) 
+        build_init_pos = (-buildings_1.rect.width, resolution[1]-buildings_1.rect.height)
+        build_end_pos = (resolution[0]+buildings_1.rect.width, resolution[1]-buildings_1.rect.height)
+        fore_init_pos = (-foreground_1.rect.width, resolution[1]-foreground_1.rect.height)
+        fore_end_pos = (resolution[0]+foreground_1.rect.width, resolution[1]-foreground_1.rect.height)'''
         #Timers
         building_time = time*2
         far_building_time = time*3
         foreground_time = time
         #Animating
         background.add_movement((0, 0), (0, 0), 1)
-        far_buildings_1.add_movement(far_init_pos, far_end_pos, far_building_time)  #TODO make a copy of this.
+        far_buildings_1.add_movement(far_init_pos, far_end_pos, far_building_time)  #TODO make a copy of this?
         far_buildings_2.add_movement(far_init_pos, far_end_pos, far_building_time)
         buildings_1.add_movement(build_init_pos, build_end_pos, building_time)
         buildings_2.add_movement(build_init_pos, build_end_pos, building_time)
@@ -96,6 +86,27 @@ class AnimationGenerator(object):
         animation.add_sprite(buildings_2, 0.5*building_time, 1.5*building_time, 2)
         animation.add_sprite(foreground_1, 0, foreground_time, 3)
         animation.add_sprite(foreground_2, 0.5*foreground_time, 1.5*foreground_time, 3) #How to not repeat this shit
+        return animation
+
+    @staticmethod
+    def waterfall_animated_background(resolution, *fps):
+        pass
+
+    @staticmethod
+    @time_it
+    def characters_crossing_screen(resolution, *fps, ammount=5, time_interval=(4, 10)):
+        animation = AnimationGenerator.sprite_crossing_screen(resolution, random.randint(time_interval[0],\
+                                                            time_interval[1]), random.choice(SPRITE_PATHS), *fps)
+        ratio_size = 0.10
+        size = tuple(res * ratio_size for res in resolution)
+        for _ in range(0, ammount-1):
+            sprite = ScriptedSprite(random.choice(SPRITE_NAMES), (0, 0), size, resolution, fps[0], fps,\
+                                    sprite_folder=random.choice(SPRITE_PATHS), keywords=MOVE_KEYWORDS)
+            init_pos = (-sprite.rect.width, resolution[1]-sprite.rect.height)
+            end_pos = (resolution[0], resolution[1]-sprite.rect.height)
+            time = time_interval[0]+(random.random()*(time_interval[1]-time_interval[0]))
+            sprite.add_movement(init_pos, end_pos, time)
+            animation.add_sprite(sprite, 0, time)
         return animation
 
     @staticmethod
@@ -121,7 +132,7 @@ class AnimationGenerator(object):
         ratio_size = 0.10
         size = tuple(res * ratio_size for res in resolution)
         sprite = ScriptedSprite('sprite_crossing', (0, 0), size, resolution, fps[0], fps, sprite_folder=folder, keywords=MOVE_KEYWORDS)
-        init_pos = (0, resolution[1]-sprite.rect.height)
+        init_pos = (-sprite.rect.width, resolution[1]-sprite.rect.height)
         end_pos = (resolution[0], resolution[1]-sprite.rect.height)
         sprite.add_movement(init_pos, end_pos, time)
         animation = LoopedAnimation('Crossing screen bro')
@@ -143,7 +154,7 @@ class AnimationGenerator(object):
         size = tuple(res * ratio_size for res in resolution)
         #Sprites
         start_door = ScriptedSprite('door', (0, 0), size, resolution, fps[0], fps, sprite_folder=DOOR_PATH, animation_delay=1)
-        end_door = ScriptedSprite(  'door', (0, 0), size, resolution, fps[0], fps, sprite_folder=DOOR_PATH, animation_delay=1)
+        end_door = ScriptedSprite('door', (0, 0), size, resolution, fps[0], fps, sprite_folder=DOOR_PATH, animation_delay=1)
         sprite = ScriptedSprite('sans', (0, 0), size, resolution, fps[0], fps, sprite_folder=IMG_FOLDER+'\\sans_hd', animation_delay=1)
         #params
         init_pos = ((start_pos*resolution[0]), resolution[1]-sprite.rect.height)
@@ -153,7 +164,7 @@ class AnimationGenerator(object):
         sprite.add_movement(init_pos, end_pos, time)
         #Creating animation
         animation = LoopedAnimation('Crossing screen bro')
-        animation.add_sprite(start_door, 0, time)
-        animation.add_sprite(end_door, 0, time)
-        animation.add_sprite(sprite, 0, time)
+        animation.add_sprite(start_door, 0, time, 0)
+        animation.add_sprite(end_door, 0, time, 0)
+        animation.add_sprite(sprite, 0, time, 1)
         return animation  

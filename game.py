@@ -80,20 +80,13 @@ class Game(object):
                 LOG.log('INFO', 'Unknown command "', command, '"')
     
     def config_handler(self, command, value):
+        characters = ('pawn', 'warrior', 'wizard', 'priestess', 'matron')
         if 'mode' in command or 'game' in command:
             self.board_generator.set_gamemode(value)
         if 'player' in command:
             self.board_generator.players = value
-        if 'pawn' in command:
-            self.board_generator.pawns = value
-        if 'warrior' in command:
-            self.board_generator.warriors = value
-        if 'wizard' in command:
-            self.board_generator.wizards = value
-        if 'priestess' in command:
-            self.board_generator.priestesses = value
-        if 'matron' in command:
-            self.board_generator.matron_mothers = value
+        if any(char in command for char in characters):
+            self.board_generator.set_character_ammount(command, value)
 
     def graphic_handler(self, command, value):
         if 'fps' in command:          
@@ -312,6 +305,7 @@ class Game(object):
 
     def initiate(self):
         self.started = True
+        self.disable_params()
         self.screens.append(self.board_generator.generate_board(self.resolution))
 
     def start(self):

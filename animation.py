@@ -358,9 +358,7 @@ class LoopedAnimation(Animation):
         for index in range (0, len(self.idle_sprites)):
             if self.current_time > self.idle_sprites[index].init_time:
                 indexes_to_start.append(index)
-                continue    #Next iteration
-            self.init_sprites(*indexes_to_start)
-            break
+        self.init_sprites(*indexes_to_start)
 
     def play(self, surface):
         """Plays the animation. Draws a frame of it and updates the attributes to

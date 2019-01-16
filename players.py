@@ -276,7 +276,7 @@ class Character(AnimatedSprite):
             else Warrior if 'warrior' in key else Priestess if 'priestess' in key\
             else MatronMother if 'matron' in key else None
             #Actual loading
-            threads.append(Character.__char_loader(char_init, characters, character_settings[key]['number'],\
+            threads.append(Character.__char_loader(char_init, characters, character_settings[key]['ammount'],\
                             player_name, player_name+key, (0, 0), sprite_size, canvas_size, character_settings[key]['path'],\
                             **character_settings[key]['aliases']))
         for t in threads:   t.join()        #Threading.join

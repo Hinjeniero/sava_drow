@@ -11,39 +11,43 @@ import random
 import pygame
 from paths import IMG_FOLDER
 from board import Board
+from logger import Logger as LOG
 
 #To hold the differenmt board configurations of whatever. And return a different board per gammemode.
 PLAYER_NAMES = ['Mitches', 'Hayesshine', 'Rolbo Gordonggins', 'Spencerpop', 'Palka', 'Rainrobinson', 'Kingolas', 'Zippotudo',
                 'Zimrcia', 'Coxobby Ohmswilson', 'Uwotm8', 'Orangeman', 'npc', 'Totallynot Arobot', 'Bigba Lshanging']
 BOARD_ID = 'main_board'
 BOARD_EVENT_ID = pygame.USEREVENT+2
-CHARACTER_SETTINGS = {'pawn':{'number': 1, 'aliases':{'pickup': 'running'}},
-                    'warrior':{'number': 1, 'aliases':{'pickup': 'run'}},
-                    'wizard':{'number': 0, 'aliases':{'pickup': 'pick'}},
-                    'priestess':{'number': 0, 'aliases':{'pickup': 'run'}},
-                    'matron_mother':{'number': 0, 'path': IMG_FOLDER+'\\priestess', 'aliases':{'pickup': 'pick'}},
+CHARACTER_SETTINGS = {'pawn':{'ammount': 4, 'aliases':{'pickup': 'running'}},
+                    'warrior':{'ammount': 2, 'aliases':{'pickup': 'run'}},
+                    'wizard':{'ammount': 2, 'aliases':{'pickup': 'pick'}},
+                    'priestess':{'ammount': 2, 'aliases':{'pickup': 'run'}},
+                    'matron_mother':{'ammount': 1, 'path': IMG_FOLDER+'\\priestess', 'aliases':{'pickup': 'pick'}},
 }
 
 class BoardGenerator(object):
     def __init__(self):
         self.players = 2
-        self.pawns = 4
-        self.wizards = 2
-        self.warriors = 2
-        self.priestesses = 2
-        self.matron_mothers = 1
         self.game_mode = 'default'
+        self.characters_params = CHARACTER_SETTINGS.copy()
         self.board_params = {}
 
     def set_gamemode(self, gamemode):
         self.game_mode = gamemode.lower()
+
+    def set_character_ammount(self, char, ammount):
+        for type_of_char in self.characters_params.keys():
+            if char in type_of_char or type_of_char in char:
+                self.characters_params[type_of_char]['ammount'] = ammount
+                LOG.log('INFO', 'Changed ', type_of_char, ' ammount to ', ammount)
+                return
 
     def set_board_params(self, **params):
         self.board_params.update(params)
 
     def generate_board(self, resolution):
         #Check type of board
-        print("GAMEMODE "+self.game_mode)
+        LOG.log('info', 'Selected gamemode is ', self.game_mode)
         if any(kw in self.game_mode for kw in ('default', 'normal', 'medium')):
             board = self.generate_default(resolution)
         elif any(kw in self.game_mode for kw in ('lite', 'light')):
@@ -60,7 +64,7 @@ class BoardGenerator(object):
             board = self.generate_test(resolution)
         #END
         for i in range (0, self.players):
-            board.create_player(random.choice(PLAYER_NAMES), i+1, (200, 200), **CHARACTER_SETTINGS)
+            board.create_player(random.choice(PLAYER_NAMES), i+1, (200, 200), **self.characters_params)
         return board
 
     def generate_default(self, resolution):

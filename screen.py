@@ -17,6 +17,7 @@ from sprite import Sprite, AnimatedSprite
 from exceptions import BadSpriteException, BadStateException
 from logger import Logger as LOG
 from decorators import run_async
+from synch_dict import Dictionary
 
 class Screen(object):
     """Screen class. Controls an entire 'screen' (like a desktop).
@@ -47,6 +48,8 @@ class Screen(object):
     SOUND_CHANNELS_AMMOUNT = 32  #Sound channels are shared between Screens
     SOUND_CHANNELS = []
     SOUNDS_FOLDER = SOUND_FOLDER+"\\common\\"
+    SOUNDS = Dictionary()
+    
     def __init__(self, id_, event_id, resolution, dialog=None, **params):
         """Screen constructor.
         Args:
@@ -72,7 +75,6 @@ class Screen(object):
         self.music_chan = None  #Created in generate
         self.song_index = 0
         self.sound_vol  = 0     #Created in generate
-        self.sounds     = {}    #Created in generate
         self.playing    = False #Playing music?
         #State machine
         self.state      = Screen.STATES[0]
@@ -97,8 +99,11 @@ class Screen(object):
             for song_path in self.params['songs_paths']:
                 self.songs.append(song_path)
         self.sound_vol = 0.75
-        for sound in UtilityBox.get_all_files(Screen.SOUNDS_FOLDER, '.ogg', '.wav'):
-            self.sounds[sound] = pygame.mixer.Sound(file=sound)
+        #Adding to the LUT of sounds
+        for sound_path in UtilityBox.get_all_files(Screen.SOUNDS_FOLDER, '.ogg', '.wav'):
+            if not Screen.SOUNDS.get_item(sound_path):
+                Screen.SOUNDS.add_item(sound_path, pygame.mixer.Sound(file=sound_path))
+        #Adding the sound channels
         if len(Screen.SOUND_CHANNELS) is 0:
             for _ in range (0, Screen.SOUND_CHANNELS_AMMOUNT):
                 Screen.SOUND_CHANNELS.append(UtilityBox.get_sound_channel())
@@ -178,9 +183,9 @@ class Screen(object):
     def hijack_sound(self, sound_path):
         """For easter eggs, substitutes everything except secret sounds"""
         sound = pygame.mixer.Sound(file=sound_path)
-        for key in self.sounds.keys():
+        for key in Screen.SOUNDS.keys():
             if 'secret' not in key:
-                self.sounds[key] = sound
+                Screen.SOUNDS.add_item(key, sound)
 
     def set_song(self, song_path):
         index = 0
@@ -196,13 +201,13 @@ class Screen(object):
         LOG.log('debug', 'Didn`t find ', song_path,' in ', self.id)
 
     def play_sound(self, sound_id):
-        for sound in self.sounds.keys():
+        for sound in Screen.SOUNDS.keys():
             if sound_id in sound or sound in sound_id:
                 channel = None
                 for channel in Screen.SOUND_CHANNELS:
                     if not channel.get_busy():
                         channel.set_volume(self.sound_vol)
-                        channel.play(self.sounds[sound])
+                        channel.play(Screen.SOUNDS.get_item(sound))
                         return True
         return False
 

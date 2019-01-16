@@ -478,6 +478,8 @@ class Board(Screen):
                 self.characters.add(character)
                 LOG.log('DEBUG', "Character ", character.id, " spawned with position ", cell.pos)
             self.loaded_players += 1
+            if self.ALL_PLAYERS_LOADED():
+                self.play_sound('success')
             return  #To bypass the Exception.
         raise BadPlayerTypeException("A player in the board can't be of type "+str(type(player)))
         
@@ -588,7 +590,7 @@ class Board(Screen):
                 self.current_player = self.players[self.player_index]
                 break
 
-    def kill_character(self, cell): #TODO complete
+    def kill_character(self, cell):
         #Badass Animation
         corpse = cell.kill_char()
         self.characters.remove(corpse)  #To delete it from the char list in board. It's dead.
@@ -596,6 +598,8 @@ class Board(Screen):
         for player in self.players:
             if player.has_char(corpse):
                 player.remove_char(corpse)
+        LOG.log('debug', 'The character ', corpse.id,' was killed!')
+        self.play_sound('oof')
 
     #TODO KEYBOARD DOES NOT CHANGE ACTIVE CELL, BUT ACTIVE CHARACTER. ACTIVE CELL CHANGE ONLY BY MOUSE
     def keyboard_handler(self, keys_pressed):

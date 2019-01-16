@@ -23,13 +23,20 @@ from utility_box import UtilityBox
 from game import Game
 from animation_generator import AnimationGenerator
 
+#CONFIG
 INITIAL_RESOLUTION = (1280, 720)
 INITIAL_FPS = 30
 ALL_FPS = (INITIAL_FPS, 60, 120, 144, 20)
+#MUSIC
 MENU_SONGS = UtilityBox.get_all_files(SOUND_FOLDER+'\\menu', '.ogg', '.mp3')
 BOARD_SONGS = UtilityBox.get_all_files(SOUND_FOLDER+'\\board', '.ogg', '.mp3')
+COMMON_SONGS = UtilityBox.get_all_files(SOUND_FOLDER+'\\common_music', '.ogg', '.mp3')
+MENU_SONGS.extend(COMMON_SONGS)
+BOARD_SONGS.extend(COMMON_SONGS)
+#Music for the buttons, to show the titles and that shit
 MENU_CROPPED_SONGS = [song.split('\\')[-1].split('.')[0] for song in MENU_SONGS]
 BOARD_CROPPED_SONGS = [song.split('\\')[-1].split('.')[0] for song in BOARD_SONGS]
+#GAMEMODES
 GAMEMODES = ('Normal', 'Lite', 'Small', 'Extra', 'Huge', 'Insane', 'MemoryError')
 
 def start_pygame(resolution=INITIAL_RESOLUTION):
@@ -61,17 +68,14 @@ def create_main_menu():
     buttonGraphics  = UIElement.factory('button_graphics', "go_menu_graphics_display", pygame.USEREVENT+1, next(positions), button_size,\
                                         INITIAL_RESOLUTION, text="Graphics menu", gradient = next(gradients), gradient_type='vertical')
     #Create Menu
-    anim = AnimationGenerator.industrial_moving_background(INITIAL_RESOLUTION, 20, *ALL_FPS)
-    main_menu   = Menu('main_menu', pygame.USEREVENT, INITIAL_RESOLUTION,  buttonGraphics,\
-                        background_path=IMG_FOLDER+'\\background.jpg', animated_background=anim, songs_paths=MENU_SONGS, dialog=create_dialog(), do_align=False)
-    '''main_menu   = Menu('main_menu', pygame.USEREVENT, INITIAL_RESOLUTION, buttonStart, buttonConfig, buttonSound, buttonGraphics,\
-                        background_path=IMG_FOLDER+'\\background.jpg', songs_paths=MENU_SONGS, dialog=create_dialog(), do_align=False)'''
-
-    #Animations
-    main_menu.add_animation(AnimationGenerator.characters_crossing_screen(INITIAL_RESOLUTION, *ALL_FPS))
+    bg = AnimationGenerator.industrial_moving_background(INITIAL_RESOLUTION, 30, *ALL_FPS)
+    main_menu   = Menu('main_menu', pygame.USEREVENT, INITIAL_RESOLUTION, buttonStart, buttonConfig, buttonSound, buttonGraphics,
+                        animated_background= bg, background_path=IMG_FOLDER+'\\background.jpg', songs_paths=MENU_SONGS, dialog=create_dialog(),
+                        do_align=False)
     return main_menu
 
 def create_config_menu():
+    #TODO DRAW NUMBER OF CHARS DOWN BELOW
     positions           = UtilityBox.size_position_generator(6, 0.80, 0.05)
     button_size         = next(positions)
     buttonGameModes     = UIElement.factory('button_game_mode', "change_game_mode", pygame.USEREVENT, next(positions), button_size,\
@@ -110,6 +114,7 @@ def create_sound_menu():
                                             INITIAL_RESOLUTION, default_values=MENU_CROPPED_SONGS, text='Selected menus song', text_proportion = 0.50)
     sound_menu          = Menu("menu_volume_music", pygame.USEREVENT+1, INITIAL_RESOLUTION, sliderMenuMusic, sliderMenuSounds, sliderBoardMusic, sliderBoardSounds,\
                                 buttonBoardSongs, buttonMenusSongs, background_path=IMG_FOLDER+'\\background.jpg', do_align=False)
+    sound_menu.add_animation(AnimationGenerator.characters_crossing_screen(INITIAL_RESOLUTION, *ALL_FPS))
     return sound_menu
 
 def create_video_menu():

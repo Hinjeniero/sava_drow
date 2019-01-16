@@ -150,12 +150,13 @@ class Menu (Screen):
             mouse_movement( boolean, default=False):    True if there was mouse movement since the last call.
             mouse_position (:tuple: int, int, default=(0,0)):   Current mouse position. In pixels.
         """
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if mouse_buttons[0]:    self.active_sprite.sprite.hitbox_action('first_mouse_button', value=mouse_position)
-            elif mouse_buttons[2]:  self.active_sprite.sprite.hitbox_action('secondary_mouse_button', value=mouse_position)
-        if mouse_movement: 
-            colliding_sprite = pygame.sprite.spritecollideany(UtilityBox.get_mouse_sprite(), self.sprites.sprites())
-            if colliding_sprite is not None:    self.change_active_sprite(self.get_sprite_index(colliding_sprite))  
+        colliding_sprite = pygame.sprite.spritecollideany(UtilityBox.get_mouse_sprite(), self.sprites.sprites())
+        if colliding_sprite is not None:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if mouse_buttons[0]:    self.active_sprite.sprite.hitbox_action('first_mouse_button', value=mouse_position)
+                elif mouse_buttons[2]:  self.active_sprite.sprite.hitbox_action('secondary_mouse_button', value=mouse_position)
+            if mouse_movement:     
+                self.change_active_sprite(self.get_sprite_index(colliding_sprite))  
 
     def change_active_sprite(self, index):
         """Changes the active sprite of the Menu (The one that will execute if a trigger key is pressed)

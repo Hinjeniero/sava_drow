@@ -261,9 +261,8 @@ class Game(object):
         else:  
             raise ScreenNotFoundException('A screen with any of the keywords'+ str(keywords)+'wasn`t found')
 
-    def disable_params(self):
-        #self.get_screen('main', 'menu').disable_sprite('params', 'button')
-        self.get_screen('params', 'menu', 'config').disable_all_sprites()
+    def enable_board_sliders(self):
+        self.get_screen('music', 'menu').enable_all_sprites()
 
     def user_command_handler(self, event):
         """Ou shit the user command handler, good luck m8
@@ -305,8 +304,9 @@ class Game(object):
 
     def initiate(self):
         self.started = True
-        self.disable_params()
+        self.get_screen('params', 'menu', 'config').enable_all_sprites(False)
         self.screens.append(self.board_generator.generate_board(self.resolution))
+        self.get_screen('music', 'menu', 'sound').enable_all_sprites(True)
 
     def start(self):
         try:

@@ -516,7 +516,7 @@ class InfoBoard (UIElement):
                 raise InvalidUIElementException("Elements of infoboard must follow the [(element, spaces_to_occupy), ...] scheme.")
         #Test passed
         self.add_and_adjust_sprites(*elements)
-        UtilityBox.draw_grid(self.image, self.params['rows'], self.params['cols'])
+        #UtilityBox.draw_grid(self.image, self.params['rows'], self.params['cols']) #TODO delete
     
     def add_text_element(self, id_, text, spaces, scale=0.95):
         if spaces > self.spaces-self.taken_spaces:

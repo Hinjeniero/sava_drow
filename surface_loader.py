@@ -8,11 +8,41 @@ from resizer import Resizer
 #from memory_profiler import profile
 
 IMAGE_FORMATS = ('.png', '.jpg', '.jpeg', 'bmp', '.gif', '.tga', '.pcx', '.tif', '.lbm', '.pbm', '.xbm')
-MAX_SIZE = 256
 
+#Decorator
+def no_size_limit(function):
+    """Times the input function and prints the result on screen. 
+    The time library is needed.
+    Args:
+        function (function):    Function whose execution will be timed.
+        *args (:list: arg):     Input arguments of the function.
+        **kwargs (:dict: kwarg):Input keyword arguments of the function.
+    Returns:
+        (any):  Returns whatever the function itself returns."""
+    def wrapper(*args, **kwargs):
+        SurfaceLoader.disable_max_size()
+        result = function(*args, **kwargs)
+        SurfaceLoader.enable_max_size()
+        return result
+    return wrapper
+    
 class SurfaceLoader(object):
     SURFACES_LOADED = Dictionary()
+    MAX_SIZE = 256
+    MAX_SIZE_ENABLED = True
     
+    @staticmethod
+    def disable_max_size():
+        SurfaceLoader.MAX_SIZE_ENABLED = False
+
+    @staticmethod
+    def enable_max_size():
+        SurfaceLoader.MAX_SIZE_ENABLED = True
+
+    @staticmethod
+    def change_max_size(value):
+        SurfaceLoader.MAX_SIZE = value
+
     @staticmethod
     @time_it
     def load_surfaces(folder):
@@ -61,8 +91,8 @@ class SurfaceLoader(object):
             return SurfaceLoader.SURFACES_LOADED.get_item(image_path)
         else:
             surface = pygame.image.load(image_path).convert_alpha()
-            if any(x>MAX_SIZE for x in surface.get_size()):
-                surface = Resizer.resize(surface, (MAX_SIZE, MAX_SIZE))
+            if SurfaceLoader.MAX_SIZE_ENABLED and any(x>SurfaceLoader.MAX_SIZE for x in surface.get_size()):
+                surface = Resizer.resize(surface, (SurfaceLoader.MAX_SIZE, SurfaceLoader.MAX_SIZE))
             SurfaceLoader.SURFACES_LOADED.add_item(image_path, surface)
             return surface
         

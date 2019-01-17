@@ -158,7 +158,7 @@ class Board(Screen):
         self.generate_paths(offset=True)
         self.generate_inter_paths()
         self.generate_map_board()
-        self.generate_map('test')
+
         self.add_players(*players)
         self.save_sprites()
 
@@ -422,14 +422,14 @@ class Board(Screen):
                 return cell
         return False
 
-    def generate_map(self, to_who):     #TODO SHOULD BE A DICT INSTEADD IF INSERTING IN EACH TURN
+    def update_map(self): #TODO SHOULD BE A DICT INSTEADD IF INSERTING IN EACH TURN
         """Generates the current map, changing enemies and allies of each Cell according to which player is asking.
         Args:
             to_who (str): Player who is asking.
         """ 
         for cell in self.cells: 
-            self.current_map[cell.get_real_index()]=cell.to_path(to_who)
-        LOG.log('DEBUG', "Generated the map of paths in ", self.id)
+            self.current_map[cell.get_real_index()]=cell.to_path(self.current_player.name)
+        LOG.log('DEBUG', "Generated the map of paths for ", self.current_player.name)
 
     def set_resolution(self, resolution):
         """Changes the resolution of the Screen. It also resizes all the Screen elements.
@@ -503,7 +503,8 @@ class Board(Screen):
             (:obj:Threading.thread):    The thread doing the work. It is returned by the decorator."""
         self.__add_player(Player(player_name, player_number, chars_size, self.resolution, **player_params))
         if not self.current_player:
-            self.current_player = self.players[self.player_index] 
+            self.current_player = self.players[self.player_index]
+            self.update_map()
 
     def draw(self, surface):
         """Draws the board and all of its elements on the surface.
@@ -564,6 +565,7 @@ class Board(Screen):
             self.next_turn()
         else:
             self.drag_char.sprite.rect.center = self.last_cell.sprite.center
+            self.play_sound('warning')
             LOG.log('debug', 'Cant move the char there')
         self.drag_char.empty()
         self.possible_dests.empty()
@@ -588,6 +590,7 @@ class Board(Screen):
                 self.turn += 1
             if self.players[self.player_index].turn is self.turn:
                 self.current_player = self.players[self.player_index]
+                self.update_map()
                 break
 
     def kill_character(self, cell):
@@ -610,6 +613,7 @@ class Board(Screen):
             keys_pressed (:dict: pygame.keys):  Dict in which the keys are keys and the items booleans.
                                                 Said booleans will be True if that specific key was pressed.
         """
+        self.play_sound('key')
         if keys_pressed[pygame.K_DOWN]:         LOG.log('DEBUG', "down arrow in board")
         if keys_pressed[pygame.K_UP]:           LOG.log('DEBUG', "up arrow in board")
         if keys_pressed[pygame.K_LEFT]:         LOG.log('DEBUG', "left arrow in board")
@@ -655,7 +659,7 @@ class Board(Screen):
             mouse_position (:tuple: int, int, default=(0,0)):   Current mouse position. In pixels.
         """
         if event.type == pygame.MOUSEBUTTONDOWN:  #On top of the char and clicking on it
-            self.play_sound('')
+            self.play_sound('key')
             if self.active_char.sprite: self.pickup_character()
         elif event.type == pygame.MOUSEBUTTONUP:  #If we are dragging it we will have a char in here
             if self.drag_char.sprite:   self.drop_character()

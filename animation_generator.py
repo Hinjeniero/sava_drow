@@ -16,6 +16,7 @@ import random
 from animation import ScriptedSprite, Animation, LoopedAnimation
 from paths import IMG_FOLDER
 from decorators import time_it
+from surface_loader import SurfaceLoader, no_size_limit
 
 """Global variables, read_only:
     PYGAME_EVENT:
@@ -32,24 +33,26 @@ MOVE_KEYWORDS = ('run', )
 
 class AnimationGenerator(object):
     @staticmethod
+    @no_size_limit
     def industrial_moving_background(resolution, time, *fps):
         animation       = LoopedAnimation('Moving background bro')
         #Loading
         initial_out_of_screen = tuple(-x for x in resolution)   #If I dont do this, there is one frame after every loop in which the graphcis appear i the mioddle of the screen
         background      = ScriptedSprite('sprite_crossing', initial_out_of_screen, resolution, resolution, fps[0], fps,\
-                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('background',), resize_mode='fill') 
+                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('background',), resize_mode='fill',\
+                                        resize_smooth=False) 
         far_buildings_1 = ScriptedSprite('start_far_buildings', initial_out_of_screen, resolution, resolution, fps[0], fps,\
-                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('far',))
+                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('far',), resize_smooth=False)
         far_buildings_2 = ScriptedSprite('end_far_buildings', initial_out_of_screen, resolution, resolution, fps[0], fps,\
-                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('far',))
+                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('far',), resize_smooth=False)
         buildings_1     = ScriptedSprite('start_buildings', initial_out_of_screen, resolution, resolution, fps[0], fps,\
-                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('front',))
+                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('front',), resize_smooth=False)
         buildings_2     = ScriptedSprite('end_buildings', initial_out_of_screen, resolution, resolution, fps[0], fps,\
-                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('front',))
+                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('front',), resize_smooth=False)
         foreground_1    = ScriptedSprite('start_foreground', initial_out_of_screen, resolution, resolution, fps[0], fps,\
-                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('foreground',))
+                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('foreground',), resize_smooth=False)
         foreground_2    = ScriptedSprite('end_foreground', initial_out_of_screen, resolution, resolution, fps[0], fps,\
-                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('foreground',))
+                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('foreground',), resize_smooth=False)
         #Params
         init_pos = (-resolution[0], resolution[1])
         end_pos  = (resolution[0], resolution[1])
@@ -89,8 +92,25 @@ class AnimationGenerator(object):
         return animation
 
     @staticmethod
+    @no_size_limit
     def waterfall_animated_background(resolution, *fps):
-        pass
+        animation = LoopedAnimation('Animated waterfall bro')
+        
+        #Creating sprites
+        #background = SurfaceLoader.load_surfaces_keywords(IMG_FOLDER+'\\Waterfall', ('background',))
+        #old_size = background.values()[0].get_size()
+        background = ScriptedSprite('waterfall_bg', (0, 0), resolution, resolution, fps[0], fps,\
+                                    sprite_folder=IMG_FOLDER+'\\Waterfall', keywords=('background',),\
+                                    resize_mode='fill', resize_smooth=False)
+        #ratios = tuple(new_axis/old_axis for new_axis, old_axis in zip(background.rect.size, old_size))
+        waterfall = ScriptedSprite('waterfall_animation', (0, 0), resolution, resolution, fps[0], fps,\
+                                    sprite_folder=IMG_FOLDER+'\\Waterfall', keywords=('waterfall',), resize_mode='fill')
+        #Adding movement
+        background.add_movement((0, 0), (0, 0), 1)
+        #Adding to animation
+        animation.add_sprite(background, 0, 0)
+
+        return animation
 
     @staticmethod
     @time_it

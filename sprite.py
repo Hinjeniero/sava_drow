@@ -403,7 +403,7 @@ class AnimatedSprite(Sprite):
     """
 
     def __init__(self, id_, position, size, canvas_size, *sprite_list, sprite_folder=None, keywords=None,
-                animation_delay=10, resize_mode='fit'):
+                animation_delay=10, resize_mode='fit', resize_smooth=True):
         """Constructor of AnimatedSprite. 
         Args:
             id_ (str):  Identifier of the Sprite.
@@ -426,15 +426,16 @@ class AnimatedSprite(Sprite):
         self.next_frame_time    = animation_delay
         self.animation_index    = 0
         #Generation
-        AnimatedSprite.generate(self, sprite_folder, keywords, *sprite_list, resize_mode=resize_mode)
+        AnimatedSprite.generate(self, sprite_folder, keywords, *sprite_list,\
+                                resize_mode=resize_mode, resize_smooth=resize_smooth)
 
     @staticmethod
-    def generate(self, surfaces_folder, keywords, *surfaces, resize_mode):
+    def generate(self, surfaces_folder, keywords, *surfaces, resize_mode, resize_smooth):
         self.use_overlay        = False
         if surfaces_folder:
-            self.load_surfaces(surfaces_folder, keywords=keywords, resize_mode=resize_mode)
+            self.load_surfaces(surfaces_folder, keywords=keywords, resize_mode=resize_mode, resize_smooth=resize_smooth)
         else:
-            self.add_surfaces(*surfaces, resize_mode=resize_mode)
+            self.add_surfaces(*surfaces, resize_mode=resize_mode, resize_smooth=resize_smooth)
         self.image              = self.current_sprite()    #Assigning a logical sprite in place of the decoy one of the super()
         self.mask               = self.current_mask()       #Same shit to mask
         #print("-----------------------"+self.id+"------------------------")
@@ -449,7 +450,7 @@ class AnimatedSprite(Sprite):
             size = (max(size[0], surface.get_width()), max(size[1], surface.get_height()))
         self.rect.size = size
 
-    def load_surfaces(self, folder, keywords=None, resize_mode='fit'):
+    def load_surfaces(self, folder, keywords=None, resize_mode='fit', resize_smooth=True):
         """Load all the sprites from a folder, and inserts them in the 2 lists of surfaces that are attributes.
         Only load images.
         Args:
@@ -457,13 +458,13 @@ class AnimatedSprite(Sprite):
         if not keywords:
             for path, surface in SurfaceLoader.load_surfaces(folder).items():
                 self.names.append(path)
-                self.add_surfaces(surface, resize_mode=resize_mode)
+                self.add_surfaces(surface, resize_mode=resize_mode, resize_smooth=resize_smooth)
         else:
             for path, surface in SurfaceLoader.load_surfaces_keywords(folder, *keywords).items():
                 self.names.append(path)
-                self.add_surfaces(surface, resize_mode=resize_mode)
+                self.add_surfaces(surface, resize_mode=resize_mode, resize_smooth=resize_smooth)
 
-    def add_surfaces(self, *images, resize_mode='fit'): #TODO update documentation
+    def add_surfaces(self, *images, resize_mode='fit', resize_smooth=True): #TODO update documentation
         """Check if a surface is loaded already, and adds it to the attribute lists.
         Args:
             surface (str||:obj: pygame.Surface): Surface to add, or path to the image to load."""
@@ -480,17 +481,17 @@ class AnimatedSprite(Sprite):
             #Doing the actual work
             if surface not in self.original_surfaces:    
                 self.original_surfaces.append(surface)
-                self.add_surface(surface, resize_mode=resize_mode)
+                self.add_surface(surface, resize_mode=resize_mode, resize_smooth=resize_smooth)
         self.update_size()
 
-    def add_surface(self, surface, resize_mode='fit'):
+    def add_surface(self, surface, resize_mode='fit', resize_smooth=True):
         """Resizes a surface to a size, and adds it to the non-original surfaces lists.
         Args:
             surface (:obj: pygame.Surface): Surface to resize and add.
             size (:tuple: int, int):    Size to resize the surface to."""
-        new_surf = Resizer.resize(surface, self.rect.size, mode=resize_mode)
+        new_surf = Resizer.resize(surface, self.rect.size, mode=resize_mode, smooth=resize_smooth)
         self.surfaces.append(new_surf)
-        self.hover_surfaces.append(Resizer.resize(surface, tuple(int(x*1.5) for x in new_surf.get_size())))
+        self.hover_surfaces.append(Resizer.resize(surface, tuple(int(x*1.5) for x in new_surf.get_size()), smooth=resize_smooth))
         self.masks.append(pygame.mask.from_surface(new_surf))
 
     def set_canvas_size(self, canvas_size):

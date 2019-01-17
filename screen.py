@@ -283,7 +283,7 @@ class Screen(object):
                 raise BadSpriteException('An object of type '+str(type(sprite))+' can"t be added to a screen.')
             self.sprites.add(sprite)
 
-    def disable_sprite(self, *keywords):
+    def enable_sprite(self, *keywords, state=True):
         sprite = None
         count = 0
         sprites = self.sprites.sprites()
@@ -293,13 +293,13 @@ class Screen(object):
                 sprite = sprites[i]
                 count = matches
         if count is not 0:
-            sprite.set_enabled(False)
+            sprite.set_enabled(state)
             return True
         return False
 
-    def disable_all_sprites(self):
+    def enable_all_sprites(self, state=True):
         for sprite in self.sprites.sprites():
-            sprite.set_enabled(False)
+            sprite.set_enabled(state)
 
     def hide_popups(self):
         for popup in self.popups.sprites():

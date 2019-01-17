@@ -68,6 +68,7 @@ def create_main_menu():
     buttonGraphics  = UIElement.factory('button_graphics', "go_menu_graphics_display", pygame.USEREVENT+1, next(positions), button_size,\
                                         INITIAL_RESOLUTION, text="Graphics menu", gradient = next(gradients), gradient_type='vertical')
     #Create Menu
+    #bg = AnimationGenerator.waterfall_animated_background(INITIAL_RESOLUTION, 30, *ALL_FPS)
     bg = AnimationGenerator.industrial_moving_background(INITIAL_RESOLUTION, 30, *ALL_FPS)
     main_menu   = Menu('main_menu', pygame.USEREVENT, INITIAL_RESOLUTION, buttonStart, buttonConfig, buttonSound, buttonGraphics,
                         animated_background= bg, background_path=IMG_FOLDER+'\\background.jpg', songs_paths=MENU_SONGS, dialog=create_dialog(),
@@ -112,6 +113,10 @@ def create_sound_menu():
                                             INITIAL_RESOLUTION, default_values=BOARD_CROPPED_SONGS, text='Selected board song', text_proportion = 0.50)
     buttonMenusSongs    = UIElement.factory('button_menu_song', 'change_menu_song', pygame.USEREVENT, next(positions), button_size,\
                                             INITIAL_RESOLUTION, default_values=MENU_CROPPED_SONGS, text='Selected menus song', text_proportion = 0.50)
+    #Deactivating board sounds, will be activated when the board is created and the game starts
+    sliderBoardMusic.set_enabled(False)
+    sliderBoardSounds.set_enabled(False)
+    buttonBoardSongs.set_enabled(False)
     sound_menu          = Menu("menu_volume_music", pygame.USEREVENT+1, INITIAL_RESOLUTION, sliderMenuMusic, sliderMenuSounds, sliderBoardMusic, sliderBoardSounds,\
                                 buttonBoardSongs, buttonMenusSongs, background_path=IMG_FOLDER+'\\background.jpg', do_align=False)
     sound_menu.add_animation(AnimationGenerator.characters_crossing_screen(INITIAL_RESOLUTION, *ALL_FPS))

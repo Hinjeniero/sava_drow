@@ -39,7 +39,7 @@ class ScriptedSprite(AnimatedSprite):
     """
 
     def __init__(self, id_, position, size, canvas_size, fps, fps_modes, *sprite_list, sprite_folder=None, keywords=None,
-                animation_delay=5, resize_mode='fit'):
+                animation_delay=5, resize_mode='fit', resize_smooth=True):
         """ScriptedSprite constructor.
         Args:
             id_ (str):  Identifier of the Sprite.
@@ -56,7 +56,7 @@ class ScriptedSprite(AnimatedSprite):
             animation_delay (int):  Frames that occur between each animatino (Change of surface).
         """
         super().__init__(id_, position, size, canvas_size, *sprite_list, sprite_folder=sprite_folder, keywords=keywords,\
-                        animation_delay=animation_delay, resize_mode=resize_mode)
+                        animation_delay=animation_delay, resize_mode=resize_mode, resize_smooth=resize_smooth)
         self.starting_pos = position
         self.frames = {}            #Distinct positions according to time
         self.real_frames = {}       #Real position (0->1 in the screen)

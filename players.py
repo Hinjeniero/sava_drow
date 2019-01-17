@@ -164,6 +164,10 @@ class Character(AnimatedSprite):
         if not result:
             self.set_paths(graph, distances, movement_restriction, level_size)
             result = Movements.get_movements(hash(movement_restriction))
+        for path in result[index]:
+            if current_map[path[-1]].has_ally():
+                print("ALLY GUYS")
+                result[index].remove(path)
         return result[index]
     
     def set_paths(self, graph, distances, level_size, movement_restriction):
@@ -494,7 +498,7 @@ class Pawn(Character):
         for path in unfiltered_paths:
             #If the destiny has an enemy and there is no ally in the middle. Those don't need to be checked again
             if current_map[path[-1]].has_enemy(): #Checking if in the end of this path tehre is an enemy
-                if not any(path[i].has_ally() for i in range(1, len(path)-1)): #Checking if in the middle steps there is an ally
+                if not any(current_map[path[i]].has_ally() for i in range(1, len(path)-1)): #Checking if in the middle steps there is an ally
                     enemies[path[-1]] = distances[index][path[-1]]  #Distance to the enemy. The key is the destiny index
         #Now, we compare the enemies distance to those that we would have in the 2-4 possible positions
         destinies = super().get_paths(graph, distances, current_map, index, level_size, Pawn.RESTRICTIONS)

@@ -68,6 +68,15 @@ class ScriptedSprite(AnimatedSprite):
         self.layer      = 0         #Used when added to an animation
         ScriptedSprite.generate(self)
 
+    def copy(self, new_id=None):
+        if not new_id:
+            copy = ScriptedSprite(self.id+'_copy', self.rect.topleft, self.rect.size, self.resolution, self.fps, self.fps_modes, **self.params)
+        else:
+            copy = ScriptedSprite(new_id, self.rect.topleft, self.rect.size, self.resolution, self.fps, self.fps_modes, **self.params)
+        copy.frames = dict(self.frames)
+        copy.real_frames = dict(self.real_frames)
+        return copy
+
     @staticmethod
     def generate(self):
         for fps in self.fps_modes:

@@ -17,7 +17,6 @@ from animation import ScriptedSprite, Animation, LoopedAnimation
 from paths import IMG_FOLDER
 from decorators import time_it
 from surface_loader import SurfaceLoader, no_size_limit
-
 """Global variables, read_only:
     PYGAME_EVENT:
     SPRITE_PATHS:
@@ -34,83 +33,39 @@ MOVE_KEYWORDS = ('run', )
 class AnimationGenerator(object):
     @staticmethod
     @no_size_limit
-    def industrial_moving_background(resolution, time, *fps):
-        animation       = LoopedAnimation('Moving background bro')
-        #Loading
-        initial_out_of_screen = tuple(-x for x in resolution)   #If I dont do this, there is one frame after every loop in which the graphcis appear i the mioddle of the screen
-        background      = ScriptedSprite('sprite_crossing', initial_out_of_screen, resolution, resolution, fps[0], fps,\
-                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('background',), resize_mode='fill',\
-                                        resize_smooth=False) 
-        far_buildings_1 = ScriptedSprite('start_far_buildings', initial_out_of_screen, resolution, resolution, fps[0], fps,\
-                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('far',), resize_smooth=False)
-        far_buildings_2 = ScriptedSprite('end_far_buildings', initial_out_of_screen, resolution, resolution, fps[0], fps,\
-                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('far',), resize_smooth=False)
-        buildings_1     = ScriptedSprite('start_buildings', initial_out_of_screen, resolution, resolution, fps[0], fps,\
-                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('front',), resize_smooth=False)
-        buildings_2     = ScriptedSprite('end_buildings', initial_out_of_screen, resolution, resolution, fps[0], fps,\
-                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('front',), resize_smooth=False)
-        foreground_1    = ScriptedSprite('start_foreground', initial_out_of_screen, resolution, resolution, fps[0], fps,\
-                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('foreground',), resize_smooth=False)
-        foreground_2    = ScriptedSprite('end_foreground', initial_out_of_screen, resolution, resolution, fps[0], fps,\
-                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('foreground',), resize_smooth=False)
-        #Params
-        init_pos = (-resolution[0], resolution[1])
-        end_pos  = (resolution[0], resolution[1])
-        far_init_pos = (init_pos[0], init_pos[1]-far_buildings_1.rect.height) 
-        far_end_pos = (end_pos[0], end_pos[1]-far_buildings_1.rect.height) 
-        build_init_pos = (init_pos[0], init_pos[1]-buildings_1.rect.height)
-        build_end_pos = (end_pos[0], end_pos[1]-buildings_1.rect.height)
-        fore_init_pos = (init_pos[0], init_pos[1]-foreground_1.rect.height)
-        fore_end_pos = (end_pos[0], end_pos[1]-foreground_1.rect.height)
-        ##
-        '''far_init_pos = (-far_buildings_1.rect.width, resolution[1]-far_buildings_1.rect.height) 
-        far_end_pos = (resolution[0]+far_buildings_1.rect.width, resolution[1]-far_buildings_1.rect.height) 
-        build_init_pos = (-buildings_1.rect.width, resolution[1]-buildings_1.rect.height)
-        build_end_pos = (resolution[0]+buildings_1.rect.width, resolution[1]-buildings_1.rect.height)
-        fore_init_pos = (-foreground_1.rect.width, resolution[1]-foreground_1.rect.height)
-        fore_end_pos = (resolution[0]+foreground_1.rect.width, resolution[1]-foreground_1.rect.height)'''
-        #Timers
-        building_time = time*2
-        far_building_time = time*3
-        foreground_time = time
-        #Animating
-        background.add_movement((0, 0), (0, 0), 1)
-        far_buildings_1.add_movement(far_init_pos, far_end_pos, far_building_time)  #TODO make a copy of this?
-        far_buildings_2.add_movement(far_init_pos, far_end_pos, far_building_time)
-        buildings_1.add_movement(build_init_pos, build_end_pos, building_time)
-        buildings_2.add_movement(build_init_pos, build_end_pos, building_time)
-        foreground_1.add_movement(fore_init_pos, fore_end_pos, foreground_time)
-        foreground_2.add_movement(fore_init_pos, fore_end_pos, foreground_time)
-        #Adding to animation
-        animation.add_sprite(background, 0, time, 0)
-        animation.add_sprite(far_buildings_1, 0, far_building_time, 1)
-        animation.add_sprite(far_buildings_2, 0.5*far_building_time, 1.5*far_building_time, 1)
-        animation.add_sprite(buildings_1, 0, building_time, 2)
-        animation.add_sprite(buildings_2, 0.5*building_time, 1.5*building_time, 2)
-        animation.add_sprite(foreground_1, 0, foreground_time, 3)
-        animation.add_sprite(foreground_2, 0.5*foreground_time, 1.5*foreground_time, 3) #How to not repeat this shit
+    def layered_animated_background(resolution, time, fps_modes, folder, background_keyword, *layers_keywords):
+        animation               = LoopedAnimation('Moving background bro')
+        AnimationGenerator.add_background(animation, resolution, fps_modes, folder, background_keyword)
+        time_ratio = len(layers_keywords)
+        layer_index = 1
+        initial_out_of_screen   = tuple(-x for x in resolution)
+        #Adding first layer, the background
+        for layer_kw in layers_keywords:
+            layer_time = time*time_ratio
+            layer_sprited = ScriptedSprite('layered_sprite', initial_out_of_screen, resolution, resolution, fps_modes[0], fps_modes,\
+                                        sprite_folder=folder, keywords=(layer_kw,), resize_smooth=False)
+            layer_sprited_copy = layer_sprited.copy()
+            init_pos = (-resolution[0], resolution[1]-layer_sprited.rect.height)
+            end_pos = (resolution[0], resolution[1]-layer_sprited.rect.height)
+            layer_sprited.add_movement(init_pos, end_pos, layer_time)
+            layer_sprited_copy.add_movement(init_pos, end_pos, layer_time)
+            animation.add_sprite(layer_sprited, 0, layer_time, layer_index)
+            animation.add_sprite(layer_sprited_copy, 0.5*layer_time, 1.5*layer_time, layer_index)
+            time_ratio -= 1
+            layer_index += 1
         return animation
 
     @staticmethod
-    @no_size_limit
-    def waterfall_animated_background(resolution, *fps):
-        animation = LoopedAnimation('Animated waterfall bro')
-        
-        #Creating sprites
-        #background = SurfaceLoader.load_surfaces_keywords(IMG_FOLDER+'\\Waterfall', ('background',))
-        #old_size = background.values()[0].get_size()
-        background = ScriptedSprite('waterfall_bg', (0, 0), resolution, resolution, fps[0], fps,\
-                                    sprite_folder=IMG_FOLDER+'\\Waterfall', keywords=('background',),\
-                                    resize_mode='fill', resize_smooth=False)
-        #ratios = tuple(new_axis/old_axis for new_axis, old_axis in zip(background.rect.size, old_size))
-        waterfall = ScriptedSprite('waterfall_animation', (0, 0), resolution, resolution, fps[0], fps,\
-                                    sprite_folder=IMG_FOLDER+'\\Waterfall', keywords=('waterfall',), resize_mode='fill')
-        #Adding movement
+    def add_background(animation, resolution, fps_modes, folder, background_keyword):
+        background = ScriptedSprite('layered_sprite', (0, 0), resolution, resolution, fps_modes[0], fps_modes,\
+                                    sprite_folder=folder, keywords=(background_keyword,), resize_mode='fill', resize_smooth=False)
         background.add_movement((0, 0), (0, 0), 1)
-        #Adding to animation
-        animation.add_sprite(background, 0, 0)
+        animation.add_sprite(background, 0, 1, 0)                            
 
-        return animation
+    @staticmethod
+    def industrial_moving_background(resolution, time, *fps):
+        return AnimationGenerator.layered_animated_background(resolution, time, fps, IMG_FOLDER+'\\Industrial',\
+                                                            'background', 'far', 'front', 'foreground')
 
     @staticmethod
     @time_it

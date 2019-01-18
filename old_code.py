@@ -1958,3 +1958,56 @@ class LoopedAnimation(Animation):
         Args:
             (:obj: pygame.Surface): Surface to draw the animation frame on."""
         super().play(surface, infinite=True)
+
+    @staticmethod
+    @no_size_limit
+    def industrial_moving_background_2(resolution, time, *fps):
+        animation       = LoopedAnimation('Moving background bro')
+        #Loading
+        initial_out_of_screen = tuple(-x for x in resolution)   #If I dont do this, there is one frame after every loop in which the graphcis appear i the mioddle of the screen
+        background      = ScriptedSprite('sprite_crossing', initial_out_of_screen, resolution, resolution, fps[0], fps,\
+                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('background',), resize_mode='fill',\
+                                        resize_smooth=False) 
+        far_buildings_1 = ScriptedSprite('start_far_buildings', initial_out_of_screen, resolution, resolution, fps[0], fps,\
+                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('far',), resize_smooth=False)
+        far_buildings_2 = ScriptedSprite('end_far_buildings', initial_out_of_screen, resolution, resolution, fps[0], fps,\
+                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('far',), resize_smooth=False)
+        buildings_1     = ScriptedSprite('start_buildings', initial_out_of_screen, resolution, resolution, fps[0], fps,\
+                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('front',), resize_smooth=False)
+        buildings_2     = ScriptedSprite('end_buildings', initial_out_of_screen, resolution, resolution, fps[0], fps,\
+                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('front',), resize_smooth=False)
+        foreground_1    = ScriptedSprite('start_foreground', initial_out_of_screen, resolution, resolution, fps[0], fps,\
+                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('foreground',), resize_smooth=False)
+        foreground_2 = foreground_1.copy()                                        
+        '''foreground_2    = ScriptedSprite('end_foreground', initial_out_of_screen, resolution, resolution, fps[0], fps,\
+                                        sprite_folder=IMG_FOLDER+'\\Industrial', keywords=('foreground',), resize_smooth=False)'''
+        #Params
+        init_pos = (-resolution[0], resolution[1])
+        end_pos  = (resolution[0], resolution[1])
+        far_init_pos = (init_pos[0], init_pos[1]-far_buildings_1.rect.height) 
+        far_end_pos = (end_pos[0], end_pos[1]-far_buildings_1.rect.height) 
+        build_init_pos = (init_pos[0], init_pos[1]-buildings_1.rect.height)
+        build_end_pos = (end_pos[0], end_pos[1]-buildings_1.rect.height)
+        fore_init_pos = (init_pos[0], init_pos[1]-foreground_1.rect.height)
+        fore_end_pos = (end_pos[0], end_pos[1]-foreground_1.rect.height)
+        #Timers
+        building_time = time*2
+        far_building_time = time*3
+        foreground_time = time
+        #Animating
+        background.add_movement((0, 0), (0, 0), 1)
+        far_buildings_1.add_movement(far_init_pos, far_end_pos, far_building_time)  #TODO make a copy of this?
+        far_buildings_2.add_movement(far_init_pos, far_end_pos, far_building_time)
+        buildings_1.add_movement(build_init_pos, build_end_pos, building_time)
+        buildings_2.add_movement(build_init_pos, build_end_pos, building_time)
+        foreground_1.add_movement(fore_init_pos, fore_end_pos, foreground_time)
+        foreground_2.add_movement(fore_init_pos, fore_end_pos, foreground_time)
+        #Adding to animation
+        animation.add_sprite(background, 0, time, 0)
+        animation.add_sprite(far_buildings_1, 0, far_building_time, 1)
+        animation.add_sprite(far_buildings_2, 0.5*far_building_time, 1.5*far_building_time, 1)
+        animation.add_sprite(buildings_1, 0, building_time, 2)
+        animation.add_sprite(buildings_2, 0.5*building_time, 1.5*building_time, 2)
+        animation.add_sprite(foreground_1, 0, foreground_time, 3)
+        animation.add_sprite(foreground_2, 0.5*foreground_time, 1.5*foreground_time, 3) #How to not repeat this shit
+        return animation

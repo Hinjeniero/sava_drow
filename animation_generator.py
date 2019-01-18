@@ -32,9 +32,14 @@ MOVE_KEYWORDS = ('run', )
 
 class AnimationGenerator(object):
     @staticmethod
+    def industrial_layered_background(resolution, time, *fps):
+        return AnimationGenerator.layered_animated_background(resolution, time, fps, IMG_FOLDER+'\\Industrial',\
+                                                            'background', 'far', 'front', 'foreground')
+    
+    @staticmethod
     @no_size_limit
-    def layered_animated_background(resolution, time, fps_modes, folder, background_keyword, *layers_keywords):
-        animation               = LoopedAnimation('Moving background bro')
+    def layered_animated_background(resolution, time, fps_modes, folder, background_keyword, *layers_keywords, mode='fit'):
+        animation = LoopedAnimation('Layered animated background bro')
         AnimationGenerator.add_background(animation, resolution, fps_modes, folder, background_keyword)
         time_ratio = len(layers_keywords)
         layer_index = 1
@@ -43,7 +48,7 @@ class AnimationGenerator(object):
         for layer_kw in layers_keywords:
             layer_time = time*time_ratio
             layer_sprited = ScriptedSprite('layered_sprite', initial_out_of_screen, resolution, resolution, fps_modes[0], fps_modes,\
-                                        sprite_folder=folder, keywords=(layer_kw,), resize_smooth=False)
+                                        sprite_folder=folder, keywords=(layer_kw,), resize_smooth=False, resize_mode=mode)
             layer_sprited_copy = layer_sprited.copy()
             init_pos = (-resolution[0], resolution[1]-layer_sprited.rect.height)
             end_pos = (resolution[0], resolution[1]-layer_sprited.rect.height)
@@ -60,12 +65,33 @@ class AnimationGenerator(object):
         background = ScriptedSprite('layered_sprite', (0, 0), resolution, resolution, fps_modes[0], fps_modes,\
                                     sprite_folder=folder, keywords=(background_keyword,), resize_mode='fill', resize_smooth=False)
         background.add_movement((0, 0), (0, 0), 1)
-        animation.add_sprite(background, 0, 1, 0)                            
+        animation.add_sprite(background, 0, 1, 0) #TODO this generic method to have the sprite still, convert to a method                           
 
     @staticmethod
-    def industrial_moving_background(resolution, time, *fps):
-        return AnimationGenerator.layered_animated_background(resolution, time, fps, IMG_FOLDER+'\\Industrial',\
-                                                            'background', 'far', 'front', 'foreground')
+    @no_size_limit
+    def animated_static_background(id_, folder, resolution, time, *fps):
+        animation = LoopedAnimation(id_+' bro')
+        waterfall = ScriptedSprite(id_, (0, 0), resolution, resolution, fps[0], fps, sprite_folder=folder,\
+                                    resize_mode='fill', resize_smooth=False, animation_delay=5)
+        waterfall.add_movement((0, 0), (0, 0), 1)
+        animation.add_sprite(waterfall, 0, time)
+        return animation
+
+    @staticmethod
+    def animated_waterfall_background(resolution, time, *fps):
+        return AnimationGenerator.animated_static_background('waterfall', IMG_FOLDER+'\\Waterfall', resolution, time, *fps)
+
+    @staticmethod
+    def animated_cave_waterfall_background(resolution, time, *fps):
+        return AnimationGenerator.animated_static_background('waterfall_cave', IMG_FOLDER+'\\Waterfall_dark', resolution, time, *fps)
+
+    @staticmethod
+    def animated_rain_tree(resolution, time, *fps):
+        return AnimationGenerator.animated_static_background('spirit_tree', IMG_FOLDER+'\\Rain_tree', resolution, time, *fps)
+    
+    @staticmethod
+    def animated_rain_chinese(resolution, time, *fps):
+        return AnimationGenerator.animated_static_background('chinese_chon_hon', IMG_FOLDER+'\\Rain_chinese', resolution, time, *fps)
 
     @staticmethod
     @time_it

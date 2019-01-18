@@ -68,8 +68,10 @@ def create_main_menu():
     buttonGraphics  = UIElement.factory('button_graphics', "go_menu_graphics_display", pygame.USEREVENT+1, next(positions), button_size,\
                                         INITIAL_RESOLUTION, text="Graphics menu", gradient = next(gradients), gradient_type='vertical')
     #Create Menu
-    #bg = AnimationGenerator.waterfall_animated_background(INITIAL_RESOLUTION, 30, *ALL_FPS)
-    bg = AnimationGenerator.industrial_moving_background(INITIAL_RESOLUTION, 30, *ALL_FPS)
+    #bg = AnimationGenerator.animated_waterfall_background(INITIAL_RESOLUTION, 30, *ALL_FPS)
+    bg = AnimationGenerator.animated_cave_waterfall_background(INITIAL_RESOLUTION, 30, *ALL_FPS)
+    #bg = AnimationGenerator.animated_rain_tree(INITIAL_RESOLUTION, 30, *ALL_FPS)
+    #bg = AnimationGenerator.animated_rain_chinese(INITIAL_RESOLUTION, 30, *ALL_FPS)
     main_menu   = Menu('main_menu', pygame.USEREVENT, INITIAL_RESOLUTION, buttonStart, buttonConfig, buttonSound, buttonGraphics,
                         animated_background= bg, background_path=IMG_FOLDER+'\\background.jpg', songs_paths=MENU_SONGS, dialog=create_dialog(),
                         do_align=False)

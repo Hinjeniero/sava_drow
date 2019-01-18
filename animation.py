@@ -176,7 +176,15 @@ class Animation(object):
         self.done_sprites       = []
         self.end_event          = end_event
         self.loops              = loops
+        self.playing            = True
 
+    def pause_animation(self):
+        self.playing = False
+
+    def unpause_animation(self):
+        self.playing = True
+        self.init_time = time.time()-self.current_time
+        
     def set_resolution(self, resolution):
         for sprite in self.all_sprites:
             sprite.set_canvas_size(resolution)
@@ -244,11 +252,12 @@ class Animation(object):
         continue the animation the next time this method is called.
         Args:
             (:obj: pygame.Surface): Surface to draw the animation frame on."""
-        self.update_clocks()
-        self.trigger_sprites()
-        if not infinite and (self.current_time > self.total_time):
-            self.end_loop()
-        else:
+        if self.playing:
+            self.update_clocks()
+            self.trigger_sprites()
+            if not infinite and (self.current_time > self.total_time):
+                self.end_loop()
+                return
             for sprite in self.playing_sprites:
                 sprite.draw(surface)
 

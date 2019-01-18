@@ -628,7 +628,8 @@ class Board(Screen):
         if self.active_cell.sprite: #If there is already an sprite in active_cell
             if cell is not self.active_cell.sprite: #If its not the same cell that is already active, or is None
                 self.active_cell.sprite.set_active(False)
-                self.active_cell.sprite.set_active(False)
+                self.active_cell.sprite.set_hover(False)
+                self.active_char.empty()
                 self.active_cell.empty()
             else:   #If its the same one (Hovering or mouse still)
                 return
@@ -636,13 +637,16 @@ class Board(Screen):
             cell.set_active(True)
             cell.set_hover(True)
             self.active_cell.add(cell)
+            char = self.active_cell.sprite.has_char()
+            if char:
+                self.active_char.add(char)
             LOG.log('debug', 'New cell active: ', self.active_cell.sprite.pos)
 
     def set_active_path(self, path):
         if self.active_path.sprite: #If there is already an sprite in active_cell
             if path is not self.active_path.sprite: #If its not the same cell that is already active, or is None
                 self.active_path.sprite.set_active(False)
-                self.active_path.sprite.set_active(False)
+                self.active_path.sprite.set_hover(False)
                 self.active_path.empty()
             else:   #If its the same one (Hovering or mouse still)
                 return
@@ -679,12 +683,13 @@ class Board(Screen):
             #Checking collision with paths
             path = pygame.sprite.spritecollideany(mouse_sprite, self.paths.sprites(), collided=pygame.sprite.collide_mask)
             self.set_active_path(path)
-            #Checking collision with characters
-            char = pygame.sprite.spritecollideany(mouse_sprite, self.current_player.characters.sprites(), collided=pygame.sprite.collide_mask)
+
+            #Checking collision with characters themselves, using masks. Not used rn.
+            '''char = pygame.sprite.spritecollideany(mouse_sprite, self.current_player.characters.sprites(), collided=pygame.sprite.collide_mask)
             if char is not None:  
                 char.set_hover(True)
                 self.active_char.add(char)
             else:               
                 if self.active_char.sprite is not None:
                     self.active_char.sprite.set_hover(False)
-                    self.active_char.empty()
+                    self.active_char.empty()'''

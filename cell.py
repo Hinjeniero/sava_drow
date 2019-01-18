@@ -67,6 +67,11 @@ class Cell(Circle):
         if not self.chars.has(character):
             self.chars.add(character)
 
+    def set_hover(self, hover):
+        super().set_hover(hover)
+        if self.chars.sprite:
+            self.chars.sprite.set_hover(hover)
+
     def get_level(self):
         """Returns:
             (int):  Level/Circumference of the Cell (Positioning)."""
@@ -82,8 +87,12 @@ class Cell(Circle):
             (int):  Absolute index of the Cell (Positioning) (level*level_size+index)."""
         return self.index
 
+    def has_char(self):
+        return self.chars.sprite if self.chars.sprite else False
+
     def has_enemy(self, who_asking):
         """Checks if there is an enemy in the Cell (If a character is of a different player of who is asking).
+        Used to convert to path object.
         Args:
             who_asking (str):   The player who is asking this information.
         Returns:
@@ -94,6 +103,7 @@ class Cell(Circle):
 
     def has_ally(self, who_asking):
         """Checks if there is an ally in the Cell (If a character is of the same player of who is asking).
+        Used to convert to path object.
         Args:
             who_asking (str):   The player who is asking this information.
         Returns:

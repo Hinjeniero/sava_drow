@@ -427,7 +427,7 @@ class Board(Screen):
         Args:
             to_who (str): Player who is asking.
         """ 
-        for cell in self.cells: 
+        for cell in self.cells:
             self.current_map[cell.get_real_index()]=cell.to_path(self.current_player.name)
         LOG.log('DEBUG', "Generated the map of paths for ", self.current_player.name)
 

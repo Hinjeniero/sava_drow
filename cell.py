@@ -119,7 +119,7 @@ class Cell(Circle):
             who_asking (str):   The player who is requesting this casting.
         Returns:
             (:obj: Path):   A Path object with the same info as this Cell."""
-        return Path(self.pos, self.has_enemy(who_asking), self.has_ally(who_asking), self.index)
+        return Path(self.pos, self.has_ally(who_asking), self.has_enemy(who_asking), self.index)
     
     def __str__(self):
         return "[Cell "+str(self.pos)+" | Chars: "+str(len(self.chars))+"]"

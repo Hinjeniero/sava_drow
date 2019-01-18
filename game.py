@@ -27,6 +27,7 @@ from utility_box import UtilityBox
 from board_generator import BoardGenerator
 from exceptions import  NoScreensException, InvalidGameElementException,\
                         EmptyCommandException, ScreenNotFoundException
+from surface_loader import ResizedSurface
 
 class Game(object):
     SOUND_KEYWORDS = ['sound', 'music', 'song']
@@ -99,7 +100,8 @@ class Game(object):
 
     def set_resolution(self, resolution):
         self.display = pygame.display.set_mode(resolution)
-        for screen in self.screens:     
+        ResizedSurface.clear_lut()
+        for screen in self.screens:
             screen.set_resolution(resolution)
         LOG.log('DEBUG', "Changed resolution to ", resolution)
 

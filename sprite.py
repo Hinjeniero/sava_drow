@@ -542,6 +542,13 @@ class AnimatedSprite(Sprite):
         """Changes the current showing surface (changing the index) to the next one."""
         self.animation_index = self.animation_index+1 if self.animation_index < (len(self.surfaces)-1) else 0
 
+    def set_hover(self, hover):
+        super().set_hover(hover)
+        if hover:
+            self.image = self.current_hover_sprite()
+        else:
+            self.image = self.current_sprite()
+
     def current_sprite(self):
         """Returns the current surface that will be shown if there are no special states in effect.
         Returns:

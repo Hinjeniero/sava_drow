@@ -87,6 +87,10 @@ class ResizedSurface(object):
     def add_surface(ResizedSurface):
         ResizedSurface.RESIZED_SURFACES_LOADED.add_item(hash(ResizedSurface), ResizedSurface)
 
+    @staticmethod
+    def clear_lut():
+        ResizedSurface.RESIZED_SURFACES_LOADED.clear()
+
 class SurfaceLoader(object):
     """Loader of the original unresized/unmodified images/surfaces"""
     SURFACES_LOADED = Dictionary()

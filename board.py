@@ -582,6 +582,7 @@ class Board(Screen):
         if not active_cell.is_empty():
             self.kill_character(active_cell) #Killing char if there is one 
         active_cell.add_char(character)
+        self.current_player.register_movement(character)
         self.last_cell.empty()  #Not last cell anymore, char was droppped succesfully
     
     def next_turn(self):
@@ -604,6 +605,7 @@ class Board(Screen):
         for player in self.players:
             if player.has_char(corpse):
                 player.remove_char(corpse)
+        self.current_player.add_kill(corpse, self.drag_char.sprite)
         LOG.log('debug', 'The character ', corpse.id,' was killed!')
         self.play_sound('oof')
 
@@ -683,13 +685,3 @@ class Board(Screen):
             #Checking collision with paths
             path = pygame.sprite.spritecollideany(mouse_sprite, self.paths.sprites(), collided=pygame.sprite.collide_mask)
             self.set_active_path(path)
-
-            #Checking collision with characters themselves, using masks. Not used rn.
-            '''char = pygame.sprite.spritecollideany(mouse_sprite, self.current_player.characters.sprites(), collided=pygame.sprite.collide_mask)
-            if char is not None:  
-                char.set_hover(True)
-                self.active_char.add(char)
-            else:               
-                if self.active_char.sprite is not None:
-                    self.active_char.sprite.set_hover(False)
-                    self.active_char.empty()'''

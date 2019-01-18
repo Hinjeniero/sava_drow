@@ -2011,3 +2011,14 @@ class LoopedAnimation(Animation):
         animation.add_sprite(foreground_1, 0, foreground_time, 3)
         animation.add_sprite(foreground_2, 0.5*foreground_time, 1.5*foreground_time, 3) #How to not repeat this shit
         return animation
+
+#OLD CHAR COLLISION OF BOARD
+            #Checking collision with characters themselves, using masks. Not used rn.
+            '''char = pygame.sprite.spritecollideany(mouse_sprite, self.current_player.characters.sprites(), collided=pygame.sprite.collide_mask)
+            if char is not None:  
+                char.set_hover(True)
+                self.active_char.add(char)
+            else:               
+                if self.active_char.sprite is not None:
+                    self.active_char.sprite.set_hover(False)
+                    self.active_char.empty()'''

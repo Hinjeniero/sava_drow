@@ -55,6 +55,9 @@ class Player(object):
         self.characters = Character.factory(name, sprite_size, canvas_size, **character_params)
         self.infoboard  = None  #Created in generate
         self.turn       = 0
+        self.kills      = 0
+        self.corpses    = []    #Contains dead chars.
+        self.movements  = 0
         Player.generate(self, canvas_size, **character_params)
 
     @staticmethod
@@ -72,6 +75,20 @@ class Player(object):
         infoboard.add_element('player_name', self.name, cols)   #Player ammount of priestesses
         infoboard.add_element('player_name', self.name, cols)   #Player ammount of matronmothers"""
         self.infoboard = infoboard
+
+    def register_movement(self, character):
+        self.movements += 1
+        self.get_character(character).movements += 1
+
+    def add_kill(self, corpse, killer):
+        self.kills+=1
+        self.corpses.append(corpse)
+        self.get_character(killer).kills += 1
+
+    def get_character(self, character):
+        for char in self.characters:
+            if character is char:
+                return char
 
     def update(self):
         self.infoboard.get_sprite('char').set_text('characters: '+str(len(self.characters.sprites())))
@@ -141,6 +158,8 @@ class Character(AnimatedSprite):
         self.my_master  = my_player
         self.state      = self.aliases['idle']
         self.index      = 0
+        self.kills      = 0
+        self.movements  = 0
     
     def get_paths(self, graph, distances, current_map, index, level_size, movement_restriction):
         """Gets all the possible paths for each cell (of a specific subclass) with this overloaded method.

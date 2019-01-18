@@ -25,6 +25,7 @@ from animation_generator import AnimationGenerator
 
 #CONFIG
 INITIAL_RESOLUTION = (1280, 720)
+RESOLUTIONS = (INITIAL_RESOLUTION, (1366, 768), (1600, 900), (1920, 1080), (384, 216), (640, 360), (896, 504), (1024, 576))
 INITIAL_FPS = 30
 ALL_FPS = (INITIAL_FPS, 60, 120, 144, 20)
 #MUSIC
@@ -125,11 +126,10 @@ def create_sound_menu():
     return sound_menu
 
 def create_video_menu():
-    resolutions = (INITIAL_RESOLUTION, (1366, 768), (1600, 900), (1920, 1080), (640, 480), (800, 600), (1024, 768), (1280, 1024))
     positions           = UtilityBox.size_position_generator(2, 0.80, 0.15, 0.15)
     button_size         = next(positions)
     buttonRes   = UIElement.factory('button_resolution',"change_resolution_screen_display", pygame.USEREVENT, next(positions), button_size,\
-                                    INITIAL_RESOLUTION, default_values=resolutions, text="Resolution",text_alignment='left')
+                                    INITIAL_RESOLUTION, default_values=RESOLUTIONS, text="Resolution",text_alignment='left')
     buttonFps   = UIElement.factory('button_fps', "change_fps_frames_per_second", pygame.USEREVENT, next(positions), button_size,\
                                     INITIAL_RESOLUTION, default_values=ALL_FPS, text="Frames per second",text_alignment='left')
     graphics_menu  = Menu(  "menu_graphics_display", pygame.USEREVENT+1, INITIAL_RESOLUTION, buttonRes, buttonFps,\

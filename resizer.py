@@ -65,7 +65,7 @@ class Resizer (object):
         return Resizer.max_font_size_limited(text, size, font_size, font_type=font_type)
 
     @staticmethod 
-    def resize(element, new_size, mode='fit', smooth=True): #TODO UPDATE DOCUMENTATION
+    def resize(element, new_size, mode='fit', smooth=True, keep_aspect_ratio=True): #TODO UPDATE DOCUMENTATION
         """Resizes a surface to the closest size achievable to the input
         without changing the original object aspect ratio relation.
         This way the modified object looks way more natural than just a stretched wretch.
@@ -76,17 +76,22 @@ class Resizer (object):
         Returns:
             (:tuple: int, int):   A tuple with the resultant size.
         """
-        #Getting old size
-        if isinstance(element, pygame.Surface):         old_size = element.get_size()
-        elif isinstance(element, pygame.sprite.Sprite): old_size = element.rect.size
-        else:                                           raise BadResizerParamException("Can't resize element of type "+str(type(element)))
-        #Getting the ratio
-        if 'fit' in mode.lower():                       ratio = min([new/old for new, old in zip(new_size, old_size)])
-        elif 'fill' in mode.lower():                    ratio = max([new/old for new, old in zip(new_size, old_size)])
-        else:                                           raise BadResizerParamException('Mode '+mode+' is not a recognized resizing mode')
-        #Multiplyyyying
-        result_size = tuple([int(ratio*size) for size in old_size])
-        #And returning either a surface or True if success
+        if keep_aspect_ratio:
+            #Getting old size
+            if isinstance(element, pygame.Surface):         old_size = element.get_size()
+            elif isinstance(element, pygame.sprite.Sprite): old_size = element.rect.size
+            else:                                           
+                print(element)
+                raise BadResizerParamException("Can't resize element of type "+str(type(element)))
+            #Getting the ratio
+            if 'fit' in mode.lower():                       ratio = min([new/old for new, old in zip(new_size, old_size)])
+            elif 'fill' in mode.lower():                    ratio = max([new/old for new, old in zip(new_size, old_size)])
+            else:                                           raise BadResizerParamException('Mode '+mode+' is not a recognized resizing mode')
+            #Multiplyyyying
+            result_size = tuple([int(ratio*size) for size in old_size])
+        else:   #Not keeping aspect ratio
+            result_size = new_size
+        #ACTUAL resizing. And returning either a surface or True if success.
         if isinstance(element, pygame.Surface):
             if smooth:
                 return pygame.transform.smoothscale(element, result_size)
@@ -98,4 +103,4 @@ class Resizer (object):
             else:
                 element.image = pygame.transform.scale(element.image, result_size)
             element.rect.size = result_size
-        return True                                    
+        return True

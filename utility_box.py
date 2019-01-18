@@ -275,6 +275,16 @@ class UtilityBox (object):
             if file.lower().endswith(tuple(extensions)):
                 result.append(file)
         return result
+
+    @staticmethod
+    def get_filtered_files(root_folder, extensions, keywords, strict=False):
+        result = []
+        unfiltered_files = UtilityBox.get_all_files(root_folder, *extensions)
+        for file_path in unfiltered_files:
+            if (not strict and any(kw.lower() in file_path.lower() for kw in keywords))\
+            or (strict and all(kw.lower() in file_path.lower() for kw in keywords)):
+                result.append(file_path)
+        return result
     
     @staticmethod
     def size_position_generator(ammount_elements, width, inter_element_space, initial_offset=0.05, final_offset=0):

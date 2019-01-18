@@ -344,7 +344,7 @@ class LoadingScreen(Screen):
         UtilityBox.join_dicts(self.params, LoadingScreen.__default_config)
         load_surfaces = self.generate_load_sprite(self.params['loading_sprite_path'])
         loading_sprite = AnimatedSprite(self.id+'_loading_sprite', load_surfaces[0].rect.topleft,\
-                                        load_surfaces[0].rect.size, self.resolution, *load_surfaces,\
+                                        load_surfaces[0].rect.size, self.resolution, initial_surfaces=load_surfaces,\
                                         animation_delay=60)
         #The text sprite in the middle of the screen
         text_size   = tuple(x*ratio for x,ratio in zip(self.resolution, self.params['text_proportion']))

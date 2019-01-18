@@ -38,8 +38,7 @@ class ScriptedSprite(AnimatedSprite):
         end_time(float):   The time in seconds at which this sprite animation ends. It's used when added to an animation.
     """
 
-    def __init__(self, id_, position, size, canvas_size, fps, fps_modes, *sprite_list, sprite_folder=None, keywords=None,
-                animation_delay=5, resize_mode='fit', resize_smooth=True):
+    def __init__(self, id_, position, size, canvas_size, fps, fps_modes, **params):
         """ScriptedSprite constructor.
         Args:
             id_ (str):  Identifier of the Sprite.
@@ -55,8 +54,7 @@ class ScriptedSprite(AnimatedSprite):
                                                     that we don't want all of the contained ones.
             animation_delay (int):  Frames that occur between each animatino (Change of surface).
         """
-        super().__init__(id_, position, size, canvas_size, *sprite_list, sprite_folder=sprite_folder, keywords=keywords,\
-                        animation_delay=animation_delay, resize_mode=resize_mode, resize_smooth=resize_smooth)
+        super().__init__(id_, position, size, canvas_size, **params)
         self.starting_pos = position
         self.frames = {}            #Distinct positions according to time
         self.real_frames = {}       #Real position (0->1 in the screen)

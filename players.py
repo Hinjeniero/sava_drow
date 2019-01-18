@@ -85,11 +85,7 @@ class Player(object):
         if self.infoboard:
             self.infoboard.set_canvas_size(resolution)
         for char in self.characters:
-            print("OLD real pos "+str(char.real_rect[0]))
-            print("OLD pos "+str(char.rect.topleft))
             char.set_canvas_size(resolution)
-            print("NEW pos "+str(char.rect.topleft))
-            print("new real pos "+str(char.real_rect[0]))
 
     def has_char(self, char):
         return self.characters.has(char)
@@ -166,7 +162,6 @@ class Character(AnimatedSprite):
             result = Movements.get_movements(hash(movement_restriction))
         for path in result[index]:
             if current_map[path[-1]].has_ally():
-                print("ALLY GUYS")
                 result[index].remove(path)
         return result[index]
     
@@ -189,8 +184,8 @@ class Character(AnimatedSprite):
         Args:
             state (str): New state to set."""
         self.state  = state
-        for index in range (0, len(self.ids)):
-            if state in self.ids[index]:
+        for index in range (0, len(self.names)):
+            if state in self.names[index]:
                 self.animation_index = index
                 return True
         raise StateNotFoundException("Character doesn't have the state "+str(state))
@@ -200,7 +195,7 @@ class Character(AnimatedSprite):
         Searchs in the list of sprites the following one of the current sprite, that matches with the state of the character."""
         index = self.animation_index
         while True:
-            index=index+1 if index < len(self.names)-1 else 0  #going back to start
+            index=index+1 if index < (len(self.surfaces)-1) else 0  #going back to start
             if self.state in self.names[index].lower():
                 self.animation_index = index
                 break

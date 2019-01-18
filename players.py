@@ -64,7 +64,7 @@ class Player(object):
         cols = infoboard.get_cols()
         infoboard.add_text_element('initial_padding', '', cols)
         infoboard.add_text_element('player_name', self.name, cols-2)   #Player name
-        infoboard.add_text_element('player_number', 'id: '+str(self.order), cols-2)   #Player order
+        infoboard.add_text_element('player_number', 'id: '+str(self.order+1), cols-2)   #Player order
         infoboard.add_text_element('player_chars', 'characters: '+str(len(self.characters)), cols-2)   #Player total ammount of chars
         """infoboard.add_element('player_name', self.name, cols)   #Player ammount of pawns
         infoboard.add_element('player_name', self.name, cols)   #Player ammount of warriors
@@ -160,9 +160,13 @@ class Character(AnimatedSprite):
         if not result:
             self.set_paths(graph, distances, movement_restriction, level_size)
             result = Movements.get_movements(hash(movement_restriction))
-        for path in result[index]:
-            if current_map[path[-1]].has_ally():
-                result[index].remove(path)
+        paths = result.copy()
+        i = 0
+        while i < len(paths[index]):
+            if current_map[paths[index][i][-1]].has_ally():
+                del paths[index][i]
+                i -= 1
+            i += 1
         return result[index]
     
     def set_paths(self, graph, distances, level_size, movement_restriction):

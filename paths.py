@@ -177,8 +177,8 @@ class Path(object):
         else:   #For complex linked paths, we need a submethod
             for x in range(0, length):
                 destinations[x] = Path.generate_paths(graph, x, restrictions)
-        for key, item in destinations.items():
-            LOG.log("debug", key, " -> ", item, '\n\n')
+        '''for key, item in destinations.items():
+            LOG.log("debug", key, " -> ", item, '\n\n')'''
         return destinations
 
     @staticmethod
@@ -296,5 +296,5 @@ class Path(object):
             for dest in range(0, len(graph[0])):
                 if dest not in path\
                 and graph[path[-1]][dest]: to_check.append((dest, len(path)))
-        LOG.log('DEBUG', "Number of iterations searching paths of distance ",restrictions.dist," -> ",iterations)
+        #LOG.log('DEBUG', "Number of iterations searching paths of distance ",restrictions.dist," -> ",iterations)
         return solutions

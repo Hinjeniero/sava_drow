@@ -470,7 +470,7 @@ class Board(Screen):
             BadPlayerTypeException: If the player argument is not of type Player."""
         if isinstance(player, Player): 
             self.players.append(player)
-            for character in player.characters: 
+            for character in player.characters:
                 character.set_size(self.cells.sprites()[0].rect.size)
                 cell = self.quadrants[player.order].get_random_cell()
                 cell.add_char(character)
@@ -548,7 +548,10 @@ class Board(Screen):
         self.drag_char.sprite.set_active(True)
         self.last_cell.add(self.active_cell.sprite)
         destinations = self.drag_char.sprite.get_paths( self.enabled_paths, self.distances, self.current_map,\
-                                                        self.active_cell.sprite.index, self.params['circles_per_lvl']) 
+                                                        self.active_cell.sprite.index, self.params['circles_per_lvl'])
+        print(self.drag_char.sprite.id)
+        print("LEN OF DESTS: "+str(len(destinations)))
+        print(destinations)
         for cell_index in destinations:
             self.possible_dests.add(self.get_cell_by_real_index(cell_index[-1]))       
 

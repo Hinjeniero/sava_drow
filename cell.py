@@ -184,7 +184,7 @@ class Quadrant(object):
             (None||:obj: Cell): A cell of the requested zone as the input says so. 
                                 None if the input cant be recognized.
         """
-        cell = random.choice(self.cells.sprites()) if not zone or 'Nnne' in zone.lower()\
+        cell = random.choice(self.cells.sprites()) if not zone or 'none' in zone.lower()\
         else random.choice(self.border.sprites()) if 'bord' in zone.lower()\
         else random.choice(self.center.sprites()) if 'cent' in zone.lower()\
         else None

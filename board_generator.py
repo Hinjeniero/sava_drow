@@ -63,8 +63,8 @@ class BoardGenerator(object):
         elif any(kw in self.game_mode for kw in ('test', 'impossible', 'notreal', 'purpose', 'zero', 'memoryerror')):
             board = self.generate_test(resolution)
         #END
-        for i in range (0, self.players):
-            board.create_player(random.choice(PLAYER_NAMES), i+1, (200, 200), **self.characters_params)
+        for i in range (0, 4, (4//self.players)):
+            board.create_player(random.choice(PLAYER_NAMES), i, (200, 200), **self.characters_params)
         return board
 
     def generate_default(self, resolution):

@@ -69,7 +69,7 @@ class Cell(Circle):
 
     def set_hover(self, hover):
         super().set_hover(hover)
-        if self.chars.sprite:
+        if self.chars.sprite and self.chars.sprite.active:
             self.chars.sprite.set_hover(hover)
 
     def get_level(self):

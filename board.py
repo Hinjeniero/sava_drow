@@ -506,6 +506,7 @@ class Board(Screen):
         self.__add_player(player)
         if not self.current_player: #If this is the first player added
             self.current_player = self.players[self.player_index]
+            self.current_player.unpause_characters()
             self.update_map()   #This goes according to current_player
         else:
             player.pause_characters()
@@ -549,13 +550,9 @@ class Board(Screen):
         LOG.log('INFO', 'Selected ', self.active_char.sprite.id)
         self.drag_char.add(self.active_char.sprite)
         self.drag_char.sprite.set_selected(True)
-        self.drag_char.sprite.set_active(True)
         self.last_cell.add(self.active_cell.sprite)
         destinations = self.drag_char.sprite.get_paths( self.enabled_paths, self.distances, self.current_map,\
                                                         self.active_cell.sprite.index, self.params['circles_per_lvl'])
-        print(self.drag_char.sprite.id)
-        print("LEN OF DESTS: "+str(len(destinations)))
-        print(destinations)
         for cell_index in destinations:
             self.possible_dests.add(self.get_cell_by_real_index(cell_index[-1]))       
 
@@ -565,7 +562,6 @@ class Board(Screen):
         Otherwise, the character will be returned to the last Cell it was in."""
         LOG.log('INFO', 'Dropped ', self.drag_char.sprite.id)
         self.drag_char.sprite.set_selected(False)
-        self.drag_char.sprite.set_active(False)
         self.drag_char.sprite.set_hover(False)
         if self.possible_dests.has(self.active_cell.sprite):
             self.move_character()
@@ -646,7 +642,7 @@ class Board(Screen):
             cell.set_hover(True)
             self.active_cell.add(cell)
             char = self.active_cell.sprite.has_char()
-            if char:
+            if char and char.active:
                 self.active_char.add(char)
             LOG.log('debug', 'New cell active: ', self.active_cell.sprite.pos)
 

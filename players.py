@@ -83,10 +83,12 @@ class Player(object):
     def pause_characters(self):
         for character in self.characters:
             character.set_state("stop")
+            character.set_active(False)
 
     def unpause_characters(self):
         for character in self.characters:
-            character.set_state("idle")       
+            character.set_state("idle")
+            character.set_active(True)      
 
     def get_character(self, character):
         for char in self.characters:
@@ -210,7 +212,6 @@ class Character(AnimatedSprite):
         """Changes the current state of the character (The action that the char is performing).
         Args:
             state (str): New state to set."""
-        print("CHANGING STATE "+self.id)
         state = state.lower()
         for key_alias, alias in self.aliases.items():
             if state in key_alias or key_alias in state or state in alias or alias in state:
@@ -220,8 +221,6 @@ class Character(AnimatedSprite):
             if self.state in self.names[index].lower() or self.names[index].lower() in self.state:
                 self.animation_index = index
                 return True
-        print(state)
-        print(self.names)
         raise StateNotFoundException("Character doesn't have the state "+str(state))
 
     def animation_frame(self):

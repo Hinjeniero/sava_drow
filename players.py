@@ -69,11 +69,6 @@ class Player(object):
         infoboard.add_text_element('player_name', self.name, cols-2)   #Player name
         infoboard.add_text_element('player_number', 'id: '+str(self.order+1), cols-2)   #Player order
         infoboard.add_text_element('player_chars', 'characters: '+str(len(self.characters)), cols-2)   #Player total ammount of chars
-        """infoboard.add_element('player_name', self.name, cols)   #Player ammount of pawns
-        infoboard.add_element('player_name', self.name, cols)   #Player ammount of warriors
-        infoboard.add_element('player_name', self.name, cols)   #Player ammount of wizards
-        infoboard.add_element('player_name', self.name, cols)   #Player ammount of priestesses
-        infoboard.add_element('player_name', self.name, cols)   #Player ammount of matronmothers"""
         self.infoboard = infoboard
 
     def register_movement(self, character):
@@ -84,6 +79,14 @@ class Player(object):
         self.kills+=1
         self.corpses.append(corpse)
         self.get_character(killer).kills += 1
+
+    def pause_characters(self):
+        for character in self.characters:
+            character.set_state("stop")
+
+    def unpause_characters(self):
+        for character in self.characters:
+            character.set_state("idle")       
 
     def get_character(self, character):
         for char in self.characters:
@@ -140,7 +143,8 @@ class Character(AnimatedSprite):
                             "pickup" : "pickup",
                             "drop" : "drop",
                             "action" : "action",
-                            "die" : "die"    
+                            "die" : "die",
+                            "stop": "stop" 
     }
     def __init__(self, my_player, id_, position, size, canvas_size, sprites_path, **aliases):
         """Character constructor.
@@ -206,11 +210,18 @@ class Character(AnimatedSprite):
         """Changes the current state of the character (The action that the char is performing).
         Args:
             state (str): New state to set."""
-        self.state  = state
+        print("CHANGING STATE "+self.id)
+        state = state.lower()
+        for key_alias, alias in self.aliases.items():
+            if state in key_alias or key_alias in state or state in alias or alias in state:
+                self.state  = self.aliases[key_alias]
+                break
         for index in range (0, len(self.names)):
-            if state in self.names[index]:
+            if self.state in self.names[index].lower() or self.names[index].lower() in self.state:
                 self.animation_index = index
                 return True
+        print(state)
+        print(self.names)
         raise StateNotFoundException("Character doesn't have the state "+str(state))
 
     def animation_frame(self):

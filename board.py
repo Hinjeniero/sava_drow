@@ -104,7 +104,8 @@ class Board(Screen):
                                 max_levels, path_color, path_width.
         """
         super().__init__(id_, event_id, resolution, **params)
-        self.turn           = 0        
+        self.turn           = 0   
+        self.end            = 0     
         #Graphic elements
         self.loading_screen = None  #Created in Board.generate
         self.cells          = pygame.sprite.Group()
@@ -501,10 +502,13 @@ class Board(Screen):
                                         Ammount of each type of char, name of their actions, and their folder paths.
         Returns:
             (:obj:Threading.thread):    The thread doing the work. It is returned by the decorator."""
-        self.__add_player(Player(player_name, player_number, chars_size, self.resolution, **player_params))
-        if not self.current_player:
+        player = Player(player_name, player_number, chars_size, self.resolution, **player_params)
+        self.__add_player(player)
+        if not self.current_player: #If this is the first player added
             self.current_player = self.players[self.player_index]
-            self.update_map()
+            self.update_map()   #This goes according to current_player
+        else:
+            player.pause_characters()
 
     def draw(self, surface):
         """Draws the board and all of its elements on the surface.
@@ -593,7 +597,9 @@ class Board(Screen):
                 self.player_index = 0
                 self.turn += 1
             if self.players[self.player_index].turn is self.turn:
+                self.current_player.pause_characters()
                 self.current_player = self.players[self.player_index]
+                self.current_player.unpause_characters()
                 self.update_map()
                 break
 

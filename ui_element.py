@@ -390,12 +390,15 @@ class Slider (UIElement):
         Args:
             position (float||int): Position of the dial to set."""
         dial = self.get_sprite('dial')
-        dial_position = int(self.rect.width*position) if (0 <= position <= 1) else int(position)                                      #Converting the dial position to pixels.
-        dial_position = 0 if dial_position < 0 else self.rect.width if dial_position > self.rect.width else dial_position       #Checking if it's out of bounds 
-        dial.rect.x = dial_position-(dial.rect.width//2)
+        dial_position = int(self.rect.width*position) if (0 <= position <= 1) else int(position) #Converting the dial position to pixels.
+        dial_position = 0 if dial_position < 0\
+                        else self.rect.width if dial_position > self.rect.width \
+                        else dial_position       #Checking if it's out of bounds 
+        dial_x = dial_position-(dial.rect.width//2)
+        dial.set_position((dial_x, dial.rect.y))
         value_text = self.get_sprite('value')
         value_text.set_text(str(round(self.get_value(), 2)))
-        self.regenerate_image()                                                                    #To compensate the graphical offset of managing center/top-left
+        self.regenerate_image()  #To compensate the graphical offset of managing center/top-left
 
     def get_value(self):
         """Returns:
@@ -523,7 +526,7 @@ class InfoBoard (UIElement):
             raise NotEnoughSpaceException("There is not enough space in the infoboard to add that sprite")
         spaces = self.parse_element_spaces(spaces)
         size        = self.get_element_size(spaces, scale)
-        text        = TextSprite(id_, (0, 0), size, self.rect.size, text)
+        text        = TextSprite(id_, (0, 0), size, self.resolution, text)
         position    = self.get_element_position(spaces, text.rect.size)
         text.set_position(position)
         self.add_sprite(text)
@@ -550,7 +553,7 @@ class InfoBoard (UIElement):
         return (x_axis, y_axis)
 
     #Modify to also add elements when there are elements inside already
-    def add_and_adjust_sprites(self, *elements, scale=0.95):
+    def add_and_adjust_sprites(self, *elements, scale=0.95): #TODO convert to generator
         """Adds all the UIElements to the Infoboard, adjusting and placing them.
         The number of spaces taken won't be modified if it's under the row number,
         but will be rounded up otherwise. This is due to the impossibility of showing

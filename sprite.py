@@ -98,8 +98,8 @@ class Sprite(pygame.sprite.Sprite):
         self.overlay        = None  #Created in Sprite.generate
         self.mask           = None  #Created in Sprite.generate
         #Additions to interesting funcionality-------
-        self.real_rects     = {}    #Created in Sprite.generate, lut to not carry errors from resizings
         self.real_rect      = None  #Created in Sprite.generate
+        self.rects          = {}  #Created to blit onto another surfaces when needed.
         self.resolution     = canvas_size      
         #Animation and showing-----------------------
         self.animation_value= 0
@@ -117,14 +117,12 @@ class Sprite(pygame.sprite.Sprite):
     def generate(self):
         self.image, self.overlay = Sprite.generate_surface(self.rect, **self.params)
         self.mask = pygame.mask.from_surface(self.image)
-        try:
-            self.real_rect = self.real_rects[self.resolution]
-            print("YES DETECTED RESOLUTION")
-        except KeyError:
-            real_rect = (tuple([x/y for x,y in zip(self.rect.topleft, self.resolution)]),\
+        self.real_rect = (tuple([x/y for x,y in zip(self.rect.topleft, self.resolution)]),\
                         tuple([x/y for x,y in zip(self.rect.size, self.resolution)]))
-            self.real_rects[self.resolution] = real_rect
-            self.real_rect = real_rect
+        try:
+            self.rect = self.rects[self.resolution]
+        except KeyError:
+            self.rects[self.resolution] = self.rect.copy() 
 
     def draw(self, surface):
         """Draws the sprite over a surface. Draws the overlay too if use_overlay is True.
@@ -156,9 +154,9 @@ class Sprite(pygame.sprite.Sprite):
             tuple(int, int):    Resolution/canvas size of this Sprite."""
         return self.resolution
 
-    def get_rect_if_canvas_size(self, canvas_size):
-        return pygame.Rect(tuple([x*y for x,y in zip(self.real_rect[0], canvas_size)]),\
-        tuple([x*y for x,y in zip(self.real_rect[1], canvas_size)]))
+    '''def get_rect_if_canvas_size(self, canvas_size):
+        return pygame.Rect( tuple([x*y for x,y in zip(self.real_rect[0], canvas_size)]),\
+                            tuple([x*y for x,y in zip(self.real_rect[1], canvas_size)]))'''
 
     def set_canvas_size(self, canvas_size):
         """Set an internal resolution (NOT SIZE). Updates self.real_rect and self.resolution.
@@ -166,9 +164,14 @@ class Sprite(pygame.sprite.Sprite):
             canvas_size (:tuple: int,int): Resolution to set.
         """
         self.resolution = canvas_size
-        new_position    = tuple([int(x*y) for x,y in zip(self.real_rect[0], canvas_size)]) 
-        new_size        = tuple([int(x*y) for x,y in zip(self.real_rect[1], canvas_size)])
-        self.set_rect(pygame.Rect(new_position, new_size))
+        try:
+            rect = self.rects[self.resolution]
+        except KeyError:
+            new_position    = tuple([int(x*y) for x,y in zip(self.real_rect[0], canvas_size)]) 
+            new_size        = tuple([int(x*y) for x,y in zip(self.real_rect[1], canvas_size)])
+            rect            = pygame.Rect(new_position, new_size)
+            self.rects[self.resolution] = rect
+        self.set_rect(rect)
         #LOG.log('debug', "Succesfully changed sprite ", self.id, " to ", self.rect.size, ", due to the change to resolution ", canvas_size)
 
     def set_size(self, size):
@@ -177,8 +180,8 @@ class Sprite(pygame.sprite.Sprite):
             size (:obj: pygame.Rect||:tuple: int,int): New size of the Sprite. In pixels.
         """
         self.rect       = pygame.rect.Rect(self.rect.topleft, size)
-        self.real_rect  = (self.real_rect[0], tuple([x/y for x,y in zip(size, self.resolution)]))
-        self.real_rects[self.resolution] = self.real_rect
+        self.rects[self.resolution] = self.rect.copy()
+        self.real_rect  = (self.real_rect[0], tuple(x/y for x,y in zip(size, self.resolution)))
         self.regenerate_image()
         #LOG.log('debug', "Succesfully changed sprite ", self.id, " size to ",size)
 
@@ -188,8 +191,8 @@ class Sprite(pygame.sprite.Sprite):
             position (:obj: pygame.Rect||:tuple: int,int): New position of the Sprite. In pixels.
         """
         self.rect       = pygame.rect.Rect(position, self.rect.size)
-        self.real_rect  = (tuple([x/y for x,y in zip(position, self.resolution)]), self.real_rect[1])
-        self.real_rects[self.resolution] = self.real_rect
+        self.rects[self.resolution] = self.rect.copy()
+        self.real_rect  = (tuple(x/y for x,y in zip(position, self.resolution)), self.real_rect[1])
         #LOG.log('debug', "Succesfully changed sprite ",self.id, " position to ",position)
 
     def set_rect(self, rect):
@@ -614,7 +617,7 @@ class MultiSprite(Sprite):
         sprite.use_overlay   = False #Not interested in overlays from a lot of sprites at the same time
         self.sprites.add(sprite)
         #LOG.log('debug', "ADDING SPRITE ", sprite.id, " WITH POS ", sprite.rect.topleft)
-        self.image.blit(sprite.image, sprite.rect)
+        self.image.blit(sprite.image, sprite.rect.topleft)
 
     def regenerate_image(self):
         """Generates the image again, blitting the Sprites in the sprite list.
@@ -622,7 +625,7 @@ class MultiSprite(Sprite):
         Those changes propagate through all the sprites."""
         super().regenerate_image()
         for sprite in self.sprites.sprites():   
-            self.image.blit(sprite.image, sprite.rect)
+            self.image.blit(sprite.image, sprite.rect.topleft)
 
     def set_size(self, size):
         """Changes the size of the MultiSprite. All the internal Sprites are resized too as result.
@@ -630,7 +633,8 @@ class MultiSprite(Sprite):
             size (:tuple: int, int):    New size in pixels."""
         super().set_size(size)    #Changing the sprite size and position to the proper place
         for sprite in self.sprites.sprites():   
-            sprite.set_canvas_size(size)
+            sprite.set_canvas_size(self.rect.size)
+        self.regenerate_image()
 
     def set_canvas_size(self, canvas_size):
         """Changes the resolution (NOT SIZE) of the MultiSprite. All the internal Sprites are resized too as result.

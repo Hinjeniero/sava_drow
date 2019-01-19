@@ -58,8 +58,6 @@ class Cell(Circle):
         super().draw(surface)
         if self.active:
             pygame.draw.circle(surface, UtilityBox.random_rgb_color(), self.rect.center, self.rect.height//2)
-            #text = self.get_sprite("text")
-            #surface.blit(text.image, text.rect) # TODO Im almost sure that this shit will be drawn in the topleft corner
 
     def add_char(self, character):
         """Args:

@@ -25,7 +25,7 @@ from animation_generator import AnimationGenerator
 
 #CONFIG
 INITIAL_RESOLUTION = (1280, 720)
-RESOLUTIONS = (INITIAL_RESOLUTION, (1366, 768), (1600, 900), (1920, 1080), (384, 216), (640, 360), (896, 504), (1024, 576))
+RESOLUTIONS = (INITIAL_RESOLUTION, (1366, 768), (1600, 900), (384, 216), (640, 360), (896, 504), (1024, 576)) #v, (1920, 1080)
 INITIAL_FPS = 30
 ALL_FPS = (INITIAL_FPS, 60, 120, 144, 20)
 #MUSIC
@@ -69,10 +69,10 @@ def create_main_menu():
     buttonGraphics  = UIElement.factory('button_graphics', "go_menu_graphics_display", pygame.USEREVENT+1, next(positions), button_size,\
                                         INITIAL_RESOLUTION, text="Graphics menu", gradient = next(gradients), gradient_type='vertical')
     #Create Menu
-    #bg = AnimationGenerator.animated_waterfall_background(INITIAL_RESOLUTION, 30, *ALL_FPS)
-    bg = AnimationGenerator.animated_cave_waterfall_background(INITIAL_RESOLUTION, 30, *ALL_FPS)
-    #bg = AnimationGenerator.animated_rain_tree(INITIAL_RESOLUTION, 30, *ALL_FPS)
-    #bg = AnimationGenerator.animated_rain_chinese(INITIAL_RESOLUTION, 30, *ALL_FPS)
+    #bg = AnimationGenerator.animated_waterfall_background(INITIAL_RESOLUTION, INITIAL_FPS, *ALL_FPS)
+    bg = AnimationGenerator.animated_cave_waterfall_background(INITIAL_RESOLUTION, INITIAL_FPS, *ALL_FPS)
+    #bg = AnimationGenerator.animated_rain_tree(INITIAL_RESOLUTION, INITIAL_FPS, *ALL_FPS)
+    #bg = AnimationGenerator.animated_rain_chinese(INITIAL_RESOLUTION, INITIAL_FPS, *ALL_FPS)
     main_menu   = Menu('main_menu', pygame.USEREVENT, INITIAL_RESOLUTION, buttonStart, buttonConfig, buttonSound, buttonGraphics,
                         animated_background= bg, background_path=IMG_FOLDER+'\\background.jpg', songs_paths=MENU_SONGS, dialog=create_dialog(),
                         do_align=False)
@@ -139,8 +139,9 @@ def create_video_menu():
 
 def create_board_params():
     board_params = {}
-    board_params['background_path'] = IMG_FOLDER+'\\board_2.jpg'
+    #board_params['background_path'] = IMG_FOLDER+'\\board_2.jpg'
     board_params['songs_paths'] = BOARD_SONGS
+    board_params['animated_background'] = AnimationGenerator.animated_cave_waterfall_background(INITIAL_RESOLUTION, INITIAL_FPS, *ALL_FPS)
     return board_params
 
 def main():

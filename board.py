@@ -440,6 +440,12 @@ class Board(Screen):
         self.loading_screen.set_resolution(resolution)
         for player in self.players:
             player.set_resolution(resolution)
+        #Othewise the bezier curves just get fucked up when resizing back and forth.
+        self.generate_inter_paths()
+        for sprite in self.sprites: #Updateing the bezier curves.
+            if 'inter' in sprite.id and 'path' in sprite.id:
+                sprite = self.inter_paths.sprite
+                break
 
     def ALL_PLAYERS_LOADED(self):
         """Returns:

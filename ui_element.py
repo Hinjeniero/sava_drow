@@ -523,7 +523,7 @@ class InfoBoard (UIElement):
             raise NotEnoughSpaceException("There is not enough space in the infoboard to add that sprite")
         spaces = self.parse_element_spaces(spaces)
         size        = self.get_element_size(spaces, scale)
-        text        = TextSprite(id_, (0, 0), size, self.resolution, text)
+        text        = TextSprite(id_, (0, 0), size, self.rect.size, text)
         position    = self.get_element_position(spaces, text.rect.size)
         text.set_position(position)
         self.add_sprite(text)
@@ -573,7 +573,7 @@ class InfoBoard (UIElement):
             ratios              = (height_ratio, math.ceil(spaces/columns)) #Width, height
             element_size        = tuple([x*y for x,y in zip(size_per_element, ratios)])
             #element[0].image = pygame.transform.smoothscale(element[0].image, element_size) #This was just to test how it looks like
-            Resizer.resize_same_aspect_ratio(element[0], tuple([x*scale for x in element_size]))
+            Resizer.resize(element[0], tuple([x*scale for x in element_size]))
             current_center      = [x+y//2 for x,y in zip(current_pos, element_size)]
             element[0].rect.center   = tuple(x for x in current_center)
             self.add_sprite(element[0])
@@ -612,7 +612,6 @@ class Dialog (InfoBoard):
     def add_button(self, spaces, text, command, scale=1, **button_params):
         spaces = self.parse_element_spaces(spaces)
         size = self.get_element_size(spaces, scale)
-        print(size)
         position = self.get_element_position(spaces, size)
         button = ButtonAction(self.id+"_button", command, self.event_id, position, size, self.rect.size, text=text, **button_params)
         self.add_sprite(button)

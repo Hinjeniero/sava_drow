@@ -105,7 +105,8 @@ class Player(object):
     def set_resolution(self, resolution):
         """Resizes the infoboard and the player's characters"""
         if self.infoboard:
-            self.infoboard.set_canvas_size(resolution)
+            #self.infoboard.set_canvas_size(resolution)
+            print("AFTER "+str(len(self.infoboard.sprites)))
         for char in self.characters:
             char.set_canvas_size(resolution)
 

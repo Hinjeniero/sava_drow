@@ -98,6 +98,7 @@ class Sprite(pygame.sprite.Sprite):
         self.overlay        = None  #Created in Sprite.generate
         self.mask           = None  #Created in Sprite.generate
         #Additions to interesting funcionality-------
+        self.real_rects     = {}    #Created in Sprite.generate, lut to not carry errors from resizings
         self.real_rect      = None  #Created in Sprite.generate
         self.resolution     = canvas_size      
         #Animation and showing-----------------------
@@ -116,8 +117,14 @@ class Sprite(pygame.sprite.Sprite):
     def generate(self):
         self.image, self.overlay = Sprite.generate_surface(self.rect, **self.params)
         self.mask = pygame.mask.from_surface(self.image)
-        self.real_rect =(tuple([x/y for x,y in zip(self.rect.topleft, self.resolution)]),\
-                         tuple([x/y for x,y in zip(self.rect.size, self.resolution)]))
+        try:
+            self.real_rect = self.real_rects[self.resolution]
+            print("YES DETECTED RESOLUTION")
+        except KeyError:
+            real_rect = (tuple([x/y for x,y in zip(self.rect.topleft, self.resolution)]),\
+                        tuple([x/y for x,y in zip(self.rect.size, self.resolution)]))
+            self.real_rects[self.resolution] = real_rect
+            self.real_rect = real_rect
 
     def draw(self, surface):
         """Draws the sprite over a surface. Draws the overlay too if use_overlay is True.
@@ -170,7 +177,8 @@ class Sprite(pygame.sprite.Sprite):
             size (:obj: pygame.Rect||:tuple: int,int): New size of the Sprite. In pixels.
         """
         self.rect       = pygame.rect.Rect(self.rect.topleft, size)
-        self.real_rect  =  (self.real_rect[0], tuple([x/y for x,y in zip(size, self.resolution)]))
+        self.real_rect  = (self.real_rect[0], tuple([x/y for x,y in zip(size, self.resolution)]))
+        self.real_rects[self.resolution] = self.real_rect
         self.regenerate_image()
         #LOG.log('debug', "Succesfully changed sprite ", self.id, " size to ",size)
 
@@ -180,7 +188,8 @@ class Sprite(pygame.sprite.Sprite):
             position (:obj: pygame.Rect||:tuple: int,int): New position of the Sprite. In pixels.
         """
         self.rect       = pygame.rect.Rect(position, self.rect.size)
-        self.real_rect  =  (tuple([x/y for x,y in zip(position, self.resolution)]), self.real_rect[1])
+        self.real_rect  = (tuple([x/y for x,y in zip(position, self.resolution)]), self.real_rect[1])
+        self.real_rects[self.resolution] = self.real_rect
         #LOG.log('debug', "Succesfully changed sprite ",self.id, " position to ",position)
 
     def set_rect(self, rect):
@@ -265,8 +274,9 @@ class Sprite(pygame.sprite.Sprite):
     def regenerate_image(self):
         """Generates the image and overlay again, following the params when the constructor executed.
         Also updates the mask. Intended to be used after changing an important attribute in rect or image."""
-        self.image, self.overlay = Sprite.generate_surface(self.rect, **self.params)
-        self.update_mask()
+        Sprite.generate(self)
+        #self.image, self.overlay = Sprite.generate_surface(self.rect, **self.params)
+        #self.update_mask()
 
     @staticmethod   #TODO UPDATE DOCUMENTATION
     def generate_surface(size, surface=None, texture=None, keep_aspect_ratio=True, resize_mode='fit', resize_smooth=True,\
@@ -371,9 +381,8 @@ class TextSprite(Sprite):
 
     @staticmethod
     def generate(self):
-        UtilityBox.join_dicts(self.params, TextSprite.__default_config)
-        self.rect.size  = self.image.get_size()  #←The size can change in texts from the initial one↓
-        self.real_rect  = (self.real_rect[0], tuple([x/y for x,y in zip(self.rect.size, self.resolution)]))
+        UtilityBox.join_dicts(self.params, TextSprite.__default_config) 
+        self.set_size(self.image.get_size())    #The size can change in texts from the initial one
 
     def set_text(self, text):
         """Changes the text of the TextSprite, and regenerates the image to show the changes.

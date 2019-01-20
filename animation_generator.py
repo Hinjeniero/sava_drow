@@ -14,9 +14,11 @@ import pygame
 import random
 #Selfmade libraries
 from animation import ScriptedSprite, Animation, LoopedAnimation
+from sprite import AnimatedSprite
 from paths import IMG_FOLDER
 from decorators import time_it
 from surface_loader import SurfaceLoader, no_size_limit
+
 """Global variables, read_only:
     PYGAME_EVENT:
     SPRITE_PATHS:
@@ -32,10 +34,17 @@ MOVE_KEYWORDS = ('run', )
 
 class AnimationGenerator(object):
     @staticmethod
+    def animated_tree_platform(resolution):
+        tree_sprite = AnimatedSprite('tree', (0, 0), resolution, resolution, sprite_folder=IMG_FOLDER+'\\Tree',\
+                                    resize_smooth=False)
+        tree_sprite.set_position(tuple(x//2 - y//2 for x,y in zip(resolution, tree_sprite.rect.size)))
+        return tree_sprite
+
+    @staticmethod
     def industrial_layered_background(resolution, time, *fps):
         return AnimationGenerator.layered_animated_background(resolution, time, fps, IMG_FOLDER+'\\Industrial',\
                                                             'background', 'far', 'front', 'foreground')
-    
+
     @staticmethod
     @no_size_limit
     def layered_animated_background(resolution, time, fps_modes, folder, background_keyword, *layers_keywords, mode='fit'):

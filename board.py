@@ -89,7 +89,8 @@ class Board(Screen):
                         'circles_per_lvl'       : 16,
                         'max_levels'            : 4,
                         'path_color'            : WHITE,
-                        'path_width'            : 5
+                        'path_width'            : 5,
+                        'platform_sprite'       : None
     }
     #CHANGE MAYBE THE THREADS OF CHARACTER TO JOIN INSTEAD OF NUM PLAYERS AND SHIT
     def __init__(self, id_, event_id, resolution, *players, **params):
@@ -153,7 +154,10 @@ class Board(Screen):
         else centered_pos if 'center' in self.params['platform_alignment']\
         else (self.resolution[0]-platform_size[0], centered_pos[1])
 
-        self.platform   = Rectangle(self.id+"_platform", platform_pos, platform_size, self.resolution)
+        if not self.params['platform_sprite']:
+            self.platform = Rectangle(self.id+"_platform", platform_pos, platform_size, self.resolution)
+        else:
+            self.platform = self.params['platform_sprite']
         self.generate_all_cells()
         self.assign_quadrants(*self.cells)
         self.generate_paths(offset=True)

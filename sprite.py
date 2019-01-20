@@ -119,10 +119,7 @@ class Sprite(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
         self.real_rect = (tuple([x/y for x,y in zip(self.rect.topleft, self.resolution)]),\
                         tuple([x/y for x,y in zip(self.rect.size, self.resolution)]))
-        try:
-            self.rect = self.rects[self.resolution]
-        except KeyError:
-            self.rects[self.resolution] = self.rect.copy() 
+        self.rects[self.resolution] = self.rect.copy() 
 
     def draw(self, surface):
         """Draws the sprite over a surface. Draws the overlay too if use_overlay is True.
@@ -171,35 +168,41 @@ class Sprite(pygame.sprite.Sprite):
             new_size        = tuple([int(x*y) for x,y in zip(self.real_rect[1], canvas_size)])
             rect            = pygame.Rect(new_position, new_size)
             self.rects[self.resolution] = rect
-        self.set_rect(rect)
+        self.set_rect(rect, update_rects=False)
         #LOG.log('debug', "Succesfully changed sprite ", self.id, " to ", self.rect.size, ", due to the change to resolution ", canvas_size)
 
-    def set_size(self, size):
+    def set_size(self, size, update_rects=True): #TODO update documentation
         """Changes the size of the Sprite. Updates rect and real_rect, and changes image and mask to match the size.
         Args:
             size (:obj: pygame.Rect||:tuple: int,int): New size of the Sprite. In pixels.
         """
-        self.rect       = pygame.rect.Rect(self.rect.topleft, size)
-        self.rects[self.resolution] = self.rect.copy()
-        self.real_rect  = (self.real_rect[0], tuple(x/y for x,y in zip(size, self.resolution)))
+        #print("SET SIZE "+str(update_rects))
+        self.rect.size = size
+        if update_rects:
+            self.real_rect  = (self.real_rect[0], tuple(x/y for x,y in zip(size, self.resolution)))
+            self.rects[self.resolution] = self.rect.copy()
         self.regenerate_image()
         #LOG.log('debug', "Succesfully changed sprite ", self.id, " size to ",size)
 
-    def set_position(self, position):
+    def set_position(self, position, update_rects=True):
         """Changes the position of the Sprite. Updates rect and real_rect.
         Args:
             position (:obj: pygame.Rect||:tuple: int,int): New position of the Sprite. In pixels.
         """
-        self.rect       = pygame.rect.Rect(position, self.rect.size)
-        self.rects[self.resolution] = self.rect.copy()
-        self.real_rect  = (tuple(x/y for x,y in zip(position, self.resolution)), self.real_rect[1])
+        #print("SET POSITION "+str(update_rects))
+        self.rect.topleft = position
+        if update_rects:
+            self.real_rect  = (tuple(x/y for x,y in zip(position, self.resolution)), self.real_rect[1])
+            self.rects[self.resolution] = self.rect.copy()
         #LOG.log('debug', "Succesfully changed sprite ",self.id, " position to ",position)
 
-    def set_rect(self, rect):
+    def set_rect(self, rect, update_rects=True):
         """Sets a new Rect as the Sprite rect. Uses the rect.size and rect.topleft to change size and position
         Only executes set_position and set_size if the position or size of the rect is different from the original one. """
-        if self.rect.topleft != rect.topleft:   self.set_position(rect.topleft)
-        if self.rect.size != rect.size:         self.set_size(rect.size)
+        if self.rect.topleft != rect.topleft:   
+            self.set_position(rect.topleft, update_rects)
+        if self.rect.size != rect.size:         
+            self.set_size(rect.size, update_rects)
 
     def set_center(self, center):
         if self.rect.topleft != center:
@@ -276,10 +279,10 @@ class Sprite(pygame.sprite.Sprite):
     #For use after changing some input param.
     def regenerate_image(self):
         """Generates the image and overlay again, following the params when the constructor executed.
-        Also updates the mask. Intended to be used after changing an important attribute in rect or image."""
-        Sprite.generate(self)
-        #self.image, self.overlay = Sprite.generate_surface(self.rect, **self.params)
-        #self.update_mask()
+        Also updates the mask. Intended to be used after changing an important attribute in rect or image.
+        Called after an important change in resolution or the sprite params."""
+        self.image, self.overlay = Sprite.generate_surface(self.rect, **self.params)
+        self.update_mask() 
 
     @staticmethod   #TODO UPDATE DOCUMENTATION
     def generate_surface(size, surface=None, texture=None, keep_aspect_ratio=True, resize_mode='fit', resize_smooth=True,\
@@ -352,6 +355,13 @@ class Sprite(pygame.sprite.Sprite):
             return surf, overlay
         else:
             return surf, None
+
+    def rects_to_str(self, return_luts_too=False):
+        result = 'Id: '+self.id+', Position: '+str(self.rect.topleft)+', Size: '+str(self.rect.size)+\
+                '\nReal rect pos: '+str(self.real_rect[0])+', Real rect size: '+str(self.real_rect[0])
+        if return_luts_too:
+            return result+'\nLut table of rects:\n '+str(self.rects)
+        return result
 
 class TextSprite(Sprite):
     """Class TextSprite. Inherits from Sprite, and the main surface is a text, from pygame.font.render.
@@ -524,11 +534,11 @@ class AnimatedSprite(Sprite):
         self.hover_surfaces.append(hover_surface)
         self.masks.append(pygame.mask.from_surface(surface))
 
-    def set_size(self, size): #TODO CHANGE THIS TO USE LOAD_SURFACES
+    def set_size(self, size, update_rects=True): #TODO CHANGE THIS TO USE LOAD_SURFACES
         """Changes the size of all the surfaces that this Sprite contains (except the original ones).
         Args:
             size(:tuple: int, int): New size of the surfaces."""
-        super().set_size(size)
+        super().set_size(size, update_rects=update_rects)
         self.clear_lists()
         AnimatedSprite.generate(self)
 
@@ -627,23 +637,24 @@ class MultiSprite(Sprite):
         for sprite in self.sprites.sprites():   
             self.image.blit(sprite.image, sprite.rect.topleft)
 
-    def set_size(self, size):
+    def set_size(self, size, update_rects=True):
         """Changes the size of the MultiSprite. All the internal Sprites are resized too as result.
         Args;
             size (:tuple: int, int):    New size in pixels."""
-        super().set_size(size)    #Changing the sprite size and position to the proper place
+        super().set_size(size, update_rects=update_rects)    #Changing the sprite size and position to the proper place
         for sprite in self.sprites.sprites():   
             sprite.set_canvas_size(self.rect.size)
         self.regenerate_image()
 
-    def set_canvas_size(self, canvas_size):
+    '''def set_canvas_size(self, canvas_size):
         """Changes the resolution (NOT SIZE) of the MultiSprite. All the internal Sprites are resized too as result.
         Args;
             canvas_size (:tuple: int, int): New resolution in pixels."""
         super().set_canvas_size(canvas_size)    #Changing the sprite size and position to the proper place
-        for sprite in self.sprites.sprites():   
+        for sprite in self.sprites.sprites():
+            print("HALLO "+str(sprite.id))
             sprite.set_canvas_size(self.rect.size)
-        self.regenerate_image()
+        self.regenerate_image()'''
 
     def get_sprite_abs_position(self, sprite):
         """Gets the absolute position of a sprite (in pixels) in the screen, instead of a relative in the 

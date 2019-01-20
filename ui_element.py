@@ -526,7 +526,7 @@ class InfoBoard (UIElement):
             raise NotEnoughSpaceException("There is not enough space in the infoboard to add that sprite")
         spaces = self.parse_element_spaces(spaces)
         size        = self.get_element_size(spaces, scale)
-        text        = TextSprite(id_, (0, 0), size, self.resolution, text)
+        text        = TextSprite(id_, (0, 0), size, self.rect.size, text)
         position    = self.get_element_position(spaces, text.rect.size)
         text.set_position(position)
         self.add_sprite(text)
@@ -552,6 +552,15 @@ class InfoBoard (UIElement):
         + (((math.ceil(spaces/cols)*self.element_size[1])//2)-(size[1]//2))
         return (x_axis, y_axis)
 
+    def set_canvas_size(self, res):
+        #print("BEGORE "+str(len(self.sprites)))
+        #for sprite in self.sprites:
+            #print(sprite.rects_to_str())
+        super().set_canvas_size(res)
+        #print("AFTER "+str(len(self.sprites)))
+        #for sprite in self.sprites:
+            #print(sprite.rects_to_str())
+
     #Modify to also add elements when there are elements inside already
     def add_and_adjust_sprites(self, *elements, scale=0.95): #TODO convert to generator
         """Adds all the UIElements to the Infoboard, adjusting and placing them.
@@ -567,7 +576,6 @@ class InfoBoard (UIElement):
         size_per_element    = (self.rect.width//columns, self.rect.height//rows)
         for element in elements:
             #(x_axis, y_axis)
-            #TODO CHECK IN CASE THERE ARE ALREADY ELEMENTS OCUPPYING UNEVEN SPACES 
             current_pos         = ((self.taken_spaces%columns)*size_per_element[0],\
                                     (self.taken_spaces//columns)*size_per_element[1])
             spaces = self.parse_element_spaces(element[1])
@@ -581,7 +589,8 @@ class InfoBoard (UIElement):
             element[0].rect.center   = tuple(x for x in current_center)
             self.add_sprite(element[0])
             self.taken_spaces   += spaces 
-            if self.taken_spaces > self.spaces: raise TooManyElementsException("Too many elements in infoboard") 
+            if self.taken_spaces > self.spaces: 
+                raise TooManyElementsException("Too many elements in infoboard") 
 
     def parse_element_spaces(self, spaces):
         return self.params['cols']*math.ceil(spaces/self.params['cols']) if spaces > self.params['cols'] else spaces

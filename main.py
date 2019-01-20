@@ -22,6 +22,7 @@ from logger import Logger as LOG
 from utility_box import UtilityBox
 from game import Game
 from animation_generator import AnimationGenerator
+from sprite import AnimatedSprite
 
 #CONFIG
 INITIAL_RESOLUTION = (1280, 720)
@@ -142,6 +143,7 @@ def create_board_params():
     #board_params['background_path'] = IMG_FOLDER+'\\board_2.jpg'
     board_params['songs_paths'] = BOARD_SONGS
     board_params['animated_background'] = AnimationGenerator.animated_cave_waterfall_background(INITIAL_RESOLUTION, INITIAL_FPS, *ALL_FPS)
+    board_params['platform_sprite'] = AnimationGenerator.animated_tree_platform(INITIAL_RESOLUTION)
     return board_params
 
 def main():

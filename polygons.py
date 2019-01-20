@@ -74,13 +74,13 @@ class Circle(Polygon):
         self.radius = min(x for x in size)//2
         self.center = self.rect.center
     
-    def set_size(self, size):
-        super().set_size(size)
+    def set_size(self, size, update_rects):
+        super().set_size(size, update_rects)
         self.radius = min(x for x in size)//2
         self.center = self.rect.center
     
-    def set_position(self, position):
-        super().set_position(position)
+    def set_position(self, position, update_rects):
+        super().set_position(position, update_rects)
         self.center = self.rect.center
 
     def collision(self, rect):

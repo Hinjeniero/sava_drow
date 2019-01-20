@@ -151,6 +151,8 @@ class Game(object):
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:        
                     self.esc_handler()
+                elif event.key == pygame.K_F4 and (all_keys[pygame.K_LALT] or all_keys[pygame.K_RALT]):
+                    return True
                 else:
                     self.process_last_input(event)
             elif event.type >= pygame.USEREVENT:        

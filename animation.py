@@ -106,14 +106,12 @@ class ScriptedSprite(AnimatedSprite):
         self.time += time
 
     def set_canvas_size(self, resolution):
-        print(self.id+"OLD "+str(self.fps)+", "+str(self.frame_jump)+", "+str(self.next_frame_time))
         super().set_canvas_size(resolution)
         self.start_pos = tuple(x*y for x,y in zip(self.real_start, self.resolution))
         for fps in self.fps_modes:
             del self.frames[fps][:]
             for real_frame in self.real_frames[fps]:
                 self.frames[fps].append(tuple(real_axis*res for real_axis, res in zip(real_frame, self.resolution)))
-        print(self.id+"NEW "+str(self.fps)+", "+str(self.frame_jump)+", "+str(self.next_frame_time))
 
     def update(self):
         """Changes the image to the next surface when its time.

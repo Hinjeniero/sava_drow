@@ -26,7 +26,8 @@ from sprite import AnimatedSprite
 
 #CONFIG
 INITIAL_RESOLUTION = (1280, 720)
-RESOLUTIONS = (INITIAL_RESOLUTION, (1366, 768), (1600, 900), (256, 144), (640, 360), (848, 480), (1024, 576)) #v, (1920, 1080)
+#RESOLUTIONS = (INITIAL_RESOLUTION, (1366, 768), (1600, 900), (256, 144), (640, 360), (848, 480), (1024, 576))
+RESOLUTIONS = (INITIAL_RESOLUTION, (1366, 768), (1600, 900), (1920, 1080), (256, 144), (640, 360), (848, 480), (1024, 576))
 INITIAL_FPS = 30
 ALL_FPS = (INITIAL_FPS, 60, 120, 144, 20)
 #MUSIC
@@ -134,7 +135,7 @@ def create_video_menu():
     buttonFps   = UIElement.factory('button_fps', "change_fps_frames_per_second", pygame.USEREVENT, next(positions), button_size,\
                                     INITIAL_RESOLUTION, default_values=ALL_FPS, text="Frames per second",text_alignment='left')
     buttonFullscreen = UIElement.factory('button_fps', "set_display_mode_fullscreen", pygame.USEREVENT, next(positions), button_size,\
-                                INITIAL_RESOLUTION, default_values=('On', 'Off'), text="Fullscreen")                                    
+                                INITIAL_RESOLUTION, default_values=('Off', 'On'), text="Fullscreen")                                    
     graphics_menu  = Menu(  "menu_graphics_display", pygame.USEREVENT+1, INITIAL_RESOLUTION, buttonRes, buttonFps, buttonFullscreen,\
                             background_path=IMG_FOLDER+'\\background.jpg', do_align=False)
     graphics_menu.add_animation(AnimationGenerator.character_teleporting_screen(INITIAL_RESOLUTION, *ALL_FPS))

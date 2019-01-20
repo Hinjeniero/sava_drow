@@ -55,7 +55,8 @@ class ScriptedSprite(AnimatedSprite):
             animation_delay (int):  Frames that occur between each animatino (Change of surface).
         """
         super().__init__(id_, position, size, canvas_size, **params)
-        self.start_pos   = None
+        self.real_start = None
+        self.start_pos  = None
         self.frames     = {}        #Distinct positions according to time
         self.real_frames= {}        #Real position (0->1 in the screen)
         self.index      = 0
@@ -91,7 +92,8 @@ class ScriptedSprite(AnimatedSprite):
             end_pos(:tuple: int, int):  Ending position of the movement on the screen. In pixels.
             time(float):    Duration of the movement in seconds."""
         if not self.start_pos:
-            self.start_pos = init_pos
+            self.start_pos  = init_pos
+            self.real_start = tuple(x/y for x,y in zip(self.start_pos, self.resolution))
         if not isinstance(self.fps_modes, tuple):
             self.fps_modes = self.fps_modes,
         vector_mvnt = tuple(end-init for end, init in zip(end_pos, init_pos))
@@ -104,11 +106,14 @@ class ScriptedSprite(AnimatedSprite):
         self.time += time
 
     def set_canvas_size(self, resolution):
+        print(self.id+"OLD "+str(self.fps)+", "+str(self.frame_jump)+", "+str(self.next_frame_time))
         super().set_canvas_size(resolution)
+        self.start_pos = tuple(x*y for x,y in zip(self.real_start, self.resolution))
         for fps in self.fps_modes:
             del self.frames[fps][:]
             for real_frame in self.real_frames[fps]:
                 self.frames[fps].append(tuple(real_axis*res for real_axis, res in zip(real_frame, self.resolution)))
+        print(self.id+"NEW "+str(self.fps)+", "+str(self.frame_jump)+", "+str(self.next_frame_time))
 
     def update(self):
         """Changes the image to the next surface when its time.

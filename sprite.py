@@ -457,16 +457,16 @@ class AnimatedSprite(Sprite):
     @staticmethod
     def generate(self):
         UtilityBox.join_dicts(self.params, AnimatedSprite.__default_config)
-        self.use_overlay        = False
-        self.next_frame_time    = self.params['animation_delay']
+        self.use_overlay = False
+        self.next_frame_time = self.params['animation_delay']
         self.params['hover_size'] = tuple(x*self.params['hover_ratio'] for x in self.rect.size)
         if self.params['sprite_folder']:
             self.load_surfaces()
         else:
             self.add_surfaces()
         self.update_size()
-        self.image              = self.current_sprite()    #Assigning a logical sprite in place of the decoy one of the super()
-        self.mask               = self.current_mask()       #Same shit to mask
+        self.image  = self.current_sprite()    #Assigning a logical sprite in place of the decoy one of the super()
+        self.mask   = self.current_mask()       #Same shit to mask
 
     def update_size(self):
         """Due to the resizer, we have to check the new size of this sprite."""
@@ -528,14 +528,6 @@ class AnimatedSprite(Sprite):
         self.hover_surfaces.append(hover_surface)
         self.masks.append(pygame.mask.from_surface(surface))
 
-    def set_size(self, size, update_rects=True): #TODO CHANGE THIS TO USE LOAD_SURFACES
-        """Changes the size of all the surfaces that this Sprite contains (except the original ones).
-        Args:
-            size(:tuple: int, int): New size of the surfaces."""
-        super().set_size(size, update_rects=update_rects)
-        self.clear_lists()
-        AnimatedSprite.generate(self)
-
     def set_canvas_size(self, canvas_size): #TODO CHANGE THIS TO USE LOAD_SURFACES
         """Set an internal resolution (NOT SIZE). Updates self.real_rect and self.resolution.
         Clears the internal lists, and resize all the surfaces again to match the old proportion size/resolution.
@@ -545,7 +537,13 @@ class AnimatedSprite(Sprite):
         #Changing the sprite size and position to the proper place.
         super().set_canvas_size(canvas_size)    
         self.clear_lists()
-        AnimatedSprite.generate(self)
+        if self.params['sprite_folder']:
+            self.load_surfaces()
+        else:
+            self.add_surfaces()
+        self.update_size()
+        self.image  = self.current_sprite()    #Assigning a logical sprite in place of the decoy one of the super()
+        self.mask   = self.current_mask()       #Same shit to mask
 
     def clear_lists(self):
         """Empty all the internal lists of surfaces and masks, except the original ones (The non-resized).

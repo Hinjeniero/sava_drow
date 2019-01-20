@@ -26,7 +26,7 @@ from sprite import AnimatedSprite
 
 #CONFIG
 INITIAL_RESOLUTION = (1280, 720)
-RESOLUTIONS = (INITIAL_RESOLUTION, (1366, 768), (1600, 900), (384, 216), (640, 360), (896, 504), (1024, 576)) #v, (1920, 1080)
+RESOLUTIONS = (INITIAL_RESOLUTION, (1366, 768), (1600, 900), (256, 144), (640, 360), (848, 480), (1024, 576)) #v, (1920, 1080)
 INITIAL_FPS = 30
 ALL_FPS = (INITIAL_FPS, 60, 120, 144, 20)
 #MUSIC
@@ -127,13 +127,15 @@ def create_sound_menu():
     return sound_menu
 
 def create_video_menu():
-    positions           = UtilityBox.size_position_generator(2, 0.80, 0.15, 0.15)
+    positions           = UtilityBox.size_position_generator(3, 0.80, 0.10, 0.10, final_offset=0.15)
     button_size         = next(positions)
     buttonRes   = UIElement.factory('button_resolution',"change_resolution_screen_display", pygame.USEREVENT, next(positions), button_size,\
                                     INITIAL_RESOLUTION, default_values=RESOLUTIONS, text="Resolution",text_alignment='left')
     buttonFps   = UIElement.factory('button_fps', "change_fps_frames_per_second", pygame.USEREVENT, next(positions), button_size,\
                                     INITIAL_RESOLUTION, default_values=ALL_FPS, text="Frames per second",text_alignment='left')
-    graphics_menu  = Menu(  "menu_graphics_display", pygame.USEREVENT+1, INITIAL_RESOLUTION, buttonRes, buttonFps,\
+    buttonFullscreen = UIElement.factory('button_fps', "set_display_mode_fullscreen", pygame.USEREVENT, next(positions), button_size,\
+                                INITIAL_RESOLUTION, default_values=('On', 'Off'), text="Fullscreen")                                    
+    graphics_menu  = Menu(  "menu_graphics_display", pygame.USEREVENT+1, INITIAL_RESOLUTION, buttonRes, buttonFps, buttonFullscreen,\
                             background_path=IMG_FOLDER+'\\background.jpg', do_align=False)
     graphics_menu.add_animation(AnimationGenerator.character_teleporting_screen(INITIAL_RESOLUTION, *ALL_FPS))
     return graphics_menu

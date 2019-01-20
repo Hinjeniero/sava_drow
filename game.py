@@ -48,6 +48,7 @@ class Game(object):
         self.game_config    = {}    #Created in Game.generate()
         self.current_screen = None  #Created in Game.start()
         self.board_generator= None  #Created in Game.generate()
+        self.fullscreen     = False
         Game.generate(self)
 
     @staticmethod
@@ -97,10 +98,20 @@ class Game(object):
         elif 'res' in command:   
             self.resolution = value
             self.set_resolution(value)
+        elif 'fullscreen' in command:
+            if 'on' in value.lower() or value == 1:
+                self.display = pygame.display.set_mode(self.resolution, pygame.HWSURFACE | pygame.FULLSCREEN | pygame.DOUBLEBUF)
+                self.fullscreen = True
+            else:
+                self.display = pygame.display.set_mode(self.resolution, pygame.DOUBLEBUF)
+                self.fullscreen = False
 
     def set_resolution(self, resolution):
-        self.display = pygame.display.set_mode(resolution)
-        ResizedSurface.clear_lut()
+        if self.fullscreen:
+            self.display = pygame.display.set_mode(self.resolution, pygame.HWSURFACE | pygame.FULLSCREEN | pygame.DOUBLEBUF)
+        else:
+            self.display = pygame.display.set_mode(self.resolution, pygame.DOUBLEBUF)
+        ResizedSurface.clear_lut()  #Clear the lut of resized surfaces
         for screen in self.screens:
             screen.set_resolution(resolution)
         LOG.log('DEBUG', "Changed resolution to ", resolution)

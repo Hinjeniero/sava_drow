@@ -55,11 +55,11 @@ class ScriptedSprite(AnimatedSprite):
             animation_delay (int):  Frames that occur between each animatino (Change of surface).
         """
         super().__init__(id_, position, size, canvas_size, **params)
-        self.starting_pos = position
-        self.frames = {}            #Distinct positions according to time
-        self.real_frames = {}       #Real position (0->1 in the screen)
-        self.index  = 0
-        self.fps    = fps           #Current frames per second value of animations
+        self.start_pos   = None
+        self.frames     = {}        #Distinct positions according to time
+        self.real_frames= {}        #Real position (0->1 in the screen)
+        self.index      = 0
+        self.fps        = fps       #Current frames per second value of animations
         self.fps_modes  = fps_modes #All the possible fps modes
         self.frame_jump = 1         #To speedup the animation
         self.time       = 0
@@ -90,7 +90,8 @@ class ScriptedSprite(AnimatedSprite):
             init_pos(:tuple: int, int): Starting position of the movement on the screen. In pixels.
             end_pos(:tuple: int, int):  Ending position of the movement on the screen. In pixels.
             time(float):    Duration of the movement in seconds."""
-        self.starting_pos = init_pos
+        if not self.start_pos:
+            self.start_pos = init_pos
         if not isinstance(self.fps_modes, tuple):
             self.fps_modes = self.fps_modes,
         vector_mvnt = tuple(end-init for end, init in zip(end_pos, init_pos))
@@ -126,7 +127,7 @@ class ScriptedSprite(AnimatedSprite):
     def restart(self):
         """Restarts the movement's attributes and the position to the initial ones."""
         self.index = 0
-        self.rect.topleft = self.starting_pos
+        self.rect.topleft = self.start_pos
 
     def set_refresh_rate(self, fps):
         """Updates the refresh rate and the number of frames of the movements of this sprite. Also fix the frame index if the sprite was active.

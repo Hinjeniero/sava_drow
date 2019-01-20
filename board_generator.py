@@ -12,6 +12,7 @@ import pygame
 from paths import IMG_FOLDER
 from board import Board
 from logger import Logger as LOG
+from decorators import time_it
 
 #To hold the differenmt board configurations of whatever. And return a different board per gammemode.
 PLAYER_NAMES = ['Mitches', 'Hayesshine', 'Rolbo Gordonggins', 'Spencerpop', 'Palka', 'Rainrobinson', 'Kingolas', 'Zippotudo',
@@ -45,6 +46,7 @@ class BoardGenerator(object):
     def set_board_params(self, **params):
         self.board_params.update(params)
 
+    @time_it
     def generate_board(self, resolution):
         #Check type of board
         LOG.log('info', 'Selected gamemode is ', self.game_mode)

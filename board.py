@@ -136,6 +136,8 @@ class Board(Screen):
         self.loaded_players = 0
         self.players        = []
         self.player_index   = 0
+        #Started
+        self.started        = False
         Board.generate(self, *players)
     
     @staticmethod
@@ -163,7 +165,6 @@ class Board(Screen):
         self.generate_paths(offset=True)
         self.generate_inter_paths()
         self.generate_map_board()
-
         self.add_players(*players)
         self.save_sprites()
 
@@ -454,7 +455,13 @@ class Board(Screen):
     def ALL_PLAYERS_LOADED(self):
         """Returns:
             (boolean): True if all the requested players have been loaded already."""
-        return self.loaded_players is self.total_players
+        if not self.started and (self.loaded_players is self.total_players):
+            self.play_sound('success')
+            if not self.current_player: #If this is the first player added
+                self.current_player = self.players[0]
+                self.current_player.unpause_characters()
+                self.update_map()       #This goes according to current_player
+            self.started = True
 
     def create_player(self, name, number, chars_size, **player_settings):
         """Queues the creation of a player on the async method.
@@ -488,10 +495,10 @@ class Board(Screen):
                 character.set_center(cell.rect.center)
                 self.characters.add(character)
                 LOG.log('DEBUG', "Character ", character.id, " spawned with position ", cell.pos)
+            player.pause_characters()
             self.loaded_players += 1
-            if self.ALL_PLAYERS_LOADED():
-                self.play_sound('success')
-            return  #To bypass the Exception.
+            self.ALL_PLAYERS_LOADED()
+            return True
         raise BadPlayerTypeException("A player in the board can't be of type "+str(type(player)))
         
     def add_players(self, *players):
@@ -514,12 +521,6 @@ class Board(Screen):
             (:obj:Threading.thread):    The thread doing the work. It is returned by the decorator."""
         player = Player(player_name, player_number, chars_size, self.resolution, **player_params)
         self.__add_player(player)
-        if not self.current_player: #If this is the first player added
-            self.current_player = self.players[self.player_index]
-            self.current_player.unpause_characters()
-            self.update_map()   #This goes according to current_player
-        else:
-            player.pause_characters()
 
     def draw(self, surface):
         """Draws the board and all of its elements on the surface.
@@ -527,7 +528,7 @@ class Board(Screen):
         Args:
             surface (:obj: pygame.Surface): Surface to draw the board.
         """
-        if not self.ALL_PLAYERS_LOADED():
+        if not self.started:
             self.loading_screen.draw(surface)
             return
         super().draw(surface)                                                                           #Draws background
@@ -549,7 +550,7 @@ class Board(Screen):
             mouse_movement (boolean, default=False):    True if there was mouse movement since the last call.
             mouse_pos (:tuple: int, int, default=(0,0)):Current mouse position. In pixels.
         """
-        if self.ALL_PLAYERS_LOADED():
+        if self.started:
             if event.type == pygame.KEYDOWN:    self.keyboard_handler(keys_pressed)
             else:                               self.mouse_handler(event, mouse_movement, mouse_pos)  
 

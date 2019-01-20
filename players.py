@@ -58,6 +58,7 @@ class Player(object):
         self.kills      = 0
         self.corpses    = []    #Contains dead chars.
         self.movements  = 0
+        self.dead       = False #If the player has already lost
         Player.generate(self, canvas_size, **character_params)
 
     @staticmethod
@@ -116,6 +117,14 @@ class Player(object):
         if self.has_char(char):
             self.characters.remove(char)
             self.update()
+            if char.essential:  #If the killed one was a matron mother or a promoted/bonus char 
+                for character in self.characters:
+                    if character.essential:
+                        return
+                self.dead = True
+    
+    def has_lost(self):
+        return self.dead
 
 class Character(AnimatedSprite):
     """Character class. Inherits from AnimatedSprite.
@@ -166,6 +175,7 @@ class Character(AnimatedSprite):
         self.index      = 0
         self.kills      = 0
         self.movements  = 0
+        self.essential  = False
     
     def get_paths(self, graph, distances, current_map, index, level_size, movement_restriction):
         """Gets all the possible paths for each cell (of a specific subclass) with this overloaded method.
@@ -194,6 +204,12 @@ class Character(AnimatedSprite):
             i += 1
         return result[index]
     
+    def promote(self):
+        self.essential = True
+
+    def demote(self):
+        self.essential = False
+
     def set_paths(self, graph, distances, level_size, movement_restriction):
         """Sets all the possible paths for each cell (of a specific subclass) with this overloaded method.
         Args:
@@ -571,6 +587,7 @@ class MatronMother(Character):
             **aliases (:dict:): How each standarized action will be named in the loaded images.
         """
         super().__init__(my_player, id_, position, size, canvas_size, sprites_path, **aliases)
+        self.essential = True
         #self.movement   = Restriction(bypass_enemies=True)
 
     def get_paths(self, graph, distances, current_map, index, level_size):

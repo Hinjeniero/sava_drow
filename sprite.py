@@ -176,7 +176,6 @@ class Sprite(pygame.sprite.Sprite):
         Args:
             size (:obj: pygame.Rect||:tuple: int,int): New size of the Sprite. In pixels.
         """
-        #print("SET SIZE "+str(update_rects))
         self.rect.size = size
         if update_rects:
             self.real_rect  = (self.real_rect[0], tuple(x/y for x,y in zip(size, self.resolution)))
@@ -189,7 +188,6 @@ class Sprite(pygame.sprite.Sprite):
         Args:
             position (:obj: pygame.Rect||:tuple: int,int): New position of the Sprite. In pixels.
         """
-        #print("SET POSITION "+str(update_rects))
         self.rect.topleft = position
         if update_rects:
             self.real_rect  = (tuple(x/y for x,y in zip(position, self.resolution)), self.real_rect[1])
@@ -469,10 +467,6 @@ class AnimatedSprite(Sprite):
         self.update_size()
         self.image              = self.current_sprite()    #Assigning a logical sprite in place of the decoy one of the super()
         self.mask               = self.current_mask()       #Same shit to mask
-        #print("-----------------------"+self.id+"------------------------")
-        #print("AT THE END OF GENERATE; THE SIZE OF THE SURFACES IS "+str(MemoryProfiler.get_size(self.surfaces)/1000000)+" MB")
-        #print("AT THE END OF GENERATE; THE SIZE OF THE HOVER SURFACES IS "+str(MemoryProfiler.get_size(self.hover_surfaces)/1000000)+" MB")
-        #print("AT THE END OF GENERATE; THE SIZE OF THE MASKS IS "+str(MemoryProfiler.get_size(self.masks)/1000000)+" MB")
 
     def update_size(self):
         """Due to the resizer, we have to check the new size of this sprite."""
@@ -645,16 +639,6 @@ class MultiSprite(Sprite):
         for sprite in self.sprites.sprites():   
             sprite.set_canvas_size(self.rect.size)
         self.regenerate_image()
-
-    '''def set_canvas_size(self, canvas_size):
-        """Changes the resolution (NOT SIZE) of the MultiSprite. All the internal Sprites are resized too as result.
-        Args;
-            canvas_size (:tuple: int, int): New resolution in pixels."""
-        super().set_canvas_size(canvas_size)    #Changing the sprite size and position to the proper place
-        for sprite in self.sprites.sprites():
-            print("HALLO "+str(sprite.id))
-            sprite.set_canvas_size(self.rect.size)
-        self.regenerate_image()'''
 
     def get_sprite_abs_position(self, sprite):
         """Gets the absolute position of a sprite (in pixels) in the screen, instead of a relative in the 

@@ -2014,11 +2014,23 @@ class LoopedAnimation(Animation):
 
 #OLD CHAR COLLISION OF BOARD
             #Checking collision with characters themselves, using masks. Not used rn.
-            '''char = pygame.sprite.spritecollideany(mouse_sprite, self.current_player.characters.sprites(), collided=pygame.sprite.collide_mask)
+            char = pygame.sprite.spritecollideany(mouse_sprite, self.current_player.characters.sprites(), collided=pygame.sprite.collide_mask)
             if char is not None:  
                 char.set_hover(True)
                 self.active_char.add(char)
             else:               
                 if self.active_char.sprite is not None:
                     self.active_char.sprite.set_hover(False)
-                    self.active_char.empty()'''
+                    self.active_char.empty()
+
+#Old redundant method of set_canvas_size of multisprite
+
+    def set_canvas_size(self, canvas_size):
+        """Changes the resolution (NOT SIZE) of the MultiSprite. All the internal Sprites are resized too as result.
+        Args;
+            canvas_size (:tuple: int, int): New resolution in pixels."""
+        super().set_canvas_size(canvas_size)    #Changing the sprite size and position to the proper place
+        for sprite in self.sprites.sprites():
+            print("HALLO "+str(sprite.id))
+            sprite.set_canvas_size(self.rect.size)
+        self.regenerate_image()

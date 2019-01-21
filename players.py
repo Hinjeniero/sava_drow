@@ -157,7 +157,7 @@ class Character(AnimatedSprite):
                             "die" : "die",
                             "stop": "stop" 
     }
-    def __init__(self, my_player, id_, position, size, canvas_size, sprites_path, **aliases):
+    def __init__(self, my_player, id_, position, size, canvas_size, sprites_path, aliases={}, **params):
         """Character constructor.
         Args:
             my_player (str):    Owning/Master player of this Character.
@@ -166,8 +166,8 @@ class Character(AnimatedSprite):
             canvas_size (:tuple: int, int): Resolution of the screen. In pixels.
             **aliases (:dict:): How each standarized action will be named in the loaded images.
         """
-        LOG.log('DEBUG', "Initializing character ", id_, " of player ", my_player)
-        super().__init__(id_, position, size, canvas_size, sprite_folder=sprites_path)
+        params['hover_surfaces'] = True
+        super().__init__(id_, position, size, canvas_size, sprite_folder=sprites_path, **params)
         self.aliases    = Character.__default_aliases.copy()
         self.aliases.update(aliases)
         self.my_master  = my_player
@@ -326,7 +326,7 @@ class Character(AnimatedSprite):
             #Actual loading
             threads.append(Character.__char_loader(char_init, characters, character_settings[key]['ammount'],\
                             player_name, player_name+key, (0, 0), sprite_size, canvas_size, character_settings[key]['path'],\
-                            **character_settings[key]['aliases']))
+                            aliases=character_settings[key]['aliases']))
         for t in threads:   t.join()        #Threading.join
         LOG.log('INFO', "----Factory, done making ", player_name, " characters----")
         return characters
@@ -367,7 +367,7 @@ class Warrior(Character):
     DEFAULT_PATH    = IMG_FOLDER+'\\Warrior'
     DEFAULT_AMMOUNT = 4
 
-    def __init__(self, my_player, id_, position, size, canvas_size, sprites_path, **aliases):
+    def __init__(self, my_player, id_, position, size, canvas_size, sprites_path,  aliases={}, **params):
         """Warrior constructor. 
         Args:       
             my_player (str):    Owning/Master player of this Character.
@@ -377,7 +377,7 @@ class Warrior(Character):
             canvas_size (:tuple: int, int): Resolution of the screen. In pixels.
             **aliases (:dict:): How each standarized action will be named in the loaded images.
         """
-        super().__init__(my_player, id_, position, size, canvas_size, sprites_path, **aliases)
+        super().__init__(my_player, id_, position, size, canvas_size, sprites_path, aliases=aliases, **params)
         
     def get_paths(self, graph, distances, current_map, index, level_size):
         """Gets all the possible paths for each cell for a Warrior type with his Restriction in movement.
@@ -457,7 +457,7 @@ class Priestess(Character):
     DEFAULT_PATH    = IMG_FOLDER+'\\Priestess'
     DEFAULT_AMMOUNT = 2
 
-    def __init__(self, my_player, id_, position, size, canvas_size, sprites_path, **aliases):
+    def __init__(self, my_player, id_, position, size, canvas_size, sprites_path, aliases={}, **params):
         """Priestess constructor. 
         Args:       
             my_player (str):    Owning/Master player of this Character.
@@ -467,7 +467,7 @@ class Priestess(Character):
             canvas_size (:tuple: int, int): Resolution of the screen. In pixels.
             **aliases (:dict:): How each standarized action will be named in the loaded images.
         """
-        super().__init__(my_player, id_, position, size, canvas_size, sprites_path, **aliases)
+        super().__init__(my_player, id_, position, size, canvas_size, sprites_path, aliases=aliases, **params)
 
     def get_paths(self, graph, distances, current_map, index, level_size):
         """Gets all the possible paths for each cell for a Priestess type with her Restriction in movement.
@@ -484,7 +484,12 @@ class Priestess(Character):
             (:list: tuple): List with all the possible paths to take if Priestess is in the index cell.
                             Each path is composed by all the steps to take (all the cell indexes from start until destiny).
         """
-        return super().get_paths(graph, distances, current_map, index, level_size, Priestess.RESTRICTIONS)
+        unfiltered_paths = super().get_paths(graph, distances, current_map, index, level_size, Priestess.RESTRICTIONS)
+        results = []
+        for path in unfiltered_paths:
+            if not any(current_map[path[i]].has_ally() or current_map[path[i]].has_enemy() for i in range(1, len(path)-1)):
+                results.append(path)
+        return results
 
 class Pawn(Character):
     """Pawn class. Inherits from Character.
@@ -507,7 +512,7 @@ class Pawn(Character):
     DEFAULT_PATH    = IMG_FOLDER+'\\Pawn'
     DEFAULT_AMMOUNT = 8
 
-    def __init__(self, my_player, id_, position, size, canvas_size, sprites_path, **aliases):
+    def __init__(self, my_player, id_, position, size, canvas_size, sprites_path, aliases={}, **params):
         """Pawn constructor. 
         Args:       
             my_player (str):    Owning/Master player of this Character.
@@ -517,7 +522,7 @@ class Pawn(Character):
             canvas_size (:tuple: int, int): Resolution of the screen. In pixels.
             **aliases (:dict:): How each standarized action will be named in the loaded images.
         """
-        super().__init__(my_player, id_, position, size, canvas_size, sprites_path, **aliases)
+        super().__init__(my_player, id_, position, size, canvas_size, sprites_path, aliases=aliases, **params)
 
     def get_paths(self, graph, distances, current_map, index, level_size):
         """Gets all the possible paths for each cell for a Pawn type with his Restriction in movement.
@@ -576,7 +581,7 @@ class MatronMother(Character):
     DEFAULT_PATH    = IMG_FOLDER+'\\Matron_Mother'
     DEFAULT_AMMOUNT = 1
 
-    def __init__(self, my_player, id_, position, size, canvas_size, sprites_path, **aliases):
+    def __init__(self, my_player, id_, position, size, canvas_size, sprites_path, aliases={}, **params):
         """MatronMother constructor. 
         Args:       
             my_player (str):    Owning/Master player of this Character.
@@ -586,7 +591,7 @@ class MatronMother(Character):
             canvas_size (:tuple: int, int): Resolution of the screen. In pixels.
             **aliases (:dict:): How each standarized action will be named in the loaded images.
         """
-        super().__init__(my_player, id_, position, size, canvas_size, sprites_path, **aliases)
+        super().__init__(my_player, id_, position, size, canvas_size, sprites_path, aliases=aliases, **params)
         self.essential = True
         #self.movement   = Restriction(bypass_enemies=True)
 

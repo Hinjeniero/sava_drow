@@ -330,15 +330,14 @@ class Game(object):
             self.first_log()
             self.current_screen = self.screens[0]
             self.current_screen.play_music()
-            while True:
+            end = False
+            while not end:
                 self.clock.tick(self.fps)
                 self.current_screen.draw(self.display)
                 end = self.event_handler(pygame.event.get())
                 if self.fps_text:
                     self.display.blit(self.fps_text, (50, 150))
                 pygame.display.update()
-                if end:
-                    break
             sys.exit()
         except Exception as exc:
             raise exc

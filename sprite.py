@@ -422,8 +422,9 @@ class AnimatedSprite(Sprite):
     """
     __default_config = {'hover_ratio'   : 1.5,
                         'initial_surfaces': (),
+                        'hover_surfaces': False,
                         'sprite_folder' : None,
-                        'keywords'      :None,
+                        'keywords'      : (),
                         'animation_delay':10, 
                         'resize_mode'   :'fit', 
                         'resize_smooth' :True,
@@ -459,7 +460,8 @@ class AnimatedSprite(Sprite):
         UtilityBox.join_dicts(self.params, AnimatedSprite.__default_config)
         self.use_overlay = False
         self.next_frame_time = self.params['animation_delay']
-        self.params['hover_size'] = tuple(x*self.params['hover_ratio'] for x in self.rect.size)
+        if self.params['hover_surfaces']:
+            self.params['hover_size'] = tuple(x*self.params['hover_ratio'] for x in self.rect.size)
         if self.params['sprite_folder']:
             self.load_surfaces()
         else:
@@ -481,19 +483,18 @@ class AnimatedSprite(Sprite):
         Args:
             folder(str):    Path of the folder that contains the surfaces (images) to be loaded."""
         _ = self.params
-        if not _['keywords']:
-            surfaces = ResizedSurface.load_surfaces(_['sprite_folder'], self.rect.size, _['resize_mode'], _['resize_smooth'],\
-                                                    _['keep_aspect_ratio'])
-            hover_surfaces = ResizedSurface.load_surfaces(_['sprite_folder'], _['hover_size'], _['resize_mode'],\
-                                                        _['resize_smooth'], _['keep_aspect_ratio'])
-        else:
-            surfaces = ResizedSurface.load_surfaces(_['sprite_folder'], self.rect.size, _['resize_mode'], _['resize_smooth'],\
-                                                    _['keep_aspect_ratio'], *_['keywords'], strict=_['keywords_strict'])
-            hover_surfaces = ResizedSurface.load_surfaces(_['sprite_folder'], self.rect.size, _['resize_mode'], _['resize_smooth'],\
+        surfaces = ResizedSurface.load_surfaces(_['sprite_folder'], self.rect.size, _['resize_mode'], _['resize_smooth'],\
+                                                _['keep_aspect_ratio'], *_['keywords'], strict=_['keywords_strict'])
+        if self.params['hover_surfaces']:
+            hover_surfaces = ResizedSurface.load_surfaces(_['sprite_folder'], _['hover_size'], _['resize_mode'], _['resize_smooth'],\
                                                         _['keep_aspect_ratio'], *_['keywords'], strict=_['keywords_strict'])
         for path in surfaces.keys():
             self.names.append(path)
-            self.add_surface(surfaces[path], hover_surfaces[path])
+            if self.params['hover_surfaces']:
+                self.add_surface(surfaces[path], hover_surfaces[path])
+            else:
+                self.add_surface(surfaces[path], None)
+            
 
     def add_surfaces(self): #TODO update documentation
         """Check if a surface is loaded already, and adds it to the attribute lists.
@@ -512,12 +513,15 @@ class AnimatedSprite(Sprite):
                 raise BadSpriteException("Can't add a sprite of type "+str(type(image)))
             #Doing the actual work
             if surface not in self.surfaces:
+                hover_surface = None
                 _ = self.params
                 surface = Resizer.resize(surface, self.rect.size, _['resize_mode'], _['resize_smooth'],\
                                         _['keep_aspect_ratio'])
-                hover_surface = Resizer.resize(surface, _['hover_size'], _['resize_mode'],\
-                                                _['resize_smooth'], _['keep_aspect_ratio'])
+                if self.params['hover_surfaces']:
+                    hover_surface = Resizer.resize(surface, _['hover_size'], _['resize_mode'],\
+                                                    _['resize_smooth'], _['keep_aspect_ratio'])
                 self.add_surface(surface, hover_surface)
+                
 
     def add_surface(self, surface, hover_surface):
         """Resizes a surface to a size, and adds it to the non-original surfaces lists.
@@ -525,25 +529,24 @@ class AnimatedSprite(Sprite):
             surface (:obj: pygame.Surface): Surface to resize and add.
             size (:tuple: int, int):    Size to resize the surface to."""
         self.surfaces.append(surface)
-        self.hover_surfaces.append(hover_surface)
+        if hover_surface:
+            self.hover_surfaces.append(hover_surface)
         self.masks.append(pygame.mask.from_surface(surface))
 
-    def set_canvas_size(self, canvas_size): #TODO CHANGE THIS TO USE LOAD_SURFACES
-        """Set an internal resolution (NOT SIZE). Updates self.real_rect and self.resolution.
-        Clears the internal lists, and resize all the surfaces again to match the old proportion size/resolution.
+    def set_size(self, size, update_rects=True): #TODO CHANGE THIS TO USE LOAD_SURFACES
+        """Changes the size of all the surfaces that this Sprite contains (except the original ones).
         Args:
-            canvas_size (:tuple: int,int): Resolution to set.
-        """
-        #Changing the sprite size and position to the proper place.
-        super().set_canvas_size(canvas_size)    
+            size(:tuple: int, int): New size of the surfaces."""
+        super().set_size(size, update_rects=update_rects)
+        self.params['hover_size'] = tuple(x*self.params['hover_ratio'] for x in self.rect.size)
         self.clear_lists()
         if self.params['sprite_folder']:
             self.load_surfaces()
         else:
             self.add_surfaces()
         self.update_size()
-        self.image  = self.current_sprite()    #Assigning a logical sprite in place of the decoy one of the super()
-        self.mask   = self.current_mask()       #Same shit to mask
+        self.image  = self.current_sprite()
+        self.mask   = self.current_mask() 
 
     def clear_lists(self):
         """Empty all the internal lists of surfaces and masks, except the original ones (The non-resized).
@@ -573,7 +576,10 @@ class AnimatedSprite(Sprite):
         """Returns the current surface that will be shown if the hover state is True.
         Returns:
             (pygame.Surface):   Hover surface that should be drawn right now."""
-        return self.hover_surfaces[self.animation_index]
+        if self.params['hover_surfaces']:
+            return self.hover_surfaces[self.animation_index]
+        else:
+            return self.current_sprite()
 
     def current_mask(self):
         """Returns the current surface that will be shown if there are no special states in effect.

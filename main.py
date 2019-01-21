@@ -26,10 +26,9 @@ from sprite import AnimatedSprite
 
 #CONFIG
 INITIAL_RESOLUTION = (1280, 720)
-#RESOLUTIONS = (INITIAL_RESOLUTION, (1366, 768), (1600, 900), (256, 144), (640, 360), (848, 480), (1024, 576))
 RESOLUTIONS = (INITIAL_RESOLUTION, (1366, 768), (1600, 900), (1920, 1080), (256, 144), (640, 360), (848, 480), (1024, 576))
-INITIAL_FPS = 30
-ALL_FPS = (INITIAL_FPS, 60, 120, 144, 20)
+INITIAL_FPS = 60
+ALL_FPS = (INITIAL_FPS, 120, 20, 30)
 #MUSIC
 MENU_SONGS = UtilityBox.get_all_files(SOUND_FOLDER+'\\menu', '.ogg', '.mp3')
 BOARD_SONGS = UtilityBox.get_all_files(SOUND_FOLDER+'\\board', '.ogg', '.mp3')
@@ -47,6 +46,7 @@ def start_pygame(resolution=INITIAL_RESOLUTION):
     pygame.init()
     pygame.mouse.set_visible(True)
     pygame.display.set_caption('sava drow')
+    print(pygame.display.Info())
     pygame.display.set_mode(resolution, pygame.DOUBLEBUF)  
 
 def create_dialog(text='You sure?'):
@@ -151,7 +151,7 @@ def create_board_params():
 
 def main():
     start_pygame()
-    game = Game('sava_drow', INITIAL_RESOLUTION, 30)
+    game = Game('sava_drow', INITIAL_RESOLUTION, INITIAL_FPS)
     game.add_screens(create_main_menu(), create_sound_menu(), create_config_menu(), create_video_menu())
     game.update_board_params(**create_board_params())
     game.start()

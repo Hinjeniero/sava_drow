@@ -564,9 +564,12 @@ class Board(Screen):
         self.last_cell.add(self.active_cell.sprite)
         destinations = self.drag_char.sprite.get_paths( self.enabled_paths, self.distances, self.current_map,\
                                                         self.active_cell.sprite.index, self.params['circles_per_lvl'])
+        print("PAAATHS AFTER BROOO ")
         for cell_index in destinations:
+            print(cell_index)
             self.possible_dests.add(self.get_cell_by_real_index(cell_index[-1]))       
-
+        print("------------")
+        
     def drop_character(self):
         """Drops a character. Deletes it from the drag char Group, and checks if the place in which
         has been dropped is a possible destination. If it is, it drops the character in that cell.

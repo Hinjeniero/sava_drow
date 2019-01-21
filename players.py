@@ -195,14 +195,14 @@ class Character(AnimatedSprite):
         if not result:
             self.set_paths(graph, distances, movement_restriction, level_size)
             result = Movements.get_movements(hash(movement_restriction))
-        paths = result.copy()
-        i = 0
-        while i < len(paths[index]):
-            if current_map[paths[index][i][-1]].has_ally():
-                del paths[index][i]
-                i -= 1
-            i += 1
-        return result[index]
+        paths = []
+        #print("----------------")
+        #print("PATHS BEFORE")
+        for path in result[index]:
+            #print(path)
+            if not current_map[path[-1]].has_ally():
+                paths.append(path)
+        return paths
     
     def promote(self):
         self.essential = True
@@ -543,25 +543,29 @@ class Pawn(Character):
         unfiltered_paths = super().get_paths(graph, distances, current_map, index, level_size, Pawn.CHECK_ENEMIES)
         results = []
         enemies = {}
-        #print(unfiltered_paths) TODO delete
         for path in unfiltered_paths:
-            #If the destiny has an enemy and there is no ally in the middle. Those don't need to be checked again
-            if current_map[path[-1]].has_enemy(): #Checking if in the end of this path tehre is an enemy
-                if not any(current_map[path[i]].has_ally() for i in range(1, len(path)-1)): #Checking if in the middle steps there is an ally
-                    enemies[path[-1]] = distances[index][path[-1]]  #Distance to the enemy. The key is the destiny index
+            enemies.update(self.get_enemies_distances(current_map, path))
         #Now, we compare the enemies distance to those that we would have in the 2-4 possible positions
         destinies = super().get_paths(graph, distances, current_map, index, level_size, Pawn.RESTRICTIONS)
         if len(enemies) > 0: #If there is an enemy in any of the direct paths.
-            for new_path in destinies:
-                for enemy_index, enemy_dist in enemies.items(): #We will check the new distances to enemies in each of the destinies
-                    if distances[new_path[-1]][enemy_index] < enemy_dist:  
-                        results.append((index, new_path[-1]))
-                        break   #breaking the first loop
+            for new_path in destinies:  #For each destiny possible for the pawn
+                unfiltered_new_paths = super().get_paths(graph, distances, current_map, new_path[-1], level_size, Pawn.CHECK_ENEMIES)   #We get the unfiltered paths that may end in enemies
+                for path in unfiltered_new_paths:   #For each one of those
+                    if path[-1] in enemies.keys():  #We check if ends in an enemy of the old position, then we compare distances
+                        if (len(path)-1) < enemies[path[-1]]:
+                            results.append(new_path)
+                            break
         else:
-            #print("NOT ENEMIES FOUND IN THE PROXIMITIES") TODO delete
-            for new_path in destinies:
-                results.append((index, new_path[-1])) #Copying herethe paths because I dont want to modify tuples from gods know where.
+            results = destinies
         return results
+
+    def get_enemies_distances(self, current_map, path):
+        #If the destiny has an enemy and there is no ally in the middle. Those don't need to be checked again
+        enemies = {}
+        if current_map[path[-1]].has_enemy(): #Checking if in the end of this path tehre is an enemy
+            if not any(current_map[path[i]].has_ally() or current_map[path[i]].has_enemy() for i in range(1, len(path)-1)): #Checking if in the middle steps there is an ally
+                enemies[path[-1]] = len(path)-1
+        return enemies
             
 class MatronMother(Character):
     """MatronMother class. Inherits from Character.

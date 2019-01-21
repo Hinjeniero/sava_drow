@@ -105,7 +105,8 @@ class Board(Screen):
                                 max_levels, path_color, path_width.
         """
         super().__init__(id_, event_id, resolution, **params)
-        self.turn           = 0   
+        self.turn           = 0
+        self.char_turns     = 0
         self.end            = 0     
         #Graphic elements
         self.loading_screen = None  #Created in Board.generate
@@ -564,12 +565,10 @@ class Board(Screen):
         self.last_cell.add(self.active_cell.sprite)
         destinations = self.drag_char.sprite.get_paths( self.enabled_paths, self.distances, self.current_map,\
                                                         self.active_cell.sprite.index, self.params['circles_per_lvl'])
-        print("PAAATHS AFTER BROOO ")
         for cell_index in destinations:
             print(cell_index)
-            self.possible_dests.add(self.get_cell_by_real_index(cell_index[-1]))       
-        print("------------")
-        
+            self.possible_dests.add(self.get_cell_by_real_index(cell_index[-1]))
+
     def drop_character(self):
         """Drops a character. Deletes it from the drag char Group, and checks if the place in which
         has been dropped is a possible destination. If it is, it drops the character in that cell.
@@ -578,8 +577,8 @@ class Board(Screen):
         self.drag_char.sprite.set_selected(False)
         self.drag_char.sprite.set_hover(False)
         if self.possible_dests.has(self.active_cell.sprite):
-            self.move_character()
-            self.next_turn()
+            self.move_character(self.drag_char.sprite)
+            self.next_char_turn(self.drag_char.sprite)
         else:
             self.drag_char.sprite.rect.center = self.last_cell.sprite.center
             self.play_sound('warning')
@@ -587,9 +586,8 @@ class Board(Screen):
         self.drag_char.empty()
         self.possible_dests.empty()
 
-    def move_character(self):
+    def move_character(self, character):
         LOG.log('debug', 'The chosen cell is possible, moving')
-        character = self.drag_char.sprite
         active_cell = self.active_cell.sprite
         self.last_cell.sprite.empty_cell() #Emptying to delete the active char from there
         character.set_center(active_cell.center)  #Positioning the char
@@ -599,7 +597,17 @@ class Board(Screen):
         self.current_player.register_movement(character)
         self.last_cell.empty()  #Not last cell anymore, char was droppped succesfully
     
-    def next_turn(self):
+    def next_char_turn(self, char):
+        self.char_turns += 1
+        if self.char_turns >= char.turns:
+            self.char_turns = 0
+            self.next_player_turn()
+        elif self.char_turns < char.turns and self.char_turns == 1:
+            self.current_player.pause_characters()
+            char.set_state('idle')
+            char.active = True  #Only can move this one afterwards
+
+    def next_player_turn(self):
         self.current_player.turn += 1
         while True:
             self.player_index += 1

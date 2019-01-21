@@ -89,7 +89,7 @@ class Player(object):
     def unpause_characters(self):
         for character in self.characters:
             character.set_state("idle")
-            character.set_active(True)      
+            character.set_active(True)
 
     def get_character(self, character):
         for char in self.characters:
@@ -151,6 +151,7 @@ class Character(AnimatedSprite):
     """
     __default_aliases   = { "idle" : "idle",
                             "fight" : "fight",
+                            "attack" : "attack",
                             "pickup" : "pickup",
                             "drop" : "drop",
                             "action" : "action",
@@ -176,6 +177,7 @@ class Character(AnimatedSprite):
         self.kills      = 0
         self.movements  = 0
         self.essential  = False
+        self.turns      = 1
     
     def get_paths(self, graph, distances, current_map, index, level_size, movement_restriction):
         """Gets all the possible paths for each cell (of a specific subclass) with this overloaded method.
@@ -363,7 +365,7 @@ class Warrior(Character):
         DEFAULT_AMMOUNT (int):  Default ammount of this subtype of Character in a player. 
                                 Not used directly, this is for the player to read from an above method.
     """
-    RESTRICTIONS    = Restriction(max_dist=2)
+    RESTRICTIONS    = Restriction()
     DEFAULT_PATH    = IMG_FOLDER+'\\Warrior'
     DEFAULT_AMMOUNT = 4
 
@@ -378,6 +380,7 @@ class Warrior(Character):
             **aliases (:dict:): How each standarized action will be named in the loaded images.
         """
         super().__init__(my_player, id_, position, size, canvas_size, sprites_path, aliases=aliases, **params)
+        self.turns = 2
         
     def get_paths(self, graph, distances, current_map, index, level_size):
         """Gets all the possible paths for each cell for a Warrior type with his Restriction in movement.

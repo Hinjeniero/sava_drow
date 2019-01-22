@@ -635,9 +635,18 @@ class Board(Screen):
         for player in self.players:
             if player.has_char(corpse):
                 player.remove_char(corpse)
+                self.check_player(player)
         self.current_player.add_kill(corpse, self.drag_char.sprite)
         LOG.log('debug', 'The character ', corpse.id,' was killed!')
         self.play_sound('oof')
+
+    def check_player(self, player):
+        if player.has_lost():
+            self.players.remove(player)
+            print("hllo")
+            self.characters.remove(player.characters)
+            if len(self.players) == 1:  #WE HAVE A WINNER!
+                self.play_sound('win')
 
     #TODO KEYBOARD DOES NOT CHANGE ACTIVE CELL, BUT ACTIVE CHARACTER. ACTIVE CELL CHANGE ONLY BY MOUSE
     def keyboard_handler(self, keys_pressed):

@@ -585,7 +585,7 @@ class MatronMother(Character):
                                 Not used directly, this is for the player to read from an above method.
     """
     RESTRICTIONS    = Restriction()
-    DEFAULT_PATH    = IMG_FOLDER+'\\Matron_Mother'
+    DEFAULT_PATH    = IMG_FOLDER+'\\Matronmother'
     DEFAULT_AMMOUNT = 1
 
     def __init__(self, my_player, id_, position, size, canvas_size, sprites_path, aliases={}, **params):

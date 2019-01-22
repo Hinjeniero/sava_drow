@@ -68,8 +68,8 @@ class Player(object):
         cols = infoboard.get_cols()
         infoboard.add_text_element('initial_padding', '', cols)
         infoboard.add_text_element('player_name', self.name, cols-2)   #Player name
-        #infoboard.add_text_element('player_number', 'id: '+str(self.order+1), cols-2)   #Player order
-        #infoboard.add_text_element('player_chars', 'characters: '+str(len(self.characters)), cols-2)   #Player total ammount of chars
+        infoboard.add_text_element('player_number', 'id: '+str(self.order+1), cols-2)   #Player order
+        infoboard.add_text_element('player_chars', 'characters: '+str(len(self.characters)), cols-2)   #Player total ammount of chars
         self.infoboard = infoboard
 
     def register_movement(self, character):
@@ -198,10 +198,7 @@ class Character(AnimatedSprite):
             self.set_paths(graph, distances, movement_restriction, level_size)
             result = Movements.get_movements(hash(movement_restriction))
         paths = []
-        #print("----------------")
-        #print("PATHS BEFORE")
         for path in result[index]:
-            #print(path)
             if not current_map[path[-1]].has_ally():
                 paths.append(path)
         return paths
@@ -550,6 +547,8 @@ class Pawn(Character):
             enemies.update(self.get_enemies_distances(current_map, path))
         #Now, we compare the enemies distance to those that we would have in the 2-4 possible positions
         destinies = super().get_paths(graph, distances, current_map, index, level_size, Pawn.RESTRICTIONS)
+        #print("POSSIBLE DESTINEIS ")
+        #print(destinies)
         if len(enemies) > 0: #If there is an enemy in any of the direct paths.
             for new_path in destinies:  #For each destiny possible for the pawn
                 unfiltered_new_paths = super().get_paths(graph, distances, current_map, new_path[-1], level_size, Pawn.CHECK_ENEMIES)   #We get the unfiltered paths that may end in enemies

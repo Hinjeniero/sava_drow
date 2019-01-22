@@ -58,18 +58,18 @@ def create_dialog(text='You sure?'):
 def create_main_menu():
     #Create elements, main menu buttons (POSITIONS AND SIZES ARE IN PERCENTAGES OF THE CANVAS_SIZE, can use absolute integers too)
     gradients       = UtilityBox.rainbow_gradient_generator(((255, 0, 0),(0, 0, 255)), 4)
-    positions       = UtilityBox.size_position_generator(4, 0.90, 0.05, 0.20, 0)
+    positions       = UtilityBox.size_position_generator(4, 0.40, 0.05, 0.20, 0)
     button_size     = next(positions)
     #texture=IMG_FOLDER+"//button.png" #TO USE IN THE FIUTUR
     buttonStart     = UIElement.factory('button_start', "start_game_go_main_board", pygame.USEREVENT+1, next(positions), button_size,\
                                         INITIAL_RESOLUTION, text="Start game", keep_aspect_ratio = False,\
-                                        gradient=next(gradients), gradient_type='vertical')
+                                        gradient=next(gradients), gradient_type='vertical', texture=IMG_FOLDER+'\\button.png')
     buttonConfig    = UIElement.factory('button_params_menu', "go_menu_params_config", pygame.USEREVENT+1, next(positions),button_size,\
-                                        INITIAL_RESOLUTION, text="Parameters", gradient = next(gradients), gradient_type='vertical')
+                                        INITIAL_RESOLUTION, text="Parameters", gradient = next(gradients), gradient_type='vertical', texture=IMG_FOLDER+'\\button.png', keep_aspect_ratio = False)
     buttonSound     = UIElement.factory('button_sound', "go_menu_sound_music", pygame.USEREVENT+1, next(positions), button_size,\
-                                        INITIAL_RESOLUTION, text="Music menu", gradient = next(gradients), gradient_type='vertical')
+                                        INITIAL_RESOLUTION, text="Music menu", gradient = next(gradients), gradient_type='vertical', texture=IMG_FOLDER+'\\button.png', keep_aspect_ratio = False)
     buttonGraphics  = UIElement.factory('button_graphics', "go_menu_graphics_display", pygame.USEREVENT+1, next(positions), button_size,\
-                                        INITIAL_RESOLUTION, text="Graphics menu", gradient = next(gradients), gradient_type='vertical')
+                                        INITIAL_RESOLUTION, text="Graphics menu", gradient = next(gradients), gradient_type='vertical', texture=IMG_FOLDER+'\\button.png', keep_aspect_ratio = False)
     #Create Menu
     #bg = AnimationGenerator.animated_waterfall_background(INITIAL_RESOLUTION, INITIAL_FPS, *ALL_FPS)
     #bg = AnimationGenerator.animated_cave_waterfall_background(INITIAL_RESOLUTION, INITIAL_FPS, *ALL_FPS)

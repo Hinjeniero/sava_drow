@@ -429,7 +429,7 @@ class Board(Screen):
                 return cell
         return False
 
-    def update_map(self): #TODO SHOULD BE A DICT INSTEADD IF INSERTING IN EACH TURN
+    def update_map(self):
         """Generates the current map, changing enemies and allies of each Cell according to which player is asking.
         Args:
             to_who (str): Player who is asking.
@@ -437,6 +437,10 @@ class Board(Screen):
         for cell in self.cells:
             self.current_map[cell.get_real_index()]=cell.to_path(self.current_player.name)
         LOG.log('DEBUG', "Generated the map of paths for ", self.current_player.name)
+    
+    def update_cells(self, *cells):
+        for cell in cells:
+            self.current_map[cell.get_real_index()]=cell.to_path(self.current_player.name)
 
     def set_resolution(self, resolution):
         """Changes the resolution of the Screen. It also resizes all the Screen elements.
@@ -566,7 +570,6 @@ class Board(Screen):
         destinations = self.drag_char.sprite.get_paths( self.enabled_paths, self.distances, self.current_map,\
                                                         self.active_cell.sprite.index, self.params['circles_per_lvl'])
         for cell_index in destinations:
-            print(cell_index)
             self.possible_dests.add(self.get_cell_by_real_index(cell_index[-1]))
 
     def drop_character(self):
@@ -595,7 +598,9 @@ class Board(Screen):
             self.kill_character(active_cell) #Killing char if there is one 
         active_cell.add_char(character)
         self.current_player.register_movement(character)
+        self.update_cells(self.last_cell.sprite, active_cell)
         self.last_cell.empty()  #Not last cell anymore, char was droppped succesfully
+        
     
     def next_char_turn(self, char):
         self.char_turns += 1
@@ -624,6 +629,7 @@ class Board(Screen):
     def kill_character(self, cell):
         #Badass Animation
         corpse = cell.kill_char()
+        self.update_cells(cell.get_real_index())
         self.characters.remove(corpse)  #To delete it from the char list in board. It's dead.
         #Search for it in players to delete it :)
         for player in self.players:

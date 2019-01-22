@@ -172,7 +172,7 @@ class Sprite(pygame.sprite.Sprite):
         self.set_rect(rect, update_rects=False)
         #LOG.log('debug', "Succesfully changed sprite ", self.id, " to ", self.rect.size, ", due to the change to resolution ", canvas_size)
 
-    def set_size(self, size, update_rects=True): #TODO update documentation
+    def set_size(self, size, update_rects=True, regenerate_image=True): #TODO update documentation
         """Changes the size of the Sprite. Updates rect and real_rect, and changes image and mask to match the size.
         Args:
             size (:obj: pygame.Rect||:tuple: int,int): New size of the Sprite. In pixels.
@@ -181,7 +181,8 @@ class Sprite(pygame.sprite.Sprite):
         if update_rects:
             self.real_rect  = (self.real_rect[0], tuple(x/y for x,y in zip(size, self.resolution)))
             self.rects[self.resolution] = self.rect.copy()
-        self.regenerate_image()
+        if regenerate_image:
+            self.regenerate_image()
         #LOG.log('debug', "Succesfully changed sprite ", self.id, " size to ",size)
 
     def set_position(self, position, update_rects=True):
@@ -618,6 +619,14 @@ class MultiSprite(Sprite):
         """
         super().__init__(id_, position, size, canvas_size, **image_params)
         self.sprites        = pygame.sprite.OrderedUpdates()
+        self.copy_read_only_texture()
+
+    def copy_read_only_texture(self):
+        try:    #Checking if we have a texture (Textures are shared, since we get it from a lut)
+            self.params['texture']
+            self.image = self.image.copy()  #If we do, we make a copy to not overlap texts of different sprites.
+        except KeyError:
+            pass
 
     def add_sprite(self, sprite):
         """Add sprite to the Sprite list, and blit it to the image of the MultiSprite
@@ -625,7 +634,6 @@ class MultiSprite(Sprite):
             sprite (Sprite):    sprite to add."""
         sprite.use_overlay   = False #Not interested in overlays from a lot of sprites at the same time
         self.sprites.add(sprite)
-        #LOG.log('debug', "ADDING SPRITE ", sprite.id, " WITH POS ", sprite.rect.topleft)
         self.image.blit(sprite.image, sprite.rect.topleft)
 
     def regenerate_image(self):
@@ -633,11 +641,7 @@ class MultiSprite(Sprite):
         Intended to be used after changing an important attribute in rect or image.
         Those changes propagate through all the sprites."""
         super().regenerate_image()
-        try:    #Checking if we have a texture (Textures are shared, since we get it from a lut)
-            self.params['texture']
-            self.image = self.image.copy()  #If we do, we make a copy to not overlap texts of different sprites.
-        except KeyError:
-            pass
+        self.copy_read_only_texture()
         for sprite in self.sprites.sprites():   
             self.image.blit(sprite.image, sprite.rect.topleft)
 
@@ -645,17 +649,9 @@ class MultiSprite(Sprite):
         """Changes the size of the MultiSprite. All the internal Sprites are resized too as result.
         Args;
             size (:tuple: int, int):    New size in pixels."""
-        super().set_size(size, update_rects=update_rects)    #Changing the sprite size and position to the proper place
-        if 'infoboard' in self.id:
-            print(self.id)
-            print(len(self.sprites.sprites()))
+        super().set_size(size, update_rects=update_rects, regenerate_image=False)    #Changing the sprite size and position to the proper place
         for sprite in self.sprites.sprites():
-            if 'infoboard' in self.id:
-                print(sprite.id)
             sprite.set_canvas_size(self.rect.size)
-        if 'infoboard' in self.id:
-            print(len(self.sprites.sprites()))
-            print("-------")
         self.regenerate_image()
 
     def get_sprite_abs_position(self, sprite):

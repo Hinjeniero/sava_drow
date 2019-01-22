@@ -165,7 +165,7 @@ class Path(object):
         if restrictions.dist is 1:          #No need to check much, only if the immediate path exists
             for x in range(0, length):      
                 for y in range(x, length):
-                    if x is y:              continue                    #Same cell, no movmnt
+                    if x is y:        continue                    #Same cell, no movmnt
                     if graph[x][y]:   Path.add_path(x, y, graph, level_size, destinations)
         if restrictions.dist < 2:   #If less that two but not one, infinite distance w/ restrictions (CANT HAVE NO RESTRICTIONS)
             for x in range(0, length):      

@@ -629,7 +629,7 @@ class Board(Screen):
     def kill_character(self, cell):
         #Badass Animation
         corpse = cell.kill_char()
-        self.update_cells(cell.get_real_index())
+        self.update_cells(cell)
         self.characters.remove(corpse)  #To delete it from the char list in board. It's dead.
         #Search for it in players to delete it :)
         for player in self.players:

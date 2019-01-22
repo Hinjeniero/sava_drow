@@ -547,18 +547,19 @@ class Pawn(Character):
             enemies.update(self.get_enemies_distances(current_map, path))
         #Now, we compare the enemies distance to those that we would have in the 2-4 possible positions
         destinies = super().get_paths(graph, distances, current_map, index, level_size, Pawn.RESTRICTIONS)
-        #print("POSSIBLE DESTINEIS ")
-        #print(destinies)
-        if len(enemies) > 0: #If there is an enemy in any of the direct paths.
-            for new_path in destinies:  #For each destiny possible for the pawn
-                unfiltered_new_paths = super().get_paths(graph, distances, current_map, new_path[-1], level_size, Pawn.CHECK_ENEMIES)   #We get the unfiltered paths that may end in enemies
-                for path in unfiltered_new_paths:   #For each one of those
-                    if path[-1] in enemies.keys():  #We check if ends in an enemy of the old position, then we compare distances
-                        if (len(path)-1) < enemies[path[-1]]:
-                            results.append(new_path)
-                            break
-        else:
-            results = destinies
+        if len(enemies) == 0:   #If no enemies detected, every path is possible
+            return destinies
+        #If enemies detected
+        for new_path in destinies:  #For each destiny possible for the pawn
+            if new_path[-1] in enemies.keys():  #If the enemy is in the immediate cell
+                results.append(new_path)
+                continue
+            unfiltered_new_paths = super().get_paths(graph, distances, current_map, new_path[-1], level_size, Pawn.CHECK_ENEMIES)   #We get the unfiltered paths that may end in enemies
+            for path in unfiltered_new_paths:   #For each one of those
+                if path[-1] in enemies.keys():  #We check if ends in an enemy of the old position, then we compare distances
+                    if (len(path)-1) < enemies[path[-1]]:
+                        results.append(new_path)
+                        break
         return results
 
     def get_enemies_distances(self, current_map, path):

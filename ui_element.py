@@ -526,7 +526,7 @@ class InfoBoard (UIElement):
             raise NotEnoughSpaceException("There is not enough space in the infoboard to add that sprite")
         spaces = self.parse_element_spaces(spaces)
         size        = self.get_element_size(spaces, scale)
-        text        = TextSprite(id_, (0, 0), size, self.rect.size, text)
+        text        = TextSprite(id_, (0, 0), size, self.rect.size, text, text_color = (0, 0, 0))
         position    = self.get_element_position(spaces, text.rect.size)
         text.set_position(position)
         self.add_sprite(text)

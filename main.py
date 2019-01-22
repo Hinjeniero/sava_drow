@@ -72,9 +72,10 @@ def create_main_menu():
                                         INITIAL_RESOLUTION, text="Graphics menu", gradient = next(gradients), gradient_type='vertical')
     #Create Menu
     #bg = AnimationGenerator.animated_waterfall_background(INITIAL_RESOLUTION, INITIAL_FPS, *ALL_FPS)
-    bg = AnimationGenerator.animated_cave_waterfall_background(INITIAL_RESOLUTION, INITIAL_FPS, *ALL_FPS)
+    #bg = AnimationGenerator.animated_cave_waterfall_background(INITIAL_RESOLUTION, INITIAL_FPS, *ALL_FPS)
     #bg = AnimationGenerator.animated_rain_tree(INITIAL_RESOLUTION, INITIAL_FPS, *ALL_FPS)
     #bg = AnimationGenerator.animated_rain_chinese(INITIAL_RESOLUTION, INITIAL_FPS, *ALL_FPS)
+    bg = AnimationGenerator.industrial_layered_background(INITIAL_RESOLUTION, INITIAL_FPS, *ALL_FPS)
     main_menu   = Menu('main_menu', pygame.USEREVENT, INITIAL_RESOLUTION, buttonStart, buttonConfig, buttonSound, buttonGraphics,
                         animated_background= bg, background_path=IMG_FOLDER+'\\background.jpg', songs_paths=MENU_SONGS, dialog=create_dialog(),
                         do_align=False)

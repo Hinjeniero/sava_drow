@@ -68,8 +68,8 @@ class Player(object):
         cols = infoboard.get_cols()
         infoboard.add_text_element('initial_padding', '', cols)
         infoboard.add_text_element('player_name', self.name, cols-2)   #Player name
-        infoboard.add_text_element('player_number', 'id: '+str(self.order+1), cols-2)   #Player order
-        infoboard.add_text_element('player_chars', 'characters: '+str(len(self.characters)), cols-2)   #Player total ammount of chars
+        #infoboard.add_text_element('player_number', 'id: '+str(self.order+1), cols-2)   #Player order
+        #infoboard.add_text_element('player_chars', 'characters: '+str(len(self.characters)), cols-2)   #Player total ammount of chars
         self.infoboard = infoboard
 
     def register_movement(self, character):

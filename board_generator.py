@@ -25,7 +25,12 @@ CHARACTER_SETTINGS = {'pawn':{'ammount': 4, 'aliases':{'pickup': 'running'}},
                     'priestess':{'ammount': 2, 'aliases':{'pickup': 'run'}},
                     'matron_mother':{'ammount': 1, 'path': IMG_FOLDER+'\\priestess', 'aliases':{'pickup': 'pick'}},
 }
-
+'''CHARACTER_SETTINGS = {'pawn':{'ammount': 0, 'aliases':{'pickup': 'running'}},
+                    'warrior':{'ammount': 0, 'aliases':{'pickup': 'run'}},
+                    'wizard':{'ammount': 0, 'aliases':{'pickup': 'pick'}},
+                    'priestess':{'ammount': 0, 'aliases':{'pickup': 'run'}},
+                    'matron_mother':{'ammount': 0, 'path': IMG_FOLDER+'\\priestess', 'aliases':{'pickup': 'pick'}},
+}'''
 class BoardGenerator(object):
     def __init__(self):
         self.players = 2

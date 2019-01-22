@@ -27,6 +27,7 @@ from logger import Logger as LOG
 from synch_dict import Dictionary
 from utility_box import UtilityBox
 from surface_loader import SurfaceLoader, ResizedSurface
+from strings import FONT
 #from memory_profiler import profile
 
 #Global variables, read-only
@@ -284,7 +285,7 @@ class Sprite(pygame.sprite.Sprite):
 
     @staticmethod   #TODO UPDATE DOCUMENTATION
     def generate_surface(size, surface=None, texture=None, keep_aspect_ratio=True, resize_mode='fit', resize_smooth=True,\
-                        shape="Rectangle", transparent=False, only_text=False, text="default_text", text_color=WHITE, text_font=None,\
+                        shape="Rectangle", transparent=False, only_text=False, text="default_text", text_color=WHITE, text_font=FONT,\
                         fill_color=RED, fill_gradient=True, gradient=(LIGHTGRAY, DARKGRAY), gradient_type="horizontal",\
                         overlay=True, overlay_color=WHITE, border=True, border_color=WHITE, border_width=2, **unexpected_kwargs):
         """Generates a pygame surface according to input arguments.
@@ -369,7 +370,7 @@ class TextSprite(Sprite):
     Attributes:
         text (str): Text that will be drawn.
     """
-    __default_config = {'text_font'      : None,
+    __default_config = {'text_font'      : FONT,
                         'text_color'     : WHITE
     }
 
@@ -384,7 +385,7 @@ class TextSprite(Sprite):
             params (:dict:):    Dict of keywords and values as parameters to create the self.image attribute.
                                 Includes attributes about the TextSprite, like the text color and the font used.            
         """
-        params['only_text']=True
+        params['only_text'] = True
         params['text'] = text
         super().__init__(id_, position, size, canvas_size, **params)
         self.text = text
@@ -632,6 +633,11 @@ class MultiSprite(Sprite):
         Intended to be used after changing an important attribute in rect or image.
         Those changes propagate through all the sprites."""
         super().regenerate_image()
+        try:    #Checking if we have a texture (Textures are shared, since we get it from a lut)
+            self.params['texture']
+            self.image = self.image.copy()  #If we do, we make a copy to not overlap texts of different sprites.
+        except KeyError:
+            pass
         for sprite in self.sprites.sprites():   
             self.image.blit(sprite.image, sprite.rect.topleft)
 
@@ -640,8 +646,16 @@ class MultiSprite(Sprite):
         Args;
             size (:tuple: int, int):    New size in pixels."""
         super().set_size(size, update_rects=update_rects)    #Changing the sprite size and position to the proper place
-        for sprite in self.sprites.sprites():   
+        if 'infoboard' in self.id:
+            print(self.id)
+            print(len(self.sprites.sprites()))
+        for sprite in self.sprites.sprites():
+            if 'infoboard' in self.id:
+                print(sprite.id)
             sprite.set_canvas_size(self.rect.size)
+        if 'infoboard' in self.id:
+            print(len(self.sprites.sprites()))
+            print("-------")
         self.regenerate_image()
 
     def get_sprite_abs_position(self, sprite):

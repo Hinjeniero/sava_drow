@@ -2034,3 +2034,17 @@ class LoopedAnimation(Animation):
             print("HALLO "+str(sprite.id))
             sprite.set_canvas_size(self.rect.size)
         self.regenerate_image()
+
+#Old methoos in game
+    def command_handler(self, command, value): #TODO Write here logic to handle board parameters (players and such) changes and shit
+        LOG.log('DEBUG', 'Requested change of pygame params: ', command, '->', value)
+        if len(command) > 0:
+            cmd = command.lower()
+            if any(kw in command for kw in Game.GRAPHIC_KEYWORDS):
+                self.graphic_handler(cmd, value)
+            elif any(kw in command for kw in Game.SOUND_KEYWORDS):
+                self.sound_handler(cmd, value)
+            elif any(kw in command for kw in Game.CONFIG_KEYWORDS):
+                self.config_handler(cmd, value)
+            else:
+                LOG.log('INFO', 'Unknown command "', command, '"')

@@ -30,11 +30,6 @@ from exceptions import  NoScreensException, InvalidGameElementException,\
 from surface_loader import ResizedSurface
 
 class Game(object):
-    SOUND_KEYWORDS = ['sound', 'music', 'song']
-    GRAPHIC_KEYWORDS = ['resolution', 'display', 'fps']
-    CONFIG_KEYWORDS = ['char', 'player', 'mode', 'game', 'ammount', 'pawn', 'warrior',
-                        'wizard', 'matron', 'priest']
-
     def __init__(self, id_, resolution, fps, **board_params):
         self.id             = id_
         self.display        = None  #Created in Game.generate()
@@ -68,18 +63,39 @@ class Game(object):
             else:                           
                 raise InvalidGameElementException('Can`t add an element of type '+str(type(screen)))
 
-    def command_handler(self, command, value): #TODO Write here logic to handle board parameters (players and such) changes and shit
-        LOG.log('DEBUG', 'Requested change of pygame params: ', command, '->', value)
-        if len(command) > 0:
-            cmd = command.lower()
-            if any(kw in command for kw in Game.GRAPHIC_KEYWORDS):
-                self.graphic_handler(cmd, value)
-            elif any(kw in command for kw in Game.SOUND_KEYWORDS):
-                self.sound_handler(cmd, value)
-            elif any(kw in command for kw in Game.CONFIG_KEYWORDS):
-                self.config_handler(cmd, value)
-            else:
-                LOG.log('INFO', 'Unknown command "', command, '"')
+    def user_command_handler(self, event):
+        """Ou shit the user command handler, good luck m8
+        USEREVENT+0: Change of screens
+        UESREVENT+1: Change in sound settings
+        USEREVENT+2: Change in graphic settings
+        USEREVENT+3: Change in board configuration settings
+        USEREVENT+4: Action in board. Unused rn.
+        USEREVENT+5: Action in dialogs. Unused rn.
+        USEREVENT+6: Signals the end of the current board.
+        USEREVENT+7: Called every second. Timer.
+        """
+        try:
+            command = event.command.lower()
+            value = event.value
+        except AttributeError:
+            pass
+
+        if event.type < pygame.USEREVENT:       
+            return False
+        elif event.type is pygame.USEREVENT:
+            if 'start' in command and not self.started:
+                self.initiate()
+            self.change_screen(*command.split('_'))
+        elif event.type is pygame.USEREVENT+1:
+            self.sound_handler(command, value)
+        elif event.type is pygame.USEREVENT+2:  
+            self.graphic_handler(command, value)
+        elif event.type is pygame.USEREVENT+3:  
+            self.config_handler(command, value)
+        elif event.type is pygame.USEREVENT+6:
+            pass
+        elif event.type is pygame.USEREVENT+7:
+            self.fps_text = UtilityBox.generate_fps(self.clock, size=tuple(int(x*0.05) for x in self.resolution))
     
     def config_handler(self, command, value):
         characters = ('pawn', 'warrior', 'wizard', 'priestess', 'matron')
@@ -279,36 +295,13 @@ class Game(object):
     def enable_board_sliders(self):
         self.get_screen('music', 'menu').enable_all_sprites()
 
-    def user_command_handler(self, event):
-        """Ou shit the user command handler, good luck m8
-        USEREVENT when MENUS:           Change in current settings (Could be config, sound or graphics)
-        UESREVENT+1 when MENUS:         Change of screen
-        USEREVENT+2 when BOARD:         Action in them
-        USEREVENT+3 when NOTIFICATIONS: popups and shit
-        USEREVENT+4:                    Signal that forces drawing.
-        """
-        if event.type < pygame.USEREVENT:       
-            return False
-        elif event.type is pygame.USEREVENT:
-            self.command_handler(event.command, event.value)
-        elif event.type is pygame.USEREVENT+1:
-            if 'start' in event.command and not self.started:
-                self.initiate()
-            self.change_screen(*event.command.split('_'))
-        elif event.type is pygame.USEREVENT+2:  
-            pass    #Board actions
-        elif event.type is pygame.USEREVENT+3:  
-            pass    #Dialog actions
-        elif event.type is pygame.USEREVENT+7:  #Called every second
-            self.fps_text = UtilityBox.generate_fps(self.clock)
-
     def check_state(self):
         if len(self.screens) > 0:
             if any(isinstance(screen, Menu) and 'main' in screen.id for screen in self.screens):
                 return True
         raise NoScreensException('A game needs at least a main menu to start.')
 
-    def first_log(self):
+    def init_log(self):
         LOG.log('INFO', "GAME STARTING!")
         LOG.log('INFO', "----Initial Pygame parameters----")
         LOG.log('INFO', "Game initial frames per second: ", self.fps)
@@ -327,7 +320,7 @@ class Game(object):
         try:
             self.set_easter_eggs()
             self.check_state()
-            self.first_log()
+            self.init_log()
             self.current_screen = self.screens[0]
             self.current_screen.play_music()
             end = False
@@ -336,7 +329,7 @@ class Game(object):
                 self.current_screen.draw(self.display)
                 end = self.event_handler(pygame.event.get())
                 if self.fps_text:
-                    self.display.blit(self.fps_text, (50, 150))
+                    self.display.blit(self.fps_text, tuple(int(x*0.02) for x in self.resolution))
                 pygame.display.update()
             sys.exit()
         except Exception as exc:

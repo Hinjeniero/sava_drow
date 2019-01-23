@@ -93,7 +93,7 @@ class Board(Screen):
                         'platform_sprite'       : None
     }
     #CHANGE MAYBE THE THREADS OF CHARACTER TO JOIN INSTEAD OF NUM PLAYERS AND SHIT
-    def __init__(self, id_, event_id, resolution, *players, **params):
+    def __init__(self, id_, event_id, end_event_id, resolution, *players, **params):
         """Board constructor. Inherits from Screen.
         Args:
             id_ (str):  Identifier of the Screen.
@@ -643,10 +643,15 @@ class Board(Screen):
     def check_player(self, player):
         if player.has_lost():
             self.players.remove(player)
-            print("hllo")
             self.characters.remove(player.characters)
             if len(self.players) == 1:  #WE HAVE A WINNER!
                 self.play_sound('win')
+                self.win()
+
+    def win(self):
+        pass
+        #send event to change screen
+        #send event to end game
 
     #TODO KEYBOARD DOES NOT CHANGE ACTIVE CELL, BUT ACTIVE CHARACTER. ACTIVE CELL CHANGE ONLY BY MOUSE
     def keyboard_handler(self, keys_pressed):

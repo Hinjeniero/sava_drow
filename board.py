@@ -139,7 +139,7 @@ class Board(Screen):
         self.player_index   = 0
         #Started
         self.started        = False
-        self.end_event      = end_event_id
+        self.end_event      = pygame.event.Event(end_event_id)
         Board.generate(self, *players)
     
     @staticmethod

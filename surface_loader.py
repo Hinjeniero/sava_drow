@@ -7,6 +7,7 @@ from logger import Logger as LOG
 from resizer import Resizer
 #from memory_profiler import profile
 from settings import EXTENSIONS
+from wrapt import synchronized
 
 #Decorator
 def no_size_limit(function):
@@ -49,9 +50,6 @@ class ResizedSurface(object):
     @staticmethod
     def load_surfaces(folder, intended_size, resize_mode, resize_smooth, keep_aspect_ratio, *keywords, strict=False):
         """To load from a folder. Can use keywords"""
-        print("HOLA "+folder)
-        print(keywords)
-        print("------")
         if len(keywords) is 0 or None in keywords:
             paths = UtilityBox.get_all_files(folder, *EXTENSIONS.IMAGE_FORMATS)
         else:
@@ -67,7 +65,6 @@ class ResizedSurface(object):
         for path in paths:
             surfaces[path] = ResizedSurface.get_surface(path, intended_size, resize_mode,\
                             resize_smooth, keep_aspect_ratio)
-        print("RESULTS "+str(len(surfaces.values())))
         return surfaces
 
     @staticmethod
@@ -152,7 +149,8 @@ class SurfaceLoader(object):
             surfaces[image_path] = SurfaceLoader.get_surface(image_path)
         return surfaces
 
-    @staticmethod     
+    @staticmethod
+    @synchronized
     def get_surface(image_path):
         """Image_path can be an id too"""
         if image_path in SurfaceLoader.SURFACES_LOADED.keys():

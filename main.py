@@ -25,6 +25,9 @@ from sprite import AnimatedSprite
 from settings import USEREVENTS, INIT_PARAMS, PATHS,\
                     STRINGS, EXTENSIONS, SCREEN_FLAGS
 
+import faulthandler
+faulthandler.enable()
+
 #MUSIC
 MENU_SONGS = UtilityBox.get_all_files(PATHS.MENU_SONGS, *EXTENSIONS.MUSIC_FORMATS)
 BOARD_SONGS = UtilityBox.get_all_files(PATHS.BOARD_SONGS, *EXTENSIONS.MUSIC_FORMATS)

@@ -61,7 +61,7 @@ class Game(object):
         for screen in screens:
             if isinstance(screen, Screen):
                 self.screens.append(screen)
-            else:                           
+            else:
                 raise InvalidGameElementException('Can`t add an element of type '+str(type(screen)))
 
     def user_command_handler(self, event):
@@ -88,6 +88,7 @@ class Game(object):
         elif event.type is USEREVENTS.CONFIG_USEREVENT:  
             self.config_handler(event.command.lower(), event.value)
         elif event.type is USEREVENTS.END_CURRENT_GAME:
+            print("WINNER")
             self.show_popup('win')
             self.current_screen.play_sound('win')
             self.started = False
@@ -198,7 +199,7 @@ class Game(object):
         popup_running.use_overlay = False
         popup_dejavu = UIElement.factory('secret_dejavu', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
                                         text='Gz, you found a secret! The background music is now Dejavu.', text_proportion=text_size)
-        popup_winner = UIElement.factory('secret_dejavu', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
+        popup_winner = UIElement.factory('winner', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
                                         text='Gz, you won!', text_proportion=text_size)
         popup_dejavu.use_overlay = False
         self.add_popups(popup_acho, popup_running, popup_dejavu, popup_winner)

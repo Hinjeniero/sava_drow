@@ -327,7 +327,8 @@ class Character(AnimatedSprite):
             threads.append(Character.__char_loader(char_init, characters, character_settings[key]['ammount'],\
                             player_name, player_name+key, (0, 0), sprite_size, canvas_size, character_settings[key]['path'],\
                             aliases=character_settings[key]['aliases']))
-        for t in threads:   t.join()        #Threading.join
+        for t in threads:   
+            t.join()        #Threading.join
         LOG.log('INFO', "----Factory, done making ", player_name, " characters----")
         return characters
 

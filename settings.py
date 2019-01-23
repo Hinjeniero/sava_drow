@@ -67,8 +67,8 @@ class PATHS:
     SOUNDS_FOLDER = AUDIO_FOLDER+'common\\'
     #Characters
     PAWN = IMAGE_FOLDER+'Pawn'
-    WIZARD = IMAGE_FOLDER+'Warrior'
-    WARRIOR = IMAGE_FOLDER+'Wizard'
+    WIZARD = IMAGE_FOLDER+'Wizard'
+    WARRIOR = IMAGE_FOLDER+'Warrior'
     PRIESTESS = IMAGE_FOLDER+'Priestess'
     MATRONMOTHER = IMAGE_FOLDER+'Matronmother'
     SANS = IMAGE_FOLDER+'sans_hd'

@@ -69,7 +69,6 @@ class Screen(object):
         self.background = None  #Created in generate
         self.dialog     = dialog
         self.sprites    = pygame.sprite.OrderedUpdates()
-        self.popups     = pygame.sprite.OrderedUpdates()
         #Sound & Music
         self.songs      = []    #Created in generate
         self.music_chan = None  #Created in generate
@@ -134,20 +133,6 @@ class Screen(object):
 
     def has_music(self):
         return True if self.music_chan else False
-
-    def add_popups(self, *popups):
-        for popup in popups:
-            popup.set_active(False)
-            popup.set_visible(False)
-            self.popups.add(popup)
-
-    def show_popup(self, id_):
-        for popup in self.popups.sprites():
-            if id_ in popup.id:
-                popup.set_visible(True)
-                popup.set_active(True)
-                return
-        LOG.log('debug', 'POPup ', id_,'not found')
 
     def play_music(self):
         if len(self.songs) is not 0 and not self.playing:
@@ -244,8 +229,6 @@ class Screen(object):
             self.background.draw(surface)
         for sprite in self.sprites.sprites():
             sprite.draw(surface)
-        for popup in self.popups.sprites():
-            popup.draw(surface)
         if self.have_dialog() and self.dialog_active():
             self.dialog.draw(surface)
         if self.animation:
@@ -266,8 +249,6 @@ class Screen(object):
                 self.dialog.set_canvas_size(resolution)
             for sprite in self.sprites.sprites():
                 sprite.set_canvas_size(resolution)
-            for popup in self.popups.sprites():
-                popup.set_canvas_size(resolution)
             for animation in self.animations:
                 animation.set_resolution(resolution)
                 
@@ -300,11 +281,6 @@ class Screen(object):
     def enable_all_sprites(self, state=True):
         for sprite in self.sprites.sprites():
             sprite.set_enabled(state)
-
-    def hide_popups(self):
-        for popup in self.popups.sprites():
-            popup.set_active(False)
-            popup.set_visible(False)
 
 class LoadingScreen(Screen):
     """LoadingScreen class. Inherits from Screen.

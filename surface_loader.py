@@ -6,8 +6,7 @@ from decorators import time_it
 from logger import Logger as LOG
 from resizer import Resizer
 #from memory_profiler import profile
-
-IMAGE_FORMATS = ('.png', '.jpg', '.jpeg', 'bmp', '.gif', '.tga', '.pcx', '.tif', '.lbm', '.pbm', '.xbm')
+from settings import EXTENSIONS
 
 #Decorator
 def no_size_limit(function):
@@ -51,11 +50,11 @@ class ResizedSurface(object):
     def load_surfaces(folder, intended_size, resize_mode, resize_smooth, keep_aspect_ratio, *keywords, strict=False):
         """To load from a folder. Can use keywords"""
         if len(keywords) is 0 or None in keywords:
-            paths = UtilityBox.get_all_files(folder, *IMAGE_FORMATS)
+            paths = UtilityBox.get_all_files(folder, *EXTENSIONS.IMAGE_FORMATS)
         else:
             if not isinstance(keywords, tuple):
                 keywords = (keywords,)
-            paths = UtilityBox.get_filtered_files(folder, IMAGE_FORMATS, keywords, strict=strict)
+            paths = UtilityBox.get_filtered_files(folder, EXTENSIONS.IMAGE_FORMATS, keywords, strict=strict)
         return ResizedSurface.get_surfaces(intended_size, resize_mode, resize_smooth, keep_aspect_ratio, *paths)    
 
     @staticmethod
@@ -119,7 +118,7 @@ class SurfaceLoader(object):
         Args:
             folder(str):    Path of the folder that contains the surfacess (images) to be loaded."""
         surfaces = {}
-        for image_path in UtilityBox.get_all_files(folder, *IMAGE_FORMATS):
+        for image_path in UtilityBox.get_all_files(folder, *EXTENSIONS.IMAGE_FORMATS):
             surfaces[image_path] = SurfaceLoader.get_surface(image_path)
         LOG.log('debug', 'Loaded ', len(surfaces), ' surface from ', folder)
         return surfaces
@@ -136,7 +135,7 @@ class SurfaceLoader(object):
         surfaces = {}
         if not isinstance(keywords, tuple):
             keywords = (keywords,)
-        paths = UtilityBox.get_filtered_files(folder, IMAGE_FORMATS, keywords, strict=strict)
+        paths = UtilityBox.get_filtered_files(folder, EXTENSIONS.IMAGE_FORMATS, keywords, strict=strict)
         for image_path in paths:
             surfaces[image_path] = SurfaceLoader.get_surface(image_path)
         LOG.log('debug', 'Loaded ', len(surfaces), ' surfaces with the keywords ', keywords, ' in the folder ', folder)

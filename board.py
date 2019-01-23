@@ -139,6 +139,7 @@ class Board(Screen):
         self.player_index   = 0
         #Started
         self.started        = False
+        self.end_event      = end_event_id
         Board.generate(self, *players)
     
     @staticmethod
@@ -649,7 +650,7 @@ class Board(Screen):
                 self.win()
 
     def win(self):
-        pass
+        pygame.event.post(self.end_event)
         #send event to change screen
         #send event to end game
 

@@ -9,33 +9,16 @@ __author__ = 'David Flaity Pardo'
 
 import random
 import pygame
-from paths import IMG_FOLDER
 from board import Board
 from logger import Logger as LOG
 from decorators import time_it
+from settings import USEREVENTS, STRINGS, PARAMS
 
-#To hold the differenmt board configurations of whatever. And return a different board per gammemode.
-PLAYER_NAMES = ['Mitches', 'Hayesshine', 'Rolbo Gordonggins', 'Spencerpop', 'Palka', 'Rainrobinson', 'Kingolas', 'Zippotudo',
-                'Zimrcia', 'Coxobby Ohmswilson', 'Uwotm8', 'Orangeman', 'npc', 'Totallynot Arobot', 'Bigba Lshanging']
-BOARD_ID = 'main_board'
-BOARD_EVENT_ID = pygame.USEREVENT+2
-CHARACTER_SETTINGS = {'pawn':{'ammount': 4, 'aliases':{'pickup': 'running'}},
-                    'warrior':{'ammount': 2, 'aliases':{'pickup': 'run'}},
-                    'wizard':{'ammount': 2, 'aliases':{'pickup': 'pick'}},
-                    'priestess':{'ammount': 2, 'aliases':{'pickup': 'run'}},
-                    'matron_mother':{'ammount': 1, 'aliases':{'pickup': 'pick'}},
-}
-'''CHARACTER_SETTINGS = {'pawn':{'ammount': 0, 'aliases':{'pickup': 'running'}},
-                    'warrior':{'ammount': 0, 'aliases':{'pickup': 'run'}},
-                    'wizard':{'ammount': 0, 'aliases':{'pickup': 'pick'}},
-                    'priestess':{'ammount': 0, 'aliases':{'pickup': 'run'}},
-                    'matron_mother':{'ammount': 0, 'aliases':{'pickup': 'pick'}},
-}'''
 class BoardGenerator(object):
     def __init__(self):
         self.players = 2
         self.game_mode = 'default'
-        self.characters_params = CHARACTER_SETTINGS.copy()
+        self.characters_params = PARAMS.CHARACTER_SETTINGS.copy()
         self.board_params = {}
 
     def set_gamemode(self, gamemode):
@@ -71,40 +54,37 @@ class BoardGenerator(object):
             board = self.generate_test(resolution)
         #END
         for i in range (0, 4, (4//self.players)):
-            board.create_player(random.choice(PLAYER_NAMES), i, (200, 200), **self.characters_params)
+            board.create_player(random.choice(STRINGS.PLAYER_NAMES), i, (200, 200), **self.characters_params)
         return board
 
     def generate_default(self, resolution):
-        return Board(BOARD_ID, BOARD_EVENT_ID, resolution, **self.board_params)
+        return Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **self.board_params)
 
     def generate_lite(self, resolution):
         self.board_params['max_levels'] = 3
-        return Board(BOARD_ID, BOARD_EVENT_ID, resolution, **self.board_params)
+        return Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **self.board_params)
 
     def generate_small(self, resolution):
         self.board_params['max_levels'] = 3
         self.board_params['circles_per_lvl'] = 8
-        return Board(BOARD_ID, BOARD_EVENT_ID, resolution, **self.board_params)
+        return Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **self.board_params)
     
     def generate_extra(self, resolution):
         self.board_params['max_levels'] = 5
         self.board_params['circles_per_lvl'] = 16
-        return Board(BOARD_ID, BOARD_EVENT_ID, resolution, **self.board_params)
+        return Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **self.board_params)
 
     def generate_huge(self, resolution):
         self.board_params['max_levels'] = 5
         self.board_params['circles_per_lvl'] = 32
-        return Board(BOARD_ID, BOARD_EVENT_ID, resolution, **self.board_params)
+        return Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **self.board_params)
 
     def generate_insane(self, resolution):
         self.board_params['max_levels'] = 6
         self.board_params['circles_per_lvl'] = 32
-        return Board(BOARD_ID, BOARD_EVENT_ID, resolution, **self.board_params)
+        return Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **self.board_params)
 
     def generate_test(self, resolution):
         self.board_params['max_levels'] = 6
         self.board_params['circles_per_lvl'] = 64
-        return Board(BOARD_ID, BOARD_EVENT_ID, resolution, **self.board_params)
-
-    def to_string(self):
-        return 'Players: '+str(self.players)+'\nPawns: '+str(self.pawns)
+        return Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **self.board_params)

@@ -43,6 +43,7 @@ class Game(object):
         self.game_config    = {}    #Created in Game.generate()
         self.current_screen = None  #Created in Game.start()
         self.board_generator= None  #Created in Game.generate()
+        self.popups         = pygame.sprite.OrderedUpdates()  
         self.fullscreen     = False
         Game.generate(self)
 
@@ -74,26 +75,24 @@ class Game(object):
         USEREVENT+6: Signals the end of the current board.
         USEREVENT+7: Called every second. Timer.
         """
-        try:
-            command = event.command.lower()
-            value = event.value
-        except AttributeError:
-            pass
-
         if event.type < pygame.USEREVENT:       
             return False
         elif event.type is pygame.USEREVENT:
-            if 'start' in command and not self.started:
+            if 'start' in event.command.lower() and not self.started:
                 self.initiate()
-            self.change_screen(*command.split('_'))
+            self.change_screen(*event.command.lower().split('_'))
         elif event.type is pygame.USEREVENT+1:
-            self.sound_handler(command, value)
+            self.sound_handler(event.command.lower(), event.value)
         elif event.type is pygame.USEREVENT+2:  
-            self.graphic_handler(command, value)
+            self.graphic_handler(event.command.lower(), event.value)
         elif event.type is pygame.USEREVENT+3:  
-            self.config_handler(command, value)
+            self.config_handler(event.command.lower(), event.value)
         elif event.type is pygame.USEREVENT+6:
-            pass
+            self.show_popup('win')
+            self.current_screen.play_sound('win')
+            self.started = False
+            self.change_screen('main', 'menu')
+            #TODO REstart params of params menu
         elif event.type is pygame.USEREVENT+7:
             self.fps_text = UtilityBox.generate_fps(self.clock, size=tuple(int(x*0.05) for x in self.resolution))
     
@@ -130,6 +129,8 @@ class Game(object):
         ResizedSurface.clear_lut()  #Clear the lut of resized surfaces
         for screen in self.screens:
             screen.set_resolution(resolution)
+        for popup in self.popups.sprites():
+            popup.set_canvas_size(resolution)
         LOG.log('DEBUG', "Changed resolution to ", resolution)
 
     def sound_handler(self, command, value):
@@ -157,8 +158,9 @@ class Game(object):
         all_keys            = pygame.key.get_pressed()          #Get all the pressed keyboard keys
         all_mouse_buttons   = pygame.mouse.get_pressed()        #Get all the pressed mouse buttons
         mouse_pos           = pygame.mouse.get_pos()            #Get the current mouse position
-        mouse_mvnt          = pygame.mouse.get_rel()!=(0,0)     #True if get_rel returns non zero vaalues
-
+        mouse_mvnt          = pygame.mouse.get_rel()!=(0,0)     #True if get_rel returns non zero vaalues 
+        if any(all_mouse_buttons):
+            self.hide_popups()
         for event in events:
             #For every event we will call this
             self.current_screen.event_handler(event, all_keys, all_mouse_buttons, mouse_movement=mouse_mvnt, mouse_pos=mouse_pos)
@@ -176,7 +178,7 @@ class Game(object):
         return False
 
     def process_last_input(self, event):
-        self.current_screen.hide_popups()
+        self.hide_popups()
         if len(self.last_inputs) > 20:
             del self.last_inputs[0]
         self.last_inputs.append(pygame.key.name(event.key))
@@ -196,9 +198,29 @@ class Game(object):
         popup_running.use_overlay = False
         popup_dejavu = UIElement.factory('secret_dejavu', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
                                         text='Gz, you found a secret! The background music is now Dejavu.', text_proportion=text_size)
+        popup_winner = UIElement.factory('secret_dejavu', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
+                                        text='Gz, you won!', text_proportion=text_size)
         popup_dejavu.use_overlay = False
-        for screen in self.screens:
-            screen.add_popups(popup_acho, popup_running, popup_dejavu)
+        self.add_popups(popup_acho, popup_running, popup_dejavu, popup_winner)
+
+    def add_popups(self, *popups):
+        for popup in popups:
+            popup.set_active(False)
+            popup.set_visible(False)
+            self.popups.add(popup)
+
+    def show_popup(self, id_):
+        for popup in self.popups.sprites():
+            if id_ in popup.id:
+                popup.set_visible(True)
+                popup.set_active(True)
+                return
+        LOG.log('debug', 'Popup ', id_,'not found')
+    
+    def hide_popups(self):
+        for popup in self.popups.sprites():
+            popup.set_active(False)
+            popup.set_visible(False)
 
     def check_easter_eggs(self):
         secret = None
@@ -206,22 +228,20 @@ class Game(object):
         easter_egg_music = False
         if len(self.last_inputs) > 3:
             if 'acho' in ''.join(self.last_inputs).lower():
-                self.current_screen.show_popup('secret_acho')
                 LOG.log('INFO', 'SECRET DISCOVERED! From now on all the sfxs on all the screens will be achos.')
                 secret = 'acho.ogg'
                 easter_egg_sound = True
             elif 'running' in ''.join(self.last_inputs).lower():
-                self.current_screen.show_popup('secret_running')
                 LOG.log('INFO', 'SECRET DISCOVERED! From now on the music in all your screens will be Running in the 90s.')
                 secret = 'running90s.ogg'
                 easter_egg_music = True
             elif 'dejavu' in ''.join(self.last_inputs).lower():
-                self.current_screen.show_popup('secret_dejavu')
                 LOG.log('INFO', 'SECRET DISCOVERED! From now on the music in all your screens will be Dejavu!')
                 secret = 'dejavu.ogg'
                 easter_egg_music = True
             #If an easter egg was triggered:
             if secret:
+                self.show_popup(secret.split('.')[0])
                 self.current_screen.play_sound('secret')
                 for screen in self.screens:
                     if easter_egg_sound:
@@ -330,6 +350,8 @@ class Game(object):
                 end = self.event_handler(pygame.event.get())
                 if self.fps_text:
                     self.display.blit(self.fps_text, tuple(int(x*0.02) for x in self.resolution))
+                for popup in self.popups.sprites():
+                    popup.draw(self.display)
                 pygame.display.update()
             sys.exit()
         except Exception as exc:

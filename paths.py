@@ -17,10 +17,6 @@ from logger import Logger as LOG
 from synch_dict import Dictionary
 from decorators import time_it
 
-GAME_FOLDER = os.path.dirname(__file__)
-IMG_FOLDER = os.path.join(GAME_FOLDER, 'img')
-SOUND_FOLDER = os.path.join(GAME_FOLDER, 'sounds')
-
 class Movements(object):
     """Movement class. Only contains static methods. Generates, contains and delivers
     all the possible movements of the map, depending on the Restriction.

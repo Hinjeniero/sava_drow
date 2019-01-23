@@ -49,6 +49,9 @@ class ResizedSurface(object):
     @staticmethod
     def load_surfaces(folder, intended_size, resize_mode, resize_smooth, keep_aspect_ratio, *keywords, strict=False):
         """To load from a folder. Can use keywords"""
+        print("HOLA "+folder)
+        print(keywords)
+        print("------")
         if len(keywords) is 0 or None in keywords:
             paths = UtilityBox.get_all_files(folder, *EXTENSIONS.IMAGE_FORMATS)
         else:
@@ -64,6 +67,7 @@ class ResizedSurface(object):
         for path in paths:
             surfaces[path] = ResizedSurface.get_surface(path, intended_size, resize_mode,\
                             resize_smooth, keep_aspect_ratio)
+        print("RESULTS "+str(len(surfaces.values())))
         return surfaces
 
     @staticmethod

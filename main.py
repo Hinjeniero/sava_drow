@@ -17,7 +17,6 @@ from board import Board
 from menu import Menu
 from ui_element import UIElement, TextSprite, InfoBoard, Dialog
 from colors import RED, BLACK, WHITE, GREEN
-from paths import IMG_FOLDER, SOUND_FOLDER
 from logger import Logger as LOG
 from utility_box import UtilityBox
 from game import Game
@@ -27,9 +26,9 @@ from settings import USEREVENTS, INIT_PARAMS, PATHS,\
                     STRINGS, EXTENSIONS, SCREEN_FLAGS
 
 #MUSIC
-MENU_SONGS = UtilityBox.get_all_files(PATHS.MENU_SONGS_PATH, *EXTENSIONS.MUSIC_FORMATS)
-BOARD_SONGS = UtilityBox.get_all_files(PATHS.BOARD_SONGS_PATH, *EXTENSIONS.MUSIC_FORMATS)
-COMMON_SONGS = UtilityBox.get_all_files(PATHS.COMMON_SONGS_PATH, *EXTENSIONS.MUSIC_FORMATS)
+MENU_SONGS = UtilityBox.get_all_files(PATHS.MENU_SONGS, *EXTENSIONS.MUSIC_FORMATS)
+BOARD_SONGS = UtilityBox.get_all_files(PATHS.BOARD_SONGS, *EXTENSIONS.MUSIC_FORMATS)
+COMMON_SONGS = UtilityBox.get_all_files(PATHS.COMMON_SONGS, *EXTENSIONS.MUSIC_FORMATS)
 MENU_SONGS.extend(COMMON_SONGS)
 BOARD_SONGS.extend(COMMON_SONGS)
 #Music for the buttons, to show the titles and that shit
@@ -60,13 +59,13 @@ def create_main_menu():
     #texture=IMG_FOLDER+"//button.png" #TO USE IN THE FIUTUR
     buttonStart     = UIElement.factory('button_start', "start_game_go_main_board", USEREVENTS.MAINMENU_USEREVENT, next(positions), button_size,\
                                         INIT_PARAMS.INITIAL_RESOLUTION, text="Start game", keep_aspect_ratio = False,\
-                                        gradient=next(gradients), gradient_type='vertical', texture=IMG_FOLDER+'\\button.png')
+                                        gradient=next(gradients), gradient_type='vertical', texture=PATHS.SHORT_BUTTON)
     buttonConfig    = UIElement.factory('button_params_menu', "go_menu_params_config", USEREVENTS.MAINMENU_USEREVENT, next(positions),button_size,\
-                                        INIT_PARAMS.INITIAL_RESOLUTION, text="Parameters", gradient = next(gradients), gradient_type='vertical', texture=IMG_FOLDER+'\\button.png', keep_aspect_ratio = False)
+                                        INIT_PARAMS.INITIAL_RESOLUTION, text="Parameters", gradient = next(gradients), gradient_type='vertical', texture=PATHS.SHORT_BUTTON, keep_aspect_ratio = False)
     buttonSound     = UIElement.factory('button_sound', "go_menu_sound_music", USEREVENTS.MAINMENU_USEREVENT, next(positions), button_size,\
-                                        INIT_PARAMS.INITIAL_RESOLUTION, text="Music menu", gradient = next(gradients), gradient_type='vertical', texture=IMG_FOLDER+'\\button.png', keep_aspect_ratio = False)
+                                        INIT_PARAMS.INITIAL_RESOLUTION, text="Music menu", gradient = next(gradients), gradient_type='vertical', texture=PATHS.SHORT_BUTTON, keep_aspect_ratio = False)
     buttonGraphics  = UIElement.factory('button_graphics', "go_menu_graphics_display", USEREVENTS.MAINMENU_USEREVENT, next(positions), button_size,\
-                                        INIT_PARAMS.INITIAL_RESOLUTION, text="Graphics menu", gradient = next(gradients), gradient_type='vertical', texture=IMG_FOLDER+'\\button.png', keep_aspect_ratio = False)
+                                        INIT_PARAMS.INITIAL_RESOLUTION, text="Graphics menu", gradient = next(gradients), gradient_type='vertical', texture=PATHS.SHORT_BUTTON, keep_aspect_ratio = False)
     #Create Menu
     #bg = AnimationGenerator.animated_waterfall_background(INIT_PARAMS.INITIAL_RESOLUTIO, INIT_PARAMS.INITIAL_FPS, *INIT_PARAMS.ALL_FPS)
     #bg = AnimationGenerator.animated_cave_waterfall_background(INIT_PARAMS.INITIAL_RESOLUTIO, INIT_PARAMS.INITIAL_FPS, *INIT_PARAMS.ALL_FPS)
@@ -74,9 +73,9 @@ def create_main_menu():
     #bg = AnimationGenerator.animated_rain_chinese(INIT_PARAMS.INITIAL_RESOLUTIO, INIT_PARAMS.INITIAL_FPS, *INIT_PARAMS.ALL_FPS)
     bg = AnimationGenerator.industrial_layered_background(INIT_PARAMS.INITIAL_RESOLUTION, INIT_PARAMS.INITIAL_FPS, *INIT_PARAMS.ALL_FPS)
     main_menu   = Menu('main_menu', USEREVENTS.MAINMENU_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, buttonStart, buttonConfig, buttonSound, buttonGraphics,
-                        animated_background= bg, background_path=IMG_FOLDER+'\\background.jpg', songs_paths=MENU_SONGS, dialog=create_dialog(),
+                        animated_background= bg, background_path=PATHS.DEFAULT_BG, songs_paths=MENU_SONGS, dialog=create_dialog(),
                         do_align=False)
-    return main_menu
+    return main_menu 
 
 def create_config_menu():
     #TODO DRAW NUMBER OF CHARS DOWN BELOW
@@ -99,7 +98,7 @@ def create_config_menu():
     buttonNumPriestesses= UIElement.factory('button_priestesses', "set_ammount_priestess", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
                                             INIT_PARAMS.INITIAL_RESOLUTION, default_values=(1, 1), text="Number of priestess", text_alignment='left')
     params_menu = Menu("menu_params_config", USEREVENTS.CONFIG_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, buttonGameModes, buttonCountPlayers, buttonNumPawns,\
-                        buttonNumWarriors, buttonNumWizards, buttonNumPriestesses, background_path=IMG_FOLDER+'\\background.jpg', do_align=False)
+                        buttonNumWarriors, buttonNumWizards, buttonNumPriestesses, background_path=PATHS.DEFAULT_BG, do_align=False)
     return params_menu
 
 def create_sound_menu():
@@ -125,7 +124,7 @@ def create_sound_menu():
     sliderBoardSounds.set_enabled(False)
     buttonBoardSongs.set_enabled(False)
     sound_menu          = Menu("menu_volume_music", USEREVENTS.SOUND_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, sliderMenuMusic, sliderMenuSounds, sliderBoardMusic, sliderBoardSounds,\
-                                buttonBoardSongs, buttonMenusSongs, background_path=IMG_FOLDER+'\\background.jpg', do_align=False)
+                                buttonBoardSongs, buttonMenusSongs, background_path=PATHS.DEFAULT_BG, do_align=False)
     sound_menu.add_animation(AnimationGenerator.characters_crossing_screen(INIT_PARAMS.INITIAL_RESOLUTION, *INIT_PARAMS.ALL_FPS))
     return sound_menu
 
@@ -139,15 +138,15 @@ def create_video_menu():
     buttonFullscreen = UIElement.factory('button_fps', "set_display_mode_fullscreen", USEREVENTS.GRAPHIC_USEREVENT, next(positions), button_size,\
                                 INIT_PARAMS.INITIAL_RESOLUTION, default_values=('Off', 'On'), text="Fullscreen")                                    
     graphics_menu  = Menu("menu_graphics_display", USEREVENTS.GRAPHIC_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, buttonRes, buttonFps, buttonFullscreen,\
-                            background_path=IMG_FOLDER+'\\background.jpg', do_align=False)
+                            background_path=PATHS.DEFAULT_BG, do_align=False)
     graphics_menu.add_animation(AnimationGenerator.character_teleporting_screen(INIT_PARAMS.INITIAL_RESOLUTION, *INIT_PARAMS.ALL_FPS))
     return graphics_menu
 
 def create_board_params():
     board_params = {}
-    #board_params['background_path'] = IMG_FOLDER+'\\board_2.jpg'
     board_params['songs_paths'] = BOARD_SONGS
-    board_params['animated_background'] = AnimationGenerator.animated_cave_waterfall_background(INIT_PARAMS.INITIAL_RESOLUTION, INIT_PARAMS.INITIAL_FPS, *INIT_PARAMS.ALL_FPS)
+    board_params['animated_background'] = AnimationGenerator.animated_cave_waterfall_background(INIT_PARAMS.INITIAL_RESOLUTION,\
+                                        INIT_PARAMS.INITIAL_FPS, *INIT_PARAMS.ALL_FPS)
     board_params['platform_sprite'] = AnimationGenerator.animated_tree_platform(INIT_PARAMS.INITIAL_RESOLUTION)
     return board_params
 

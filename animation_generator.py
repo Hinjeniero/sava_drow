@@ -15,34 +15,24 @@ import random
 #Selfmade libraries
 from animation import ScriptedSprite, Animation, LoopedAnimation
 from sprite import AnimatedSprite
-from paths import IMG_FOLDER
 from decorators import time_it
 from surface_loader import SurfaceLoader, no_size_limit
+from settings import PATHS, STRINGS
 
-"""Global variables, read_only:
-    PYGAME_EVENT:
-    SPRITE_PATHS:
-    SPRITE_NAMES:
-    MOVE_KEYWORDS:
-"""
-PYGAME_EVENT = pygame.USEREVENT+6
-SPRITE_PATHS = (IMG_FOLDER+'\\Pawn', IMG_FOLDER+'\\Warrior', IMG_FOLDER+'\\Wizard',
-                IMG_FOLDER+'\\Priestess')
-DOOR_PATH = (IMG_FOLDER+'\\Portal')
-SPRITE_NAMES = ('Manolo', 'Eustaquio', 'Zimamamio')
+PYGAME_EVENT = -1
 MOVE_KEYWORDS = ('run', )
 
 class AnimationGenerator(object):
     @staticmethod
     def animated_tree_platform(resolution):
-        tree_sprite = AnimatedSprite('tree', (0, 0), resolution, resolution, sprite_folder=IMG_FOLDER+'\\Tree',\
+        tree_sprite = AnimatedSprite('tree', (0, 0), resolution, resolution, sprite_folder=PATHS.ANIMATED_TREE,\
                                     resize_smooth=False)
         tree_sprite.set_position(tuple(x//2 - y//2 for x,y in zip(resolution, tree_sprite.rect.size)))
         return tree_sprite
 
     @staticmethod
     def industrial_layered_background(resolution, time, *fps):
-        return AnimationGenerator.layered_animated_background(resolution, time, fps, IMG_FOLDER+'\\Industrial',\
+        return AnimationGenerator.layered_animated_background(resolution, time, fps, PATHS.INDUSTRIAL_LAYERED_BG,\
                                                             'background', 'far', 'front', 'foreground')
 
     @staticmethod
@@ -88,30 +78,30 @@ class AnimationGenerator(object):
 
     @staticmethod
     def animated_waterfall_background(resolution, time, *fps):
-        return AnimationGenerator.animated_static_background('waterfall', IMG_FOLDER+'\\Waterfall', resolution, time, *fps)
+        return AnimationGenerator.animated_static_background('waterfall', PATHS.ANIMATED_WATERFALL_BG, resolution, time, *fps)
 
     @staticmethod
     def animated_cave_waterfall_background(resolution, time, *fps):
-        return AnimationGenerator.animated_static_background('waterfall_cave', IMG_FOLDER+'\\Waterfall_dark', resolution, time, *fps)
+        return AnimationGenerator.animated_static_background('waterfall_cave', PATHS.ANIMATED_CAVE_WATERFALL_BG, resolution, time, *fps)
 
     @staticmethod
     def animated_rain_tree(resolution, time, *fps):
-        return AnimationGenerator.animated_static_background('spirit_tree', IMG_FOLDER+'\\Rain_tree', resolution, time, *fps)
+        return AnimationGenerator.animated_static_background('spirit_tree', PATHS.ANIMATED_RAIN_TREE_BG, resolution, time, *fps)
     
     @staticmethod
     def animated_rain_chinese(resolution, time, *fps):
-        return AnimationGenerator.animated_static_background('chinese_chon_hon', IMG_FOLDER+'\\Rain_chinese', resolution, time, *fps)
+        return AnimationGenerator.animated_static_background('chinese_chon_hon', PATHS.ANIMATED_RAIN_CHINESE_BG, resolution, time, *fps)
 
     @staticmethod
     @time_it
     def characters_crossing_screen(resolution, *fps, ammount=5, time_interval=(4, 10)):
         animation = AnimationGenerator.sprite_crossing_screen(resolution, random.randint(time_interval[0],\
-                                                            time_interval[1]), random.choice(SPRITE_PATHS), *fps)
+                                                            time_interval[1]), random.choice(PATHS.CHARS), *fps)
         ratio_size = 0.10
         size = tuple(res * ratio_size for res in resolution)
         for _ in range(0, ammount-1):
-            sprite = ScriptedSprite(random.choice(SPRITE_NAMES), (0, 0), size, resolution, fps[0], fps,\
-                                    sprite_folder=random.choice(SPRITE_PATHS), keywords=MOVE_KEYWORDS)
+            sprite = ScriptedSprite(random.choice(STRINGS.SPRITE_NAMES), (0, 0), size, resolution, fps[0], fps,\
+                                    sprite_folder=random.choice(PATHS.CHARS), keywords=MOVE_KEYWORDS)
             init_pos = (-sprite.rect.width, resolution[1]-sprite.rect.height)
             end_pos = (resolution[0], resolution[1]-sprite.rect.height)
             time = time_interval[0]+(random.random()*(time_interval[1]-time_interval[0]))
@@ -121,19 +111,19 @@ class AnimationGenerator(object):
 
     @staticmethod
     def pawn_crossing_screen(resolution, time, *fps):
-        return AnimationGenerator.sprite_crossing_screen(resolution, time, IMG_FOLDER+'\\Pawn', *fps)
+        return AnimationGenerator.sprite_crossing_screen(resolution, time, PATHS.PAWN, *fps)
 
     @staticmethod
     def warrior_crossing_screen(resolution, time, *fps):
-        return AnimationGenerator.sprite_crossing_screen(resolution, time, IMG_FOLDER+'\\Warrior', *fps)
+        return AnimationGenerator.sprite_crossing_screen(resolution, time, PATHS.WARRIOR, *fps)
 
     @staticmethod
     def wizard_crossing_screen(resolution, time, *fps):
-        return AnimationGenerator.sprite_crossing_screen(resolution, time, IMG_FOLDER+'\\Wizard', *fps)
+        return AnimationGenerator.sprite_crossing_screen(resolution, time, PATHS.WIZARD, *fps)
 
     @staticmethod
     def priestess_crossing_screen(resolution, time, *fps):
-        return AnimationGenerator.sprite_crossing_screen(resolution, time, IMG_FOLDER+'\\Priestess', *fps)
+        return AnimationGenerator.sprite_crossing_screen(resolution, time, PATHS.PRIESTESS, *fps)
 
     @staticmethod
     def sprite_crossing_screen(resolution, time, folder, *fps):
@@ -152,7 +142,7 @@ class AnimationGenerator(object):
     @staticmethod
     def character_teleporting_screen(resolution, *fps, ammount=10, time_interval=(4, 10), start_pos=0.20, end_pos=0.80):
         animation = AnimationGenerator.sprite_teleporting_screen(resolution, random.randint(time_interval[0],\
-                                                            time_interval[1]), random.choice(SPRITE_PATHS), *fps,
+                                                            time_interval[1]), random.choice(PATHS.CHARS), *fps,
                                                             start_pos=start_pos, end_pos=end_pos)
         return animation
 
@@ -163,9 +153,9 @@ class AnimationGenerator(object):
         ratio_size = 0.20
         size = tuple(res * ratio_size for res in resolution)
         #Sprites
-        start_door = ScriptedSprite('door', (0, 0), size, resolution, fps[0], fps, sprite_folder=DOOR_PATH, animation_delay=1)
-        end_door = ScriptedSprite('door', (0, 0), size, resolution, fps[0], fps, sprite_folder=DOOR_PATH, animation_delay=1)
-        sprite = ScriptedSprite('sans', (0, 0), size, resolution, fps[0], fps, sprite_folder=IMG_FOLDER+'\\sans_hd', animation_delay=1)
+        start_door = ScriptedSprite('door', (0, 0), size, resolution, fps[0], fps, sprite_folder=PATHS.DOOR, animation_delay=1)
+        end_door = ScriptedSprite('door', (0, 0), size, resolution, fps[0], fps, sprite_folder=PATHS.DOOR, animation_delay=1)
+        sprite = ScriptedSprite('sans', (0, 0), size, resolution, fps[0], fps, sprite_folder=PATHS.SANS, animation_delay=1)
         #params
         init_pos = ((start_pos*resolution[0]), resolution[1]-sprite.rect.height)
         end_pos = ((end_pos*resolution[0])-(end_door.rect.width//2), resolution[1]-sprite.rect.height)

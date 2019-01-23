@@ -10,7 +10,6 @@ __author__ = 'David Flaity Pardo'
 from os import listdir
 from os.path import isfile, join, dirname
 import pygame
-from paths import IMG_FOLDER, SOUND_FOLDER
 from utility_box import UtilityBox
 from ui_element import TextSprite
 from sprite import Sprite, AnimatedSprite
@@ -18,6 +17,7 @@ from exceptions import BadSpriteException, BadStateException
 from logger import Logger as LOG
 from decorators import run_async
 from synch_dict import Dictionary
+from settings import PATHS, STATES, SOUND_PARAMS, PATHS
 
 class Screen(object):
     """Screen class. Controls an entire 'screen' (like a desktop).
@@ -44,10 +44,7 @@ class Screen(object):
                         'animated_background': None,
                         'songs_paths'       : []
     }
-    STATES = ['idle', 'stopped', 'cutscene']
-    SOUND_CHANNELS_AMMOUNT = 32  #Sound channels are shared between Screens
     SOUND_CHANNELS = []
-    SOUNDS_FOLDER = SOUND_FOLDER+"\\common\\"
     SOUNDS = Dictionary()
     
     def __init__(self, id_, event_id, resolution, dialog=None, **params):
@@ -76,7 +73,7 @@ class Screen(object):
         self.sound_vol  = 0     #Created in generate
         self.playing    = False #Playing music?
         #State machine
-        self.state      = Screen.STATES[0]
+        self.state      = STATES.SCREEN[0]
         #Animations
         self.animations = []
         self.animation  = None  #The current playing animation
@@ -99,12 +96,12 @@ class Screen(object):
                 self.songs.append(song_path)
         self.sound_vol = 0.75
         #Adding to the LUT of sounds
-        for sound_path in UtilityBox.get_all_files(Screen.SOUNDS_FOLDER, '.ogg', '.wav'):
+        for sound_path in UtilityBox.get_all_files(PATHS.SOUNDS_FOLDER, '.ogg', '.wav'):
             if not Screen.SOUNDS.get_item(sound_path):
                 Screen.SOUNDS.add_item(sound_path, pygame.mixer.Sound(file=sound_path))
         #Adding the sound channels
         if len(Screen.SOUND_CHANNELS) is 0:
-            for _ in range (0, Screen.SOUND_CHANNELS_AMMOUNT):
+            for _ in range (0, SOUND_PARAMS.SOUND_CHANNELS_AMMOUNT):
                 Screen.SOUND_CHANNELS.append(UtilityBox.get_sound_channel())
 
     def add_animation(self, animation):
@@ -127,7 +124,7 @@ class Screen(object):
 
     def set_state(self, state):
         state = state.lower()
-        if state not in Screen.STATES:
+        if state not in STATES.SCREEN:
             raise BadStateException('The state '+state+' doesn`t exist in '+self.id)
         self.state = state
 
@@ -293,8 +290,8 @@ class LoadingScreen(Screen):
             text_proportion (str):  Tuple containing the text proportion vs the resolution.
                                     Default is (0.6, 0.1)
     """
-    __default_config = {'background_path': IMG_FOLDER+'//loading_background.png',
-                        'loading_sprite_path': IMG_FOLDER+'//loading_circle.png', 
+    __default_config = {'background_path': PATHS.LOADING_BG,
+                        'loading_sprite_path': PATHS.LOADING_STATIC_CIRCLE, 
                         'text': 'Loading...',
                         'text_proportion': (0.6, 0.1)}
 

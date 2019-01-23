@@ -22,12 +22,13 @@ from os.path import isfile, join, dirname
 #Selfmade libraries
 from exceptions import BadCharacterInitException, StateNotFoundException
 from resizer import Resizer
-from paths import IMG_FOLDER, Restriction, Movements
+from paths import Restriction, Movements
 from logger import Logger as LOG
 from decorators import run_async
 from sprite  import AnimatedSprite
 from ui_element import InfoBoard
 from utility_box import UtilityBox
+from settings import PATHS
 
 class Player(object):
     """Player class. Each player has a name, some characters and his own turn.
@@ -63,8 +64,8 @@ class Player(object):
 
     @staticmethod
     def generate(self, canvas_size, **character_params):
-        infoboard = InfoBoard(self.name+'_infoboard', pygame.USEREVENT+3, (0, 0), (0.15*canvas_size[0], canvas_size[1]),\
-                            canvas_size, texture=IMG_FOLDER+'\\infoboard.png', keep_aspect_ratio = False, cols=6)
+        infoboard = InfoBoard(self.name+'_infoboard', 0, (0, 0), (0.15*canvas_size[0], canvas_size[1]),\
+                            canvas_size, texture=PATHS.INFOBOARD, keep_aspect_ratio = False, cols=6)
         cols = infoboard.get_cols()
         infoboard.add_text_element('initial_padding', '', cols)
         infoboard.add_text_element('player_name', self.name, cols-2)   #Player name
@@ -363,7 +364,7 @@ class Warrior(Character):
                                 Not used directly, this is for the player to read from an above method.
     """
     RESTRICTIONS    = Restriction()
-    DEFAULT_PATH    = IMG_FOLDER+'\\Warrior'
+    DEFAULT_PATH    = PATHS.WARRIOR
     DEFAULT_AMMOUNT = 4
 
     def __init__(self, my_player, id_, position, size, canvas_size, sprites_path,  aliases={}, **params):
@@ -407,7 +408,7 @@ class Wizard(Character):
                                 Not used directly, this is for the player to read from an above method.
     """
     RESTRICTIONS    = Restriction(max_dist=3)
-    DEFAULT_PATH    = IMG_FOLDER+'\\Wizard'
+    DEFAULT_PATH    = PATHS.WIZARD
     DEFAULT_AMMOUNT = 2
 
     def __init__(self, my_player, id_, position, size, canvas_size, sprites_path, **aliases):
@@ -454,7 +455,7 @@ class Priestess(Character):
                                 Not used directly, this is for the player to read from an above method.
     """
     RESTRICTIONS    = Restriction(max_dist=0, move_along_lvl=True, move_along_index=True)
-    DEFAULT_PATH    = IMG_FOLDER+'\\Priestess'
+    DEFAULT_PATH    = PATHS.PRIESTESS
     DEFAULT_AMMOUNT = 2
 
     def __init__(self, my_player, id_, position, size, canvas_size, sprites_path, aliases={}, **params):
@@ -509,7 +510,7 @@ class Pawn(Character):
     """
     RESTRICTIONS    = Restriction()
     CHECK_ENEMIES   = Restriction(max_dist=0, move_along_lvl=True, move_along_index=True)
-    DEFAULT_PATH    = IMG_FOLDER+'\\Pawn'
+    DEFAULT_PATH    = PATHS.PAWN
     DEFAULT_AMMOUNT = 8
 
     def __init__(self, my_player, id_, position, size, canvas_size, sprites_path, aliases={}, **params):
@@ -585,7 +586,7 @@ class MatronMother(Character):
                                 Not used directly, this is for the player to read from an above method.
     """
     RESTRICTIONS    = Restriction()
-    DEFAULT_PATH    = IMG_FOLDER+'\\Matronmother'
+    DEFAULT_PATH    = PATHS.MATRONMOTHER
     DEFAULT_AMMOUNT = 1
 
     def __init__(self, my_player, id_, position, size, canvas_size, sprites_path, aliases={}, **params):

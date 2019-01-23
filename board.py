@@ -25,7 +25,7 @@ from cell import Cell, Quadrant
 from exceptions import BadPlayersParameter, BadPlayerTypeException, PlayerNameExistsException
 from decorators import run_async
 from players import Player
-from paths import IMG_FOLDER, Path
+from paths import Path
 from ui_element import TextSprite
 from logger import Logger as LOG
 from players import Character, Restriction

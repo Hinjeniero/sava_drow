@@ -21,13 +21,13 @@ from board import Board
 from menu import Menu
 from ui_element import UIElement, TextSprite, InfoBoard, Dialog
 from colors import RED, BLACK, WHITE
-from paths import IMG_FOLDER, SOUND_FOLDER
 from logger import Logger as LOG
 from utility_box import UtilityBox
 from board_generator import BoardGenerator
 from exceptions import  NoScreensException, InvalidGameElementException,\
                         EmptyCommandException, ScreenNotFoundException
 from surface_loader import ResizedSurface
+from settings import PATHS, USEREVENTS, SCREEN_FLAGS
 
 class Game(object):
     def __init__(self, id_, resolution, fps, **board_params):
@@ -55,7 +55,7 @@ class Game(object):
         self.set_timers()
 
     def set_timers(self):
-        pygame.time.set_timer(pygame.USEREVENT+7, 1000) #Each second
+        pygame.time.set_timer(USEREVENTS.TIMER_ONE_SEC, 1000) #Each second
 
     def add_screens(self, *screens):
         for screen in screens:
@@ -77,23 +77,23 @@ class Game(object):
         """
         if event.type < pygame.USEREVENT:       
             return False
-        elif event.type is pygame.USEREVENT:
+        elif event.type is USEREVENTS.MAINMENU_USEREVENT:
             if 'start' in event.command.lower() and not self.started:
                 self.initiate()
             self.change_screen(*event.command.lower().split('_'))
-        elif event.type is pygame.USEREVENT+1:
+        elif event.type is USEREVENTS.SOUND_USEREVENT:
             self.sound_handler(event.command.lower(), event.value)
-        elif event.type is pygame.USEREVENT+2:  
+        elif event.type is USEREVENTS.GRAPHIC_USEREVENT:  
             self.graphic_handler(event.command.lower(), event.value)
-        elif event.type is pygame.USEREVENT+3:  
+        elif event.type is USEREVENTS.CONFIG_USEREVENT:  
             self.config_handler(event.command.lower(), event.value)
-        elif event.type is pygame.USEREVENT+6:
+        elif event.type is USEREVENTS.END_CURRENT_GAME:
             self.show_popup('win')
             self.current_screen.play_sound('win')
             self.started = False
             self.change_screen('main', 'menu')
             #TODO REstart params of params menu
-        elif event.type is pygame.USEREVENT+7:
+        elif event.type is USEREVENTS.TIMER_ONE_SEC:
             self.fps_text = UtilityBox.generate_fps(self.clock, size=tuple(int(x*0.05) for x in self.resolution))
     
     def config_handler(self, command, value):
@@ -115,17 +115,17 @@ class Game(object):
             self.set_resolution(value)
         elif 'fullscreen' in command:
             if 'on' in value.lower() or value == 1:
-                self.display = pygame.display.set_mode(self.resolution, pygame.HWSURFACE | pygame.FULLSCREEN | pygame.DOUBLEBUF)
+                self.display = pygame.display.set_mode(self.resolution, SCREEN_FLAGS.FULLSCREEN)
                 self.fullscreen = True
             else:
-                self.display = pygame.display.set_mode(self.resolution, pygame.DOUBLEBUF)
+                self.display = pygame.display.set_mode(self.resolution, SCREEN_FLAGS.WINDOWED)
                 self.fullscreen = False
 
     def set_resolution(self, resolution):
         if self.fullscreen:
-            self.display = pygame.display.set_mode(self.resolution, pygame.HWSURFACE | pygame.FULLSCREEN | pygame.DOUBLEBUF)
+            self.display = pygame.display.set_mode(self.resolution, SCREEN_FLAGS.FULLSCREEN)
         else:
-            self.display = pygame.display.set_mode(self.resolution, pygame.DOUBLEBUF)
+            self.display = pygame.display.set_mode(self.resolution, SCREEN_FLAGS.WINDOWED)
         ResizedSurface.clear_lut()  #Clear the lut of resized surfaces
         for screen in self.screens:
             screen.set_resolution(resolution)
@@ -188,7 +188,7 @@ class Game(object):
         res = self.resolution
         size = (900, 80)
         position = tuple(x//2 - y//2 for x, y in zip(res, size))
-        image = IMG_FOLDER+'\\pixel_panel_2.png'
+        image = PATHS.LONG_POPUP
         text_size = 0.95
         popup_acho = UIElement.factory( 'secret_acho', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
                                         text='Gz, you found a secret! all your SFXs will be achos now.', text_proportion=text_size)

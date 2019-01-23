@@ -31,10 +31,13 @@ class PARAMS:
                     'matron_mother':{'ammount': 1, 'aliases':{'pickup': 'pick'}},
     }
 
+class SOUND_PARAMS:
+    SOUND_CHANNELS_AMMOUNT = 8
 #---Miscellaneous
 class SCREEN_FLAGS:
     FULLSCREEN  = pygame.HWSURFACE | pygame.FULLSCREEN | pygame.DOUBLEBUF
     WINDOWED    = pygame.DOUBLEBUF
+
 class SIZES:
     MAX_SURFACE_SIZE = 256
 
@@ -51,17 +54,43 @@ class STRINGS:
     SPRITE_NAMES = ('Manolo', 'Eustaquio', 'Zimamamio')
     MOVE_KEYWORDS = ('run', )
 
+#STATE MACHINES
+class STATES:
+    SCREEN = ('idle', 'stopped', 'cutscene')
+
 #PATHS TO FILES/IMAGES/SOUNDS
 #---Global paths(Container paths)
 class PATHS:
     GAME_FOLDER = os.path.dirname(__file__)
     IMAGE_FOLDER = os.path.join(GAME_FOLDER, 'img\\')
     AUDIO_FOLDER = os.path.join(GAME_FOLDER, 'sounds\\')
-    #---Specific paths
-    CHAR_PATHS = (IMAGE_FOLDER+'Pawn', IMAGE_FOLDER+'Warrior', IMAGE_FOLDER+'Wizard', IMAGE_FOLDER+'Priestess', IMAGE_FOLDER+'Matronmother')
-    DOOR_PATH = (IMAGE_FOLDER+'\\Portal')
-    MENU_SONGS_PATH = AUDIO_FOLDER+'menu'
-    BOARD_SONGS_PATH = AUDIO_FOLDER+'board'
-    COMMON_SONGS_PATH = AUDIO_FOLDER+'common'
-
-    POPUP_IMAGE = IMAGE_FOLDER+'\\pixel_panel_2.png'
+    SOUNDS_FOLDER = AUDIO_FOLDER+'common\\'
+    #Characters
+    PAWN = IMAGE_FOLDER+'Pawn'
+    WIZARD = IMAGE_FOLDER+'Warrior'
+    WARRIOR = IMAGE_FOLDER+'Wizard'
+    PRIESTESS = IMAGE_FOLDER+'Priestess'
+    MATRONMOTHER = IMAGE_FOLDER+'Matronmother'
+    SANS = IMAGE_FOLDER+'sans_hd'
+    #---Specific paths, animation_generator
+    CHARS = (PAWN, WARRIOR, WIZARD, PRIESTESS,MATRONMOTHER)
+    DOOR = IMAGE_FOLDER+'Portal'
+    ANIMATED_TREE = IMAGE_FOLDER+'Tree'
+    ANIMATED_WATERFALL_BG = IMAGE_FOLDER+'Waterfall'
+    ANIMATED_CAVE_WATERFALL_BG = IMAGE_FOLDER+'Waterfall_dark'
+    ANIMATED_RAIN_TREE_BG = IMAGE_FOLDER+'Rain_tree'
+    ANIMATED_RAIN_CHINESE_BG = IMAGE_FOLDER+'Rain_chinese'
+    INDUSTRIAL_LAYERED_BG = IMAGE_FOLDER+'Industrial'
+    #---Main, the songs folders
+    MENU_SONGS = AUDIO_FOLDER+'menu'
+    BOARD_SONGS = AUDIO_FOLDER+'board'
+    COMMON_SONGS = AUDIO_FOLDER+'common'
+    #---Screen
+    DEFAULT_BG = IMAGE_FOLDER+'background.jpg'
+    LOADING_BG = IMAGE_FOLDER+'loading_background.png'
+    LOADING_STATIC_CIRCLE = IMAGE_FOLDER+'loading_circle.png'
+    LOADING_ANIMATED_CIRCLE = ''
+    #---Menus, buttons and such
+    LONG_POPUP = IMAGE_FOLDER+'pixel_panel_2.png'
+    SHORT_BUTTON = IMAGE_FOLDER+'button.png'
+    INFOBOARD = IMAGE_FOLDER+'infoboard.png'

@@ -199,9 +199,13 @@ class Character(AnimatedSprite):
             self.set_paths(graph, distances, movement_restriction, level_size)
             result = Movements.get_movements(hash(movement_restriction))
         paths = []
+        print("RSEULTS INDEX ")
+        print(result[index])
         for path in result[index]:
             if not current_map[path[-1]].has_ally():
                 paths.append(path)
+        print("AFTER CHECKING FOR ALLIES ")
+        print(paths)
         return paths
     
     def promote(self):

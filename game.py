@@ -88,11 +88,11 @@ class Game(object):
         elif event.type is USEREVENTS.CONFIG_USEREVENT:  
             self.config_handler(event.command.lower(), event.value)
         elif event.type is USEREVENTS.END_CURRENT_GAME:
-            print("WINNER")
             self.show_popup('win')
             self.current_screen.play_sound('win')
             self.started = False
             self.change_screen('main', 'menu')
+            self.get_screen('params', 'menu', 'config').enable_all_sprites(True)
             #TODO REstart params of params menu
         elif event.type is USEREVENTS.TIMER_ONE_SEC:
             self.fps_text = UtilityBox.generate_fps(self.clock, size=tuple(int(x*0.05) for x in self.resolution))
@@ -333,8 +333,14 @@ class Game(object):
 
     def initiate(self):
         self.started = True
+        if self.get_screen('board'):
+            for i in range(0, len(self.screens)):
+                if 'board' in self.screens[i].id:
+                    self.screens[i] = self.board_generator.generate_board(self.resolution)
+                    break
+        else:
+            self.screens.append(self.board_generator.generate_board(self.resolution))
         self.get_screen('params', 'menu', 'config').enable_all_sprites(False)
-        self.screens.append(self.board_generator.generate_board(self.resolution))
         self.get_screen('music', 'menu', 'sound').enable_all_sprites(True)
 
     def start(self):

@@ -8,6 +8,7 @@ class USEREVENTS:
     GRAPHIC_USEREVENT   = pygame.USEREVENT+2
     CONFIG_USEREVENT    = pygame.USEREVENT+3
     BOARD_USEREVENT     = pygame.USEREVENT+4
+    DIALOG_USEREVENT    = pygame.USEREVENT+5
     END_CURRENT_GAME    = pygame.USEREVENT+6
     TIMER_ONE_SEC       = pygame.USEREVENT+7
 
@@ -40,7 +41,7 @@ class SCREEN_FLAGS:
 
 class SIZES:
     MAX_SURFACE_SIZE = 256
-
+    
 class EXTENSIONS:
     SOUND_FORMATS = ('.ogg', '.mp3')
     MUSIC_FORMATS = ('.ogg', '.mp3')

@@ -602,7 +602,6 @@ class Board(Screen):
         self.update_cells(self.last_cell.sprite, active_cell)
         self.last_cell.empty()  #Not last cell anymore, char was droppped succesfully
         
-    
     def next_char_turn(self, char):
         self.char_turns += 1
         if self.char_turns >= char.turns:
@@ -617,7 +616,7 @@ class Board(Screen):
         self.current_player.turn += 1
         while True:
             self.player_index += 1
-            if self.player_index is len(self.players):
+            if self.player_index >= len(self.players):
                 self.player_index = 0
                 self.turn += 1
             if self.players[self.player_index].turn is self.turn:
@@ -651,8 +650,6 @@ class Board(Screen):
 
     def win(self):
         pygame.event.post(self.end_event)
-        #send event to change screen
-        #send event to end game
 
     #TODO KEYBOARD DOES NOT CHANGE ACTIVE CELL, BUT ACTIVE CHARACTER. ACTIVE CELL CHANGE ONLY BY MOUSE
     def keyboard_handler(self, keys_pressed):

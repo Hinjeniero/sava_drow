@@ -50,7 +50,7 @@ def start_pygame(resolution=INIT_PARAMS.INITIAL_RESOLUTION):
 
 def create_dialog(text='You sure?'):
     #Dialog
-    dialog = Dialog('dialog', pygame.USEREVENT, (500, 200), INIT_PARAMS.INITIAL_RESOLUTION, text=text)
+    dialog = Dialog('dialog', USEREVENTS.DIALOG_USEREVENT, (500, 200), INIT_PARAMS.INITIAL_RESOLUTION, text=text)
     dialog.add_button(dialog.get_cols()//2, 'ok', 'whatever', gradient=((0, 0, 255, 255),(128, 128, 255, 255)))
     return dialog
 

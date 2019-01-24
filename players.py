@@ -70,7 +70,7 @@ class Player(object):
         infoboard.add_text_element('initial_padding', '', cols)
         infoboard.add_text_element('player_name', self.name, cols-2)   #Player name
         infoboard.add_text_element('player_number', 'id: '+str(self.order+1), cols-2)   #Player order
-        infoboard.add_text_element('player_chars', 'characters: '+str(len(self.characters)), cols-2)   #Player total ammount of chars
+        infoboard.add_text_element('player_chars', 'characters: '+str(len(self.characters.sprites())), cols-2)   #Player total ammount of chars
         self.infoboard = infoboard
 
     def register_movement(self, character):
@@ -83,17 +83,17 @@ class Player(object):
         self.get_character(killer).kills += 1
 
     def pause_characters(self):
-        for character in self.characters:
+        for character in self.characters.sprites():
             character.set_state("stop")
             character.set_active(False)
 
     def unpause_characters(self):
-        for character in self.characters:
+        for character in self.characters.sprites():
             character.set_state("idle")
             character.set_active(True)
 
     def get_character(self, character):
-        for char in self.characters:
+        for char in self.characters.sprites():
             if character is char:
                 return char
 
@@ -108,7 +108,7 @@ class Player(object):
         """Resizes the infoboard and the player's characters"""
         if self.infoboard:
             self.infoboard.set_canvas_size(resolution)
-        for char in self.characters:
+        for char in self.characters.sprites():
             char.set_canvas_size(resolution)
 
     def has_char(self, char):
@@ -119,7 +119,7 @@ class Player(object):
             self.characters.remove(char)
             self.update()
             if char.essential:  #If the killed one was a matron mother or a promoted/bonus char 
-                for character in self.characters:
+                for character in self.characters.sprites():
                     if character.essential:
                         return
                 self.dead = True
@@ -179,6 +179,7 @@ class Character(AnimatedSprite):
         self.movements  = 0
         self.essential  = False
         self.turns      = 1
+        self.rank       = 0
     
     def get_paths(self, graph, distances, current_map, index, level_size, movement_restriction):
         """Gets all the possible paths for each cell (of a specific subclass) with this overloaded method.
@@ -320,7 +321,7 @@ class Character(AnimatedSprite):
         """
         LOG.log('INFO', "----Factory, making ", player_name, " characters----")
         Character.parse_json_char_params(character_settings)
-        characters  = pygame.sprite.Group()
+        characters  = pygame.sprite.OrderedUpdates()
         threads     = []
 
         for key in character_settings.keys():
@@ -334,6 +335,7 @@ class Character(AnimatedSprite):
         for t in threads:   
             t.join()        #Threading.join
         LOG.log('INFO', "----Factory, done making ", player_name, " characters----")
+        characters.sprites().sort(key=lambda char: char.rank, reverse=True)  #To drop first the most important characters
         return characters
 
     @staticmethod
@@ -383,7 +385,8 @@ class Warrior(Character):
             **aliases (:dict:): How each standarized action will be named in the loaded images.
         """
         super().__init__(my_player, id_, position, size, canvas_size, sprites_path, aliases=aliases, **params)
-        self.turns = 2
+        self.turns  = 2
+        self.rank   = 1
         
     def get_paths(self, graph, distances, current_map, index, level_size):
         """Gets all the possible paths for each cell for a Warrior type with his Restriction in movement.
@@ -427,7 +430,7 @@ class Wizard(Character):
             **aliases (:dict:): How each standarized action will be named in the loaded images.
         """
         super().__init__(my_player, id_, position, size, canvas_size, sprites_path, **aliases)
-
+        self.rank   = 1
     def get_paths(self, graph, distances, current_map, index, level_size):
         """Gets all the possible paths for each cell for a Wizard type with his Restriction in movement.
         If the result is None, means that the paths for the restrictions of this Character were not requested before.
@@ -474,6 +477,7 @@ class Priestess(Character):
             **aliases (:dict:): How each standarized action will be named in the loaded images.
         """
         super().__init__(my_player, id_, position, size, canvas_size, sprites_path, aliases=aliases, **params)
+        self.rank   = 1
 
     def get_paths(self, graph, distances, current_map, index, level_size):
         """Gets all the possible paths for each cell for a Priestess type with her Restriction in movement.
@@ -605,8 +609,8 @@ class MatronMother(Character):
             **aliases (:dict:): How each standarized action will be named in the loaded images.
         """
         super().__init__(my_player, id_, position, size, canvas_size, sprites_path, aliases=aliases, **params)
-        self.essential = True
-        #self.movement   = Restriction(bypass_enemies=True)
+        self.essential  = True
+        self.rank       = 2
 
     def get_paths(self, graph, distances, current_map, index, level_size):
         """Gets all the possible paths for each cell for a MatronMother type with her Restriction in movement.

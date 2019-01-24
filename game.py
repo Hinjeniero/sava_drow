@@ -336,7 +336,10 @@ class Game(object):
         if self.get_screen('board'):
             for i in range(0, len(self.screens)):
                 if 'board' in self.screens[i].id:
+                    old_board = self.screens[i]
                     self.screens[i] = self.board_generator.generate_board(self.resolution)
+                    self.screens[i].music_chan.set_volume(old_board.music_chan.get_volume())
+                    self.screens[i].sound_vol = old_board.sound_vol
                     break
         else:
             self.screens.append(self.board_generator.generate_board(self.resolution))

@@ -198,7 +198,8 @@ class Board(Screen):
                 except KeyError:    quadrants[quadrant] = [cell]
         for quadrant_number, quadrant_cells in quadrants.items():
             #LOG.log('debug', quadrant_number, ": ", quadrant_cells)
-            self.quadrants[quadrant_number] = Quadrant(quadrant_number, self.params['circles_per_lvl'],*quadrant_cells)
+            self.quadrants[quadrant_number] = Quadrant(quadrant_number, self.params['circles_per_lvl'],\
+                                                        self.params['inter_path_frequency'], *quadrant_cells)
 
     def __get_quadrant(self, cell_index):
         """Gets the respective quadrant of the cell index received.
@@ -494,9 +495,10 @@ class Board(Screen):
             BadPlayerTypeException: If the player argument is not of type Player."""
         if isinstance(player, Player): 
             self.players.append(player)
+            #TODO CHECK IF LEN OF CHARS IS GREATER THAN LEN OF CELLS
             for character in player.characters:
                 character.set_size(self.cells.sprites()[0].rect.size)
-                cell = self.quadrants[player.order].get_random_cell()
+                cell = self.quadrants[player.order].get_random_cell(center_level = character.rank)
                 cell.add_char(character)
                 character.set_center(cell.rect.center)
                 self.characters.add(character)

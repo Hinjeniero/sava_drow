@@ -156,6 +156,7 @@ class QuadrantCell(object):
         self.cell = cell
         self.center_level = 0
         self.border_level = 0
+        self.bifurcation  = False
 
 class Quadrant(object):
     """Quadrant class. Takes care of the organization of the Cells themselves.
@@ -177,7 +178,7 @@ class Quadrant(object):
         index (:tuple: int, int):   Minimum and maximum levels that the cells of this quadrant posses.
         """
 
-    def __init__(self, id_, level_size, *cells):
+    def __init__(self, id_, level_size, interpath_freq, *cells):
         """Quadrant constructor.
         Args:
             id (int):   Numerical ID of this quadrant.
@@ -189,16 +190,18 @@ class Quadrant(object):
         #interval to return pseudo cells (exterior-border-center, and shit like that)
         self.index  = None
         self.lvl    = None
-        Quadrant.generate(self, level_size, *cells)
+        Quadrant.generate(self, level_size, interpath_freq, *cells)
         
 
     @staticmethod
-    def generate(self, level_size, *cells):
+    def generate(self, level_size, interpath_freq, *cells):
         for cell in cells:
             self.cells.append(QuadrantCell(cell))
         self.index, self.lvl = self.get_intervals(level_size, *self.cells)
         self.sort_cells_but_good(level_size, *self.cells)
         for cell in self.cells:
+            if (cell.cell.get_index()+1)%interpath_freq == 0:
+                cell.bifurcation = True
             try:
                 self.borders[cell.border_level].append(cell)
             except KeyError:
@@ -212,10 +215,24 @@ class Quadrant(object):
     def print_state(self):
         LOG.log('debug', 'Quadrant id: ', self.id, ', with the intervals: lvl ', self.lvl, ', index', self.index,\
                         '\nAll cells: ',\
-                        tuple(str(cell.cell.pos)+', center_level: '+str(cell.center_level)+', border_level: '+ str(cell.border_level)+'\n'\
+                        tuple(str(cell.cell.pos)+', center_level: '+str(cell.center_level)+\
+                        ', border_level: '+ str(cell.border_level)+\
+                        ', bifurcation: '+str(cell.bifurcation)+'\n'\
                         for cell in self.cells),\
                         '---------------------------------')
 
+    def parse_level(self, border_level=None, center_level=None):
+        if center_level:
+            center_levels = (min(x for x in self.centers.keys()), max(x for x in self.centers.keys()))
+            level = center_levels[0] if center_level < center_levels[0]\
+            else center_levels[1] if center_level > center_levels[1] else center_level
+            return level
+        elif border_level:
+            border_levels = (min(x for x in self.borders.keys()), max(x for x in self.borders.keys()))
+            level = border_levels[0] if border_level < border_levels[0]\
+            else border_levels[1] if border_level > border_levels[1] else border_level
+            return level
+        
     def get_random_cell(self, border_level=None, center_level=None):
         """Gets a random cell from the quadrant, returns it and deletes it.
         Args:
@@ -225,22 +242,31 @@ class Quadrant(object):
             (None||:obj: Cell): A cell of the requested zone as the input says so. 
                                 None if the input cant be recognized.
         """
-        if center_level:
-            #Parsing center level
-            center_levels = (min(x for x in self.centers.keys()), max(x for x in self.centers.keys()))
-            level = center_levels[0] if center_level < center_levels[0]\
-            else center_levels[1] if center_level > center_levels[1] else center_level
-            #Returning the cell
-            cell = random.choice(self.centers[level])
-        elif border_level:
-            #parsing border level
-            border_levels = (min(x for x in self.borders.keys()), max(x for x in self.borders.keys()))
-            level = border_levels[0] if border_level < border_levels[0]\
-            else border_levels[1] if border_level > border_levels[1] else border_level
-            #Returning the cell
-            cell = random.choice(self.centers[level])
-        else:
-            cell = random.choice(self.cells)
+        choosable_pool = []
+        #Too low and too high levels get parsed here
+        center_level = self.parse_level(center_level=center_level)
+        border_level = self.parse_level(border_level=border_level)
+        bifurcations = True    
+        while len(choosable_pool) is 0:
+            if center_level:
+                choosable_pool.extend((cell for cell in self.centers[center_level] if cell.bifurcation == bifurcations))
+                if not bifurcations:
+                    center_level -= 1
+                    if center_level < 0:
+                        break
+            elif border_level:
+                choosable_pool.extend((cell for cell in self.borders[center_level] if cell.bifurcation == bifurcations))
+                if not bifurcations:
+                    border_level -= 1
+                    if border_level < 0:
+                        break
+            else:
+                break
+            bifurcations = not bifurcations
+        if len(choosable_pool) is 0:            #If its 0 even after all that
+            choosable_pool.extend(self.cells)   #Lets just get whatever cell is still available 
+        #And now we can choose
+        cell = random.choice(choosable_pool)
         self.delete_cells(cell)
         return cell.cell
 

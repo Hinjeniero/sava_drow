@@ -198,7 +198,7 @@ class Board(Screen):
                 except KeyError:    quadrants[quadrant] = [cell]
         for quadrant_number, quadrant_cells in quadrants.items():
             #LOG.log('debug', quadrant_number, ": ", quadrant_cells)
-            self.quadrants[quadrant_number] = Quadrant(quadrant_number, *quadrant_cells)
+            self.quadrants[quadrant_number] = Quadrant(quadrant_number, self.params['circles_per_lvl'],*quadrant_cells)
 
     def __get_quadrant(self, cell_index):
         """Gets the respective quadrant of the cell index received.

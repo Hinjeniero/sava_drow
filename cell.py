@@ -16,6 +16,7 @@ import random
 from paths import Path
 from utility_box import UtilityBox
 from polygons import Circle
+from logger import Logger as LOG
 
 @functools.total_ordering
 class Cell(Circle):
@@ -150,6 +151,12 @@ class Cell(Circle):
     def __hash__(self):
         return hash(self.pos)
 
+class QuadrantCell(object):
+    def __init__(self, cell):
+        self.cell = cell
+        self.center_layer = 0
+        self.border_layer = 0
+
 class Quadrant(object):
     """Quadrant class. Takes care of the organization of the Cells themselves.
     in different zones of the board. Each zone is divided between borders and centre.
@@ -170,18 +177,33 @@ class Quadrant(object):
         index (:tuple: int, int):   Minimum and maximum levels that the cells of this quadrant posses.
         """
 
-    def __init__(self, id_, *cells):
+    def __init__(self, id_, level_size, *cells):
         """Quadrant constructor.
         Args:
             id (int):   Numerical ID of this quadrant.
             *cells (:obj: Cell):    All the cells belonging to this quadrant that have to be sorted out. Separated by commas."""
         self.id     = id_
-        self.cells  = pygame.sprite.Group()
-        self.center = pygame.sprite.Group()
-        self.border = pygame.sprite.Group()
+        self.cells  = []
         #interval to return pseudo cells (exterior-border-center, and shit like that)
-        self.lvl, self.index = self.get_intervals(*cells)
-        self.sort_cells(*cells)
+        self.index  = None
+        self.lvl    = None
+        Quadrant.generate(self, level_size, *cells)
+        
+
+    @staticmethod
+    def generate(self, level_size, *cells):
+        for cell in cells:
+            self.cells.append(QuadrantCell(cell))
+        self.index, self.lvl = self.get_intervals(level_size, *self.cells)
+        self.sort_cells_but_good(level_size, *self.cells)
+        self.print_state()
+
+    def print_state(self):
+        LOG.log('debug', 'Quadrant id: ', self.id, ', with the intervals: lvl ', self.lvl, ', index', self.index,\
+                        '\nAll cells: ',\
+                        tuple(str(cell.cell.pos)+', center_level: '+str(cell.center_layer)+', border_level: '+ str(cell.border_layer)+'\n'\
+                        for cell in self.cells),\
+                        '---------------------------------')
 
     def get_random_cell(self, zone=None):
         """Gets a random cell from the quadrant, returns it and deletes it.
@@ -192,35 +214,45 @@ class Quadrant(object):
             (None||:obj: Cell): A cell of the requested zone as the input says so. 
                                 None if the input cant be recognized.
         """
-        cell = random.choice(self.cells.sprites()) if not zone or 'none' in zone.lower()\
-        else random.choice(self.border.sprites()) if 'bord' in zone.lower()\
-        else random.choice(self.center.sprites()) if 'cent' in zone.lower()\
-        else None
+        cell = random.choice(self.cells)
         self.cells.remove(cell)
-        self.center.remove(cell)
-        self.border.remove(cell)
-        return cell
+        return cell.cell
 
-    def get_intervals(self, *cells):
+    def get_intervals(self, level_size, *cells):
         """After analyzing all the Cells, gets the intervals for max and min levels, and max/min indexes
         of all the Cells in the quadrant.
         Args:
             *cells (:obj: Cell):    All the cells that belong to this quadrant. Separated by commas.
         Returns:
             (tuple: tuple, tuple):  Both intervals in a (minimum, maximum) schema."""
-        indexes, levels = tuple([cell.get_index() for cell in cells]), tuple([cell.get_level() for cell in cells])
+        offset = level_size//8
+        indexes, levels = tuple([(cell.cell.get_index()+offset)%level_size for cell in cells]), tuple([cell.cell.get_level() for cell in cells])
         return (min(indexes), max(indexes)), (min(levels), max(levels))
 
-    def sort_cells(self, *cells):
+
+    def sort_cells_but_good(self, level_size, *cells):
+        while True:
+            for cell in cells:
+                cell.border_layer += 1
+            indexes, lvls = self.get_intervals(level_size, *cells)
+            center_cells = self.sort_cells(level_size, lvls, indexes, *cells)
+            for cell in center_cells:
+                cell.center_layer += 1
+            cells = center_cells
+            if len(cells) is 0:
+                break
+
+    def sort_cells(self, level_size, lvl_interval, index_interval, *cells):
         """Sort all the input cells and separates them in center or border. Also adds them to the belonging Group.
         The Cells have their references duplicated, since they are added to the general Cell groupm, ando to border or center.
         Args:
             *cells (:obj: Cell):    All the cells that belong to this quadrant. Separated by commas."""
+        center = []
+        offset = level_size//8
         for cell in cells:
-            self.cells.add(cell)
-            if cell.get_level() < self.lvl[1] and cell.get_level() > self.lvl[0]\
-            and cell.get_index() < self.index[1] and cell.get_index() > self.index[0]:
-                self.center.add(cell)
-            else:
-                self.border.add(cell)
-                        
+            #if cell.get_level() < self.lvl[1] and cell.get_level() > self.lvl[0]\ #This makes the outside-cells border too (altho correct, we dont want that)
+            if cell.cell.get_level() > lvl_interval[0]\
+            and (cell.cell.get_index()+offset)%level_size < index_interval[1]\
+            and (cell.cell.get_index()+offset)%level_size > index_interval[0]:
+                center.append(cell)
+        return center

@@ -25,15 +25,17 @@ class INIT_PARAMS:
 
 class PARAMS:
     BOARD_ID    = 'main_board'
-    CHARACTER_SETTINGS = {'pawn':{'ammount': 4, 'aliases':{'pickup': 'running'}},
-                    'warrior':{'ammount': 2, 'aliases':{'pickup': 'run'}},
-                    'wizard':{'ammount': 2, 'aliases':{'pickup': 'pick'}},
-                    'priestess':{'ammount': 2, 'aliases':{'pickup': 'run'}},
-                    'matron_mother':{'ammount': 1, 'aliases':{'pickup': 'pick'}},
+    CHARACTER_SETTINGS = {'pawn':{'ammount': 0, 'aliases':{'pickup': 'running'}},
+                    'warrior':{'ammount': 0, 'aliases':{'pickup': 'run'}},
+                    'wizard':{'ammount': 0, 'aliases':{'pickup': 'pick'}},
+                    'priestess':{'ammount': 0, 'aliases':{'pickup': 'run'}},
+                    'matron_mother':{'ammount': 0, 'aliases':{'pickup': 'pick'}},
     }
 
 class SOUND_PARAMS:
     SOUND_CHANNELS_AMMOUNT = 8
+    INIT_BOARD_VOLUME = 0.25
+    INIT_MENU_VOLUME = 0.25
 #---Miscellaneous
 class SCREEN_FLAGS:
     FULLSCREEN  = pygame.HWSURFACE | pygame.FULLSCREEN | pygame.DOUBLEBUF

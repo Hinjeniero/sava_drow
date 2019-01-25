@@ -26,7 +26,8 @@ class INIT_PARAMS:
 class PARAMS:
     BOARD_ID    = 'main_board'
     PLAYERS_AMMOUNT = (2, 4, 1) #1 is for testing
-    
+    ANIMATION_TIME = 25
+
 class CHARACTERS:
     PAWN_AMMOUNT = 8
     WARRIOR_AMMOUNT = 2
@@ -71,6 +72,8 @@ class STRINGS:
     MOVE_KEYWORDS = ('run', )
     YES_NO_OPTIONS = ('On', 'Off')
     YES_NO_REVERSED = ('Off', 'On')
+    ANIMATED_BGS = ('Layered industrial', 'Layered forest', 'Animated rain tree',
+                    'Animated rain china', 'Animated waterfall cave', 'Animated waterfall')
 #STATE MACHINES
 class STATES:
     SCREEN = ('idle', 'stopped', 'cutscene')

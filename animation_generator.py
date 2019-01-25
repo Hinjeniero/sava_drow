@@ -15,7 +15,7 @@ import random
 #Selfmade libraries
 from animation import ScriptedSprite, Animation, LoopedAnimation
 from sprite import AnimatedSprite
-from decorators import time_it
+from decorators import time_it, run_async
 from surface_loader import SurfaceLoader, no_size_limit
 from settings import PATHS, STRINGS
 
@@ -23,6 +23,31 @@ PYGAME_EVENT = -1
 MOVE_KEYWORDS = ('run', )
 
 class AnimationGenerator(object):
+
+    @staticmethod
+    def factory(request_id, resolution, time, fps_modes, current_fps):
+        animation = None
+        request_id = request_id.lower()
+        if 'layer' in request_id:
+            if 'industrial' in request_id:
+                animation = AnimationGenerator.industrial_layered_background(resolution, time, *fps_modes)
+            elif 'forest' in request_id:
+                animation = AnimationGenerator.forest_layered_background(resolution, time, *fps_modes)
+        if 'animated' in request_id:
+            if 'waterfall' in request_id:
+                if 'cave' in request_id:
+                    animation = AnimationGenerator.animated_cave_waterfall_background(resolution, time, *fps_modes)
+                else:
+                    animation = AnimationGenerator.animated_waterfall_background(resolution, time, *fps_modes)
+            elif 'rain' in request_id:
+                if 'chin' in request_id:
+                    animation = AnimationGenerator.animated_rain_chinese(resolution, time, *fps_modes)
+                else:
+                    animation = AnimationGenerator.animated_rain_tree(resolution, time, *fps_modes)
+        if animation:
+            animation.set_fps(current_fps)
+        return animation
+
     @staticmethod
     def animated_tree_platform(resolution):
         tree_sprite = AnimatedSprite('tree', (0, 0), resolution, resolution, sprite_folder=PATHS.ANIMATED_TREE,\
@@ -32,6 +57,11 @@ class AnimationGenerator(object):
 
     @staticmethod
     def industrial_layered_background(resolution, time, *fps):
+        return AnimationGenerator.layered_animated_background(resolution, time, fps, PATHS.INDUSTRIAL_LAYERED_BG,\
+                                                            'background', 'far', 'front', 'foreground')
+
+    @staticmethod
+    def forest_layered_background(resolution, time, *fps):
         return AnimationGenerator.layered_animated_background(resolution, time, fps, PATHS.INDUSTRIAL_LAYERED_BG,\
                                                             'background', 'far', 'front', 'foreground')
 

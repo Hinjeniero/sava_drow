@@ -17,6 +17,7 @@ from pygame.locals import *
 from pygame.key import *
 from screen import Screen
 #Selfmade Libraries
+from decorators import run_async
 from board import Board
 from menu import Menu
 from ui_element import UIElement, TextSprite, InfoBoard, Dialog
@@ -27,7 +28,8 @@ from board_generator import BoardGenerator
 from exceptions import  NoScreensException, InvalidGameElementException,\
                         EmptyCommandException, ScreenNotFoundException, TooManyCharactersException
 from surface_loader import ResizedSurface
-from settings import PATHS, USEREVENTS, SCREEN_FLAGS
+from settings import PATHS, USEREVENTS, SCREEN_FLAGS, INIT_PARAMS, PARAMS
+from animation_generator import AnimationGenerator
 
 class Game(object):
     def __init__(self, id_, resolution, fps, **board_params):
@@ -134,6 +136,11 @@ class Game(object):
             else:
                 self.display = pygame.display.set_mode(self.resolution, SCREEN_FLAGS.WINDOWED)
                 self.fullscreen = False
+        elif 'bg' in command or 'background' in command:
+            if 'menu' in command:
+                self.set_background(self.get_screen('main', 'menu'), value)
+            elif 'board' in command:
+                self.set_background(self.get_screen('board'), value)
 
     def set_resolution(self, resolution):
         if self.fullscreen:
@@ -146,6 +153,13 @@ class Game(object):
         for popup in self.popups.sprites():
             popup.set_canvas_size(resolution)
         LOG.log('DEBUG', "Changed resolution to ", resolution)
+
+    @run_async
+    def set_background(self, screen, new_bg_id):
+        new_animated_bg = AnimationGenerator.factory(new_bg_id, self.resolution, PARAMS.ANIMATION_TIME,\
+                                                    INIT_PARAMS.ALL_FPS, self.fps)
+        screen.animated_background = True
+        screen.background = new_animated_bg
 
     def sound_handler(self, command, value):
         """Kinda an unconventional method, calls the whatever method """

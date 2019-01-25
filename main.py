@@ -74,11 +74,11 @@ def create_main_menu():
                                         INIT_PARAMS.INITIAL_RESOLUTION, text="Graphics menu", gradient = next(gradients), gradient_type='vertical', texture=PATHS.SHORT_BUTTON, keep_aspect_ratio = False)
     buttonContinue.set_enabled(False)
     #Create Menu
-    #bg = AnimationGenerator.animated_waterfall_background(INIT_PARAMS.INITIAL_RESOLUTIO, INIT_PARAMS.INITIAL_FPS, *INIT_PARAMS.ALL_FPS)
-    #bg = AnimationGenerator.animated_cave_waterfall_background(INIT_PARAMS.INITIAL_RESOLUTIO, INIT_PARAMS.INITIAL_FPS, *INIT_PARAMS.ALL_FPS)
-    #bg = AnimationGenerator.animated_rain_tree(INIT_PARAMS.INITIAL_RESOLUTIO, INIT_PARAMS.INITIAL_FPS, *INIT_PARAMS.ALL_FPS)
-    #bg = AnimationGenerator.animated_rain_chinese(INIT_PARAMS.INITIAL_RESOLUTIO, INIT_PARAMS.INITIAL_FPS, *INIT_PARAMS.ALL_FPS)
-    bg = AnimationGenerator.industrial_layered_background(INIT_PARAMS.INITIAL_RESOLUTION, INIT_PARAMS.INITIAL_FPS, *INIT_PARAMS.ALL_FPS)
+    #bg = AnimationGenerator.animated_waterfall_background(INIT_PARAMS.INITIAL_RESOLUTIO, PARAMS.ANIMATION_TIME,, *INIT_PARAMS.ALL_FPS)
+    #bg = AnimationGenerator.animated_cave_waterfall_background(INIT_PARAMS.INITIAL_RESOLUTIO, PARAMS.ANIMATION_TIME,, *INIT_PARAMS.ALL_FPS)
+    #bg = AnimationGenerator.animated_rain_tree(INIT_PARAMS.INITIAL_RESOLUTIO, PARAMS.ANIMATION_TIME,, *INIT_PARAMS.ALL_FPS)
+    #bg = AnimationGenerator.animated_rain_chinese(INIT_PARAMS.INITIAL_RESOLUTIO, PARAMS.ANIMATION_TIME,, *INIT_PARAMS.ALL_FPS)
+    bg = AnimationGenerator.industrial_layered_background(INIT_PARAMS.INITIAL_RESOLUTION, PARAMS.ANIMATION_TIME, *INIT_PARAMS.ALL_FPS)
     main_menu   = Menu('main_menu', USEREVENTS.MAINMENU_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, buttonStart, buttonContinue, buttonConfig, buttonSound, buttonGraphics,
                         animated_background= bg, background_path=PATHS.DEFAULT_BG, songs_paths=MENU_SONGS, dialog=create_dialog(),
                         do_align=False)
@@ -146,21 +146,20 @@ def create_sound_menu():
     return sound_menu
 
 def create_video_menu():
-    positions           = UtilityBox.size_position_generator(3, 0.80, 0.10, 0.10, final_offset=0.15)
+    positions           = UtilityBox.size_position_generator(5, 0.80, 0.10, 0.10, final_offset=0.15)
     button_size         = next(positions)
-    buttonRes   = UIElement.factory('button_resolution',"change_resolution_screen_display", USEREVENTS.GRAPHIC_USEREVENT, next(positions), button_size,\
+    buttonRes   = UIElement.factory('button_resolution', "change_resolution_screen_display", USEREVENTS.GRAPHIC_USEREVENT, next(positions), button_size,\
                                     INIT_PARAMS.INITIAL_RESOLUTION, default_values=INIT_PARAMS.RESOLUTIONS, text="Resolution",text_alignment='left')
     buttonFps   = UIElement.factory('button_fps', "change_fps_frames_per_second", USEREVENTS.GRAPHIC_USEREVENT, next(positions), button_size,\
                                     INIT_PARAMS.INITIAL_RESOLUTION, default_values=INIT_PARAMS.ALL_FPS, text="Frames per second",text_alignment='left')
     buttonFullscreen = UIElement.factory('button_fps', "set_display_mode_fullscreen", USEREVENTS.GRAPHIC_USEREVENT, next(positions), button_size,\
                                 INIT_PARAMS.INITIAL_RESOLUTION, default_values=STRINGS.YES_NO_REVERSED, text="Fullscreen")                                    
-    
-    #buttonBgBoard
-
-    #buttonBgMenu
-    
-    graphics_menu  = Menu("menu_graphics_display", USEREVENTS.GRAPHIC_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, buttonRes, buttonFps, buttonFullscreen,\
-                            background_path=PATHS.DEFAULT_BG, do_align=False)
+    buttonBgsMenu   = UIElement.factory('button_menu_bgs', "set_animated_background_menu", USEREVENTS.GRAPHIC_USEREVENT, next(positions), button_size,\
+                                    INIT_PARAMS.INITIAL_RESOLUTION, default_values=STRINGS.ANIMATED_BGS, text="Set menu background",text_alignment='left')
+    buttonBgsBoard  = UIElement.factory('button__board_bgs', "set_animated_background_board", USEREVENTS.GRAPHIC_USEREVENT, next(positions), button_size,\
+                                    INIT_PARAMS.INITIAL_RESOLUTION, default_values=STRINGS.ANIMATED_BGS, text="Set board background", text_alignment='left')
+    graphics_menu   = Menu("menu_graphics_display", USEREVENTS.GRAPHIC_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, buttonRes, buttonFps, buttonFullscreen,\
+                            buttonBgsMenu, buttonBgsBoard, background_path=PATHS.DEFAULT_BG, do_align=False)
     graphics_menu.add_animation(AnimationGenerator.character_teleporting_screen(INIT_PARAMS.INITIAL_RESOLUTION, *INIT_PARAMS.ALL_FPS))
     return graphics_menu
 

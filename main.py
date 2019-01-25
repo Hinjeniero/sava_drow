@@ -22,7 +22,7 @@ from utility_box import UtilityBox
 from game import Game
 from animation_generator import AnimationGenerator
 from sprite import AnimatedSprite
-from settings import USEREVENTS, INIT_PARAMS, PATHS, CHARACTERS,\
+from settings import USEREVENTS, INIT_PARAMS, PATHS, CHARACTERS, PARAMS,\
                     STRINGS, EXTENSIONS, SCREEN_FLAGS, SOUND_PARAMS
 #This because segmentation fault
 import faulthandler
@@ -93,14 +93,14 @@ def create_config_menu():
     buttonLoadingScreen = UIElement.factory('button_game_mode', "set_loading_board", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
                                             INIT_PARAMS.INITIAL_RESOLUTION, default_values=STRINGS.YES_NO_OPTIONS, text="Show screen while board loads", text_alignment='left',\
                                             gradient = (RED, BLACK))
-    buttonRandomFilling = UIElement.factory('button_game_mode', "set_random_board_fill", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
+    buttonRandomFilling = UIElement.factory('button_game_mode', "set_random_board_cells_fill", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
                                             INIT_PARAMS.INITIAL_RESOLUTION, default_values=STRINGS.YES_NO_OPTIONS, text="Random board fill order", text_alignment='left',\
                                             gradient = (RED, BLACK))
     buttonGameModes     = UIElement.factory('button_game_mode', "change_game_mode", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
                                             INIT_PARAMS.INITIAL_RESOLUTION, default_values=STRINGS.GAMEMODES, text="Game Mode", text_alignment='left',\
                                             gradient = (RED, BLACK))
     buttonCountPlayers  = UIElement.factory('button_players', "set_ammount_players", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
-                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=(2, 4), text="Number of players", text_alignment='left',\
+                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=PARAMS.PLAYERS_AMMOUNT, text="Number of players", text_alignment='left',\
                                             gradient = (RED, BLACK))
     buttonNumPawns      = UIElement.factory('button_pawns', "set_ammount_pawns", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
                                             INIT_PARAMS.INITIAL_RESOLUTION, default_values=CHARACTERS.PAWN_OPTIONS, text="Number of pawns", text_alignment='left',\

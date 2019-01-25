@@ -158,6 +158,9 @@ class QuadrantCell(object):
         self.border_level = 0
         self.bifurcation  = False
 
+    def cell_to_str(self):
+        return 'border_level: '+str(self.border_level)
+
 class Quadrant(object):
     """Quadrant class. Takes care of the organization of the Cells themselves.
     in different zones of the board. Each zone is divided between borders and centre.
@@ -209,7 +212,7 @@ class Quadrant(object):
                 self.centers[cell.center_level].append(cell)
             except KeyError:
                 self.centers[cell.center_level] = [cell]
-        self.print_state()
+        #self.print_state()
 
     @staticmethod
     def delete_overlapping_cells(*quadrants):
@@ -286,10 +289,10 @@ class Quadrant(object):
         if len(choosable_pool) is 0:            #If its 0 even after all that
             choosable_pool.extend(self.cells)   #Lets just get whatever cell is still available 
         #And now we can choose
-        if random:
+        if random_cell:
             cell = random.choice(choosable_pool)
         else:
-            choosable_pool.sort(key=lambda char: cell.cell.get_level(), reverse=True)
+            choosable_pool.sort(key=lambda cell: cell.cell.get_level(), reverse=True)
             cell = choosable_pool[0]    #The first one after sorting
         self.delete_cells(cell)
         return cell.cell

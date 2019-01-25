@@ -25,7 +25,8 @@ class INIT_PARAMS:
 
 class PARAMS:
     BOARD_ID    = 'main_board'
-
+    PLAYERS_AMMOUNT = (2, 4, 1) #1 is for testing
+    
 class CHARACTERS:
     PAWN_AMMOUNT = 8
     WARRIOR_AMMOUNT = 2

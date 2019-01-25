@@ -180,6 +180,7 @@ class Character(AnimatedSprite):
         self.essential  = False
         self.turns      = 1
         self.rank       = 0
+        self.order      = 0
         self.current_pos= (0, 0)
 
     def get_paths(self, graph, distances, current_map, index, level_size, movement_restriction):
@@ -326,7 +327,7 @@ class Character(AnimatedSprite):
         """
         LOG.log('INFO', "----Factory, making ", player_name, " characters----")
         Character.parse_json_char_params(character_settings)
-        characters  = pygame.sprite.OrderedUpdates()
+        characters  = []
         threads     = []
 
         for key in character_settings.keys():
@@ -340,8 +341,8 @@ class Character(AnimatedSprite):
         for t in threads:   
             t.join()        #Threading.join
         LOG.log('INFO', "----Factory, done making ", player_name, " characters----")
-        characters.sprites().sort(key=lambda char: char.rank, reverse=True)  #To drop first the most important characters
-        return characters
+        characters.sort(key=lambda char: (char.rank, char.order), reverse=True)  #To drop first the most important characters
+        return pygame.sprite.OrderedUpdates(*characters)
 
     @staticmethod
     @run_async
@@ -392,6 +393,7 @@ class Warrior(Character):
         super().__init__(my_player, id_, position, size, canvas_size, sprites_path, aliases=aliases, **params)
         self.turns  = 2
         self.rank   = 1
+        self.order  = 1
         
     def get_paths(self, graph, distances, current_map, index, level_size):
         """Gets all the possible paths for each cell for a Warrior type with his Restriction in movement.
@@ -436,6 +438,8 @@ class Wizard(Character):
         """
         super().__init__(my_player, id_, position, size, canvas_size, sprites_path, **aliases)
         self.rank   = 1
+        self.order  = 2
+
     def get_paths(self, graph, distances, current_map, index, level_size):
         """Gets all the possible paths for each cell for a Wizard type with his Restriction in movement.
         If the result is None, means that the paths for the restrictions of this Character were not requested before.
@@ -482,7 +486,8 @@ class Priestess(Character):
             **aliases (:dict:): How each standarized action will be named in the loaded images.
         """
         super().__init__(my_player, id_, position, size, canvas_size, sprites_path, aliases=aliases, **params)
-        self.rank   = 2
+        self.rank   = 1
+        self.order  = 3
 
     def get_paths(self, graph, distances, current_map, index, level_size):
         """Gets all the possible paths for each cell for a Priestess type with her Restriction in movement.
@@ -617,7 +622,8 @@ class MatronMother(Character):
         """
         super().__init__(my_player, id_, position, size, canvas_size, sprites_path, aliases=aliases, **params)
         self.essential  = True
-        self.rank       = 3
+        self.rank       = 2
+        self.order      = 4
 
     def get_paths(self, graph, distances, current_map, index, level_size):
         """Gets all the possible paths for each cell for a MatronMother type with her Restriction in movement.

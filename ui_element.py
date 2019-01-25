@@ -147,7 +147,7 @@ class ButtonAction(UIElement):
             text_alignment (str):   Alignment inside the element. Center, Left, Right.
     """
     __default_config = {'text': 'ButtonAction', 
-                        'text_proportion': 0.5, 
+                        'text_proportion': 0.66, 
                         'text_alignment': 'center'}
 
     def __init__(self, id_, command, user_event_id, position, size, canvas_size, **params):
@@ -191,7 +191,7 @@ class ButtonValue (UIElement):
         current_index (int):        Index of the current active value.
     """
     __default_config = {'text': 'ButtonValue', 
-                        'text_proportion': 0.33,
+                        'text_proportion': 0.66,
                         'text_alignment': 'center',
                         'shows_value': True}
 
@@ -298,7 +298,7 @@ class Slider (UIElement):
         value (float):  Value of the slider. Depends on the current position of the dial.
     """
     __default_config = {'text': 'Slider',
-                        'text_proportion': 0.33,
+                        'text_proportion': 0.66,
                         'text_alignment': 'left',
                         'shows_value': True,
                         'dial_fill_color': GREEN,

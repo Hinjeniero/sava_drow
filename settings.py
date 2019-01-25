@@ -68,7 +68,8 @@ class STRINGS:
                     'Zimrcia', 'Coxobby Ohmswilson', 'Uwotm8', 'Orangeman', 'npc', 'Totallynot Arobot', 'Bigba Lshanging']
     SPRITE_NAMES = ('Manolo', 'Eustaquio', 'Zimamamio')
     MOVE_KEYWORDS = ('run', )
-
+    YES_NO_OPTIONS = ('On', 'Off')
+    YES_NO_REVERSED = ('Off', 'On')
 #STATE MACHINES
 class STATES:
     SCREEN = ('idle', 'stopped', 'cutscene')

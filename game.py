@@ -101,10 +101,20 @@ class Game(object):
         characters = ('pawn', 'warrior', 'wizard', 'priestess', 'matron')
         if 'mode' in command or 'game' in command:
             self.board_generator.set_gamemode(value)
-        if 'player' in command:
+        elif 'player' in command:
             self.board_generator.players = value
-        if any(char in command for char in characters):
+        elif any(char in command for char in characters):
             self.board_generator.set_character_ammount(command, value)
+        elif 'loading' in command:
+            if 'on' in value.lower() or value == 1 or 'yes' in value.lower():
+                self.board_generator.set_board_params(loading_screen=True)
+            else:
+                self.board_generator.set_board_params(loading_screen=False)
+        elif 'cell' in command:
+            if 'on' in value.lower() or value == 1 or 'yes' in value.lower():
+                self.board_generator.set_board_params(random_filling=True)
+            else:
+                self.board_generator.set_board_params(random_filling=False)
 
     def graphic_handler(self, command, value):
         if 'fps' in command:          
@@ -115,7 +125,7 @@ class Game(object):
             self.resolution = value
             self.set_resolution(value)
         elif 'fullscreen' in command:
-            if 'on' in value.lower() or value == 1:
+            if 'on' in value.lower() or value == 1 or 'yes' in value.lower():
                 self.display = pygame.display.set_mode(self.resolution, SCREEN_FLAGS.FULLSCREEN)
                 self.fullscreen = True
             else:

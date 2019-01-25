@@ -85,6 +85,7 @@ class Board(Screen):
         player_index (int):     Index of the current player playing.
         """
     __default_config = {'quadrants_overlap'     : True,
+                        'random_filling'        : True,
                         'loading_screen'        : True,
                         'platform_proportion'   : 0.95,
                         'platform_alignment'    : "center",
@@ -510,7 +511,7 @@ class Board(Screen):
                     current_level -= 1
                     rank = character.rank
                 character.set_size(self.cells.sprites()[0].rect.size)
-                cell = self.quadrants[player.order].get_random_cell(border_level=current_level)
+                cell = self.quadrants[player.order].get_cell(border_level=current_level, random_cell=self.params['random_filling'])
                 cell.add_char(character)
                 character.set_cell(cell)
                 self.characters.add(character)

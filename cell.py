@@ -253,7 +253,7 @@ class Quadrant(object):
             else border_levels[1] if border_level > border_levels[1] else border_level
             return level
         
-    def get_random_cell(self, border_level=None, center_level=None):
+    def get_cell(self, border_level=None, center_level=None, random_cell=True):
         """Gets a random cell from the quadrant, returns it and deletes it.
         Args:
             zone (string, default=None):    Zone from where to get the Cell. Kinda like a restriction or to specify.
@@ -286,7 +286,11 @@ class Quadrant(object):
         if len(choosable_pool) is 0:            #If its 0 even after all that
             choosable_pool.extend(self.cells)   #Lets just get whatever cell is still available 
         #And now we can choose
-        cell = random.choice(choosable_pool)
+        if random:
+            cell = random.choice(choosable_pool)
+        else:
+            choosable_pool.sort(key=lambda char: cell.cell.get_level(), reverse=True)
+            cell = choosable_pool[0]    #The first one after sorting
         self.delete_cells(cell)
         return cell.cell
 

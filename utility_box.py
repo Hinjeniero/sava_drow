@@ -298,6 +298,16 @@ class UtilityBox (object):
             yield position
 
     @staticmethod
+    def size_position_generator_no_adjustment(ammount_elements, width, height, inter_element_space, initial_offset=0.05):
+        """Returns a generator thyat provides the values
+        First value is the size. The rest of them are the positions.
+        The final_offset is the same as the interelemental space. If you want 0 final offset, you have to compensate with a negative number."""
+        for index in range (0, ammount_elements):
+            position = ((1-width)/2, initial_offset+(index*(height+inter_element_space)))
+            yield position
+
+
+    @staticmethod
     def rainbow_gradient_generator(gradient, ammount_elements, transparency=255):
         """To generate the desired colors."""
         transparency = (transparency,)  #Converting to tuple to join in the yields

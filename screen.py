@@ -91,10 +91,10 @@ class Screen(object):
                                     resize_mode='fill', texture=self.params['background_path'])
         if self.params['songs_paths']:
             self.music_chan = UtilityBox.get_sound_channel()
-            self.music_chan.set_volume(0.75)
+            self.music_chan.set_volume(SOUND_PARAMS.INIT_VOLUME)
             for song_path in self.params['songs_paths']:
                 self.songs.append(song_path)
-        self.sound_vol = 0.75
+        self.sound_vol = SOUND_PARAMS.INIT_VOLUME
         #Adding to the LUT of sounds
         for sound_path in UtilityBox.get_all_files(PATHS.SOUNDS_FOLDER, '.ogg', '.wav'):
             if not Screen.SOUNDS.get_item(sound_path):

@@ -12,13 +12,13 @@ import pygame
 from board import Board
 from logger import Logger as LOG
 from decorators import time_it
-from settings import USEREVENTS, STRINGS, PARAMS
+from settings import USEREVENTS, STRINGS, PARAMS, CHARACTERS
 
 class BoardGenerator(object):
     def __init__(self):
         self.players = 2
         self.game_mode = 'default'
-        self.characters_params = PARAMS.CHARACTER_SETTINGS.copy()
+        self.characters_params = CHARACTERS.CHARACTER_SETTINGS.copy()
         self.board_params = {}
 
     def set_gamemode(self, gamemode):

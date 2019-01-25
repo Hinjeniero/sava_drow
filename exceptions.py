@@ -60,3 +60,6 @@ class NotEnoughSpaceException(Exception):
 
 class BadStateException(Exception):
     pass
+
+class TooManyCharactersException(Exception):
+    pass

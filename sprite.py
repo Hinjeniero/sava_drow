@@ -642,7 +642,7 @@ class MultiSprite(Sprite):
         Those changes propagate through all the sprites."""
         super().regenerate_image()
         self.copy_read_only_texture()
-        for sprite in self.sprites.sprites():   
+        for sprite in self.sprites:   
             self.image.blit(sprite.image, sprite.rect.topleft)
 
     def set_size(self, size, update_rects=True):
@@ -650,7 +650,7 @@ class MultiSprite(Sprite):
         Args;
             size (:tuple: int, int):    New size in pixels."""
         super().set_size(size, update_rects=update_rects, regenerate_image=False)    #Changing the sprite size and position to the proper place
-        for sprite in self.sprites.sprites():
+        for sprite in self.sprites:
             sprite.set_canvas_size(self.rect.size)
         self.regenerate_image()
 
@@ -674,7 +674,7 @@ class MultiSprite(Sprite):
             *keywords (str): keywords that the sprite must contain, separated by commas.
         Returns:
             (Sprite | None):    The Sprite if its found, else None."""
-        for sprite in self.sprites.sprites():
+        for sprite in self.sprites:
             if all(kw in sprite.id for kw in keywords): 
                 return sprite
 

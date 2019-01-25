@@ -22,9 +22,9 @@ from utility_box import UtilityBox
 from game import Game
 from animation_generator import AnimationGenerator
 from sprite import AnimatedSprite
-from settings import USEREVENTS, INIT_PARAMS, PATHS,\
-                    STRINGS, EXTENSIONS, SCREEN_FLAGS
-
+from settings import USEREVENTS, INIT_PARAMS, PATHS, CHARACTERS,\
+                    STRINGS, EXTENSIONS, SCREEN_FLAGS, SOUND_PARAMS
+#This because segmentation fault
 import faulthandler
 faulthandler.enable()
 
@@ -81,8 +81,8 @@ def create_main_menu():
     return main_menu 
 
 def create_config_menu():
-    #TODO DRAW NUMBER OF CHARS DOWN BELOW
-    positions           = UtilityBox.size_position_generator(6, 0.80, 0.05)
+    #TODO DRAW NUMBER OF CHARS DOWN BELOW, IN AN ANIMATION. (TOO MUCH WORK)
+    positions           = UtilityBox.size_position_generator(7, 0.80, 0.05)
     button_size         = next(positions)
     buttonGameModes     = UIElement.factory('button_game_mode', "change_game_mode", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
                                             INIT_PARAMS.INITIAL_RESOLUTION, default_values=STRINGS.GAMEMODES, text="Game Mode", text_alignment='left',\
@@ -91,17 +91,19 @@ def create_config_menu():
                                             INIT_PARAMS.INITIAL_RESOLUTION, default_values=(2, 4), text="Number of players", text_alignment='left',\
                                             gradient = ((220, 0, 0, 255), (120, 120, 120, 255)))
     buttonNumPawns      = UIElement.factory('button_pawns', "set_ammount_pawns", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
-                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=(4, 8), text="Number of pawns", text_alignment='left',\
+                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=CHARACTERS.PAWN_OPTIONS, text="Number of pawns", text_alignment='left',\
                                             gradient = ((170, 0, 0, 255), (170, 170, 170, 255)))
     buttonNumWarriors   = UIElement.factory('button_warriors', "set_ammount_warriors", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
-                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=(1, 2, 4), text="Number of warriors", text_alignment='left',\
+                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=CHARACTERS.WARRIOR_OPTIONS, text="Number of warriors", text_alignment='left',\
                                             gradient = ((120, 0, 0, 255), (220, 220, 220, 255)))
     buttonNumWizards    = UIElement.factory('button_wizards', "set_ammount_wizards", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,
-                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=(1, 2), text="Number of wizards", text_alignment='left')
+                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=CHARACTERS.WIZARD_OPTIONS, text="Number of wizards", text_alignment='left')
     buttonNumPriestesses= UIElement.factory('button_priestesses', "set_ammount_priestess", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
-                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=(1, 1), text="Number of priestess", text_alignment='left')
+                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=CHARACTERS.PRIESTESS_OPTIONS, text="Number of priestess", text_alignment='left')
+    buttonNumMothers    = UIElement.factory('button_matrons', "set_ammount_matronmothers", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
+                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=CHARACTERS.MATRONMOTHER_OPTIONS, text="Number of Matron Mothers", text_alignment='left')
     params_menu = Menu("menu_params_config", USEREVENTS.CONFIG_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, buttonGameModes, buttonCountPlayers, buttonNumPawns,\
-                        buttonNumWarriors, buttonNumWizards, buttonNumPriestesses, background_path=PATHS.DEFAULT_BG, do_align=False)
+                        buttonNumWarriors, buttonNumWizards, buttonNumPriestesses, buttonNumMothers, background_path=PATHS.DEFAULT_BG, do_align=False)
     return params_menu
 
 def create_sound_menu():
@@ -110,14 +112,14 @@ def create_sound_menu():
     button_size         = next(positions)
     #TODO create method in utilitybox for this shit
     sliderMenuMusic     = UIElement.factory('slider_music_volume', "set_menu_music_volume", USEREVENTS.SOUND_USEREVENT, next(positions), button_size,\
-                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=(0.75), text="Menus music volume", slider_type='circular',\
+                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=SOUND_PARAMS.INIT_VOLUME, text="Menus music volume", slider_type='circular',\
                                             gradient = (RED, BLACK), slider_start_color = RED, slider_end_color = WHITE)
     sliderMenuSounds    = UIElement.factory('slider_sound_volume', "set_menu_sound_volume", USEREVENTS.SOUND_USEREVENT, next(positions), button_size,\
-                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=(0.75), text="Menus sound volume", slider_type='elliptical')
+                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=SOUND_PARAMS.INIT_VOLUME, text="Menus sound volume", slider_type='elliptical')
     sliderBoardMusic    = UIElement.factory('slider_board_music_volume', "set_board_music_volume", USEREVENTS.SOUND_USEREVENT, next(positions), button_size,\
-                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=(0.75), text="Board music volume", slider_type='rectangular')
+                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=SOUND_PARAMS.INIT_VOLUME, text="Board music volume", slider_type='rectangular')
     sliderBoardSounds   = UIElement.factory('slider_board_sound_volume', "set_board_sound_volume", USEREVENTS.SOUND_USEREVENT, next(positions), button_size,\
-                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=(0.75), text="Board sound volume")
+                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=SOUND_PARAMS.INIT_VOLUME, text="Board sound volume")
     buttonBoardSongs    = UIElement.factory('button_board_song', 'change_board_song', USEREVENTS.SOUND_USEREVENT, next(positions), button_size,\
                                             INIT_PARAMS.INITIAL_RESOLUTION, default_values=BOARD_CROPPED_SONGS, text='Selected board song', text_proportion = 0.50)
     buttonMenusSongs    = UIElement.factory('button_menu_song', 'change_menu_song', USEREVENTS.SOUND_USEREVENT, next(positions), button_size,\

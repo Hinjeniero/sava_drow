@@ -25,17 +25,29 @@ class INIT_PARAMS:
 
 class PARAMS:
     BOARD_ID    = 'main_board'
-    CHARACTER_SETTINGS = {'pawn':{'ammount': 4, 'aliases':{'pickup': 'running'}},
-                    'warrior':{'ammount': 2, 'aliases':{'pickup': 'run'}},
-                    'wizard':{'ammount': 2, 'aliases':{'pickup': 'pick'}},
-                    'priestess':{'ammount': 2, 'aliases':{'pickup': 'run'}},
-                    'matron_mother':{'ammount': 1, 'aliases':{'pickup': 'pick'}},
+
+class CHARACTERS:
+    PAWN_AMMOUNT = 8
+    WARRIOR_AMMOUNT = 2
+    WIZARD_AMMOUNT = 2
+    PRIESTESS_AMMOUNT = 2
+    MATRONMOTHER_AMMOUNT = 1
+    CHARACTER_SETTINGS = {'pawn':{'ammount': PAWN_AMMOUNT, 'aliases':{'pickup': 'running'}},
+                    'warrior':{'ammount': WARRIOR_AMMOUNT, 'aliases':{'pickup': 'run'}},
+                    'wizard':{'ammount': WIZARD_AMMOUNT, 'aliases':{'pickup': 'pick'}},
+                    'priestess':{'ammount': PRIESTESS_AMMOUNT, 'aliases':{'pickup': 'run'}},
+                    'matron_mother':{'ammount': MATRONMOTHER_AMMOUNT, 'aliases':{'pickup': 'pick'}}
     }
+    PAWN_OPTIONS = (PAWN_AMMOUNT, 16, 24, 32, 0, 4)
+    WARRIOR_OPTIONS = (WARRIOR_AMMOUNT, 4, 6, 8, 1, 0)
+    WIZARD_OPTIONS = (WIZARD_AMMOUNT, 4, 6, 8, 1, 0)
+    PRIESTESS_OPTIONS = (PRIESTESS_AMMOUNT, 4, 6, 8, 1, 0)
+    MATRONMOTHER_OPTIONS = (MATRONMOTHER_AMMOUNT, 2, 4)
 
 class SOUND_PARAMS:
     SOUND_CHANNELS_AMMOUNT = 8
-    INIT_BOARD_VOLUME = 0.25
-    INIT_MENU_VOLUME = 0.25
+    INIT_VOLUME = 0.15
+
 #---Miscellaneous
 class SCREEN_FLAGS:
     FULLSCREEN  = pygame.HWSURFACE | pygame.FULLSCREEN | pygame.DOUBLEBUF

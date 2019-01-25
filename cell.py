@@ -191,7 +191,6 @@ class Quadrant(object):
         self.index  = None
         self.lvl    = None
         Quadrant.generate(self, level_size, interpath_freq, *cells)
-        
 
     @staticmethod
     def generate(self, level_size, interpath_freq, *cells):
@@ -211,6 +210,12 @@ class Quadrant(object):
             except KeyError:
                 self.centers[cell.center_level] = [cell]
         self.print_state()
+
+    def max_border_lvl(self):
+        return max(x for x in self.borders.keys())
+
+    def max_center_lvl(self):
+        return max(x for x in self.centers.keys())
 
     def print_state(self):
         LOG.log('debug', 'Quadrant id: ', self.id, ', with the intervals: lvl ', self.lvl, ', index', self.index,\
@@ -255,7 +260,7 @@ class Quadrant(object):
                     if center_level < 0:
                         break
             elif border_level:
-                choosable_pool.extend((cell for cell in self.borders[center_level] if cell.bifurcation == bifurcations))
+                choosable_pool.extend((cell for cell in self.borders[border_level] if cell.bifurcation == bifurcations))
                 if not bifurcations:
                     border_level -= 1
                     if border_level < 0:

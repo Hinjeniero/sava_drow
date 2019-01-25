@@ -22,7 +22,8 @@ from polygons import Circle, Rectangle, Circumference
 from colors import RED, WHITE, DARKGRAY, LIGHTGRAY, TRANSPARENT_GRAY
 from screen import Screen, LoadingScreen
 from cell import Cell, Quadrant
-from exceptions import BadPlayersParameter, BadPlayerTypeException, PlayerNameExistsException
+from exceptions import BadPlayersParameter, BadPlayerTypeException,\
+                        PlayerNameExistsException, TooManyCharactersException
 from decorators import run_async
 from players import Player
 from paths import Path
@@ -83,7 +84,8 @@ class Board(Screen):
         players (:list: Player):List with all the Player objects.
         player_index (int):     Index of the current player playing.
         """
-    __default_config = {'platform_proportion'   : 0.95,
+    __default_config = {'loading_screen'        : True,
+                        'platform_proportion'   : 0.95,
                         'platform_alignment'    : "center",
                         'inter_path_frequency'  : 2,
                         'circles_per_lvl'       : 16,
@@ -149,7 +151,8 @@ class Board(Screen):
         dimensions          = (self.params['circles_per_lvl']*self.params['max_levels'], self.params['circles_per_lvl']*self.params['max_levels'])
         self.distances      = numpy.full(dimensions, -888, dtype=int)   #Says the distance between cells
         self.enabled_paths  = numpy.zeros(dimensions, dtype=bool)       #Shows if the path exist
-        self.loading_screen = LoadingScreen(self.id+"_loading", self.event_id, self.resolution, text="Loading, hang tight like a japanese pussy")
+        if self.params['loading_screen']:
+            self.loading_screen = LoadingScreen(self.id+"_loading", self.event_id, self.resolution, text="Loading, hang tight like a japanese pussy")
         #REST
         platform_size   = tuple(min(self.resolution)*self.params['platform_proportion'] for _ in self.resolution)
         centered_pos    = tuple(x//2-y//2 for x, y in zip(self.resolution, platform_size))
@@ -495,10 +498,16 @@ class Board(Screen):
             BadPlayerTypeException: If the player argument is not of type Player."""
         if isinstance(player, Player): 
             self.players.append(player)
-            #TODO CHECK IF LEN OF CHARS IS GREATER THAN LEN OF CELLS
+            if len(self.quadrants[player.order].cells) < len(player.characters):
+                raise TooManyCharactersException('There are too many characters for this quadrant.')
+            current_level = self.quadrants[player.order].max_border_lvl()
+            rank = player.characters.sprites()[0].rank
             for character in player.characters:
+                if character.rank < rank:
+                    current_level -= 1
+                    rank = character.rank
                 character.set_size(self.cells.sprites()[0].rect.size)
-                cell = self.quadrants[player.order].get_random_cell(center_level = character.rank)
+                cell = self.quadrants[player.order].get_random_cell(border_level=current_level)
                 cell.add_char(character)
                 character.set_center(cell.rect.center)
                 self.characters.add(character)
@@ -536,15 +545,16 @@ class Board(Screen):
         Args:
             surface (:obj: pygame.Surface): Surface to draw the board.
         """
-        if not self.started:
+        if not self.started and self.params['loading_screen']:
             self.loading_screen.draw(surface)
             return
         super().draw(surface)                                                                           #Draws background
-        for dest in self.possible_dests.sprites():
+        for dest in self.possible_dests:
             pygame.draw.circle(surface, WHITE, dest.center, dest.radius)
         for char in self.characters:
             char.draw(surface)
-        self.current_player.draw(surface)   #This draws the player's infoboard
+        if self.current_player:
+            self.current_player.draw(surface)   #This draws the player's infoboard
             
         
     def event_handler(self, event, keys_pressed, mouse_buttons_pressed, mouse_movement=False, mouse_pos=(0, 0)):
@@ -723,9 +733,9 @@ class Board(Screen):
             mouse_sprite = UtilityBox.get_mouse_sprite()
             
             #Checking collision with cells
-            collided_cell = pygame.sprite.spritecollideany(mouse_sprite, self.cells.sprites(), collided=pygame.sprite.collide_circle)
+            collided_cell = pygame.sprite.spritecollideany(mouse_sprite, self.cells, collided=pygame.sprite.collide_circle)
             self.set_active_cell(collided_cell)
 
             #Checking collision with paths
-            path = pygame.sprite.spritecollideany(mouse_sprite, self.paths.sprites(), collided=pygame.sprite.collide_mask)
+            path = pygame.sprite.spritecollideany(mouse_sprite, self.paths, collided=pygame.sprite.collide_mask)
             self.set_active_path(path)

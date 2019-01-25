@@ -25,7 +25,7 @@ from logger import Logger as LOG
 from utility_box import UtilityBox
 from board_generator import BoardGenerator
 from exceptions import  NoScreensException, InvalidGameElementException,\
-                        EmptyCommandException, ScreenNotFoundException
+                        EmptyCommandException, ScreenNotFoundException, TooManyCharactersException
 from surface_loader import ResizedSurface
 from settings import PATHS, USEREVENTS, SCREEN_FLAGS
 
@@ -201,8 +201,10 @@ class Game(object):
                                         text='Gz, you found a secret! The background music is now Dejavu.', text_proportion=text_size)
         popup_winner = UIElement.factory('winner', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
                                         text='Gz, you won!', text_proportion=text_size)
-        popup_dejavu.use_overlay = False
-        self.add_popups(popup_acho, popup_running, popup_dejavu, popup_winner)
+        popup_chars  = UIElement.factory('toomany_chars', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
+                                        text='Too many chars, change the params.', text_proportion=text_size)
+        #popup_dejavu.use_overlay = False
+        self.add_popups(popup_acho, popup_running, popup_dejavu, popup_winner, popup_chars)
 
     def add_popups(self, *popups):
         for popup in popups:
@@ -332,19 +334,23 @@ class Game(object):
         self.board_generator.set_board_params(**params)
 
     def initiate(self):
-        self.started = True
-        if self.get_screen('board'):
-            for i in range(0, len(self.screens)):
-                if 'board' in self.screens[i].id:
-                    old_board = self.screens[i]
-                    self.screens[i] = self.board_generator.generate_board(self.resolution)
-                    self.screens[i].music_chan.set_volume(old_board.music_chan.get_volume())
-                    self.screens[i].sound_vol = old_board.sound_vol
-                    break
-        else:
-            self.screens.append(self.board_generator.generate_board(self.resolution))
+        try:
+            if self.get_screen('board'):
+                for i in range(0, len(self.screens)):
+                    if 'board' in self.screens[i].id:
+                        old_board = self.screens[i]
+                        self.screens[i] = self.board_generator.generate_board(self.resolution)
+                        self.screens[i].music_chan.set_volume(old_board.music_chan.get_volume())
+                        self.screens[i].sound_vol = old_board.sound_vol
+                        break
+            else:
+                self.screens.append(self.board_generator.generate_board(self.resolution))
+        except TooManyCharactersException:
+            self.show_popup('chars')
+            return
         self.get_screen('params', 'menu', 'config').enable_all_sprites(False)
         self.get_screen('music', 'menu', 'sound').enable_all_sprites(True)
+        self.started = True
 
     def start(self):
         try:

@@ -70,7 +70,7 @@ class Player(object):
         infoboard.add_text_element('initial_padding', '', cols)
         infoboard.add_text_element('player_name', self.name, cols-2)   #Player name
         infoboard.add_text_element('player_number', 'id: '+str(self.order+1), cols-2)   #Player order
-        infoboard.add_text_element('player_chars', 'characters: '+str(len(self.characters.sprites())), cols-2)   #Player total ammount of chars
+        infoboard.add_text_element('player_chars', 'characters: '+str(len(self.characters)), cols-2)   #Player total ammount of chars
         self.infoboard = infoboard
 
     def register_movement(self, character):
@@ -83,22 +83,22 @@ class Player(object):
         self.get_character(killer).kills += 1
 
     def pause_characters(self):
-        for character in self.characters.sprites():
+        for character in self.characters:
             character.set_state("stop")
             character.set_active(False)
 
     def unpause_characters(self):
-        for character in self.characters.sprites():
+        for character in self.characters:
             character.set_state("idle")
             character.set_active(True)
 
     def get_character(self, character):
-        for char in self.characters.sprites():
+        for char in self.characters:
             if character is char:
                 return char
 
     def update(self):
-        self.infoboard.get_sprite('char').set_text('characters: '+str(len(self.characters.sprites())))
+        self.infoboard.get_sprite('char').set_text('characters: '+str(len(self.characters)))
         self.infoboard.regenerate_image()
 
     def draw(self, surface):
@@ -108,7 +108,7 @@ class Player(object):
         """Resizes the infoboard and the player's characters"""
         if self.infoboard:
             self.infoboard.set_canvas_size(resolution)
-        for char in self.characters.sprites():
+        for char in self.characters:
             char.set_canvas_size(resolution)
 
     def has_char(self, char):
@@ -119,7 +119,7 @@ class Player(object):
             self.characters.remove(char)
             self.update()
             if char.essential:  #If the killed one was a matron mother or a promoted/bonus char 
-                for character in self.characters.sprites():
+                for character in self.characters:
                     if character.essential:
                         return
                 self.dead = True

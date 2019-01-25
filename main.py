@@ -73,6 +73,7 @@ def create_main_menu():
     buttonGraphics  = UIElement.factory('button_graphics', "go_menu_graphics_display", USEREVENTS.MAINMENU_USEREVENT, next(positions), button_size,\
                                         INIT_PARAMS.INITIAL_RESOLUTION, text="Graphics menu", gradient = next(gradients), gradient_type='vertical', texture=PATHS.SHORT_BUTTON, keep_aspect_ratio = False)
     buttonContinue.set_enabled(False)
+    
     #Create Menu
     #bg = AnimationGenerator.animated_waterfall_background(INIT_PARAMS.INITIAL_RESOLUTIO, PARAMS.ANIMATION_TIME,, *INIT_PARAMS.ALL_FPS)
     #bg = AnimationGenerator.animated_cave_waterfall_background(INIT_PARAMS.INITIAL_RESOLUTIO, PARAMS.ANIMATION_TIME,, *INIT_PARAMS.ALL_FPS)
@@ -82,6 +83,10 @@ def create_main_menu():
     main_menu   = Menu('main_menu', USEREVENTS.MAINMENU_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, buttonStart, buttonContinue, buttonConfig, buttonSound, buttonGraphics,
                         animated_background= bg, background_path=PATHS.DEFAULT_BG, songs_paths=MENU_SONGS, dialog=create_dialog(),
                         do_align=False)
+    
+    vertical_shit = UIElement.factory('button_graphics', "go_menu_graphics_display", USEREVENTS.MAINMENU_USEREVENT, (1100, 50), (0.05, 0.80),\
+                                        INIT_PARAMS.INITIAL_RESOLUTION, text="YES", default_values=0, gradient_type='vertical')
+    main_menu.add_sprites(vertical_shit)
     return main_menu 
 
 def create_config_menu():

@@ -129,7 +129,10 @@ class UIElement(MultiSprite):
         if isinstance(default_values, (list, tuple)):
             return ButtonValue(id_, command, user_event_id, position, size, canvas_size, tuple(default_values), **params)
         elif isinstance(default_values, (int, float)):
-            return Slider(id_, command, user_event_id, position, size, canvas_size, float(default_values), **params)
+            if size[0] > size[1]:
+                return Slider(id_, command, user_event_id, position, size, canvas_size, float(default_values), **params)
+            else:
+                return VerticalSlider(id_, command, user_event_id, position, size, canvas_size, float(default_values), **params)
         elif default_values is None:
             return ButtonAction(id_, command, user_event_id, position, size, canvas_size, **params)    
         else:
@@ -465,6 +468,66 @@ class Slider (UIElement):
         if 'circ' in _['dial_shape']:       pygame.draw.circle(surface, color, dial_rect.center, dial.rect.height//2)
         elif 'ellip' in _['dial_shape']:    pygame.draw.ellipse(surface, color, dial_rect)
         else:                               pygame.draw.rect(surface, color, dial_rect)
+
+class VerticalSlider(Slider):
+    def __init__(self, id_, command, user_event_id, position, size, canvas_size, default_value, **params):
+        """VerticalSlider constructor.
+        Args:
+            id_ (str):  Identifier of the Sprite.
+            command (str):  Command linked with the element. Will be sent in the payload of the event.
+            user_event_id (int): Identifier of the event that will be sent.
+            position (:tuple: int,int): Position of the Sprite in the screen. In pixels.
+            size (:tuple: int,int):     Size of the Sprite in the screen. In pixels.
+            canvas_size (:tuple: int,int):  Size of the display. In pixels.
+            default_value (float):  Initial value that the slider has. Dial will be set accordingly.
+            params (:dict:):    Dict of keywords and values as parameters to create the self.image attribute.
+                                Variety going from fill_color and use_gradient to text_only.
+            """
+        super().__init__(id_, command, user_event_id, position, size, canvas_size, default_value, **params)
+    
+    def set_dial_position(self, position):
+        """Changes the dial position to the input parameter. Changes the graphics and the value accordingly.
+        Distinguises between values between 0 and 1 (position in value), and values over 1 (position in pixels).
+        Args:
+            position (float||int): Position of the dial to set."""
+        dial = self.get_sprite('dial')
+        dial_position = int(self.rect.height*position) if (0 <= position <= 1) else int(position) #Converting the dial position to pixels.
+        dial_position = 0 if dial_position < 0\
+                        else self.rect.height if dial_position > self.rect.height \
+                        else dial_position       #Checking if it's out of bounds 
+        dial_y = dial_position-(dial.rect.height//2)
+        dial.set_position((dial.rect.x, dial_y))
+        value_text = self.get_sprite('value')
+        value_text.set_text(str(round(self.get_value(), 2)))
+        self.regenerate_image()  #To compensate the graphical offset of managing center/top-left
+
+    def hitbox_action(self, command, value):
+        """Decrement or increment the value if a keyboard key is pressed, or set a value
+        if its a mouse action. After that, posts an event with the new value.
+        Args:   
+            command (str):  Decrement or increment the index if it contains 
+                            the following substrings:
+                                dec, min, left  -> decrement index.
+                                inc, add, right -> increment index.
+                                mouse && click  -> Sets whatever value.
+            value (int):    Value to be set.
+        Raises:
+            InvalidCommandValueException:   If the value input argument is not a tuple nor a rect.
+        """
+        if not self.enabled:    return  #Element is not enabled, byebye, no action from this one.
+        if 'dec' in command or 'min' in command or 'left' in command:       self.set_value(self.get_value()-0.1)
+        elif 'inc' in command or 'add' in command or 'right' in command:    self.set_value(self.get_value()+0.1)
+        elif ('mouse' in command and ('click' in command or 'button' in command)):
+            if isinstance(value, tuple):            mouse_y = value[1]
+            elif isinstance(value, pygame.Rect):    mouse_y = value.y
+            else:                                   raise InvalidCommandValueException("Value in slider hitbox can't be of type "+str(type(value)))
+
+            pixels = mouse_y-self.rect.y        #Pixels into the bar, that the dial position has.
+            value = pixels/self.rect.height      #Converting to float value between 0-1
+            if value != self.get_value:         #If its a new value, we create another dial and value and blit it.
+                self.set_value(value)
+        self.send_event()
+
 
 class InfoBoard (UIElement):
     """InfoBoard class. Inherits from UIElement.

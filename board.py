@@ -485,10 +485,12 @@ class Board(Screen):
             **player_settings (:dict:): Contains the more specific parameters to create the player.
                                         Ammount of each type of char, name of their actions, and their folder paths.
         """
-        self.total_players          += 1
+        self.total_players += 1
         for player in self.players:
             if name == player.name: 
                 raise PlayerNameExistsException("The player name "+name+" already exists")
+        if sum(x['ammount'] for x in player_settings.values()) > len(self.quadrants[0].cells):
+            raise TooManyCharactersException('There are too many characters in player for a quadrant.')
         self.__create_player(name, number, chars_size, **player_settings)
         LOG.log('DEBUG', "Queue'd player to load, total players ", self.total_players, " already loaded ", self.loaded_players)
 
@@ -501,8 +503,6 @@ class Board(Screen):
             BadPlayerTypeException: If the player argument is not of type Player."""
         if isinstance(player, Player): 
             self.players.append(player)
-            if len(self.quadrants[player.order].cells) < len(player.characters):
-                raise TooManyCharactersException('There are too many characters for this quadrant.')
             current_level = self.quadrants[player.order].max_border_lvl()
             rank = player.characters.sprites()[0].rank
             for character in player.characters:

@@ -78,8 +78,10 @@ class Game(object):
         if event.type < pygame.USEREVENT:       
             return False
         elif event.type is USEREVENTS.MAINMENU_USEREVENT:
-            if 'start' in event.command.lower() and not self.started:
+            if 'start' in event.command.lower():
                 self.initiate()
+            '''elif 'continue' in event.command.lower() and self.started:
+                self.change_screen('board')'''
             self.change_screen(*event.command.lower().split('_'))
         elif event.type is USEREVENTS.SOUND_USEREVENT:
             self.sound_handler(event.command.lower(), event.value)
@@ -93,6 +95,7 @@ class Game(object):
             self.started = False
             self.change_screen('main', 'menu')
             self.get_screen('params', 'menu', 'config').enable_all_sprites(True)
+            self.get_screen('main', 'menu').get_sprite('continue').set_enable(False)
             #TODO REstart params of params menu
         elif event.type is USEREVENTS.TIMER_ONE_SEC:
             self.fps_text = UtilityBox.generate_fps(self.clock, size=tuple(int(x*0.05) for x in self.resolution))
@@ -360,6 +363,7 @@ class Game(object):
             return
         self.get_screen('params', 'menu', 'config').enable_all_sprites(False)
         self.get_screen('music', 'menu', 'sound').enable_all_sprites(True)
+        self.get_screen('main', 'menu').enable_all_sprites(True)
         self.started = True
 
     def start(self):

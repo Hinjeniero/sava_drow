@@ -56,12 +56,15 @@ def create_dialog(text='You sure?'):
 
 def create_main_menu():
     #Create elements, main menu buttons (POSITIONS AND SIZES ARE IN PERCENTAGES OF THE CANVAS_SIZE, can use absolute integers too)
-    gradients       = UtilityBox.rainbow_gradient_generator(((255, 0, 0),(0, 0, 255)), 4)
-    positions       = UtilityBox.size_position_generator(4, 0.40, 0.05, 0.20, 0)
+    gradients       = UtilityBox.rainbow_gradient_generator(((255, 0, 0),(0, 0, 255)), 5)
+    positions       = UtilityBox.size_position_generator(5, 0.40, 0.05, 0.20, 0)
     button_size     = next(positions)
     #texture=IMG_FOLDER+"//button.png" #TO USE IN THE FIUTUR
     buttonStart     = UIElement.factory('button_start', "start_game_go_main_board", USEREVENTS.MAINMENU_USEREVENT, next(positions), button_size,\
-                                        INIT_PARAMS.INITIAL_RESOLUTION, text="Start game", keep_aspect_ratio = False,\
+                                        INIT_PARAMS.INITIAL_RESOLUTION, text="Start new game", keep_aspect_ratio = False,\
+                                        gradient=next(gradients), gradient_type='vertical', texture=PATHS.SHORT_BUTTON)
+    buttonContinue  = UIElement.factory('button_continue', "continue_game_go_main_board", USEREVENTS.MAINMENU_USEREVENT, next(positions), button_size,\
+                                        INIT_PARAMS.INITIAL_RESOLUTION, text="Continue last game", keep_aspect_ratio = False,\
                                         gradient=next(gradients), gradient_type='vertical', texture=PATHS.SHORT_BUTTON)
     buttonConfig    = UIElement.factory('button_params_menu', "go_menu_params_config", USEREVENTS.MAINMENU_USEREVENT, next(positions),button_size,\
                                         INIT_PARAMS.INITIAL_RESOLUTION, text="Parameters", gradient = next(gradients), gradient_type='vertical', texture=PATHS.SHORT_BUTTON, keep_aspect_ratio = False)
@@ -69,13 +72,14 @@ def create_main_menu():
                                         INIT_PARAMS.INITIAL_RESOLUTION, text="Music menu", gradient = next(gradients), gradient_type='vertical', texture=PATHS.SHORT_BUTTON, keep_aspect_ratio = False)
     buttonGraphics  = UIElement.factory('button_graphics', "go_menu_graphics_display", USEREVENTS.MAINMENU_USEREVENT, next(positions), button_size,\
                                         INIT_PARAMS.INITIAL_RESOLUTION, text="Graphics menu", gradient = next(gradients), gradient_type='vertical', texture=PATHS.SHORT_BUTTON, keep_aspect_ratio = False)
+    buttonContinue.set_enabled(False)
     #Create Menu
     #bg = AnimationGenerator.animated_waterfall_background(INIT_PARAMS.INITIAL_RESOLUTIO, INIT_PARAMS.INITIAL_FPS, *INIT_PARAMS.ALL_FPS)
     #bg = AnimationGenerator.animated_cave_waterfall_background(INIT_PARAMS.INITIAL_RESOLUTIO, INIT_PARAMS.INITIAL_FPS, *INIT_PARAMS.ALL_FPS)
     #bg = AnimationGenerator.animated_rain_tree(INIT_PARAMS.INITIAL_RESOLUTIO, INIT_PARAMS.INITIAL_FPS, *INIT_PARAMS.ALL_FPS)
     #bg = AnimationGenerator.animated_rain_chinese(INIT_PARAMS.INITIAL_RESOLUTIO, INIT_PARAMS.INITIAL_FPS, *INIT_PARAMS.ALL_FPS)
     bg = AnimationGenerator.industrial_layered_background(INIT_PARAMS.INITIAL_RESOLUTION, INIT_PARAMS.INITIAL_FPS, *INIT_PARAMS.ALL_FPS)
-    main_menu   = Menu('main_menu', USEREVENTS.MAINMENU_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, buttonStart, buttonConfig, buttonSound, buttonGraphics,
+    main_menu   = Menu('main_menu', USEREVENTS.MAINMENU_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, buttonStart, buttonContinue, buttonConfig, buttonSound, buttonGraphics,
                         animated_background= bg, background_path=PATHS.DEFAULT_BG, songs_paths=MENU_SONGS, dialog=create_dialog(),
                         do_align=False)
     return main_menu 
@@ -149,7 +153,7 @@ def create_video_menu():
     buttonFps   = UIElement.factory('button_fps', "change_fps_frames_per_second", USEREVENTS.GRAPHIC_USEREVENT, next(positions), button_size,\
                                     INIT_PARAMS.INITIAL_RESOLUTION, default_values=INIT_PARAMS.ALL_FPS, text="Frames per second",text_alignment='left')
     buttonFullscreen = UIElement.factory('button_fps', "set_display_mode_fullscreen", USEREVENTS.GRAPHIC_USEREVENT, next(positions), button_size,\
-                                INIT_PARAMS.INITIAL_RESOLUTION, default_values=('Off', 'On'), text="Fullscreen")                                    
+                                INIT_PARAMS.INITIAL_RESOLUTION, default_values=STRINGS.YES_NO_REVERSED, text="Fullscreen")                                    
     
     #buttonBgBoard
 

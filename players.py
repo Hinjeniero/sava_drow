@@ -482,7 +482,7 @@ class Priestess(Character):
             **aliases (:dict:): How each standarized action will be named in the loaded images.
         """
         super().__init__(my_player, id_, position, size, canvas_size, sprites_path, aliases=aliases, **params)
-        self.rank   = 1
+        self.rank   = 2
 
     def get_paths(self, graph, distances, current_map, index, level_size):
         """Gets all the possible paths for each cell for a Priestess type with her Restriction in movement.
@@ -617,7 +617,7 @@ class MatronMother(Character):
         """
         super().__init__(my_player, id_, position, size, canvas_size, sprites_path, aliases=aliases, **params)
         self.essential  = True
-        self.rank       = 2
+        self.rank       = 3
 
     def get_paths(self, graph, distances, current_map, index, level_size):
         """Gets all the possible paths for each cell for a MatronMother type with her Restriction in movement.

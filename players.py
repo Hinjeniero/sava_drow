@@ -180,7 +180,8 @@ class Character(AnimatedSprite):
         self.essential  = False
         self.turns      = 1
         self.rank       = 0
-    
+        self.current_pos= (0, 0)
+
     def get_paths(self, graph, distances, current_map, index, level_size, movement_restriction):
         """Gets all the possible paths for each cell (of a specific subclass) with this overloaded method.
         If the result is None, means that the paths for the restrictions of this Character were not requested before.
@@ -209,6 +210,10 @@ class Character(AnimatedSprite):
         print(paths)
         return paths
     
+    def set_cell(self, cell):
+        self.set_center(cell.center)
+        self.current_pos = cell.get_real_index()
+
     def promote(self):
         self.essential = True
 
@@ -499,6 +504,8 @@ class Priestess(Character):
         for path in unfiltered_paths:
             if not any(current_map[path[i]].has_ally() or current_map[path[i]].has_enemy() for i in range(1, len(path)-1)):
                 results.append(path)
+        print("AFTER CHECKING FOR allies and enemies in the middle of the path ")
+        print(results)
         return results
 
 class Pawn(Character):

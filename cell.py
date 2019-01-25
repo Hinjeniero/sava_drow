@@ -211,6 +211,21 @@ class Quadrant(object):
                 self.centers[cell.center_level] = [cell]
         self.print_state()
 
+    @staticmethod
+    def delete_overlapping_cells(*quadrants):
+        for quadrant in quadrants:
+            for cell in quadrant.cells:
+                overlaps = False
+                for other_quadrant in quadrants:
+                    if quadrant is not other_quadrant:
+                        for other_cell in other_quadrant.cells:
+                            if cell.cell.get_real_index() == other_cell.cell.get_real_index():
+                                overlaps = True
+                                other_quadrant.delete_cells(other_cell)
+                                break
+                if overlaps:
+                    quadrant.delete_cells(cell)
+
     def max_border_lvl(self):
         return max(x for x in self.borders.keys())
 

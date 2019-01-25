@@ -37,6 +37,8 @@ class BoardGenerator(object):
     @time_it
     def generate_board(self, resolution):
         #Check type of board
+        if self.players > 2:
+            self.board_params['quadrants_overlap'] = False
         LOG.log('info', 'Selected gamemode is ', self.game_mode)
         if any(kw in self.game_mode for kw in ('default', 'normal', 'medium')):
             board = self.generate_default(resolution)

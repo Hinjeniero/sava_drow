@@ -31,7 +31,8 @@ class Menu (Screen):
         active_sprite (:obj: pygame.sprite.GroupSingle):    Active element in the menu.
         active_sprite_index (int):  
     """
-    __default_config = {'do_align': True,
+    __default_config = {'slider_texture': None,
+                        'do_align': True,
                         'alignment': 'center'
     }
 

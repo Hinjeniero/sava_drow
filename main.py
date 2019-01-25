@@ -84,6 +84,11 @@ def create_config_menu():
     #TODO DRAW NUMBER OF CHARS DOWN BELOW, IN AN ANIMATION. (TOO MUCH WORK)
     positions           = UtilityBox.size_position_generator(7, 0.80, 0.05)
     button_size         = next(positions)
+    
+    #buttonLoadingScreen
+
+
+
     buttonGameModes     = UIElement.factory('button_game_mode', "change_game_mode", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
                                             INIT_PARAMS.INITIAL_RESOLUTION, default_values=STRINGS.GAMEMODES, text="Game Mode", text_alignment='left',\
                                             gradient = (RED, BLACK))
@@ -142,6 +147,11 @@ def create_video_menu():
                                     INIT_PARAMS.INITIAL_RESOLUTION, default_values=INIT_PARAMS.ALL_FPS, text="Frames per second",text_alignment='left')
     buttonFullscreen = UIElement.factory('button_fps', "set_display_mode_fullscreen", USEREVENTS.GRAPHIC_USEREVENT, next(positions), button_size,\
                                 INIT_PARAMS.INITIAL_RESOLUTION, default_values=('Off', 'On'), text="Fullscreen")                                    
+    
+    #buttonBgBoard
+
+    #buttonBgMenu
+    
     graphics_menu  = Menu("menu_graphics_display", USEREVENTS.GRAPHIC_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, buttonRes, buttonFps, buttonFullscreen,\
                             background_path=PATHS.DEFAULT_BG, do_align=False)
     graphics_menu.add_animation(AnimationGenerator.character_teleporting_screen(INIT_PARAMS.INITIAL_RESOLUTION, *INIT_PARAMS.ALL_FPS))

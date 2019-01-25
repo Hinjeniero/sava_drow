@@ -84,7 +84,8 @@ class Board(Screen):
         players (:list: Player):List with all the Player objects.
         player_index (int):     Index of the current player playing.
         """
-    __default_config = {'loading_screen'        : True,
+    __default_config = {'quadrants_overlap'     : True,
+                        'loading_screen'        : True,
                         'platform_proportion'   : 0.95,
                         'platform_alignment'    : "center",
                         'inter_path_frequency'  : 2,
@@ -203,6 +204,8 @@ class Board(Screen):
             #LOG.log('debug', quadrant_number, ": ", quadrant_cells)
             self.quadrants[quadrant_number] = Quadrant(quadrant_number, self.params['circles_per_lvl'],\
                                                         self.params['inter_path_frequency'], *quadrant_cells)
+        if not self.params['quadrants_overlap']:
+            Quadrant.delete_overlapping_cells(*self.quadrants.values())                                    
 
     def __get_quadrant(self, cell_index):
         """Gets the respective quadrant of the cell index received.
@@ -509,7 +512,7 @@ class Board(Screen):
                 character.set_size(self.cells.sprites()[0].rect.size)
                 cell = self.quadrants[player.order].get_random_cell(border_level=current_level)
                 cell.add_char(character)
-                character.set_center(cell.rect.center)
+                character.set_cell(cell)
                 self.characters.add(character)
                 LOG.log('DEBUG', "Character ", character.id, " spawned with position ", cell.pos)
             player.pause_characters()
@@ -606,7 +609,7 @@ class Board(Screen):
         LOG.log('debug', 'The chosen cell is possible, moving')
         active_cell = self.active_cell.sprite
         self.last_cell.sprite.empty_cell() #Emptying to delete the active char from there
-        character.set_center(active_cell.center)  #Positioning the char
+        character.set_cell(active_cell)  #Positioning the char
         if not active_cell.is_empty():
             self.kill_character(active_cell) #Killing char if there is one 
         active_cell.add_char(character)
@@ -656,6 +659,8 @@ class Board(Screen):
         if player.has_lost():
             self.players.remove(player)
             self.characters.remove(player.characters)
+            for char in player.characters:
+                self.get_cell_by_real_index(char.current_pos).empty_cell()
             if len(self.players) == 1:  #WE HAVE A WINNER!
                 self.play_sound('win')
                 self.win()
@@ -663,7 +668,6 @@ class Board(Screen):
     def win(self):
         pygame.event.post(self.end_event)
 
-    #TODO KEYBOARD DOES NOT CHANGE ACTIVE CELL, BUT ACTIVE CHARACTER. ACTIVE CELL CHANGE ONLY BY MOUSE
     def keyboard_handler(self, keys_pressed):
         """Handles any pygame keyboard related event. This allows for user interaction with the object.
         Posibilities:

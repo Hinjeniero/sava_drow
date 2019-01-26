@@ -75,22 +75,17 @@ def create_main_menu():
     buttonContinue.set_enabled(False)
     
     #Create Menu
-    #bg = AnimationGenerator.animated_waterfall_background(INIT_PARAMS.INITIAL_RESOLUTIO, PARAMS.ANIMATION_TIME,, *INIT_PARAMS.ALL_FPS)
-    #bg = AnimationGenerator.animated_cave_waterfall_background(INIT_PARAMS.INITIAL_RESOLUTIO, PARAMS.ANIMATION_TIME,, *INIT_PARAMS.ALL_FPS)
-    #bg = AnimationGenerator.animated_rain_tree(INIT_PARAMS.INITIAL_RESOLUTIO, PARAMS.ANIMATION_TIME,, *INIT_PARAMS.ALL_FPS)
-    #bg = AnimationGenerator.animated_rain_chinese(INIT_PARAMS.INITIAL_RESOLUTIO, PARAMS.ANIMATION_TIME,, *INIT_PARAMS.ALL_FPS)
-    bg = AnimationGenerator.industrial_layered_background(INIT_PARAMS.INITIAL_RESOLUTION, PARAMS.ANIMATION_TIME, *INIT_PARAMS.ALL_FPS)
+    bg = AnimationGenerator.animated_waterfall_background(INIT_PARAMS.INITIAL_RESOLUTION, PARAMS.ANIMATION_TIME, *INIT_PARAMS.ALL_FPS)
     main_menu   = Menu('main_menu', USEREVENTS.MAINMENU_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, buttonStart, buttonContinue, buttonConfig, buttonSound, buttonGraphics,
-                        animated_background= bg, background_path=PATHS.DEFAULT_BG, songs_paths=MENU_SONGS, dialog=create_dialog(),
+                        animated_background=bg, background_path=PATHS.DEFAULT_BG, songs_paths=MENU_SONGS, dialog=create_dialog(),
                         do_align=False)
     
-    vertical_shit = UIElement.factory('button_graphics', "go_menu_graphics_display", USEREVENTS.MAINMENU_USEREVENT, (1100, 50), (0.05, 0.80),\
+    vertical_shit = UIElement.factory('slider_scroll_menu', "menu_scroll", USEREVENTS.DIALOG_USEREVENT, (1100, 50), (0.05, 0.80),\
                                         INIT_PARAMS.INITIAL_RESOLUTION, text="YES", default_values=0, gradient_type='vertical')
     main_menu.add_sprites(vertical_shit)
     return main_menu 
 
 def create_config_menu():
-    #TODO DRAW NUMBER OF CHARS DOWN BELOW, IN AN ANIMATION. (TOO MUCH WORK)
     positions           = UtilityBox.size_position_generator(9, 0.60, 0.05)
     button_size         = next(positions)
     
@@ -171,7 +166,7 @@ def create_video_menu():
 def create_board_params():
     board_params = {}
     board_params['songs_paths'] = BOARD_SONGS
-    board_params['animated_background'] = AnimationGenerator.animated_cave_waterfall_background(INIT_PARAMS.INITIAL_RESOLUTION,\
+    board_params['animated_background'] = AnimationGenerator.animated_rain_tree(INIT_PARAMS.INITIAL_RESOLUTION,\
                                         INIT_PARAMS.INITIAL_FPS, *INIT_PARAMS.ALL_FPS)
     board_params['platform_sprite'] = AnimationGenerator.animated_tree_platform(INIT_PARAMS.INITIAL_RESOLUTION)
     return board_params

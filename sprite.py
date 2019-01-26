@@ -94,7 +94,7 @@ class Sprite(pygame.sprite.Sprite):
         self.params         = image_params
         #Basic stuff---------------------------------
         self.id             = id_
-        self.rect           = pygame.Rect(position, size) 
+        self.rect           = pygame.Rect(position, size)
         self.image          = None  #Created in Sprite.generate
         self.overlay        = None  #Created in Sprite.generate
         self.mask           = None  #Created in Sprite.generate
@@ -122,28 +122,34 @@ class Sprite(pygame.sprite.Sprite):
                         tuple([x/y for x,y in zip(self.rect.size, self.resolution)]))
         self.rects[self.resolution] = self.rect.copy() 
 
-    def draw(self, surface):
+    def draw(self, surface, offset=None):
         """Draws the sprite over a surface. Draws the overlay too if use_overlay is True.
         Args:
             surface (:obj: pygame.Surface): Surface to draw the Sprite. It's usually the display.
         """
         if self.visible:
-            surface.blit(self.image, self.rect)
+            if offset:
+                surface.blit(self.image, tuple(off+pos for off, pos in zip(offset, self.rect.topleft)))
+            else:
+                surface.blit(self.image, self.rect)
             if self.enabled:
                 if self.overlay and self.use_overlay and self.active:    
-                    self.draw_overlay(surface)               
+                    self.draw_overlay(surface, offset=offset)               
                 self.update()
 
     def update_mask(self):
         """Updates the mask attribute afther the image attribute. To use after a change in self.image."""
         self.mask = pygame.mask.from_surface(self.image)
 
-    def draw_overlay(self, surface):
+    def draw_overlay(self, surface, offset=None):
         """Draws the overlay over a surface.
         Args:
             surface (:obj: pygame.Surface): Surface to draw the Sprite. It's usually the display
         """
-        surface.blit(self.overlay, self.rect)
+        if offset:
+            surface.blit(self.overlay, tuple(off+pos for off, pos in zip(offset, self.rect.topleft)))
+        else:
+            surface.blit(self.overlay, self.rect)
         self.animation_frame()
 
     def get_canvas_size(self):

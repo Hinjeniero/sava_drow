@@ -132,13 +132,32 @@ class Menu (Screen):
                                                 Said booleans will be True if that specific key was pressed.
         """
         self.play_sound('key')
-        if keys_pressed[pygame.K_DOWN]:         self.change_active_sprite(self.active_sprite_index+1)
-        if keys_pressed[pygame.K_UP]:           self.change_active_sprite(self.active_sprite_index-1)
-        if keys_pressed[pygame.K_LEFT]:         self.active_sprite.sprite.hitbox_action('left_arrow', -1)
-        if keys_pressed[pygame.K_RIGHT]:        self.active_sprite.sprite.hitbox_action('right_arrow', -1)
+        if keys_pressed[pygame.K_DOWN]:
+            old_index = self.active_sprite_index
+            while True:
+                self.change_active_sprite(self.active_sprite_index+1)
+                if (self.active_sprite.sprite.visible\
+                and self.active_sprite.sprite.enabled\
+                and 'scroll' not in self.active_sprite.sprite.id)\
+                or self.active_sprite_index is old_index:
+                    break
+        if keys_pressed[pygame.K_UP]:
+            old_index = self.active_sprite_index
+            while True:
+                self.change_active_sprite(self.active_sprite_index-1)
+                if (self.active_sprite.sprite.visible\
+                and self.active_sprite.sprite.enabled\
+                and 'scroll' not in self.active_sprite.sprite.id)\
+                or self.active_sprite_index is old_index:
+                    break
+        if keys_pressed[pygame.K_LEFT]:
+            self.active_sprite.sprite.hitbox_action('left_arrow', -1)
+        if keys_pressed[pygame.K_RIGHT]:
+            self.active_sprite.sprite.hitbox_action('right_arrow', -1)
         if keys_pressed[pygame.K_RETURN]\
             or keys_pressed[pygame.K_KP_ENTER]\
-            or keys_pressed[pygame.K_SPACE]:    self.active_sprite.sprite.hitbox_action('do_action_or_add_value', -1)
+            or keys_pressed[pygame.K_SPACE]:    
+                self.active_sprite.sprite.hitbox_action('do_action_or_add_value', -1)
 
     def mouse_handler(self, event, mouse_buttons, mouse_movement, mouse_position):
         """Handles any mouse related pygame event. This allows for user interaction with the object.
@@ -164,11 +183,12 @@ class Menu (Screen):
         Args:
             ineex (int):    Index of the new active sprite in the sprite list."""
         if index is not self.active_sprite_index:
-            size_sprite_list                    = len(self.sprites.sprites())
-
-            self.active_sprite_index            = index 
-            if index >= size_sprite_list:       self.active_sprite_index = 0
-            elif index < 0:                     self.active_sprite_index = size_sprite_list-1
+            size_sprite_list = len(self.sprites.sprites())
+            self.active_sprite_index = index 
+            if index >= size_sprite_list:       
+                self.active_sprite_index = 0
+            elif index < 0:                     
+                self.active_sprite_index = size_sprite_list-1
             
             if self.active_sprite.sprite is not None:   
                 self.active_sprite.sprite.set_hover(False) #Change the active back to the original state

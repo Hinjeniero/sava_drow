@@ -368,22 +368,32 @@ class Slider (UIElement):
             InvalidSliderException: If the shape of the dial is not recognized. 
         """
         ratio = 3   #Ratio to resize square into rectangle and circle into ellipse
-        dial_size = (self.rect.height, self.rect.height)
+        dial_size = [min(self.rect.size), min(self.rect.size)]
         dial_id   = self.id+'_dial'
         if 'circ' in shape or 'ellip' in shape: 
-            dial = Circle(dial_id, (0, 0), dial_size, self.rect.size,\
+            dial = Circle(dial_id, (0, 0), tuple(dial_size), self.rect.size,\
                             fill_color=fill_color, fill_gradient=use_gradient, gradient=gradient,\
                             border=border, border_width=border_width, border_color=border_color)
             if 'ellip' in shape:
-                dial.rect.width //= ratio
+                if self.rect.width < self.rect.height:
+                    dial.rect.height //= ratio
+                else:
+                    dial.rect.width //= ratio
                 dial.image = pygame.transform.smoothscale(dial.image, dial.rect.size)
         elif 'rect' in shape:
-            dial = Rectangle( dial_id, (0, 0), (dial_size[0]//ratio, dial_size[1]), self.rect.size,\
+            if self.rect.width < self.rect.height:
+                dial_size[1] //= ratio
+            else:
+                dial_size[0] //= ratio
+            dial = Rectangle( dial_id, (0, 0), tuple(dial_size), self.rect.size,\
                                 fill_color=fill_color, fill_gradient=use_gradient, gradient=gradient,\
                                 border=border, border_width=border_width, border_color=border_color)
         else:  
             raise InvalidSliderException('Slider of type '+str(shape)+' is not available')
-        dial.rect.center = (int(self.get_value()*self.rect.width), self.rect.height//2)
+        if self.rect.width < self.rect.height:
+            dial.rect.center = (self.rect.width//2, int(self.get_value()*self.rect.height))
+        else:
+            dial.rect.center = (int(self.get_value()*self.rect.width), self.rect.height//2)
         dial.set_position(dial.rect.topleft)
         self.add_sprite(dial)
 
@@ -456,7 +466,7 @@ class Slider (UIElement):
         In slider does nothing. This way we don't do the useless work of super() update, useless in Slider."""
         pass 
 
-    def draw_overlay(self, surface):
+    def draw_overlay(self, surface, offset=None):
         """Draws an overlay of a random color each time over the dial. Simulates animation in this way.
         The overlay has the same shape as the dial.
         Args:
@@ -465,6 +475,8 @@ class Slider (UIElement):
         dial    = self.get_sprite('dial')
         _       = self.params
         dial_rect = pygame.Rect(self.get_sprite_abs_position(dial), dial.rect.size)
+        if offset:
+            dial_rect.topleft = tuple(off+pos for off, pos in zip(offset, dial_rect.topleft))
         if 'circ' in _['dial_shape']:       pygame.draw.circle(surface, color, dial_rect.center, dial.rect.height//2)
         elif 'ellip' in _['dial_shape']:    pygame.draw.ellipse(surface, color, dial_rect)
         else:                               pygame.draw.rect(surface, color, dial_rect)
@@ -485,6 +497,10 @@ class VerticalSlider(Slider):
             """
         super().__init__(id_, command, user_event_id, position, size, canvas_size, default_value, **params)
     
+    def draw(self, surface, offset=None):
+        """This will be a scroll bar, we don't need a fuckin offset here to draw it in the oblivion of the screen."""
+        super().draw(surface)
+
     def set_dial_position(self, position):
         """Changes the dial position to the input parameter. Changes the graphics and the value accordingly.
         Distinguises between values between 0 and 1 (position in value), and values over 1 (position in pixels).

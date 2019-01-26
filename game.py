@@ -73,7 +73,7 @@ class Game(object):
         USEREVENT+2: Change in graphic settings
         USEREVENT+3: Change in board configuration settings
         USEREVENT+4: Action in board. Unused rn.
-        USEREVENT+5: Action in dialogs. Unused rn.
+        USEREVENT+5: Action in dialogs/etc. Unused rn.
         USEREVENT+6: Signals the end of the current board.
         USEREVENT+7: Called every second. Timer.
         """
@@ -91,6 +91,9 @@ class Game(object):
             self.graphic_handler(event.command.lower(), event.value)
         elif event.type is USEREVENTS.CONFIG_USEREVENT:  
             self.config_handler(event.command.lower(), event.value)
+        elif event.type is USEREVENTS.DIALOG_USEREVENT:
+            if 'scroll' in event.command:
+                self.current_screen.set_scroll(event.value)
         elif event.type is USEREVENTS.END_CURRENT_GAME:
             self.show_popup('win')
             self.current_screen.play_sound('win')

@@ -175,6 +175,10 @@ class Board(Screen):
         self.add_players(*players)
         self.save_sprites()
 
+    def set_scroll(self, value):
+        """We dont want scrolls in the board"""
+        pass
+
     def save_sprites(self):
         """Copies all the references of the sprites to the sprites list declared on the superclass.
         Do this to modify all the graphical elements at once when needed in a more seamless manner.

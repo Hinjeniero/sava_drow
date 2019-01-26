@@ -82,7 +82,7 @@ def create_main_menu():
     
     vertical_shit = UIElement.factory('slider_scroll_menu', "menu_scroll", USEREVENTS.DIALOG_USEREVENT, (1100, 50), (0.05, 0.80),\
                                         INIT_PARAMS.INITIAL_RESOLUTION, text="YES", default_values=0, gradient_type='vertical')
-    main_menu.add_sprites(vertical_shit)
+    main_menu.scroll_sprite=vertical_shit
     return main_menu 
 
 def create_config_menu():

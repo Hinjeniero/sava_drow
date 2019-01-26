@@ -496,10 +496,6 @@ class VerticalSlider(Slider):
                                 Variety going from fill_color and use_gradient to text_only.
             """
         super().__init__(id_, command, user_event_id, position, size, canvas_size, default_value, **params)
-    
-    def draw(self, surface, offset=None):
-        """This will be a scroll bar, we don't need a fuckin offset here to draw it in the oblivion of the screen."""
-        super().draw(surface)
 
     def set_dial_position(self, position):
         """Changes the dial position to the input parameter. Changes the graphics and the value accordingly.

@@ -80,6 +80,7 @@ class Screen(object):
         self.animated_background = False
         #Scroll
         self.scroll_offset = 0
+        self.scroll_sprite = None
         Screen.generate(self)
 
     @staticmethod
@@ -231,6 +232,8 @@ class Screen(object):
                 sprite.draw(surface, offset=self.scroll_offset)
             else:
                 sprite.draw(surface)
+        if self.scroll_sprite:
+            self.scroll_sprite.draw(surface)       
         if self.have_dialog() and self.dialog_active():
             self.dialog.draw(surface)
         if self.animation:
@@ -243,7 +246,7 @@ class Screen(object):
             resolution (:tuple: int, int):  Resolution to set on the Screen."""
         if resolution != self.resolution:
             self.resolution = resolution
-            self.scroll_offset=None
+            self.set_scroll(0)
             if self.animated_background:
                 self.background.set_resolution(resolution)
             else:
@@ -261,12 +264,9 @@ class Screen(object):
         else:
             pixels = -(value*self.resolution[1])
             self.scroll_offset=(0, pixels)
-        print("NES SCROLL OFFSET "+str(self.scroll_offset))
         scroll = (0, 0) if not self.scroll_offset else self.scroll_offset
         screen_rect = pygame.Rect((0, 0), self.resolution)
         for sprite in self.sprites:
-            if 'scroll' in sprite.id:
-                continue
             sprite_rect = sprite.rect.copy()
             sprite_rect.topleft = tuple(off+pos for off, pos in zip(scroll, sprite_rect.topleft))
             if screen_rect.colliderect(sprite_rect):

@@ -133,25 +133,37 @@ class Menu (Screen):
         """
         self.play_sound('key')
         if keys_pressed[pygame.K_DOWN]:
-            old_index = self.active_sprite_index
-            while True:
-                self.change_active_sprite(self.active_sprite_index+1)
-                if (self.active_sprite.sprite.visible\
-                and self.active_sprite.sprite.enabled)\
-                or self.active_sprite_index is old_index:
-                    break
+            if self.active_sprite.sprite is self.scroll_sprite:
+                self.active_sprite.sprite.hitbox_action('right_arrow', -1)
+            else:
+                old_index = self.active_sprite_index
+                while True:
+                    self.change_active_sprite(self.active_sprite_index+1)
+                    if (self.active_sprite.sprite.visible\
+                    and self.active_sprite.sprite.enabled)\
+                    or self.active_sprite_index is old_index:
+                        break
         if keys_pressed[pygame.K_UP]:
-            old_index = self.active_sprite_index
-            while True:
-                self.change_active_sprite(self.active_sprite_index-1)
-                if (self.active_sprite.sprite.visible\
-                and self.active_sprite.sprite.enabled)\
-                or self.active_sprite_index is old_index:
-                    break
+            if self.active_sprite.sprite is self.scroll_sprite:
+                self.active_sprite.sprite.hitbox_action('left_arrow', -1)
+            else:
+                old_index = self.active_sprite_index
+                while True:
+                    self.change_active_sprite(self.active_sprite_index-1)
+                    if (self.active_sprite.sprite.visible\
+                    and self.active_sprite.sprite.enabled)\
+                    or self.active_sprite_index is old_index:
+                        break
         if keys_pressed[pygame.K_LEFT]:
-            self.active_sprite.sprite.hitbox_action('left_arrow', -1)
+            if self.active_sprite.sprite is self.scroll_sprite:
+                self.set_active_sprite(self.sprites.sprites()[0])
+            else:
+                self.active_sprite.sprite.hitbox_action('left_arrow', -1)
         if keys_pressed[pygame.K_RIGHT]:
-            self.active_sprite.sprite.hitbox_action('right_arrow', -1)
+            if self.active_sprite.sprite is self.scroll_sprite:
+                self.set_active_sprite(self.sprites.sprites()[0])
+            else:
+                self.active_sprite.sprite.hitbox_action('right_arrow', -1)
         if keys_pressed[pygame.K_RETURN]\
             or keys_pressed[pygame.K_KP_ENTER]\
             or keys_pressed[pygame.K_SPACE]:    
@@ -185,7 +197,7 @@ class Menu (Screen):
         colliding_sprite = None
         mouse_sprite = UtilityBox.get_mouse_sprite()
         #Check if colliding with scroll
-        if mouse_sprite.rect.colliderect(self.scroll_sprite.rect):
+        if self.scroll_sprite and mouse_sprite.rect.colliderect(self.scroll_sprite.rect):
             return self.scroll_sprite
         if self.scroll_offset:
             for sprite in self.sprites:

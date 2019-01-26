@@ -178,6 +178,8 @@ class Character(AnimatedSprite):
         self.kills      = 0
         self.movements  = 0
         self.essential  = False
+        self.can_kill   = True
+        self.can_die    = True
         self.turns      = 1
         self.rank       = 0
         self.order      = 0
@@ -205,7 +207,7 @@ class Character(AnimatedSprite):
         print("RSEULTS INDEX ")
         print(result[index])
         for path in result[index]:
-            if not current_map[path[-1]].has_ally():
+            if current_map[path[-1]].accessible():
                 paths.append(path)
         print("AFTER CHECKING FOR ALLIES ")
         print(paths)
@@ -641,3 +643,62 @@ class MatronMother(Character):
                             Each path is composed by all the steps to take (all the cell indexes from start until destiny).
         """
         return super().get_paths(graph, distances, current_map, index, level_size, MatronMother.RESTRICTIONS)
+
+class HolyChampion(Character):
+    """HolyChampion class. Inherits from Character.
+    Pawn can move in 1 turn a distance of 1. In short, can only move to immediate cells.
+    There are no more restrictions. This gives her a restriction of distance of 1.
+
+    General class attributes:    
+        RESTRICTIONS (:obj: Restriction):   Restrictions that this type of character have in the movement.
+        CHECK_ENEMIES (:obj: Restriction):  Restrictions that this character have when checking for enemies in the paths.
+                                            This way it checks for enemies in the same circumference or interpath and saves
+                                            the distance, to compare with the possible destinies.
+        DEFAULT_PATH (str): Default path of the folder with the surfaces to initiate the sprite.
+        DEFAULT_AMMOUNT (int):  Default ammount of this subtype of Character in a player. 
+                                Not used directly, this is for the player to read from an above method.
+    """
+    #RESTRICTIONS    = Restriction() DOn't have restrictions on its own
+    DEFAULT_PATH    = PATHS.MATRONMOTHER
+    DEFAULT_AMMOUNT = 1
+
+    def __init__(self, my_player, id_, position, size, canvas_size, sprites_path, aliases={}, **params):
+        """HolyChampion constructor. 
+        Args:       
+            my_player (str):    Owning/Master player of this Character.
+            id_ (str):  Identifier/name of this Character.
+            position (:tuple: int, int):    Position of the character in the screen. In pixels.
+            size (:tuple: int, int):    Size of every surface of the character. In pixels.
+            canvas_size (:tuple: int, int): Resolution of the screen. In pixels.
+            **aliases (:dict:): How each standarized action will be named in the loaded images.
+        """
+        super().__init__(my_player, id_, position, size, canvas_size, sprites_path, aliases=aliases, **params)
+        self.essential  = True
+        self.rank       = 2
+        self.order      = 4
+        self.can_kill   = False
+        self.can_die    = False
+
+    def get_paths(self, graph, distances, current_map, index, level_size):
+        """Gets all the possible paths for each cell for a MatronMother type with her Restriction in movement.
+        If the result is None, means that the paths for the restrictions of this Character were not requested before.
+        (They are done only when requested). After that, they are saved in a LUT table for later use.
+        Default RESTRICTION is: max distance = 0, move_only_along_index = True,  move_only_along_level = True.
+        Args:   
+            graph (:obj: numpy.Matrix:boolean): Graph with all the directly connected cells (distance=1).
+            distances (:obj: numpy:int):   Graph of distances between cells connected (without changing direction of the path between them).
+            current_map (:dict: int, Cell): Current situation of the map, with all the enemies and allies.
+            index (int):    Current cell of the Character, we don't want to return the entire destinies for each cell.
+            level_size (int):   Number of cells per circumference. This is only used if its necessary to set the paths.
+        Returns:
+            (:list: tuple): List with all the possible paths to take if MatronMoter is in the index cell.
+                            Each path is composed by all the steps to take (all the cell indexes from start until destiny).
+        """
+        results = []
+        results.extend(super().get_paths(graph, distances, current_map, index, level_size, Wizard.RESTRICTIONS))
+        priestess_paths = super().get_paths(graph, distances, current_map, index, level_size, Priestess.RESTRICTIONS)
+        for path in priestess_paths:
+            if not any(current_map[path[i]].has_ally() or current_map[path[i]].has_enemy() for i in range(1, len(path)-1))\
+            and path not in results:
+                results.append(path)
+        return results

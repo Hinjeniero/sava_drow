@@ -93,11 +93,12 @@ class Path(object):
         ally (boolean): True if there are allies in this Path. (Depends on which player asks).
         enemy (boolean):True if there are enemies in this Path. (Depends on which player asks).
     """
-    def __init__(self, grid_pos, ally, enemy, real_index):
+    def __init__(self, grid_pos, ally, enemy, access, real_index):
         self.pos    = grid_pos
         self.index  = real_index
         self.ally   = ally
         self.enemy  = enemy
+        self.access = access
     
     def is_empty(self):
         """Returns:
@@ -123,6 +124,9 @@ class Path(object):
         """Returns:
             (boolean): True if allies are here."""
         return self.ally
+
+    def accessible(self):
+        return self.access
 
     def __lt__(self, path):
         return self.pos[0]<path.pos[0] if self.pos[0] != path.pos[0] else self.pos[1]<path.pos[1]

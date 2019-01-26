@@ -412,7 +412,7 @@ class TextSprite(Sprite):
             self.text           = text
             self.params['text'] = text
             self.regenerate_image()
-        
+
 class AnimatedSprite(Sprite):
     """Class AnimatedSprite. Inherits from Sprite. Adds all the attributes and methods needed to support
     the funcionality of a classic animated sprite, like a list of surfaces and a setted delay to change between them.

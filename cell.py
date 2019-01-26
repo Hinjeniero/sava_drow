@@ -89,6 +89,10 @@ class Cell(Circle):
     def has_char(self):
         return self.chars.sprite if self.chars.sprite else False
 
+    def open_access(self, who_asking):
+        return False if self.has_ally(who_asking) or (self.has_enemy(who_asking) and not self.chars.sprite.can_die)\
+        else True
+
     def has_enemy(self, who_asking):
         """Checks if there is an enemy in the Cell (If a character is of a different player of who is asking).
         Used to convert to path object.
@@ -128,7 +132,7 @@ class Cell(Circle):
             who_asking (str):   The player who is requesting this casting.
         Returns:
             (:obj: Path):   A Path object with the same info as this Cell."""
-        return Path(self.pos, self.has_ally(who_asking), self.has_enemy(who_asking), self.index)
+        return Path(self.pos, self.has_ally(who_asking), self.has_enemy(who_asking), self.open_access(who_asking), self.index)
     
     def __str__(self):
         return "[Cell "+str(self.pos)+" | Chars: "+str(len(self.chars))+"]"

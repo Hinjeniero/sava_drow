@@ -79,16 +79,13 @@ def create_main_menu():
     main_menu   = Menu('main_menu', USEREVENTS.MAINMENU_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, buttonStart, buttonContinue, buttonConfig, buttonSound, buttonGraphics,
                         animated_background=bg, background_path=PATHS.DEFAULT_BG, songs_paths=MENU_SONGS, dialog=create_dialog(),
                         do_align=False)
-    
-    vertical_shit = UIElement.factory('slider_scroll_menu', "menu_scroll", USEREVENTS.DIALOG_USEREVENT, (1100, 50), (0.05, 0.80),\
-                                        INIT_PARAMS.INITIAL_RESOLUTION, text="YES", default_values=0, gradient_type='vertical')
-    main_menu.scroll_sprite=vertical_shit
     return main_menu 
 
 def create_config_menu():
-    positions           = UtilityBox.size_position_generator(9, 0.60, 0.05)
-    button_size         = next(positions)
-    
+    #positions           = UtilityBox.size_position_generator(9, 0.60, 0.05)
+    #button_size         = next(positions)
+    button_size = (0.60, 0.15)
+    positions   = UtilityBox.size_position_generator_no_adjustment(9, *button_size, 0.05, 0.15)
     #buttonLoadingScreen
     buttonLoadingScreen = UIElement.factory('button_game_mode', "set_loading_board", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
                                             INIT_PARAMS.INITIAL_RESOLUTION, default_values=STRINGS.YES_NO_OPTIONS, text="Show screen while board loads", text_alignment='left',\

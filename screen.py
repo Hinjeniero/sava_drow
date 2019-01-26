@@ -81,6 +81,7 @@ class Screen(object):
         #Scroll
         self.scroll_offset = 0
         self.scroll_sprite = None
+        self.scroll_length = 0
         Screen.generate(self)
 
     @staticmethod
@@ -262,7 +263,7 @@ class Screen(object):
         if value == 0:
             self.scroll_offset=None
         else:
-            pixels = -(value*self.resolution[1])
+            pixels = int(-value*self.scroll_length)
             self.scroll_offset=(0, pixels)
         scroll = (0, 0) if not self.scroll_offset else self.scroll_offset
         screen_rect = pygame.Rect((0, 0), self.resolution)

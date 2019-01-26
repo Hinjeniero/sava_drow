@@ -18,6 +18,8 @@ from pygame.locals import *
 from utility_box import UtilityBox
 from screen import Screen
 from exceptions import NotEnoughSpritesException
+from ui_element import UIElement
+from settings import USEREVENTS
 
 class Menu (Screen):
     """Menu class. Inherits from Screen.
@@ -32,7 +34,7 @@ class Menu (Screen):
         active_sprite_index (int):  
     """
     __default_config = {'slider_texture': None,
-                        'do_align': True,
+                        'do_align': False,
                         'alignment': 'center'
     }
 
@@ -48,7 +50,7 @@ class Menu (Screen):
         """
         #Graphic elements
         super().__init__(id_, event_id, resolution, **params)
-        self.active_sprite          = pygame.sprite.GroupSingle()       #Selected from dynamic_elements, only one at the same time
+        self.active_sprite          = pygame.sprite.GroupSingle()
         self.active_sprite_index    = 0
         Menu.generate(self, *elements)
 
@@ -65,38 +67,23 @@ class Menu (Screen):
             self.add_sprites(*elements)
         else:   
             raise NotEnoughSpritesException("A menu needs at least one element prior to the generation.")
-        self.active_sprite.add(self.sprites.sprites()[0])
-        self.active_sprite.sprite.set_hover(True)
-        self.active_sprite.sprite.set_active(True)
-        self.adjust_sprites()
+        self.set_active_sprite(self.sprites.sprites()[0])
+        self.check_sprites()
         if self.params['do_align']:   
             self.center_sprites(alignment=self.params['alignment'])
-
-    def adjust_sprites(self):
-        """Adjust the current sprites of the Menu, to make them all fit within the Screen.
-        First of all, we calculate how much space them all take. After that, we get the 
-        ratio to which multiply them all so they fit tightly in the end.
-        Changes sizes and positions of the sprites if required."""
-        total_spaces    = (0, 0)
-        last_y          = (0, 0)
-        sprites         = self.sprites.sprites()
-        #Counting, adding the pixels and comparing to the resolution
-        for sprite in sprites:
-            #Total spaces between topleft position elements == all sizes+all interelement spaces
-            space       = tuple(x-y for x,y in zip(sprite.rect.topleft, last_y)) 
-            total_spaces= tuple(x+y for x,y in zip(total_spaces, space))
-            last_y      = list(sprite.rect.topleft)
-        #Adds the last element size to the spaces.
-        total_spaces    = tuple(sum(x) for x in zip(total_spaces, sprites[-1].rect.size))    
-
-        #Getting the ratios between total elements and native resolution
-        ratios = tuple(x/y for x, y in zip(self.resolution, total_spaces))
-        if any(ratio < 1 for ratio in ratios):                  #If any axis needs resizing
-            for sprite in sprites:
-                position = tuple([int(x*y) if x<1 else y for x,y in zip(ratios, sprite.rect.topleft)])
-                size =     tuple([int(x*y) if x<1 else y for x,y in zip(ratios, sprite.rect.size)])
-                sprite.set_rect(pygame.Rect(position, size))    #Adjusting size
     
+    def check_sprites(self):
+        """Adds a scroll if it's needed"""
+        if any(sprite.rect.y > self.resolution[1] for sprite in self.sprites):
+            overload = max((sprite.rect.y+sprite.rect.height)-self.resolution[1] for sprite in self.sprites)
+            self.scroll_length = int(self.resolution[1]*0.10+overload)
+            print("NEW SCROLL LENGTH "+str(self.scroll_length))
+            self.scroll_sprite  = UIElement.factory('slider_scroll_menu', "menu_scroll", USEREVENTS.DIALOG_USEREVENT,\
+                                                    (0.95, 0), (0.05, 1),\
+                                                    self.resolution, text="", default_values=0)
+            print(self.scroll_sprite.rect.topleft)
+            print(self.scroll_sprite)
+
     def center_sprites(self, alignment='center'):
         """Center the current sprites of Menu. The alignment itself depends on the argument.
         Changes positions of the sprites if required.

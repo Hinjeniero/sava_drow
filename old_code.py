@@ -2048,3 +2048,29 @@ class LoopedAnimation(Animation):
                 self.config_handler(cmd, value)
             else:
                 LOG.log('INFO', 'Unknown command "', command, '"')
+
+#old adjust in menu
+    def adjust_sprites(self):
+        """Adjust the current sprites of the Menu, to make them all fit within the Screen.
+        First of all, we calculate how much space them all take. After that, we get the 
+        ratio to which multiply them all so they fit tightly in the end.
+        Changes sizes and positions of the sprites if required."""
+        total_spaces    = (0, 0)
+        last_y          = (0, 0)
+        sprites         = self.sprites.sprites()
+        #Counting, adding the pixels and comparing to the resolution
+        for sprite in sprites:
+            #Total spaces between topleft position elements == all sizes+all interelement spaces
+            space       = tuple(x-y for x,y in zip(sprite.rect.topleft, last_y)) 
+            total_spaces= tuple(x+y for x,y in zip(total_spaces, space))
+            last_y      = list(sprite.rect.topleft)
+        #Adds the last element size to the spaces.
+        total_spaces    = tuple(sum(x) for x in zip(total_spaces, sprites[-1].rect.size))    
+
+        #Getting the ratios between total elements and native resolution
+        ratios = tuple(x/y for x, y in zip(self.resolution, total_spaces))
+        if any(ratio < 1 for ratio in ratios):                  #If any axis needs resizing
+            for sprite in sprites:
+                position = tuple([int(x*y) if x<1 else y for x,y in zip(ratios, sprite.rect.topleft)])
+                size =     tuple([int(x*y) if x<1 else y for x,y in zip(ratios, sprite.rect.size)])
+                sprite.set_rect(pygame.Rect(position, size))    #Adjusting size

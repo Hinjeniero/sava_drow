@@ -627,7 +627,7 @@ class MatronMother(Character):
         super().__init__(my_player, id_, position, size, canvas_size, sprites_path, aliases=aliases, **params)
         self.essential  = True
         self.rank       = 2
-        self.order      = 4
+        self.order      = 5
 
     def get_paths(self, graph, distances, current_map, index, level_size):
         """Gets all the possible paths for each cell for a MatronMother type with her Restriction in movement.

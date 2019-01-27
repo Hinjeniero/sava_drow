@@ -96,6 +96,9 @@ def create_config_menu():
     buttonGameModes     = UIElement.factory('button_game_mode', "change_game_mode", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
                                             INIT_PARAMS.INITIAL_RESOLUTION, default_values=STRINGS.GAMEMODES, text="Game Mode", text_alignment='left',\
                                             gradient = (RED, BLACK))
+    buttonBoardSize     = UIElement.factory('button_board_size', "change_board_size", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
+                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=STRINGS.BOARD_SIZES, text="Board Size", text_alignment='left',\
+                                            gradient = (RED, BLACK))
     buttonCenterCell    = UIElement.factory('button_center_cell', "set_board_center_cell", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
                                             INIT_PARAMS.INITIAL_RESOLUTION, default_values=STRINGS.YES_NO_REVERSED, text="Center cell on board", text_alignment='left',\
                                             gradient = (RED, BLACK))
@@ -116,8 +119,9 @@ def create_config_menu():
                                             INIT_PARAMS.INITIAL_RESOLUTION, default_values=CHARACTERS.MATRONMOTHER_OPTIONS, text="Number of Matron Mothers", text_alignment='left')
     buttonHolyChampions = UIElement.factory('button_champions', "set_ammount_champions", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
                                             INIT_PARAMS.INITIAL_RESOLUTION, default_values=CHARACTERS.HOLYCHAMPION_OPTIONS, text="Number of Holy Champions", text_alignment='left')
-    params_menu = Menu("menu_params_config", USEREVENTS.CONFIG_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, buttonLoadingScreen, buttonRandomFilling, buttonGameModes, buttonCenterCell, buttonCountPlayers, buttonNumPawns,\
-                        buttonNumWarriors, buttonNumWizards, buttonNumPriestesses, buttonNumMothers, buttonHolyChampions, background_path=PATHS.DEFAULT_BG, gradient = (RED, BLACK), do_align=False)
+    params_menu = Menu("menu_params_config", USEREVENTS.CONFIG_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, buttonLoadingScreen, buttonRandomFilling, buttonGameModes, buttonBoardSize,\
+                        buttonCenterCell, buttonCountPlayers, buttonNumPawns, buttonNumWarriors, buttonNumWizards, buttonNumPriestesses, buttonNumMothers, buttonHolyChampions,\
+                        background_path=PATHS.DEFAULT_BG, gradient = (RED, BLACK), do_align=False)
     return params_menu
 
 def create_sound_menu():

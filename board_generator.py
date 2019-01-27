@@ -17,12 +17,16 @@ from settings import USEREVENTS, STRINGS, PARAMS, CHARACTERS
 class BoardGenerator(object):
     def __init__(self):
         self.players = 2
-        self.game_mode = 'default'
+        self.game_mode = 'classic'
+        self.prefab_size = 'default'
         self.characters_params = CHARACTERS.CHARACTER_SETTINGS.copy()
         self.board_params = {}
 
-    def set_gamemode(self, gamemode):
+    def set_game_mode(self, gamemode):
         self.game_mode = gamemode.lower()
+
+    def set_board_size(self, size):
+        self.prefab_size = size.lower()
 
     def set_character_ammount(self, char, ammount):
         for type_of_char in self.characters_params.keys():
@@ -41,20 +45,23 @@ class BoardGenerator(object):
             self.board_params['quadrants_overlap'] = False
         else:
             self.board_params['quadrants_overlap'] = True
+
         LOG.log('info', 'Selected gamemode is ', self.game_mode)
-        if any(kw in self.game_mode for kw in ('default', 'normal', 'medium')):
+        LOG.log('info', 'Selected size is ', self.prefab_size)
+
+        if any(kw in self.prefab_size for kw in ('default', 'normal', 'medium')):
             board = self.generate_default(resolution)
-        elif any(kw in self.game_mode for kw in ('lite', 'light')):
+        elif any(kw in self.prefab_size for kw in ('lite', 'light')):
             board = self.generate_lite(resolution)
-        elif any(kw in self.game_mode for kw in ('small', 'easy')):
+        elif any(kw in self.prefab_size for kw in ('small', 'easy')):
             board = self.generate_small(resolution)
-        elif any(kw in self.game_mode for kw in ('xtra', 'extra', 'more', 'bigger')):
+        elif any(kw in self.prefab_size for kw in ('xtra', 'extra', 'more', 'bigger')):
             board = self.generate_extra(resolution)
-        elif any(kw in self.game_mode for kw in ('huge', 'exxtra', 'hard')):
+        elif any(kw in self.prefab_size for kw in ('huge', 'exxtra', 'hard')):
             board = self.generate_huge(resolution)
-        elif any(kw in self.game_mode for kw in ('insane', 'very hard', 'cantsee', 'nightmare')):
+        elif any(kw in self.prefab_size for kw in ('insane', 'very hard', 'cantsee', 'nightmare')):
             board = self.generate_insane(resolution)
-        elif any(kw in self.game_mode for kw in ('test', 'impossible', 'notreal', 'purpose', 'zero', 'memoryerror')):
+        elif any(kw in self.prefab_size for kw in ('test', 'impossible', 'notreal', 'purpose', 'zero', 'memoryerror')):
             board = self.generate_test(resolution)
         #END
         for i in range (0, 4, (4//self.players)):

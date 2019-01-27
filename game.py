@@ -107,8 +107,10 @@ class Game(object):
     
     def config_handler(self, command, value):
         characters = ('pawn', 'warrior', 'wizard', 'priestess', 'matron')
-        if 'mode' in command or 'game' in command:
-            self.board_generator.set_gamemode(value)
+        if 'game' in command or 'mode' in command:
+            self.board_generator.set_game_mode(value)
+        elif 'size' in command:
+            self.board_generator.set_board_size(value)
         elif 'player' in command:
             self.board_generator.players = value
         elif any(char in command for char in characters):
@@ -229,16 +231,17 @@ class Game(object):
         popup_acho = UIElement.factory( 'secret_acho', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
                                         text='Gz, you found a secret! all your SFXs will be achos now.', text_proportion=text_size)
         popup_acho.use_overlay = False
-        popup_running = UIElement.factory('secret_running', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
+        popup_running = UIElement.factory('secret_running90s', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
                                         text='Gz, you found a secret! The background music is now Running in the 90s.', text_proportion=text_size)
         popup_running.use_overlay = False
         popup_dejavu = UIElement.factory('secret_dejavu', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
                                         text='Gz, you found a secret! The background music is now Dejavu.', text_proportion=text_size)
-        popup_winner = UIElement.factory('winner', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
-                                        text='Gz, you won!', text_proportion=text_size)
+        popup_dejavu.use_overlay = False
         popup_chars  = UIElement.factory('toomany_chars', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
                                         text='Too many chars, change the params.', text_proportion=text_size)
-        #popup_dejavu.use_overlay = False
+        popup_chars.use_overlay = False
+        popup_winner = UIElement.factory('winner', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
+                                        text='Gz, you won!', text_proportion=text_size)                                        
         self.add_popups(popup_acho, popup_running, popup_dejavu, popup_winner, popup_chars)
 
     def add_popups(self, *popups):
@@ -283,9 +286,9 @@ class Game(object):
                 self.current_screen.play_sound('secret')
                 for screen in self.screens:
                     if easter_egg_sound:
-                        screen.hijack_sound(SOUND_FOLDER+'\\secret\\'+secret)
+                        screen.hijack_sound(PATHS.SECRET_FOLDER+secret)
                     elif easter_egg_music:
-                        screen.hijack_music(SOUND_FOLDER+'\\secret\\'+secret)
+                        screen.hijack_music(PATHS.SECRET_FOLDER+secret)
                         for animation in screen.animations:
                             animation.speedup(2)
                     self.last_inputs.clear()

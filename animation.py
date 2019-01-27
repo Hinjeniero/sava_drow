@@ -138,13 +138,15 @@ class ScriptedSprite(AnimatedSprite):
         Args:
             fps(int):   Frames per second to set as refresh rate."""
         draws_per_second = self.fps/self.next_frame_time
-        self.next_frame_time = int(fps//draws_per_second)
-        if self.next_frame_time < 1:
-            self.next_frame_time = 1
+        self.next_frame_time = fps/draws_per_second
         if self.index is not 0: #If it has started
             ratio = fps/self.fps
             self.index = int(ratio*self.index)
         self.fps = fps
+
+    def to_str(self):
+        return 'Character ' +self.id+ ', current fps: ' +str(self.fps)+ ', All fps modes: ' +str(self.fps_modes)+\
+        '\nFrame jump: ' +str(self.frame_jump)+ ', animation delay: ' +str(self.next_frame_time)
 
 class Animation(object):
     """Animation class. Inherits from object.

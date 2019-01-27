@@ -183,9 +183,9 @@ class AnimationGenerator(object):
         ratio_size = 0.20
         size = tuple(res * ratio_size for res in resolution)
         #Sprites
-        start_door = ScriptedSprite('door', (0, 0), size, resolution, fps[0], fps, sprite_folder=PATHS.DOOR, animation_delay=1)
-        end_door = ScriptedSprite('door', (0, 0), size, resolution, fps[0], fps, sprite_folder=PATHS.DOOR, animation_delay=1)
-        sprite = ScriptedSprite('sans', (0, 0), size, resolution, fps[0], fps, sprite_folder=PATHS.SANS, animation_delay=1)
+        start_door = ScriptedSprite('door', (0, 0), size, resolution, fps[0], fps, sprite_folder=PATHS.DOOR, animation_delay=2)
+        end_door = ScriptedSprite('door', (0, 0), size, resolution, fps[0], fps, sprite_folder=PATHS.DOOR, animation_delay=2)
+        sprite = ScriptedSprite('sans', (0, 0), size, resolution, fps[0], fps, sprite_folder=PATHS.SANS, animation_delay=2)
         #params
         init_pos = ((start_pos*resolution[0]), resolution[1]-sprite.rect.height)
         end_pos = ((end_pos*resolution[0])-(end_door.rect.width//2), resolution[1]-sprite.rect.height)

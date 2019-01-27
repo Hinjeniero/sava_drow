@@ -68,7 +68,8 @@ class EXTENSIONS:
 
 class STRINGS:
     #Strings, but not related to texts, more like names and shit
-    GAMEMODES = ('Normal', 'Lite', 'Small', 'Extra', 'Huge', 'Insane', 'MemoryError')
+    GAMEMODES = ('Classic', 'Great Wheel', 'Custom')
+    BOARD_SIZES = ('Normal', 'Lite', 'Small', 'Extra', 'Huge', 'Insane', 'MemoryError')
     PLAYER_NAMES = ['Mitches', 'Hayesshine', 'Rolbo Gordonggins', 'Spencerpop', 'Palka', 'Rainrobinson', 'Kingolas', 'Zippotudo',
                     'Zimrcia', 'Coxobby Ohmswilson', 'Uwotm8', 'Orangeman', 'npc', 'Totallynot Arobot', 'Bigba Lshanging']
     SPRITE_NAMES = ('Manolo', 'Eustaquio', 'Zimamamio')
@@ -88,6 +89,7 @@ class PATHS:
     IMAGE_FOLDER = os.path.join(GAME_FOLDER, 'img\\')
     AUDIO_FOLDER = os.path.join(GAME_FOLDER, 'sounds\\')
     SOUNDS_FOLDER = AUDIO_FOLDER+'common\\'
+    SECRET_FOLDER = AUDIO_FOLDER+'secret\\'
     #Characters
     PAWN = IMAGE_FOLDER+'Pawn'
     WIZARD = IMAGE_FOLDER+'Wizard'

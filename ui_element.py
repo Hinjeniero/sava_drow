@@ -423,10 +423,11 @@ class Slider (UIElement):
         to show the change.
         Args:
             value (float):  Value to set. Must be between 0 and 1, will be parsed otherwise."""
-        if      (self.value == 0 and value<0):  self.value = 1              #It goes all the way around from 0 to 1
-        elif    (self.value == 1 and value>1):  self.value = 0              #It goes all the way around from 1 to 0
-        else:   self.value = 0 if value < 0 else 1 if value > 1 else value  #The value it not yet absolute 1 or 0.
-        self.set_dial_position(self.value)
+        if value != self.get_value():
+            if      (self.value == 0 and value<0):  self.value = 1              #It goes all the way around from 0 to 1
+            elif    (self.value == 1 and value>1):  self.value = 0              #It goes all the way around from 1 to 0
+            else:   self.value = 0 if value < 0 else 1 if value > 1 else value  #The value it not yet absolute 1 or 0.
+            self.set_dial_position(self.value)
 
     def hitbox_action(self, command, value):
         """Decrement or increment the value if a keyboard key is pressed, or set a value
@@ -536,8 +537,7 @@ class VerticalSlider(Slider):
 
             pixels = mouse_y-self.rect.y        #Pixels into the bar, that the dial position has.
             value = pixels/self.rect.height      #Converting to float value between 0-1
-            if value != self.get_value:         #If its a new value, we create another dial and value and blit it.
-                self.set_value(value)
+            self.set_value(value)
         self.send_event()
 
 

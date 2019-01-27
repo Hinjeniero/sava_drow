@@ -22,6 +22,7 @@ from utility_box import UtilityBox
 from game import Game
 from animation_generator import AnimationGenerator
 from sprite import AnimatedSprite
+from decorators import time_it
 from settings import USEREVENTS, INIT_PARAMS, PATHS, CHARACTERS, PARAMS,\
                     STRINGS, EXTENSIONS, SCREEN_FLAGS, SOUND_PARAMS
 #This because segmentation fault
@@ -177,11 +178,16 @@ def create_board_params():
     board_params['platform_sprite'] = AnimationGenerator.animated_tree_platform(INIT_PARAMS.INITIAL_RESOLUTION)
     return board_params
 
-def main():
+@time_it
+def pre_start():
     start_pygame()
     game = Game('sava_drow', INIT_PARAMS.INITIAL_RESOLUTION, INIT_PARAMS.INITIAL_FPS)
     game.add_screens(create_main_menu(), create_sound_menu(), create_config_menu(), create_video_menu())
     game.update_board_params(**create_board_params())
+    return game
+
+def main():
+    game = pre_start()
     game.start()
 
 if __name__ == "__main__":

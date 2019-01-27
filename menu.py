@@ -104,8 +104,10 @@ class Menu (Screen):
             mouse_movement (boolean, default=False):    True if there was mouse movement since the last call.
             mouse_pos (:tuple: int, int, default=(0,0)):Current mouse position. In pixels.
         """
-        if event.type == pygame.KEYDOWN:                    self.keyboard_handler(keys_pressed)
-        if mouse_movement or any(mouse_buttons_pressed):    self.mouse_handler(event, mouse_buttons_pressed, mouse_movement, mouse_pos)                 
+        if event.type == pygame.KEYDOWN:                    
+            self.keyboard_handler(keys_pressed)
+        if mouse_movement or event.type == pygame.MOUSEBUTTONDOWN or event.type == pygame.MOUSEBUTTONUP:    
+            self.mouse_handler(event, mouse_buttons_pressed, mouse_movement, mouse_pos)                 
 
     def keyboard_handler(self, keys_pressed):
         """Handles any pygame keyboard related event. This allows for user interaction with the object.
@@ -164,11 +166,20 @@ class Menu (Screen):
             mouse_movement( boolean, default=False):    True if there was mouse movement since the last call.
             mouse_position (:tuple: int, int, default=(0,0)):   Current mouse position. In pixels.
         """
-        if event.type == pygame.MOUSEBUTTONDOWN and self.get_colliding_sprite():
-            if mouse_buttons[0]:
-                self.active_sprite.sprite.hitbox_action('first_mouse_button', value=mouse_position)
-            elif mouse_buttons[2]:  
-                self.active_sprite.sprite.hitbox_action('secondary_mouse_button', value=mouse_position)
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if self.scroll_sprite:
+                new_scroll_value = self.scroll_sprite.get_value()
+                if event.button == 4:
+                    new_scroll_value -= 0.05
+                elif event.button == 5:
+                    new_scroll_value += 0.05
+                self.scroll_sprite.set_value(new_scroll_value)
+                self.set_scroll(new_scroll_value)
+            if self.get_colliding_sprite():
+                if mouse_buttons[0]:
+                    self.active_sprite.sprite.hitbox_action('first_mouse_button', value=mouse_position)
+                elif mouse_buttons[2]:  
+                    self.active_sprite.sprite.hitbox_action('secondary_mouse_button', value=mouse_position)
         if mouse_movement:
             colliding_sprite = self.get_colliding_sprite()
             if colliding_sprite and colliding_sprite.enabled:

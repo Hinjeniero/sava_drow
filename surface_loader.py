@@ -150,15 +150,18 @@ class SurfaceLoader(object):
         return surfaces
 
     @staticmethod
-    @synchronized
     def get_surface(image_path):
         """Image_path can be an id too"""
         if image_path in SurfaceLoader.SURFACES_LOADED.keys():
             return SurfaceLoader.SURFACES_LOADED.get_item(image_path)
         else:
-            surface = pygame.image.load(image_path).convert_alpha()
+            surface = SurfaceLoader.load_image(image_path)# pygame.image.load(image_path).convert_alpha()
             if SurfaceLoader.MAX_SIZE_ENABLED and any(x>SurfaceLoader.MAX_SIZE for x in surface.get_size()):
                 surface = Resizer.resize(surface, (SurfaceLoader.MAX_SIZE, SurfaceLoader.MAX_SIZE))
             SurfaceLoader.SURFACES_LOADED.add_item(image_path, surface)
             return surface
-        
+    
+    @staticmethod
+    @synchronized
+    def load_image(image_path):
+        return pygame.image.load(image_path).convert_alpha()

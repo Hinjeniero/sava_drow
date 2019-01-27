@@ -79,7 +79,7 @@ class Screen(object):
         self.animation  = None  #The current playing animation
         self.animated_background = False
         #Scroll
-        self.scroll_offset = 0
+        self.scroll_offset = (0, 0)
         self.scroll_sprite = None
         self.scroll_length = 0
         Screen.generate(self)
@@ -229,7 +229,7 @@ class Screen(object):
         else:
             self.background.draw(surface)
         for sprite in self.sprites.sprites():
-            if self.scroll_offset:
+            if self.scroll_offset != (0, 0):
                 sprite.draw(surface, offset=self.scroll_offset)
             else:
                 sprite.draw(surface)
@@ -260,16 +260,18 @@ class Screen(object):
                 animation.set_resolution(resolution)
                 
     def set_scroll(self, value):
-        if value == 0:
-            self.scroll_offset=None
+        print(value)
+        if value <= 0:
+            self.scroll_offset = (0, 0)
+        elif value >= 1:
+            self.scroll_offset = (0, -self.scroll_length)
         else:
             pixels = int(-value*self.scroll_length)
             self.scroll_offset=(0, pixels)
-        scroll = (0, 0) if not self.scroll_offset else self.scroll_offset
         screen_rect = pygame.Rect((0, 0), self.resolution)
         for sprite in self.sprites:
             sprite_rect = sprite.rect.copy()
-            sprite_rect.topleft = tuple(off+pos for off, pos in zip(scroll, sprite_rect.topleft))
+            sprite_rect.topleft = tuple(off+pos for off, pos in zip(self.scroll_offset, sprite_rect.topleft))
             if screen_rect.colliderect(sprite_rect):
                 sprite.set_visible(True)
             else:

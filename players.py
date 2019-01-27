@@ -279,17 +279,19 @@ class Character(AnimatedSprite):
         self.state=self.aliases['pickup'] if selected is True else self.aliases['idle']
 
     @staticmethod
-    def parse_json_char_params(json_params):
+    def parse_json_char_params(json_params):    #TODO CHANGE THIS TO READ FROM SETTINGS
         """Parse and complete the dict (in a json fashion) that contains all the customizable parameters of a all the characters.
         This gets called in factory.
         Args:
             json_params (:dict:):   All the parameters that can be modified on the characters of a player. Contains:
                                     The folder path of surfaces, the ammount and aliases of each subtype of character."""
-        character_types = ['pawn', 'warrior', 'wizard', 'priestess', 'matron_mother']
+        character_types = ['pawn', 'warrior', 'wizard', 'priestess', 'matron_mother', 'holy_champion']
         ammounts        = {'pawn': Pawn.DEFAULT_AMMOUNT, 'warrior': Warrior.DEFAULT_AMMOUNT, 'wizard': Wizard.DEFAULT_AMMOUNT,\
-                            'priestess': Priestess.DEFAULT_AMMOUNT, 'matron_mother': MatronMother.DEFAULT_AMMOUNT}
+                            'priestess': Priestess.DEFAULT_AMMOUNT, 'matron_mother': MatronMother.DEFAULT_AMMOUNT,\
+                            'holy_champion': HolyChampion.DEFAULT_AMMOUNT}
         img_paths       = {'pawn': Pawn.DEFAULT_PATH, 'warrior': Warrior.DEFAULT_PATH, 'wizard': Wizard.DEFAULT_PATH,\
-                            'priestess': Priestess.DEFAULT_PATH, 'matron_mother': MatronMother.DEFAULT_PATH}
+                            'priestess': Priestess.DEFAULT_PATH, 'matron_mother': MatronMother.DEFAULT_PATH,\
+                            'holy_champion': HolyChampion.DEFAULT_PATH}
         #Parsing names of keys
         for key in json_params.keys():          #Iterating input keys
             for correct_key in character_types: #Iterating template keys
@@ -335,7 +337,7 @@ class Character(AnimatedSprite):
         for key in character_settings.keys():
             char_init = Pawn if 'pawn' in key else Wizard if 'wizard' in key\
             else Warrior if 'warrior' in key else Priestess if 'priestess' in key\
-            else MatronMother if 'matron' in key else None
+            else MatronMother if 'matron' in key else HolyChampion if 'chamo' in key else None
             #Actual loading
             threads.append(Character.__char_loader(char_init, characters, character_settings[key]['ammount'],\
                             player_name, player_name+key, (0, 0), sprite_size, canvas_size, character_settings[key]['path'],\

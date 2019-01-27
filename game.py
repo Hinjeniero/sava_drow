@@ -118,7 +118,12 @@ class Game(object):
                 self.board_generator.set_board_params(loading_screen=True)
             else:
                 self.board_generator.set_board_params(loading_screen=False)
-        elif 'cell' in command or 'fill' in command:
+        elif 'center' in command:
+            if 'on' in value.lower() or value == 1 or 'yes' in value.lower():
+                self.board_generator.set_board_params(center_cell=True)
+            else:
+                self.board_generator.set_board_params(center_cell=False)
+        elif 'fill' in command or 'drop' in command:
             if 'on' in value.lower() or value == 1 or 'yes' in value.lower():
                 self.board_generator.set_board_params(random_filling=True)
             else:

@@ -92,6 +92,7 @@ class Board(Screen):
                         'inter_path_frequency'  : 2,
                         'circles_per_lvl'       : 16,
                         'max_levels'            : 4,
+                        'center_cell'           : False, #TODO MAKE CENTER CELL
                         'path_color'            : WHITE,
                         'path_width'            : 5,
                         'platform_sprite'       : None
@@ -150,7 +151,10 @@ class Board(Screen):
     def generate(self, *players):
         UtilityBox.join_dicts(self.params, Board.__default_config)
         #INIT
-        dimensions          = (self.params['circles_per_lvl']*self.params['max_levels'], self.params['circles_per_lvl']*self.params['max_levels'])
+        axis_size = self.params['circles_per_lvl']*self.params['max_levels']
+        if self.params['center_cell']:
+            axis_size += 1
+        dimensions          = (axis_size, axis_size)
         self.distances      = numpy.full(dimensions, -888, dtype=int)   #Says the distance between cells
         self.enabled_paths  = numpy.zeros(dimensions, dtype=bool)       #Shows if the path exist
         if self.params['loading_screen']:
@@ -335,15 +339,20 @@ class Board(Screen):
         ratio       = self.platform.rect.height//(2*self.params['max_levels'])
         radius      = 0
         small_radius= ratio//4 if not custom_cell_radius else int(custom_cell_radius)
-        #cell_sprite = Circle('cell', tuple(x-small_radius for x in self.platform.rect.center),\
-                    #(small_radius*2, small_radius*2), self.resolution)
-        #cell        = Cell(cell_sprite, (-1, 0), -1)
-        #self.cells.add(cell)
         for i in range (0, self.params['max_levels']):
             radius      += ratio
             if i is 0:  self.cells.add(self.__generate_cells(radius-ratio//3, self.platform.rect.center, small_radius, 4, 0, initial_offset=-45))
             else:       self.cells.add(self.__generate_cells(radius-ratio//3, self.platform.rect.center, small_radius, self.params['circles_per_lvl'], i))
+        if self.params['center_cell']:
+            self.cells.add(self.__generate_center_cell(small_radius, self.params['circles_per_lvl'], self.params['max_levels']))
         LOG.log('DEBUG', "Generated cells of ", self.id)
+
+    def __generate_center_cell(self, radius, circle_number, lvl_number, **cell_params):
+        index = circle_number*lvl_number
+        for i in range(0, 4):
+            self.enabled_paths[i][index], self.enabled_paths[index][i] = True, True
+            self.distances[i][index], self.distances[index][i] = 1, 1
+        return Cell((lvl_number-1, circle_number), index, tuple(center-radius for center in self.platform.rect.center), (radius*2, radius*2), self.resolution, **cell_params)
 
     def __generate_cells(self, radius, center, circle_radius, circle_number, lvl, initial_offset=-90, **cell_params):
         """Generate the cells of one circumference/level of the board. 

@@ -34,17 +34,20 @@ class CHARACTERS:
     WIZARD_AMMOUNT = 2
     PRIESTESS_AMMOUNT = 2
     MATRONMOTHER_AMMOUNT = 1
+    HOLYCHAMPION_AMMOUNT = 0
     CHARACTER_SETTINGS = {'pawn':{'ammount': PAWN_AMMOUNT, 'aliases':{'pickup': 'running'}},
                     'warrior':{'ammount': WARRIOR_AMMOUNT, 'aliases':{'pickup': 'run'}},
                     'wizard':{'ammount': WIZARD_AMMOUNT, 'aliases':{'pickup': 'pick'}},
                     'priestess':{'ammount': PRIESTESS_AMMOUNT, 'aliases':{'pickup': 'run'}},
-                    'matron_mother':{'ammount': MATRONMOTHER_AMMOUNT, 'aliases':{'pickup': 'pick'}}
+                    'matron_mother':{'ammount': MATRONMOTHER_AMMOUNT, 'aliases':{'pickup': 'pick'}},
+                    'holy_champion':{'ammount': HOLYCHAMPION_AMMOUNT, 'aliases':{'pickup': 'pick'}}
     }
     PAWN_OPTIONS = (PAWN_AMMOUNT, 16, 24, 32, 0, 4)
-    WARRIOR_OPTIONS = (WARRIOR_AMMOUNT, 4, 6, 8, 1, 0)
-    WIZARD_OPTIONS = (WIZARD_AMMOUNT, 4, 6, 8, 1, 0)
-    PRIESTESS_OPTIONS = (PRIESTESS_AMMOUNT, 4, 6, 8, 1, 0)
+    WARRIOR_OPTIONS = (WARRIOR_AMMOUNT, 4, 6, 8, 0, 1)
+    WIZARD_OPTIONS = (WIZARD_AMMOUNT, 4, 6, 8, 0, 1)
+    PRIESTESS_OPTIONS = (PRIESTESS_AMMOUNT, 4, 6, 8, 0, 1)
     MATRONMOTHER_OPTIONS = (MATRONMOTHER_AMMOUNT, 2, 4)
+    HOLYCHAMPION_OPTIONS = (HOLYCHAMPION_AMMOUNT, 1, 2, 4)
 
 class SOUND_PARAMS:
     SOUND_CHANNELS_AMMOUNT = 8

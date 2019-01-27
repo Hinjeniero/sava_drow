@@ -76,8 +76,9 @@ class STRINGS:
     MOVE_KEYWORDS = ('run', )
     YES_NO_OPTIONS = ('On', 'Off')
     YES_NO_REVERSED = ('Off', 'On')
-    ANIMATED_BGS = ('Layered industrial', 'Layered forest', 'Animated rain tree',
-                    'Animated rain china', 'Animated waterfall cave', 'Animated waterfall')
+    INITIAL_ANIMATED_BG = 'Animated waterfall'
+    ANIMATED_BGS = (INITIAL_ANIMATED_BG, 'Animated rain tree',
+                    'Animated rain china', 'Animated waterfall cave', 'Layered industrial')
 #STATE MACHINES
 class STATES:
     SCREEN = ('idle', 'stopped', 'cutscene')

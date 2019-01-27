@@ -75,7 +75,7 @@ def create_main_menu():
     buttonContinue.set_enabled(False)
     
     #Create Menu
-    bg = AnimationGenerator.animated_waterfall_background(INIT_PARAMS.INITIAL_RESOLUTION, PARAMS.ANIMATION_TIME, *INIT_PARAMS.ALL_FPS)
+    bg = AnimationGenerator.factory(STRINGS.INITIAL_ANIMATED_BG, INIT_PARAMS.INITIAL_RESOLUTION, PARAMS.ANIMATION_TIME, INIT_PARAMS.ALL_FPS, INIT_PARAMS.INITIAL_FPS)
     main_menu   = Menu('main_menu', USEREVENTS.MAINMENU_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, buttonStart, buttonContinue, buttonConfig, buttonSound, buttonGraphics,
                         animated_background=bg, background_path=PATHS.DEFAULT_BG, songs_paths=MENU_SONGS, dialog=create_dialog(),
                         do_align=False)
@@ -171,9 +171,9 @@ def create_video_menu():
 
 def create_board_params():
     board_params = {}
+    bg = AnimationGenerator.factory(STRINGS.INITIAL_ANIMATED_BG, INIT_PARAMS.INITIAL_RESOLUTION, PARAMS.ANIMATION_TIME, INIT_PARAMS.ALL_FPS, INIT_PARAMS.INITIAL_FPS)
     board_params['songs_paths'] = BOARD_SONGS
-    board_params['animated_background'] = AnimationGenerator.animated_rain_tree(INIT_PARAMS.INITIAL_RESOLUTION,\
-                                        INIT_PARAMS.INITIAL_FPS, *INIT_PARAMS.ALL_FPS)
+    board_params['animated_background'] = bg
     board_params['platform_sprite'] = AnimationGenerator.animated_tree_platform(INIT_PARAMS.INITIAL_RESOLUTION)
     return board_params
 

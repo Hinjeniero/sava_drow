@@ -98,7 +98,7 @@ class Game(object):
             self.started = False
             self.change_screen('main', 'menu')
             self.get_screen('params', 'menu', 'config').enable_all_sprites(True)
-            self.get_screen('main', 'menu').get_sprite('continue').set_enable(False)
+            self.get_screen('main', 'menu').enable_sprites(False, 'continue')
             #TODO REstart params of params menu
         elif event.type is USEREVENTS.TIMER_ONE_SEC:
             self.fps_text = UtilityBox.generate_fps(self.clock, size=tuple(int(x*0.05) for x in self.resolution))
@@ -108,7 +108,6 @@ class Game(object):
         if 'game' in command or 'mode' in command:
             self.board_generator.set_game_mode(value)
             if not 'custom' in value.lower() or 'free' in value.lower():
-                print("DEACTI")
                 self.get_screen('params', 'menu', 'config').enable_sprites(False, 'set', 'board')
             else:
                 self.get_screen('params', 'menu', 'config').enable_all_sprites()

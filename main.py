@@ -87,42 +87,47 @@ def create_config_menu():
     #button_size         = next(positions)
     button_size = (0.60, 0.15)
     positions   = UtilityBox.size_position_generator_no_adjustment(*button_size, 0.05, 0.15)
+    gradients   = UtilityBox.looped_rainbow_gradient_generator(((255, 0, 0), (0, 0, 0)), 3)
     #buttonLoadingScreen
     buttonLoadingScreen = UIElement.factory('button_loading', "change_loading_board", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
                                             INIT_PARAMS.INITIAL_RESOLUTION, default_values=STRINGS.YES_NO_OPTIONS, text="Show screen while board loads", text_alignment='left',\
-                                            gradient = (RED, BLACK))
-    buttonRandomFilling = UIElement.factory('button_board_fill', "change_random_board_dropping_fill", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
-                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=STRINGS.YES_NO_OPTIONS, text="Random board fill order", text_alignment='left',\
-                                            gradient = (RED, BLACK))
+                                            gradient = next(gradients))
+    buttonCountPlayers  = UIElement.factory('button_players', "add_players_board", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
+                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=PARAMS.PLAYERS_AMMOUNT, text="Number of players", text_alignment='left',\
+                                            gradient = next(gradients))
     buttonGameModes     = UIElement.factory('button_game_mode', "change_game_mode", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
                                             INIT_PARAMS.INITIAL_RESOLUTION, default_values=STRINGS.GAMEMODES, text="Game Mode", text_alignment='left',\
-                                            gradient = (RED, BLACK))
+                                            gradient = next(gradients))
     buttonBoardSize     = UIElement.factory('button_board_size', "set_board_size", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
                                             INIT_PARAMS.INITIAL_RESOLUTION, default_values=STRINGS.BOARD_SIZES, text="Board Size", text_alignment='left',\
-                                            gradient = (RED, BLACK))
+                                            gradient = next(gradients))
+    buttonRandomFilling = UIElement.factory('button_board_fill', "set_random_board_dropping_fill", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
+                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=STRINGS.YES_NO_OPTIONS, text="Random board fill order", text_alignment='left',\
+                                            gradient = next(gradients))
     buttonCenterCell    = UIElement.factory('button_center_cell', "set_board_center_cell", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
                                             INIT_PARAMS.INITIAL_RESOLUTION, default_values=STRINGS.YES_NO_REVERSED, text="Center cell on board", text_alignment='left',\
-                                            gradient = (RED, BLACK))
-    buttonCountPlayers  = UIElement.factory('button_players', "set_players_board", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
-                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=PARAMS.PLAYERS_AMMOUNT, text="Number of players", text_alignment='left',\
-                                            gradient = (RED, BLACK))
-    buttonNumPawns      = UIElement.factory('button_pawns', "set_ammount_pawns_board", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
+                                            gradient = next(gradients))
+    buttonNumPawns      = UIElement.factory('button_pawns', "set_pawns_board", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
                                             INIT_PARAMS.INITIAL_RESOLUTION, default_values=CHARACTERS.PAWN_OPTIONS, text="Number of pawns", text_alignment='left',\
-                                            gradient = (RED, BLACK))
-    buttonNumWarriors   = UIElement.factory('button_warriors', "set_ammount_warriors_board", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
+                                            gradient = next(gradients))
+    buttonNumWarriors   = UIElement.factory('button_warriors', "set_warriors_board", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
                                             INIT_PARAMS.INITIAL_RESOLUTION, default_values=CHARACTERS.WARRIOR_OPTIONS, text="Number of warriors", text_alignment='left',\
-                                            gradient = (RED, BLACK))
-    buttonNumWizards    = UIElement.factory('button_wizards', "set_ammount_wizards_board", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,
-                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=CHARACTERS.WIZARD_OPTIONS, text="Number of wizards", gradient = (RED, BLACK), text_alignment='left')
-    buttonNumPriestesses= UIElement.factory('button_priestesses', "set_ammount_priestess_board", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
-                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=CHARACTERS.PRIESTESS_OPTIONS, text="Number of priestess", gradient = (RED, BLACK), text_alignment='left')
-    buttonNumMothers    = UIElement.factory('button_matrons', "set_ammount_matronmothers_board", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
-                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=CHARACTERS.MATRONMOTHER_OPTIONS, text="Number of Matron Mothers", text_alignment='left')
-    buttonHolyChampions = UIElement.factory('button_champions', "set_ammount_champions_board", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
-                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=CHARACTERS.HOLYCHAMPION_OPTIONS, text="Number of Holy Champions", text_alignment='left')
-    params_menu = Menu("menu_params_config", USEREVENTS.CONFIG_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, buttonLoadingScreen, buttonRandomFilling, buttonGameModes, buttonBoardSize,\
-                        buttonCenterCell, buttonCountPlayers, buttonNumPawns, buttonNumWarriors, buttonNumWizards, buttonNumPriestesses, buttonNumMothers, buttonHolyChampions,\
-                        background_path=PATHS.DEFAULT_BG, gradient = (RED, BLACK), do_align=False)
+                                            gradient = next(gradients))
+    buttonNumWizards    = UIElement.factory('button_wizards', "set_wizards_board", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,
+                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=CHARACTERS.WIZARD_OPTIONS, text="Number of wizards", text_alignment='left',\
+                                            gradient = next(gradients))
+    buttonNumPriestesses= UIElement.factory('button_priestesses', "set_priestess_board", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
+                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=CHARACTERS.PRIESTESS_OPTIONS, text="Number of priestess", text_alignment='left',\
+                                            gradient = next(gradients))
+    buttonNumMothers    = UIElement.factory('button_matrons', "set_matronmothers_board", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
+                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=CHARACTERS.MATRONMOTHER_OPTIONS, text="Number of Matron Mothers", text_alignment='left',\
+                                            gradient = next(gradients))
+    buttonHolyChampions = UIElement.factory('button_champions', "set_champions_board", USEREVENTS.CONFIG_USEREVENT, next(positions), button_size,\
+                                            INIT_PARAMS.INITIAL_RESOLUTION, default_values=CHARACTERS.HOLYCHAMPION_OPTIONS, text="Number of Holy Champions", text_alignment='left',\
+                                            gradient = next(gradients))
+    params_menu = Menu("menu_params_config", USEREVENTS.CONFIG_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, buttonLoadingScreen, buttonCountPlayers, buttonGameModes, buttonBoardSize,\
+                        buttonRandomFilling, buttonCenterCell, buttonNumPawns, buttonNumWarriors, buttonNumWizards, buttonNumPriestesses, buttonNumMothers, buttonHolyChampions,\
+                        background_path=PATHS.DEFAULT_BG, gradient = (RED, BLACK), do_align=False, songs_paths=None)
     return params_menu
 
 def create_sound_menu():
@@ -148,7 +153,7 @@ def create_sound_menu():
     sliderBoardSounds.set_enabled(False)
     buttonBoardSongs.set_enabled(False)
     sound_menu          = Menu("menu_volume_music", USEREVENTS.SOUND_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, sliderMenuMusic, sliderMenuSounds, sliderBoardMusic, sliderBoardSounds,\
-                                buttonBoardSongs, buttonMenusSongs, background_path=PATHS.DEFAULT_BG, do_align=False)
+                                buttonBoardSongs, buttonMenusSongs, background_path=PATHS.DEFAULT_BG, do_align=False, songs_paths=None)
     sound_menu.add_animation(AnimationGenerator.characters_crossing_screen(INIT_PARAMS.INITIAL_RESOLUTION, *INIT_PARAMS.ALL_FPS))
     return sound_menu
 
@@ -166,7 +171,7 @@ def create_video_menu():
     buttonBgsBoard  = UIElement.factory('button__board_bgs', "set_animated_background_board", USEREVENTS.GRAPHIC_USEREVENT, next(positions), button_size,\
                                     INIT_PARAMS.INITIAL_RESOLUTION, default_values=STRINGS.ANIMATED_BGS, text="Set board background", text_alignment='left')
     graphics_menu   = Menu("menu_graphics_display", USEREVENTS.GRAPHIC_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, buttonRes, buttonFps, buttonFullscreen,\
-                            buttonBgsMenu, buttonBgsBoard, background_path=PATHS.DEFAULT_BG, do_align=False)
+                            buttonBgsMenu, buttonBgsBoard, background_path=PATHS.DEFAULT_BG, do_align=False, songs_paths=None)
     graphics_menu.add_animation(AnimationGenerator.character_teleporting_screen(INIT_PARAMS.INITIAL_RESOLUTION, *INIT_PARAMS.ALL_FPS))
     return graphics_menu
 
@@ -186,9 +191,6 @@ def pre_start():
     game.update_board_params(**create_board_params())
     return game
 
-def main():
+if __name__ == "__main__":
     game = pre_start()
     game.start()
-
-if __name__ == "__main__":
-    main()

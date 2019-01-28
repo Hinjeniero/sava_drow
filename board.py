@@ -117,19 +117,18 @@ class Board(Screen):
         self.loading_screen = None  #Created in Board.generate
         self.cells          = pygame.sprite.Group()
         self.quadrants      = {}
-
         self.possible_dests = pygame.sprite.Group()
         self.inter_paths    = pygame.sprite.GroupSingle()
         self.paths          = pygame.sprite.Group()
         self.characters     = pygame.sprite.OrderedUpdates()
         self.current_player = None  #Created in add_player
-
+        
+        #Utilities to keep track
         self.active_cell    = pygame.sprite.GroupSingle()
         self.last_cell      = pygame.sprite.GroupSingle()
         self.active_path    = pygame.sprite.GroupSingle()
         self.active_char    = pygame.sprite.GroupSingle()
         self.drag_char      = pygame.sprite.GroupSingle()
-
         self.platform       = None  #Created in Board.generate
         
         #Paths and maping
@@ -158,7 +157,7 @@ class Board(Screen):
         self.distances      = numpy.full(dimensions, -888, dtype=int)   #Says the distance between cells
         self.enabled_paths  = numpy.zeros(dimensions, dtype=bool)       #Shows if the path exist
         if self.params['loading_screen']:
-            self.loading_screen = LoadingScreen(self.id+"_loading", self.event_id, self.resolution, text="Loading, hang tight like a japanese pussy")
+            self.loading_screen = LoadingScreen(self.id+"_loading", self.event_id, self.resolution, text="Loading, hang tight")
         #REST
         platform_size   = tuple(min(self.resolution)*self.params['platform_proportion'] for _ in self.resolution)
         centered_pos    = tuple(x//2-y//2 for x, y in zip(self.resolution, platform_size))

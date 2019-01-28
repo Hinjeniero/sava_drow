@@ -69,16 +69,21 @@ class BoardGenerator(object):
         elif any(kw in self.prefab_size for kw in ('test', 'impossible', 'notreal', 'purpose', 'zero', 'memoryerror')):
             board = self.generate_test(resolution)
         #END
-        for i in range (0, (4//self.players)):
-            board.create_player(random.choice(STRINGS.PLAYER_NAMES), i*(4//self.players), (200, 200), **self.characters_params)
+        for i in range (0, 4, 4//self.players):
+            board.create_player(random.choice(STRINGS.PLAYER_NAMES), i, (200, 200), **self.characters_params)
         return board
 
     def generate_default(self, resolution):
         return Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **self.board_params)
 
     def generate_classic(self, resolution):
-        board = Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution,\
-                    max_levels=4, circles_per_lvl=16, random_filling=False)
+        board_params = self.board_params.copy()
+        board_params['max_levels'] = 4
+        board_params['circles_per_lvl'] = 16
+        board_params['random_filling'] = False
+        board_params['center_cell'] = False
+
+        board = Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **board_params)
         char_settings = self.characters_params.copy()
         if self.players <= 2:
             char_settings['pawn']['ammount'] = 7
@@ -94,13 +99,17 @@ class BoardGenerator(object):
             char_settings['priestess']['ammount'] = 1
             char_settings['matron_mother']['ammount'] = 1
             #TOTAL 9
-        for i in range (0, 4//self.players):
-            board.create_player(random.choice(STRINGS.PLAYER_NAMES), i*(4//self.players), (200, 200), **char_settings)
+        for i in range (0, 4, 4//self.players):
+            board.create_player(random.choice(STRINGS.PLAYER_NAMES), i, (200, 200), **char_settings)
         return board
 
     def generate_great_wheel(self, resolution):
-        board = Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution,\
-                    max_levels=5, circles_per_lvl=16, random_filling=False, center_cell=True)
+        board_params = self.board_params.copy()
+        board_params['max_levels'] = 5
+        board_params['circles_per_lvl'] = 16
+        board_params['random_filling'] = False
+        board_params['center_cell'] = True
+        board = Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **board_params)
         char_settings = self.characters_params.copy()
         if self.players <= 2:
             char_settings['pawn']['ammount'] = 9
@@ -118,8 +127,8 @@ class BoardGenerator(object):
             #TOTAL 12
         #Those dont change
         char_settings['matron_mother']['ammount'] = 1
-        for i in range (0, 4//self.players):
-            board.create_player(random.choice(STRINGS.PLAYER_NAMES), i*(4//self.players), (200, 200), **char_settings)
+        for i in range (0, 4, 4//self.players):
+            board.create_player(random.choice(STRINGS.PLAYER_NAMES), i, (200, 200), **char_settings)
         return board
 
     def generate_lite(self, resolution):

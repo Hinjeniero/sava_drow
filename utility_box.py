@@ -321,3 +321,12 @@ class UtilityBox (object):
             yield (start_gradient+transparency, end_gradient+transparency)
             start_gradient = end_gradient
 
+    @staticmethod
+    def looped_rainbow_gradient_generator(gradient, ammount_elements_per_loop, transparency=255):
+        """To generate the desired colors."""
+        while True:
+            loop_generator = UtilityBox.rainbow_gradient_generator(gradient, ammount_elements_per_loop, transparency)
+            for _ in range(0, ammount_elements_per_loop):
+                yield next(loop_generator)
+            gradient = tuple(reversed(gradient))
+

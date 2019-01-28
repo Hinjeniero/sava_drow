@@ -175,16 +175,17 @@ class Screen(object):
 
     def set_song(self, song_path):
         index = 0
-        for song in self.params['songs_paths']:
-            if song_path in song:
-                LOG.log('debug', 'Changing song to ', song,' in ', self.id)
-                song = pygame.mixer.Sound(file=song)
-                self.music_chan.play(song, loops=-1)
-                if not self.playing:
-                    self.music_chan.pause()
-                self.song_index = index
-                return
-        LOG.log('debug', 'Didn`t find ', song_path,' in ', self.id)
+        if self.params['songs_paths']:
+            for song in self.params['songs_paths']:
+                if song_path in song:
+                    LOG.log('debug', 'Changing song to ', song,' in ', self.id)
+                    song = pygame.mixer.Sound(file=song)
+                    self.music_chan.play(song, loops=-1)
+                    if not self.playing:
+                        self.music_chan.pause()
+                    self.song_index = index
+                    return
+            LOG.log('debug', 'Didn`t find ', song_path,' in ', self.id)
 
     def play_sound(self, sound_id):
         for sound in Screen.SOUNDS.keys():
@@ -353,8 +354,8 @@ class LoadingScreen(Screen):
                                         animation_delay=60)
         #The text sprite in the middle of the screen
         text_size   = tuple(x*ratio for x,ratio in zip(self.resolution, self.params['text_proportion']))
-        text_pos    = tuple(x//2-y//2 for x, y in zip(self.resolution, text_size))
-        text_sprite = TextSprite(self.id+'_text', text_pos, text_size, self.resolution, self.params['text'])
+        text_sprite = TextSprite(self.id+'_text', (0, 0), text_size, self.resolution, self.params['text'])
+        text_sprite.set_position(tuple(x//2-y//2 for x, y in zip(self.resolution, text_sprite.rect.size)))
         self.sprites.add(loading_sprite, text_sprite)
 
     def generate_load_sprite(self, path, degrees=45):

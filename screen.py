@@ -17,7 +17,7 @@ from exceptions import BadSpriteException, BadStateException
 from logger import Logger as LOG
 from decorators import run_async
 from synch_dict import Dictionary
-from settings import PATHS, STATES, SOUND_PARAMS, PATHS
+from settings import PATHS, STATES, EXTENSIONS, SOUND_PARAMS
 
 class Screen(object):
     """Screen class. Controls an entire 'screen' (like a desktop).
@@ -42,7 +42,7 @@ class Screen(object):
     """
     __default_config = {'background_path'   : None,
                         'animated_background': None,
-                        'songs_paths'       : []
+                        'songs_paths'       : UtilityBox.get_all_files(PATHS.COMMON_SONGS, *EXTENSIONS.MUSIC_FORMATS)
     }
     SOUND_CHANNELS = []
     SOUNDS = Dictionary()
@@ -303,8 +303,13 @@ class Screen(object):
         return False
 
     def enable_all_sprites(self, state=True):
-        for sprite in self.sprites.sprites():
+        for sprite in self.sprites:
             sprite.set_enabled(state)
+
+    def enable_sprites(self, state=True, *keywords):
+        for sprite in self.sprites:
+            if all(kw in sprite.get_id() for kw in keywords):
+                sprite.set_enabled(state)
 
 class LoadingScreen(Screen):
     """LoadingScreen class. Inherits from Screen.

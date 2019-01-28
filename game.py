@@ -82,8 +82,6 @@ class Game(object):
         elif event.type is USEREVENTS.MAINMENU_USEREVENT:
             if 'start' in event.command.lower():
                 self.initiate()
-            '''elif 'continue' in event.command.lower() and self.started:
-                self.change_screen('board')'''
             self.change_screen(*event.command.lower().split('_'))
         elif event.type is USEREVENTS.SOUND_USEREVENT:
             self.sound_handler(event.command.lower(), event.value)
@@ -109,6 +107,11 @@ class Game(object):
         characters = ('pawn', 'warrior', 'wizard', 'priestess', 'matron')
         if 'game' in command or 'mode' in command:
             self.board_generator.set_game_mode(value)
+            if not 'custom' in value.lower() or 'free' in value.lower():
+                print("DEACTI")
+                self.get_screen('params', 'menu', 'config').enable_sprites(False, 'set', 'board')
+            else:
+                self.get_screen('params', 'menu', 'config').enable_all_sprites()
         elif 'size' in command:
             self.board_generator.set_board_size(value)
         elif 'player' in command:
@@ -378,7 +381,8 @@ class Game(object):
                     if 'board' in self.screens[i].id:
                         old_board = self.screens[i]
                         self.screens[i] = self.board_generator.generate_board(self.resolution)
-                        self.screens[i].music_chan.set_volume(old_board.music_chan.get_volume())
+                        if old_board.music_chan:
+                            self.screens[i].set_volume(old_board.music_chan.get_volume())
                         self.screens[i].sound_vol = old_board.sound_vol
                         break
             else:

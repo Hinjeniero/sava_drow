@@ -122,6 +122,9 @@ class Sprite(pygame.sprite.Sprite):
                         tuple([x/y for x,y in zip(self.rect.size, self.resolution)]))
         self.rects[self.resolution] = self.rect.copy() 
 
+    def get_id(self):
+        return self.id
+        
     def draw(self, surface, offset=None):
         """Draws the sprite over a surface. Draws the overlay too if use_overlay is True.
         Args:

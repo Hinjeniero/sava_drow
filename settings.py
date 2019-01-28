@@ -68,7 +68,7 @@ class EXTENSIONS:
 
 class STRINGS:
     #Strings, but not related to texts, more like names and shit
-    GAMEMODES = ('Classic', 'Great Wheel', 'Custom')
+    GAMEMODES = ('Custom', 'Classic', 'Great Wheel')
     BOARD_SIZES = ('Normal', 'Lite', 'Small', 'Extra', 'Huge', 'Insane', 'MemoryError')
     PLAYER_NAMES = ['Mitches', 'Hayesshine', 'Rolbo Gordonggins', 'Spencerpop', 'Palka', 'Rainrobinson', 'Kingolas', 'Zippotudo',
                     'Zimrcia', 'Coxobby Ohmswilson', 'Uwotm8', 'Orangeman', 'npc', 'Totallynot Arobot', 'Bigba Lshanging']
@@ -110,7 +110,7 @@ class PATHS:
     #---Main, the songs folders
     MENU_SONGS = AUDIO_FOLDER+'menu'
     BOARD_SONGS = AUDIO_FOLDER+'board'
-    COMMON_SONGS = AUDIO_FOLDER+'common'
+    COMMON_SONGS = AUDIO_FOLDER+'common_music\\'
     #---Screen
     DEFAULT_BG = IMAGE_FOLDER+'background.jpg'
     LOADING_BG = IMAGE_FOLDER+'loading_background.png'

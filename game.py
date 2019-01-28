@@ -5,7 +5,7 @@ Have the following classes:
     Game
 --------------------------------------------"""
 __all__ = ['Game']
-__version__ = '0.2'
+__version__ = '0.5'
 __author__ = 'David Flaity Pardo'
 
 #Python librariess

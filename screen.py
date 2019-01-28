@@ -248,7 +248,6 @@ class Screen(object):
             resolution (:tuple: int, int):  Resolution to set on the Screen."""
         if resolution != self.resolution:
             self.resolution = resolution
-            self.set_scroll(0)
             if self.animated_background:
                 self.background.set_resolution(resolution)
             else:
@@ -257,26 +256,30 @@ class Screen(object):
                 self.dialog.set_canvas_size(resolution)
             for sprite in self.sprites.sprites():
                 sprite.set_canvas_size(resolution)
+            if self.scroll_sprite:
+                self.scroll_sprite.set_canvas_size(resolution)
+                self.set_scroll(0)
             for animation in self.animations:
                 animation.set_resolution(resolution)
                 
     def set_scroll(self, value):
-        print(value)
-        if value <= 0:
-            self.scroll_offset = (0, 0)
-        elif value >= 1:
-            self.scroll_offset = (0, -self.scroll_length)
-        else:
-            pixels = int(-value*self.scroll_length)
-            self.scroll_offset=(0, pixels)
-        screen_rect = pygame.Rect((0, 0), self.resolution)
-        for sprite in self.sprites:
-            sprite_rect = sprite.rect.copy()
-            sprite_rect.topleft = tuple(off+pos for off, pos in zip(self.scroll_offset, sprite_rect.topleft))
-            if screen_rect.colliderect(sprite_rect):
-                sprite.set_visible(True)
+        if self.scroll_sprite:
+            self.scroll_sprite.set_value(value)
+            if value <= 0:
+                self.scroll_offset = (0, 0)
+            elif value >= 1:
+                self.scroll_offset = (0, -self.scroll_length)
             else:
-                sprite.set_visible(False)
+                pixels = int(-value*self.scroll_length)
+                self.scroll_offset=(0, pixels)
+            screen_rect = pygame.Rect((0, 0), self.resolution)
+            for sprite in self.sprites:
+                sprite_rect = sprite.rect.copy()
+                sprite_rect.topleft = tuple(off+pos for off, pos in zip(self.scroll_offset, sprite_rect.topleft))
+                if screen_rect.colliderect(sprite_rect):
+                    sprite.set_visible(True)
+                else:
+                    sprite.set_visible(False)
 
     def add_sprites(self, *sprites):
         """Adds sprites to the screen. Those added sprites will be drawn automatically in the next execution.
@@ -341,6 +344,7 @@ class LoadingScreen(Screen):
         if 'background_path' not in params:   
             params['background_path'] = LoadingScreen.__default_config['background_path']
         super().__init__(id_, event_id, resolution, **params)
+        self.msg_queue = None   #To add messages on screen about what it's happening
         LoadingScreen.generate(self)
 
     @staticmethod

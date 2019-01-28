@@ -173,7 +173,6 @@ class Menu (Screen):
                     new_scroll_value -= 0.05
                 elif event.button == 5:
                     new_scroll_value += 0.05
-                self.scroll_sprite.set_value(new_scroll_value)
                 self.set_scroll(new_scroll_value)
             if self.get_colliding_sprite():
                 if mouse_buttons[0]:

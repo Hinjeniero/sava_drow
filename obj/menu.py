@@ -182,7 +182,7 @@ class Menu (Screen):
         if mouse_movement:
             colliding_sprite = self.get_colliding_sprite()
             if colliding_sprite and colliding_sprite.enabled:
-                if colliding_sprite is not self.scroll_sprite:
+                if self.sprites.has(colliding_sprite):
                     self.change_active_sprite(self.get_sprite_index(colliding_sprite))
                 else:
                     self.set_active_sprite(colliding_sprite)
@@ -191,6 +191,11 @@ class Menu (Screen):
         colliding_sprite = None
         mouse_sprite = UtilityBox.get_mouse_sprite()
         #Check if colliding with scroll
+        if self.dialog and self.dialog.visible:
+            for button in self.dialog.buttons:
+                if button.rect.colliderect(mouse_sprite):
+                    return button
+            return None
         if self.scroll_sprite and mouse_sprite.rect.colliderect(self.scroll_sprite.rect):
             return self.scroll_sprite
         if self.scroll_offset:
@@ -217,7 +222,15 @@ class Menu (Screen):
             elif index < 0:                     
                 self.active_sprite_index = size_sprite_list-1
             self.set_active_sprite(self.sprites.sprites()[self.active_sprite_index])
-    
+
+    def show_dialog(self):
+        super().show_dialog()
+        self.set_active_sprite(self.dialog)
+
+    def hide_dialog(self):
+        super().hide_dialog()
+        self.active_sprite.empty()        
+
     def set_active_sprite(self, sprite):
         if self.active_sprite.sprite is not None:   
             self.active_sprite.sprite.set_hover(False) #Change the active back to the original state

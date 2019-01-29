@@ -62,7 +62,6 @@ class Screen(object):
         self.id         = id_
         self.event_id   = event_id
         self.params     = params
-        self.dialog     = pygame.sprite.GroupSingle()
         self.resolution = resolution
         #Sprites
         self.background = None  #Created in generate
@@ -89,12 +88,16 @@ class Screen(object):
     @staticmethod
     def generate(self):
         UtilityBox.join_dicts(self.params, Screen.__default_config.copy())
+        #GRAPHICS
         if self.params['animated_background']:
             self.background = self.params['animated_background']
             self.animated_background = True
         else:
             self.background = Sprite(self.id+'_background', (0, 0), self.resolution, self.resolution,\
                                     resize_mode='fill', texture=self.params['background_path'])
+        if self.dialog:
+            self.dialog.set_visible(False)
+        #SOUNDS
         if self.params['songs_paths']:
             self.music_chan = UtilityBox.get_sound_channel()
             self.music_chan.set_volume(SOUND_PARAMS.INIT_VOLUME)
@@ -238,7 +241,7 @@ class Screen(object):
                 sprite.draw(surface)
         if self.scroll_sprite:
             self.scroll_sprite.draw(surface)       
-        if self.have_dialog() and self.dialog_active():
+        if self.have_dialog():
             self.dialog.draw(surface)
         if self.animation:
             self.animation.play(surface)

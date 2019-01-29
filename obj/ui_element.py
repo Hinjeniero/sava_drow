@@ -686,6 +686,7 @@ class Dialog (InfoBoard):
     def __init__(self, id_, user_event_id, element_size, canvas_size, *elements, **params):
         UtilityBox.join_dicts(params, Dialog.__default_config)
         super().__init__(id_, user_event_id, (0, 0), element_size, canvas_size, **params)
+        self.buttons = pygame.sprite.OrderedUpdates()
         Dialog.generate(self)
 
     @staticmethod
@@ -695,9 +696,21 @@ class Dialog (InfoBoard):
         self.set_position(position)
         self.add_text_element(self.id+'_text', self.params['text'], (self.params['rows']*self.params['cols'])-self.params['cols'])
 
+    def set_active(self, active):
+        super().set_active(active)
+        for button in self.buttons:
+            button.set_active(active)
+
+    def draw(self, surface):
+        super().draw(surface)
+        for button in self.buttons:
+            if button.active:
+                button.draw_overlay(surface, self.rect.topleft)
+
     def add_button(self, spaces, text, command, scale=1, **button_params):
         spaces = self.parse_element_spaces(spaces)
         size = self.get_element_size(spaces, scale)
         position = self.get_element_position(spaces, size)
         button = ButtonAction(self.id+"_button", command, self.event_id, position, size, self.rect.size, text=text, **button_params)
-        self.add_sprite(button)
+        self.buttons.add(button)
+        self.image.blit(button.image, button.rect.topleft)

@@ -92,6 +92,8 @@ class Game(object):
         elif event.type is USEREVENTS.DIALOG_USEREVENT:
             if 'scroll' in event.command:
                 self.current_screen.set_scroll(event.value)
+            else:
+                print(event.command)
         elif event.type is USEREVENTS.END_CURRENT_GAME:
             self.show_popup('win')
             self.current_screen.play_sound('win')

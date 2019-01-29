@@ -121,6 +121,26 @@ class AnimationGenerator(object):
     @staticmethod
     def animated_rain_chinese(resolution, time, *fps):
         return AnimationGenerator.animated_static_background('chinese_chon_hon', PATHS.ANIMATED_RAIN_CHINESE_BG, resolution, time, *fps)
+    
+    ####NORMAL ANIMATIONS FORM HERE ON
+    @staticmethod
+    def explosions_bottom(resolution, *fps, bottom_offset=0.00, size=0.10):
+        animation = LoopedAnimation('EXPLOSIUNS')
+        folder = PATHS.EXPLOSIONS
+        size = tuple(size*x for x in resolution)
+        index = 1
+        for explosion_type in PATHS.ALL_EXPLOSIONS:
+            #print(folder)
+            #print("With keyw "+explosion_type)
+            sprite = ScriptedSprite('explasion_'+str(index), (0, 0), size, resolution, fps[0], fps, sprite_folder=folder,\
+                                    keywords=tuple(explosion_type,), animation_delay=2*index)
+            x = index*(resolution[0]*0.8)//len(PATHS.ALL_EXPLOSIONS)
+            position = (x, (resolution[1]*(1-bottom_offset))-sprite.rect.height)
+            sprite.set_position(position)
+            sprite.add_movement(position, position, 1)
+            animation.add_sprite(sprite, 0, 1)
+            index += 1
+        return animation
 
     @staticmethod
     @time_it

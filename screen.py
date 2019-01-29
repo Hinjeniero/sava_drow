@@ -17,7 +17,9 @@ from exceptions import BadSpriteException, BadStateException
 from logger import Logger as LOG
 from decorators import run_async
 from synch_dict import Dictionary
-from settings import PATHS, STATES, EXTENSIONS, SOUND_PARAMS
+from settings import PATHS, STATES, EXTENSIONS, SOUND_PARAMS, INIT_PARAMS
+
+from animation_generator import AnimationGenerator
 
 class Screen(object):
     """Screen class. Controls an entire 'screen' (like a desktop).
@@ -352,15 +354,19 @@ class LoadingScreen(Screen):
         """Loads the loading sprite image, and renders the TextSprite.
         Then adds them to Screen."""
         UtilityBox.join_dicts(self.params, LoadingScreen.__default_config)
-        load_surfaces = self.generate_load_sprite(self.params['loading_sprite_path'])
-        loading_sprite = AnimatedSprite(self.id+'_loading_sprite', load_surfaces[0].rect.topleft,\
-                                        load_surfaces[0].rect.size, self.resolution, initial_surfaces=load_surfaces,\
-                                        animation_delay=60)
         #The text sprite in the middle of the screen
         text_size   = tuple(x*ratio for x,ratio in zip(self.resolution, self.params['text_proportion']))
         text_sprite = TextSprite(self.id+'_text', (0, 0), text_size, self.resolution, self.params['text'])
         text_sprite.set_position(tuple(x//2-y//2 for x, y in zip(self.resolution, text_sprite.rect.size)))
-        self.sprites.add(loading_sprite, text_sprite)
+        self.sprites.add(text_sprite)
+        self.add_animation(AnimationGenerator.explosions_bottom(INIT_PARAMS.INITIAL_RESOLUTION, *INIT_PARAMS.ALL_FPS))
+
+    def generate_static_rotating_load_sprite(self):
+        load_surfaces = self.generate_load_sprite(self.params['loading_sprite_path'])
+        loading_sprite = AnimatedSprite(self.id+'_loading_sprite', load_surfaces[0].rect.topleft,\
+                                        load_surfaces[0].rect.size, self.resolution, initial_surfaces=load_surfaces,\
+                                        animation_delay=60)
+        self.sprites.add(loading_sprite)
 
     def generate_load_sprite(self, path, degrees=45):
         """Gets an image from a path, and rotates it until it completes en entier circle (360º).

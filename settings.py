@@ -107,6 +107,8 @@ class PATHS:
     ANIMATED_RAIN_TREE_BG = IMAGE_FOLDER+'Rain_tree'
     ANIMATED_RAIN_CHINESE_BG = IMAGE_FOLDER+'Rain_chinese'
     INDUSTRIAL_LAYERED_BG = IMAGE_FOLDER+'Industrial'
+    EXPLOSIONS = IMAGE_FOLDER+'Explosion'
+    ALL_EXPLOSIONS = ['Small', 'Normal', 'big', 'nuclear', 'bomb', 'supernova']
     #---Main, the songs folders
     MENU_SONGS = AUDIO_FOLDER+'menu'
     BOARD_SONGS = AUDIO_FOLDER+'board'

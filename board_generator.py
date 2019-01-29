@@ -9,9 +9,9 @@ __author__ = 'David Flaity Pardo'
 
 import random
 import pygame
-from board import Board
-from logger import Logger as LOG
-from decorators import time_it
+from obj.board import Board
+from obj.utilities.logger import Logger as LOG
+from obj.utilities.decorators import time_it
 from settings import USEREVENTS, STRINGS, PARAMS, CHARACTERS
 
 class BoardGenerator(object):

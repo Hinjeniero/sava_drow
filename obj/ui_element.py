@@ -18,15 +18,14 @@ __author__ = 'David Flaity Pardo'
 import pygame
 import math
 #Selfmade libraries
-from polygons import Circle, Rectangle
-from resizer import Resizer
-from pygame_test import PygameSuite
-from colors import WHITE, RED, DARKGRAY, LIGHTGRAY, GREEN, BLACK
-from exceptions import  InvalidUIElementException, BadUIElementInitException, InvalidCommandValueException,\
-                        TooManyElementsException, InvalidSliderException, NotEnoughSpaceException
-from utility_box import UtilityBox
-from sprite import Sprite, MultiSprite, TextSprite
-from logger import Logger as LOG
+from obj.polygons import Circle, Rectangle
+from obj.utilities.resizer import Resizer
+from obj.utilities.colors import WHITE, RED, DARKGRAY, LIGHTGRAY, GREEN, BLACK
+from obj.utilities.exceptions import    InvalidUIElementException, BadUIElementInitException, InvalidCommandValueException,\
+                                        TooManyElementsException, InvalidSliderException, NotEnoughSpaceException
+from obj.utilities.utility_box import UtilityBox
+from obj.sprite import Sprite, MultiSprite, TextSprite
+from obj.utilities.logger import Logger as LOG
 
 class UIElement(MultiSprite):
     """Superclass UI_Element. Inherits from MultiSprite.

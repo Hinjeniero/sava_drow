@@ -10,13 +10,13 @@ __author__ = 'David Flaity Pardo'
 from os import listdir
 from os.path import isfile, join, dirname
 import pygame
-from utility_box import UtilityBox
-from ui_element import TextSprite
-from sprite import Sprite, AnimatedSprite
-from exceptions import BadSpriteException, BadStateException
-from logger import Logger as LOG
-from decorators import run_async
-from synch_dict import Dictionary
+from obj.utilities.utility_box import UtilityBox
+from obj.ui_element import TextSprite
+from obj.sprite import Sprite, AnimatedSprite
+from obj.utilities.exceptions import BadSpriteException, BadStateException
+from obj.utilities.logger import Logger as LOG
+from obj.utilities.decorators import run_async
+from obj.utilities.synch_dict import Dictionary
 from settings import PATHS, STATES, EXTENSIONS, SOUND_PARAMS, INIT_PARAMS
 
 from animation_generator import AnimationGenerator

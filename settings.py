@@ -86,9 +86,10 @@ class STATES:
 #PATHS TO FILES/IMAGES/SOUNDS
 #---Global paths(Container paths)
 class PATHS:
-    GAME_FOLDER = os.path.dirname(__file__)
-    IMAGE_FOLDER = os.path.join(GAME_FOLDER, 'img\\')
-    AUDIO_FOLDER = os.path.join(GAME_FOLDER, 'sounds\\')
+    ROOT_FOLDER = os.path.dirname(__file__)
+    ASSETS_FOLDER = os.path.join(ROOT_FOLDER, 'local\\')
+    IMAGE_FOLDER = os.path.join(ASSETS_FOLDER, 'img\\')
+    AUDIO_FOLDER = os.path.join(ASSETS_FOLDER, 'sounds\\')
     SOUNDS_FOLDER = AUDIO_FOLDER+'common\\'
     SECRET_FOLDER = AUDIO_FOLDER+'secret\\'
     #Characters

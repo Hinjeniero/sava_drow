@@ -11,20 +11,21 @@ import threading
 import sys
 from pygame.locals import *
 from pygame.key import *
-from screen import Screen
+from obj.screen import Screen
 #Selfmade Libraries
-from board import Board
-from menu import Menu
-from ui_element import UIElement, TextSprite, InfoBoard, Dialog
-from colors import RED, BLACK, WHITE, GREEN
-from logger import Logger as LOG
-from utility_box import UtilityBox
+from obj.board import Board
+from obj.menu import Menu
+from obj.ui_element import UIElement, TextSprite, InfoBoard, Dialog
+from obj.utilities.colors import RED, BLACK, WHITE, GREEN
+from obj.utilities.logger import Logger as LOG
+from obj.utilities.utility_box import UtilityBox
 from game import Game
 from animation_generator import AnimationGenerator
-from sprite import AnimatedSprite
-from decorators import time_it
+from obj.sprite import AnimatedSprite
+from obj.utilities.decorators import time_it
 from settings import USEREVENTS, INIT_PARAMS, PATHS, CHARACTERS, PARAMS,\
                     STRINGS, EXTENSIONS, SCREEN_FLAGS, SOUND_PARAMS
+
 #This because segmentation fault
 import faulthandler
 faulthandler.enable()

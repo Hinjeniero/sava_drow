@@ -15,19 +15,19 @@ import threading
 import sys
 from pygame.locals import *
 from pygame.key import *
-from screen import Screen
+from obj.screen import Screen
 #Selfmade Libraries
-from decorators import run_async
-from board import Board
-from menu import Menu
-from ui_element import UIElement, TextSprite, InfoBoard, Dialog
-from colors import RED, BLACK, WHITE
-from logger import Logger as LOG
-from utility_box import UtilityBox
+from obj.utilities.decorators import run_async
+from obj.board import Board
+from obj.menu import Menu
+from obj.ui_element import UIElement, TextSprite, InfoBoard, Dialog
+from obj.utilities.colors import RED, BLACK, WHITE
+from obj.utilities.logger import Logger as LOG
+from obj.utilities.utility_box import UtilityBox
 from board_generator import BoardGenerator
-from exceptions import  NoScreensException, InvalidGameElementException,\
+from obj.utilities.exceptions import  NoScreensException, InvalidGameElementException,\
                         EmptyCommandException, ScreenNotFoundException, TooManyCharactersException
-from surface_loader import ResizedSurface
+from obj.utilities.surface_loader import ResizedSurface
 from settings import PATHS, USEREVENTS, SCREEN_FLAGS, INIT_PARAMS, PARAMS
 from animation_generator import AnimationGenerator
 

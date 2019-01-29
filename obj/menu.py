@@ -15,10 +15,10 @@ import numpy
 import os
 from pygame.locals import *
 #Selfmade libraries
-from utility_box import UtilityBox
-from screen import Screen
-from exceptions import NotEnoughSpritesException
-from ui_element import UIElement
+from obj.utilities.utility_box import UtilityBox
+from obj.screen import Screen
+from obj.utilities.exceptions import NotEnoughSpritesException
+from obj.ui_element import UIElement
 from settings import USEREVENTS
 
 class Menu (Screen):

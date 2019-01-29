@@ -16,21 +16,21 @@ import numpy
 import os
 import random
 #Selfmade libraries
-from utility_box import UtilityBox
+from obj.utilities.utility_box import UtilityBox
 from pygame.locals import *
-from polygons import Circle, Rectangle, Circumference
-from colors import RED, WHITE, DARKGRAY, LIGHTGRAY, TRANSPARENT_GRAY
-from screen import Screen, LoadingScreen
-from cell import Cell, Quadrant
-from exceptions import BadPlayersParameter, BadPlayerTypeException,\
+from obj.polygons import Circle, Rectangle, Circumference
+from obj.utilities.colors import RED, WHITE, DARKGRAY, LIGHTGRAY, TRANSPARENT_GRAY
+from obj.screen import Screen, LoadingScreen
+from obj.cell import Cell, Quadrant
+from obj.utilities.exceptions import BadPlayersParameter, BadPlayerTypeException,\
                         PlayerNameExistsException, TooManyCharactersException
-from decorators import run_async
-from players import Player
-from paths import Path
-from ui_element import TextSprite
-from logger import Logger as LOG
-from players import Character, Restriction
-from sprite import Sprite
+from obj.utilities.decorators import run_async
+from obj.players import Player
+from obj.paths import Path
+from obj.ui_element import TextSprite
+from obj.utilities.logger import Logger as LOG
+from obj.players import Character, Restriction
+from obj.sprite import Sprite
 
 #numpy.set_printoptions(threshold=numpy.nan)
 

@@ -1,4 +1,4 @@
-FONT = './zelda_font.ttf'
+FONT = './local/zelda_font.ttf'
 #ENGLISH
 
 #SPANISH

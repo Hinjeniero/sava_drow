@@ -11,7 +11,7 @@ __author__ = 'David Flaity Pardo'
 #Python libraries
 import pygame
 #Selfmade libraries
-from exceptions import BadResizerParamException
+from obj.utilities.exceptions import BadResizerParamException
 
 class Resizer (object):
     """Resizer class. Contains the methods related to surfaces transformation and analyzing."""

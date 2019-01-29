@@ -11,9 +11,9 @@ __version__ = '0.4'
 __author__ = 'David Flaity Pardo'
 
 import pygame
-from utility_box import UtilityBox
-from sprite import MultiSprite
-from colors import RED
+from obj.utilities.utility_box import UtilityBox
+from obj.sprite import MultiSprite
+from obj.utilities.colors import RED
 
 class Polygon(MultiSprite):
     """Superclass polygon. Subclasses are Rectangle and Circle.

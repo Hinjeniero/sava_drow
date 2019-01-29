@@ -20,14 +20,14 @@ import pygame
 from os import listdir
 from os.path import isfile, join, dirname
 #Selfmade libraries
-from exceptions import BadCharacterInitException, StateNotFoundException
-from resizer import Resizer
-from paths import Restriction, Movements
-from logger import Logger as LOG
-from decorators import run_async
-from sprite  import AnimatedSprite
-from ui_element import InfoBoard
-from utility_box import UtilityBox
+from obj.utilities.exceptions import BadCharacterInitException, StateNotFoundException
+from obj.utilities.resizer import Resizer
+from obj.paths import Restriction, Movements
+from obj.utilities.logger import Logger as LOG
+from obj.utilities.decorators import run_async
+from obj.sprite  import AnimatedSprite
+from obj.ui_element import InfoBoard
+from obj.utilities.utility_box import UtilityBox
 from settings import PATHS
 
 class Player(object):

@@ -13,10 +13,10 @@ __author__ = 'David Flaity Pardo'
 import functools
 import pygame
 import random
-from paths import Path
-from utility_box import UtilityBox
-from polygons import Circle
-from logger import Logger as LOG
+from obj.paths import Path
+from obj.utilities.utility_box import UtilityBox
+from obj.polygons import Circle
+from obj.utilities.logger import Logger as LOG
 
 @functools.total_ordering
 class Cell(Circle):

@@ -13,9 +13,9 @@ __author__ = 'David Flaity Pardo'
 
 import os
 import functools
-from logger import Logger as LOG
-from synch_dict import Dictionary
-from decorators import time_it
+from obj.utilities.logger import Logger as LOG
+from obj.utilities.synch_dict import Dictionary
+from obj.utilities.decorators import time_it
 
 class Movements(object):
     """Movement class. Only contains static methods. Generates, contains and delivers

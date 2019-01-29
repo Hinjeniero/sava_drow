@@ -14,18 +14,19 @@ import numpy
 import math
 import time
 import pygame
-import gradients
+import external.gradients
 import random 
 from os import listdir
 from os.path import isfile, join, dirname
 from wrapt import synchronized
 #External libraries
-from PAdLib import draw as Drawing
+from external.PAdLib import draw as Drawing
 #Selfmade libraries
-from colors import WHITE, RED, BLACK
-from decorators import time_it
-from resizer import Resizer
-from logger import Logger as LOG
+from obj.utilities.colors import WHITE, RED, BLACK
+from obj.utilities.decorators import time_it
+from obj.utilities.resizer import Resizer
+from obj.utilities.logger import Logger as LOG
+from settings import PATHS
 
 @time_it
 def euclidean_generator(size=300): #100 will be plenty in our case

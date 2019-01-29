@@ -13,10 +13,10 @@ __author__ = 'David Flaity Pardo'
 import pygame
 import random
 #Selfmade libraries
-from animation import ScriptedSprite, Animation, LoopedAnimation
-from sprite import AnimatedSprite
-from decorators import time_it, run_async
-from surface_loader import SurfaceLoader, no_size_limit
+from obj.animation import ScriptedSprite, Animation, LoopedAnimation
+from obj.sprite import AnimatedSprite
+from obj.utilities.decorators import time_it, run_async
+from obj.utilities.surface_loader import SurfaceLoader, no_size_limit
 from settings import PATHS, STRINGS
 
 PYGAME_EVENT = -1
@@ -124,16 +124,33 @@ class AnimationGenerator(object):
     
     ####NORMAL ANIMATIONS FORM HERE ON
     @staticmethod
-    def explosions_bottom(resolution, *fps, bottom_offset=0.00, size=0.10):
+    def explosions_bottom(resolution, *fps, bottom_offset=0.00, init_ratio=0.05):
+        animation = LoopedAnimation('EXPLOSIUNS')
+        folder = PATHS.EXPLOSIONS
+        index = 1
+        ratio = init_ratio
+        for explosion_type in PATHS.ALL_EXPLOSIONS:
+            size = tuple(ratio*x for x in resolution)
+            sprite = ScriptedSprite('explasion_'+str(index), (0, 0), size, resolution, fps[0], fps, sprite_folder=folder,\
+                                    keywords=(explosion_type,), animation_delay=5)
+            x = index*(resolution[0]*0.8)//len(PATHS.ALL_EXPLOSIONS)
+            position = (x, (resolution[1]*(1-bottom_offset))-sprite.rect.height)
+            sprite.set_position(position)
+            sprite.add_movement(position, position, 1)
+            animation.add_sprite(sprite, 0, 1)
+            index += 1
+            ratio += init_ratio
+        return animation
+
+    @staticmethod
+    def explosions_deccelerating_bottom(resolution, *fps, bottom_offset=0.00, size=0.20):
         animation = LoopedAnimation('EXPLOSIUNS')
         folder = PATHS.EXPLOSIONS
         size = tuple(size*x for x in resolution)
         index = 1
         for explosion_type in PATHS.ALL_EXPLOSIONS:
-            #print(folder)
-            #print("With keyw "+explosion_type)
             sprite = ScriptedSprite('explasion_'+str(index), (0, 0), size, resolution, fps[0], fps, sprite_folder=folder,\
-                                    keywords=tuple(explosion_type,), animation_delay=2*index)
+                                    animation_delay=2*index)
             x = index*(resolution[0]*0.8)//len(PATHS.ALL_EXPLOSIONS)
             position = (x, (resolution[1]*(1-bottom_offset))-sprite.rect.height)
             sprite.set_position(position)

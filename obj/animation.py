@@ -14,8 +14,8 @@ __author__ = 'David Flaity Pardo'
 #Python libraries
 import time, pygame
 #Selfmade libraries
-from sprite import AnimatedSprite, MultiSprite
-from decorators import time_it
+from obj.sprite import AnimatedSprite, MultiSprite
+from obj.utilities.decorators import time_it
 
 class ScriptedSprite(AnimatedSprite):
     """Class ScriptedSprite. Inherits from AnimatedSprite.

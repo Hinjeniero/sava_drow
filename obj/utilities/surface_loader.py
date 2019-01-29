@@ -1,10 +1,10 @@
 
 import pygame
-from synch_dict import Dictionary
-from utility_box import UtilityBox
-from decorators import time_it
-from logger import Logger as LOG
-from resizer import Resizer
+from obj.utilities.synch_dict import Dictionary
+from obj.utilities.utility_box import UtilityBox
+from obj.utilities.decorators import time_it
+from obj.utilities.logger import Logger as LOG
+from obj.utilities.resizer import Resizer
 #from memory_profiler import profile
 from settings import EXTENSIONS
 from wrapt import synchronized

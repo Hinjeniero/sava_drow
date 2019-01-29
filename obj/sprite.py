@@ -16,17 +16,16 @@ import pygame
 from os import listdir
 from os.path import isfile, join, dirname
 #External libraries
-import gradients
+import external.gradients as gradients
 #Selfmade libraries
-from colors import WHITE, RED, LIGHTGRAY, DARKGRAY
-from resizer import Resizer
-from utility_box import UtilityBox
-from exceptions import  ShapeNotFoundException, NotEnoughSpritesException,\
+from obj.utilities.colors import WHITE, RED, LIGHTGRAY, DARKGRAY
+from obj.utilities.resizer import Resizer
+from obj.utilities.utility_box import UtilityBox
+from obj.utilities.exceptions import  ShapeNotFoundException, NotEnoughSpritesException,\
                         BadSpriteException
-from logger import Logger as LOG
-from synch_dict import Dictionary
-from utility_box import UtilityBox
-from surface_loader import SurfaceLoader, ResizedSurface
+from obj.utilities.logger import Logger as LOG
+from obj.utilities.synch_dict import Dictionary
+from obj.utilities.surface_loader import SurfaceLoader, ResizedSurface
 from strings import FONT
 #from memory_profiler import profile
 

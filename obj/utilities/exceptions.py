@@ -63,3 +63,6 @@ class BadStateException(Exception):
 
 class TooManyCharactersException(Exception):
     pass
+
+class GameEndException(Exception):
+    pass

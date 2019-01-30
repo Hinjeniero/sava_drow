@@ -25,7 +25,7 @@ from obj.utilities.colors import RED, BLACK, WHITE
 from obj.utilities.logger import Logger as LOG
 from obj.utilities.utility_box import UtilityBox
 from board_generator import BoardGenerator
-from obj.utilities.exceptions import  NoScreensException, InvalidGameElementException,\
+from obj.utilities.exceptions import  NoScreensException, InvalidGameElementException, GameEndException,\
                         EmptyCommandException, ScreenNotFoundException, TooManyCharactersException
 from obj.utilities.surface_loader import ResizedSurface
 from settings import PATHS, USEREVENTS, SCREEN_FLAGS, INIT_PARAMS, PARAMS
@@ -105,21 +105,23 @@ class Game(object):
             #TODO REstart params of params menu
         elif event.type is USEREVENTS.TIMER_ONE_SEC:
             self.fps_text = UtilityBox.generate_fps(self.clock, size=tuple(int(x*0.05) for x in self.resolution))
-    
+
+    def __esc_main_menu(self):
+        if not self.current_screen.dialog_active():
+            self.current_screen.show_dialog('exit')   
+        else:  
+            self.current_screen.hide_dialog()
+            self.last_command = None
+
     def dialog_handler(self, command):
-        print("start")
-        if self.last_command:
-            if 'yes' in command or 'ok' in command or 'true' in command or 'pass' in command: #TODO could convert this to ann array of affirmative words in settings
-                pass
-                #TODO go through with the command
-                self.current_screen.hide_dialog()
-            else:
-                #self.current_screen.hide_dialog()
-                self.last_command = None
-                print("last command deleted "+str(self.last_command))
+        if 'cancel' in command or 'no' in command or 'false' in command:
+            self.current_screen.hide_dialog()
+            self.last_command = None
         else:
-            self.last_command = command
-            print("NEW LAST COMMAND "+self.last_command)
+            if not self.last_command:
+                self.last_command = command
+            else:
+                raise GameEndException("Byebye!")
 
     def config_handler(self, command, value):
         characters = ('pawn', 'warrior', 'wizard', 'priestess', 'matron')
@@ -324,13 +326,7 @@ class Game(object):
         self.change_screen('main', 'menu')
 
     def __esc_menu(self):
-        self.change_screen("main", "menu")
-
-    def __esc_main_menu(self):
-        if not self.current_screen.dialog_active():
-            self.current_screen.show_dialog('exit')   
-        else:  
-            self.current_screen.hide_dialog()  
+        self.change_screen("main", "menu")  
 
     def get_screen(self, *keywords):
         screen = None
@@ -421,14 +417,17 @@ class Game(object):
             self.current_screen.play_music()
             end = False
             while not end:
-                self.clock.tick(self.fps)
-                self.current_screen.draw(self.display)
-                end = self.event_handler(pygame.event.get())
-                if self.fps_text:
-                    self.display.blit(self.fps_text, tuple(int(x*0.02) for x in self.resolution))
-                for popup in self.popups.sprites():
-                    popup.draw(self.display)
-                pygame.display.update()
+                try:
+                    self.clock.tick(self.fps)
+                    self.current_screen.draw(self.display)
+                    end = self.event_handler(pygame.event.get())
+                    if self.fps_text:
+                        self.display.blit(self.fps_text, tuple(int(x*0.02) for x in self.resolution))
+                    for popup in self.popups.sprites():
+                        popup.draw(self.display)
+                    pygame.display.update()
+                except GameEndException:
+                    end = True
             sys.exit()
         except Exception as exc:
             raise exc

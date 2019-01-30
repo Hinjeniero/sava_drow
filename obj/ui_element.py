@@ -687,19 +687,6 @@ class Dialog (InfoBoard):
         self.set_position(position)
         #self.add_text_element(self.id+'_text', self.params['text'], (self.params['rows']*self.params['cols'])-self.params['cols'])
 
-    def enable(self):
-        super().set_visible(True)
-        self.send_event()
-
-    def disable(self):
-        super().set_visible(False)
-        for button in self.buttons:
-            if 'cancel' in button.id or button.id in 'cancel':
-                button.send_event()
-                return
-        cancel_event = pygame.event.Event(self.get_event_id(), command='cancel')
-        pygame.event.post(cancel_event)
-
     def set_active(self, active):
         super().set_active(active)
         for button in self.buttons:

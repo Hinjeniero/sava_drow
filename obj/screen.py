@@ -217,13 +217,14 @@ class Screen(object):
         for dialog in self.dialogs:
             if id_ in dialog.id or id_ in dialog.command\
             or dialog.id in id_ or dialog.command in id_:
-                dialog.enable()
+                dialog.set_visible(True)
                 self.dialog = dialog
+                self.dialog.send_event()
 
     def hide_dialog(self):
         """Makes the Screen's Dialog invisible. (If it exists)."""
-        if self.dialog and self.dialog.visible:  
-            self.dialog.disable()
+        if self.dialog and self.dialog_active:  
+            self.dialog.set_visible(False)
             self.dialog = None
 
     def draw(self, surface):

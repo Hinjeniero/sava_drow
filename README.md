@@ -3,8 +3,7 @@ TO START THE GAME: 'python.exe main.py' in command line
 DEPENDENCIES: pygame, numpy, wrapt
 
 TODO TODAY:
-    2.- Exit dialog in menus/board, finish it and connect it to game events.
-    3.- Make animated sprites loop backwards if requested (In an input argument of the constructor).
+    2.- Exit dialog in menus/board, finish it and connect it to game events. -> 85%
     4.- Start server-client connection (reverse-engineer the examples in MasterMind library).
 
 TODO WHENEVER:

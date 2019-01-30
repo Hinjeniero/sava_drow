@@ -255,14 +255,16 @@ class Character(AnimatedSprite):
     def animation_frame(self):
         """Does the animation between frames. Should only be called when the self.animation_delay is reached.
         Searchs in the list of sprites the following one of the current sprite, that matches with the state of the character."""
-        index = self.animation_index
-        while True:
-            index=index+1 if index < (len(self.surfaces)-1) else 0  #going back to start
-            if self.state in self.names[index].lower():
-                self.animation_index = index
-                break
-            if index is self.animation_index:           #A complete loop with no matches, only one sprite of the action in self.state
-                break
+        if any(self.state in name for name in self.names):  #If the current state has any sprite
+            index = self.animation_index
+            while True:
+                #TODO implement the super method to avoid shit
+                index=index+1 if index < (len(self.surfaces)-1) else 0  #going back to start
+                if self.state in self.names[index].lower():
+                    self.animation_index = index
+                    break
+                if index is self.animation_index:           #A complete loop with no matches, only one sprite of the action in self.state
+                    break
 
     def hitbox_action(self, command, value=-1):
         """Action performed when the character is interacted with.

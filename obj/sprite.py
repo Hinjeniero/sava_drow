@@ -431,6 +431,7 @@ class AnimatedSprite(Sprite):
         animation_index (int):  Current index in the surfaces and mask lists.
     """
     __default_config = {'hover_ratio'   : 1.5,
+                        'boomerang_loop': False,
                         'initial_surfaces': (),
                         'hover_surfaces': False,
                         'sprite_folder' : None,
@@ -460,6 +461,8 @@ class AnimatedSprite(Sprite):
         self.masks              = []
         #Animation
         self.counter            = 0
+        self.animated          = True
+        self.animation_step     = 1
         self.next_frame_time    = None  #In generate
         self.animation_index    = 0
         #Generation
@@ -477,8 +480,10 @@ class AnimatedSprite(Sprite):
         else:
             self.add_surfaces()
         self.update_size()
-        self.image  = self.current_sprite()    #Assigning a logical sprite in place of the decoy one of the super()
+        self.image  = self.current_sprite()     #Assigning a logical sprite in place of the decoy one of the super()
         self.mask   = self.current_mask()       #Same shit to mask
+        if len(self.surfaces) <= 1:             #If we want to be able to switch between sprites
+            self.animated = False
 
     def update_size(self):
         """Due to the resizer, we have to check the new size of this sprite."""
@@ -567,7 +572,20 @@ class AnimatedSprite(Sprite):
 
     def animation_frame(self):
         """Changes the current showing surface (changing the index) to the next one."""
-        self.animation_index = self.animation_index+1 if self.animation_index < (len(self.surfaces)-1) else 0
+        if self.animated:   #If more than 1 sprites in the list
+            self.animation_index += self.animation_step
+            if self.animation_index >= len(self.surfaces):
+                if not self.params['boomerang_loop']:
+                    self.animation_index = 0
+                else:
+                    self.animation_step = -self.animation_step
+                    self.animation_index = len(self.surfaces)-2
+            elif self.animation_index < 0:
+                if not self.params['boomerang_loop']:
+                    self.animation_index = len(self.surfaces)-1
+                else:
+                    self.animation_step = -self.animation_step
+                    self.animation_index = 1        
 
     def set_hover(self, hover):
         super().set_hover(hover)

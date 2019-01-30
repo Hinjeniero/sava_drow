@@ -626,15 +626,6 @@ class InfoBoard (UIElement):
         + (((math.ceil(spaces/cols)*self.element_size[1])//2)-(size[1]//2))
         return (x_axis, y_axis)
 
-    def set_canvas_size(self, res):
-        #print("BEGORE "+str(len(self.sprites)))
-        #for sprite in self.sprites:
-            #print(sprite.rects_to_str())
-        super().set_canvas_size(res)
-        #print("AFTER "+str(len(self.sprites)))
-        #for sprite in self.sprites:
-            #print(sprite.rects_to_str())
-
     #Modify to also add elements when there are elements inside already
     def add_and_adjust_sprites(self, *elements, scale=0.95): #TODO convert to generator
         """Adds all the UIElements to the Infoboard, adjusting and placing them.
@@ -680,7 +671,7 @@ class InfoBoard (UIElement):
         
 class Dialog (InfoBoard):
     __default_config = {'rows'  : 3,
-                        'cols'  : 4 
+                        'cols'  : 4
     }
 
     def __init__(self, id_, user_event_id, element_size, canvas_size, *elements, **params):
@@ -694,7 +685,7 @@ class Dialog (InfoBoard):
         self.clear()    #To delete the text fromn the button
         position = tuple(x//2 - y//2 for x, y in zip(self.resolution, self.rect.size))
         self.set_position(position)
-        self.add_text_element(self.id+'_text', self.params['text'], (self.params['rows']*self.params['cols'])-self.params['cols'])
+        #self.add_text_element(self.id+'_text', self.params['text'], (self.params['rows']*self.params['cols'])-self.params['cols'])
 
     def set_active(self, active):
         super().set_active(active)
@@ -711,7 +702,7 @@ class Dialog (InfoBoard):
         spaces = self.parse_element_spaces(spaces)
         size = self.get_element_size(spaces, scale)
         position = self.get_element_position(spaces, size)
-        print("POSITION "+str(position))
         button = ButtonAction(self.id+"_button", command, self.event_id, position, size, self.rect.size, text=text, **button_params)
         self.buttons.add(button)
+        self.taken_spaces += spaces
         self.image.blit(button.image, button.rect.topleft)

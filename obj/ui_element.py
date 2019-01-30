@@ -705,12 +705,13 @@ class Dialog (InfoBoard):
         super().draw(surface)
         for button in self.buttons:
             if button.active:
-                button.draw_overlay(surface, self.rect.topleft)
+                button.draw_overlay(surface, offset=self.rect.topleft)
 
     def add_button(self, spaces, text, command, scale=1, **button_params):
         spaces = self.parse_element_spaces(spaces)
         size = self.get_element_size(spaces, scale)
         position = self.get_element_position(spaces, size)
+        print("POSITION "+str(position))
         button = ButtonAction(self.id+"_button", command, self.event_id, position, size, self.rect.size, text=text, **button_params)
         self.buttons.add(button)
         self.image.blit(button.image, button.rect.topleft)

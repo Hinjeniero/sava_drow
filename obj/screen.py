@@ -49,7 +49,7 @@ class Screen(object):
     SOUND_CHANNELS = []
     SOUNDS = Dictionary()
     
-    def __init__(self, id_, event_id, resolution, dialog=None, **params):
+    def __init__(self, id_, event_id, resolution, **params):
         """Screen constructor.
         Args:
             id_ (str):  Identifier of the Screen.
@@ -65,7 +65,8 @@ class Screen(object):
         self.resolution = resolution
         #Sprites
         self.background = None  #Created in generate
-        self.dialog     = dialog
+        self.dialog     = None
+        self.dialogs    = pygame.sprite.Group()
         self.sprites    = pygame.sprite.OrderedUpdates()
         #Sound & Music
         self.songs      = []    #Created in generate
@@ -112,6 +113,9 @@ class Screen(object):
         if len(Screen.SOUND_CHANNELS) is 0:
             for _ in range (0, SOUND_PARAMS.SOUND_CHANNELS_AMMOUNT):
                 Screen.SOUND_CHANNELS.append(UtilityBox.get_sound_channel())
+
+    def add_dialogs(self, *dialogs):
+        self.dialogs.add(dialogs)
 
     def add_animation(self, animation):
         """Sets the animatino and linlks it with a specific staet"""
@@ -211,19 +215,21 @@ class Screen(object):
     def dialog_active(self):
         """Returns:
             (boolean):  True if the Screen Dialog is active, False otherwise"""
-        return (self.dialog.active and self.dialog.visible)
+        return True if self.dialog else False
 
-    def show_dialog(self):
+    def show_dialog(self, id_):
         """Makes the Screen's Dialog visible. (If it exists)."""
-        if self.have_dialog():  
-            self.dialog.set_visible(True)
-            self.dialog.set_active(True)
+        for dialog in self.dialogs:
+            if id_ in dialog.id or id_ in dialog.command\
+            or dialog.id in id_ or dialog.command in id_:
+                dialog.set_visible(True)
+                self.dialog = dialog
 
     def hide_dialog(self):
         """Makes the Screen's Dialog invisible. (If it exists)."""
-        if self.have_dialog():  
+        if self.dialog:  
             self.dialog.set_visible(False)
-            self.dialog.set_active(False)
+            self.dialog = None
 
     def draw(self, surface):
         """Draws the screen in the input surface. This method in the Screen
@@ -241,7 +247,7 @@ class Screen(object):
                 sprite.draw(surface)
         if self.scroll_sprite:
             self.scroll_sprite.draw(surface)       
-        if self.have_dialog():
+        if self.dialog:
             self.dialog.draw(surface)
         if self.animation:
             self.animation.play(surface)

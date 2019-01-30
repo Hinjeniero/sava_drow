@@ -311,9 +311,9 @@ class Game(object):
         self.change_screen("main", "menu")
 
     def __esc_main_menu(self):
-        if self.current_screen.have_dialog() and not self.current_screen.dialog_active():
-            self.current_screen.show_dialog()   
-        elif self.current_screen.have_dialog() and self.current_screen.dialog_active():  
+        if not self.current_screen.dialog_active():
+            self.current_screen.show_dialog('exit')   
+        else:  
             self.current_screen.hide_dialog()  
 
     def get_screen(self, *keywords):

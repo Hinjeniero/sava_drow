@@ -50,10 +50,11 @@ def start_pygame(resolution=INIT_PARAMS.INITIAL_RESOLUTION):
         INIT_PARAMS.RESOLUTIONS = INIT_PARAMS.RESOLUTIONS + (MY_SCREEN_RESOLUTION,)
     pygame.display.set_mode(resolution, SCREEN_FLAGS.WINDOWED)  
 
-def create_dialog(text='You sure?'):
+def create_dialog(text='Are you sure that you want to exit?'):
     #Dialog
-    dialog = Dialog('dialog', USEREVENTS.DIALOG_USEREVENT, (500, 200), INIT_PARAMS.INITIAL_RESOLUTION, text=text)
-    dialog.add_button(dialog.get_cols()//2, 'ok', 'whatever', gradient=((0, 0, 255, 255),(128, 128, 255, 255)))
+    dialog = Dialog('exit_dialog', USEREVENTS.DIALOG_USEREVENT, (500, 200), INIT_PARAMS.INITIAL_RESOLUTION, text=text)
+    dialog.add_button(dialog.get_cols()//2, 'Ok', 'whatever', gradient=((0, 0, 255, 255),(128, 128, 255, 255)))
+    dialog.add_button(dialog.get_cols()//2, 'Cancel', 'whenever', gradient=((0, 0, 255, 255),(128, 128, 255, 255)))
     return dialog
 
 def create_main_menu():
@@ -79,8 +80,8 @@ def create_main_menu():
     #Create Menu
     bg = AnimationGenerator.factory(STRINGS.INITIAL_ANIMATED_BG, INIT_PARAMS.INITIAL_RESOLUTION, PARAMS.ANIMATION_TIME, INIT_PARAMS.ALL_FPS, INIT_PARAMS.INITIAL_FPS)
     main_menu   = Menu('main_menu', USEREVENTS.MAINMENU_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, buttonStart, buttonContinue, buttonConfig, buttonSound, buttonGraphics,
-                        animated_background=bg, background_path=PATHS.DEFAULT_BG, songs_paths=MENU_SONGS, dialog=create_dialog(),
-                        do_align=False)
+                        animated_background=bg, background_path=PATHS.DEFAULT_BG, songs_paths=MENU_SONGS, do_align=False)
+    main_menu.add_dialogs(create_dialog())
     return main_menu 
 
 def create_config_menu():

@@ -96,8 +96,6 @@ class Screen(object):
         else:
             self.background = Sprite(self.id+'_background', (0, 0), self.resolution, self.resolution,\
                                     resize_mode='fill', texture=self.params['background_path'])
-        if self.dialog:
-            self.dialog.set_visible(False)
         #SOUNDS
         if self.params['songs_paths']:
             self.music_chan = UtilityBox.get_sound_channel()
@@ -115,7 +113,9 @@ class Screen(object):
                 Screen.SOUND_CHANNELS.append(UtilityBox.get_sound_channel())
 
     def add_dialogs(self, *dialogs):
-        self.dialogs.add(dialogs)
+        for dialog in dialogs:
+            dialog.set_visible(False)
+            self.dialogs.add(dialog)
 
     def add_animation(self, animation):
         """Sets the animatino and linlks it with a specific staet"""
@@ -207,11 +207,6 @@ class Screen(object):
                         return True
         return False
 
-    def have_dialog(self):
-        """Returns:
-            (boolean):  True if the screen has a Dialog, False otherwise."""
-        return False if not self.dialog else True
-
     def dialog_active(self):
         """Returns:
             (boolean):  True if the Screen Dialog is active, False otherwise"""
@@ -222,13 +217,13 @@ class Screen(object):
         for dialog in self.dialogs:
             if id_ in dialog.id or id_ in dialog.command\
             or dialog.id in id_ or dialog.command in id_:
-                dialog.set_visible(True)
+                dialog.enable()
                 self.dialog = dialog
 
     def hide_dialog(self):
         """Makes the Screen's Dialog invisible. (If it exists)."""
-        if self.dialog:  
-            self.dialog.set_visible(False)
+        if self.dialog and self.dialog.visible:  
+            self.dialog.disable()
             self.dialog = None
 
     def draw(self, surface):

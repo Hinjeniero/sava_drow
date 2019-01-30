@@ -41,7 +41,8 @@ class Game(object):
         self.resolution     = resolution
         self.fps            = fps
         self.fps_text       = None
-        self.last_inputs    = []    #Easter Eggs  
+        self.last_inputs    = []    #Easter Eggs 
+        self.last_command   = None
         self.game_config    = {}    #Created in Game.generate()
         self.current_screen = None  #Created in Game.start()
         self.board_generator= None  #Created in Game.generate()
@@ -93,7 +94,7 @@ class Game(object):
             if 'scroll' in event.command:
                 self.current_screen.set_scroll(event.value)
             else:
-                print(event.command)
+                self.dialog_handler(event.command.lower())
         elif event.type is USEREVENTS.END_CURRENT_GAME:
             self.show_popup('win')
             self.current_screen.play_sound('win')
@@ -105,6 +106,21 @@ class Game(object):
         elif event.type is USEREVENTS.TIMER_ONE_SEC:
             self.fps_text = UtilityBox.generate_fps(self.clock, size=tuple(int(x*0.05) for x in self.resolution))
     
+    def dialog_handler(self, command):
+        print("start")
+        if self.last_command:
+            if 'yes' in command or 'ok' in command or 'true' in command or 'pass' in command: #TODO could convert this to ann array of affirmative words in settings
+                pass
+                #TODO go through with the command
+                self.current_screen.hide_dialog()
+            else:
+                #self.current_screen.hide_dialog()
+                self.last_command = None
+                print("last command deleted "+str(self.last_command))
+        else:
+            self.last_command = command
+            print("NEW LAST COMMAND "+self.last_command)
+
     def config_handler(self, command, value):
         characters = ('pawn', 'warrior', 'wizard', 'priestess', 'matron')
         if 'game' in command or 'mode' in command:

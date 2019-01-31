@@ -706,3 +706,23 @@ class Dialog (InfoBoard):
         self.buttons.add(button)
         self.taken_spaces += spaces
         self.image.blit(button.image, button.rect.topleft)
+
+class TextBox(UIElement):
+    def __init__(self):
+        self.text = ''
+        self.char_limit = 0 #0 is unlimited
+        TextBox.generate(self)
+
+    @staticmethod
+    def generate(self):
+        self.set_text('|')
+        self.regenerate_shit()
+
+    def add_char(self, char):
+        self.text += char
+        self.regenerate_shit()
+
+    def delete_char(self):
+        self.text = self.text[:-1]  #Or something like this
+        self.regenerate()
+    

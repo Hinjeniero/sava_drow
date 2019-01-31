@@ -142,17 +142,15 @@ class Menu (Screen):
                     or self.active_sprite_index is old_index:
                         break
         if keys_pressed[pygame.K_LEFT]:
-            if self.active_sprite.sprite:   #TODO better way to check thbis, this is checked twice here, here and in the execute methiod
-                if self.active_sprite.sprite is self.scroll_sprite:
-                    self.set_active_sprite(self.sprites.sprites()[0])
-                else:
-                    self.execute_active_sprite('left_arrow', -1)
+            if self.scroll_sprite and self.active_sprite.sprite is self.scroll_sprite:
+                self.set_active_sprite(self.sprites.sprites()[0])
+            else:
+                self.execute_active_sprite('left_arrow', -1)
         if keys_pressed[pygame.K_RIGHT]:
-            if self.active_sprite.sprite:   #TODO SAME
-                if self.active_sprite.sprite is self.scroll_sprite:
-                    self.set_active_sprite(self.sprites.sprites()[0])
-                else:
-                    self.execute_active_sprite('right_arrow', -1)
+            if self.scroll_sprite and self.active_sprite.sprite is self.scroll_sprite:
+                self.set_active_sprite(self.sprites.sprites()[0])
+            else:
+                self.execute_active_sprite('right_arrow', -1)
         if (keys_pressed[pygame.K_RETURN]\
             or keys_pressed[pygame.K_KP_ENTER]\
             or keys_pressed[pygame.K_SPACE]):

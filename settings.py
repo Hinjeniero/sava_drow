@@ -83,6 +83,13 @@ class STRINGS:
 class STATES:
     SCREEN = ('idle', 'stopped', 'cutscene')
 
+class NETWORK:
+    SERVER_IP: ''
+    SERVER_PORT:
+    CLIENT_TIMEOUT_CONNECT:
+    CLIENT_TIMEOUT_RECEIVE:
+    TIMEOUT
+
 #PATHS TO FILES/IMAGES/SOUNDS
 #---Global paths(Container paths)
 class PATHS:

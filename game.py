@@ -106,13 +106,6 @@ class Game(object):
         elif event.type is USEREVENTS.TIMER_ONE_SEC:
             self.fps_text = UtilityBox.generate_fps(self.clock, size=tuple(int(x*0.05) for x in self.resolution))
 
-    def __esc_main_menu(self):
-        if not self.current_screen.dialog_active():
-            self.current_screen.show_dialog('exit')   
-        else:  
-            self.current_screen.hide_dialog()
-            self.last_command = None
-
     def dialog_handler(self, command):
         if 'cancel' in command or 'no' in command or 'false' in command:
             self.current_screen.hide_dialog()
@@ -121,7 +114,10 @@ class Game(object):
             if not self.last_command:
                 self.last_command = command
             else:
-                raise GameEndException("Byebye!")
+                if 'exit' in command:
+                    raise GameEndException("Byebye!")
+                else:
+                    print("COMMAND STILL NOT IMPLEMENTED! "+command)
 
     def config_handler(self, command, value):
         characters = ('pawn', 'warrior', 'wizard', 'priestess', 'matron')
@@ -328,6 +324,13 @@ class Game(object):
     def __esc_menu(self):
         self.change_screen("main", "menu")  
 
+    def __esc_main_menu(self):
+        if not self.current_screen.dialog_active():
+            self.current_screen.show_dialog('exit')   
+        else:  
+            self.current_screen.hide_dialog()
+            self.last_command = None
+            
     def get_screen(self, *keywords):
         screen = None
         count = 0

@@ -82,6 +82,10 @@ class Game(object):
             return False
         elif event.type is USEREVENTS.MAINMENU_USEREVENT:
             if 'start' in event.command.lower():
+                if ('online' in event.command.lower() or 'network' in event.command.lower()):
+                    self.board_generator.online = True
+                else:
+                    self.board_generator.online = False
                 self.initiate()
             self.change_screen(*event.command.lower().split('_'))
         elif event.type is USEREVENTS.SOUND_USEREVENT:
@@ -335,6 +339,7 @@ class Game(object):
         screen = None
         count = 0
         for i in range(0, len(self.screens)):
+            print(i)
             matches = len([0 for j in keywords if j in self.screens[i].id])
             if matches > count:   
                 screen = self.screens[i]

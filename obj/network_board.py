@@ -1,13 +1,14 @@
 from obj.board import Board
 from obj.utilities.decorators import run_async
 from settings import NETWORK
-from external.Mastermind import MastermindServerTCP, MastermindClientTCP
-from external.Mastermind._mm_errors import *
-import threading
+#from external.Mastermind import MastermindServerTCP, MastermindClientTCP
+#from external.Mastermind._mm_errors import *   #This one doesnt catch the exception for some fuckin reasoni
+from external.Mastermind import *   #I dont like this one a bit, since it has to import everything
+import threading, traceback
 
-class Server(MastermindServerTCP):
+class Server(MastermindServerCallbacksEcho, MastermindServerTCP):
     def __init__(self):
-        super().__init__(self, NETWORK.SERVER_REFRESH_TIME, NETWORK.SERVER_CONNECTION_REFRESH, NETWORK.SERVER_CONNECTION_TIMEOUT)
+        MastermindServerTCP.__init__(self, NETWORK.SERVER_REFRESH_TIME, NETWORK.SERVER_CONNECTION_REFRESH, NETWORK.SERVER_CONNECTION_TIMEOUT)
         self.lock = threading.Lock()
 
     @run_async
@@ -27,30 +28,33 @@ class NetworkBoard(Board):
         super().__init__(id_, event_id, end_event_id, resolution, *players, **params)
         self.client = None
         self.server = None
+        self.my_player = None
         self.actions_queue = []
         NetworkBoard.generate(self)
 
     @staticmethod
-    def generate(self, server): #Check if im the fuckins server or not
-        client = MastermindClientTCP(NETWORK.CLIENT_TIMEOUT_CONNECT, NETWORK.CLIENT_TIMEOUT_RECEIVE)
+    def generate(self):
+        self.client = MastermindClientTCP(NETWORK.CLIENT_TIMEOUT_CONNECT, NETWORK.CLIENT_TIMEOUT_RECEIVE)
         try:
-            print("Client connecting on \""+NETWORK.SERVER_IP+"\", port "+str(NETWORK.SERVER_PORT)+" . . .")
-            client.connect(NETWORK.CLIENT_IP, NETWORK.SERVER_PORT)
+            print("Client connecting on \""+NETWORK.CLIENT_IP+"\", port "+str(NETWORK.SERVER_PORT)+" . . .")
+            self.client.connect(NETWORK.CLIENT_IP, NETWORK.SERVER_PORT)
         except MastermindError:
             print("No server found; starting server!")
-            server = Server()
-            server.start(NETWORK.SERVER_IP, NETWORK.SERVER_PORT)
-
+            self.server = Server()
+            print("SERVER CREATED")
+            self.server.start(NETWORK.SERVER_IP, NETWORK.SERVER_PORT)
+            print("SERVER STARTED!")
             print("Client connecting on \""+NETWORK.CLIENT_LOCAL_IP+"\", port "+str(NETWORK.SERVER_PORT)+" . . .")
-            client.connect(NETWORK.CLIENT_LOCAL_IP, NETWORK.SERVER_PORT)
+            self.client.connect(NETWORK.CLIENT_LOCAL_IP, NETWORK.SERVER_PORT)
         print("Client connected!")
         self.send_handshake()
 
     def send_handshake(self):
         self.client.send(["update"], None)
         reply = None
-        while reply == None:
-            reply = client.receive(False)
+        print("WAITING FDOR HANDSHAKE")
+        reply = self.client.receive(True)
+        print("YEs.")
         print(reply)
 
     def send_data(self, data):
@@ -75,7 +79,7 @@ class NetworkBoard(Board):
 
     def drop_character(self):
         if 'its my turn':
-            super().pickup_character()
+            super().drop_character()
 
     def update_cells(self, *cells):
         #This changes depending on who you are (The map itself).

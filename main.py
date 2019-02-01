@@ -61,12 +61,14 @@ def create_exit_dialog(text='Are you sure that you want to exit?'):
 
 def create_main_menu():
     #Create elements, main menu buttons (POSITIONS AND SIZES ARE IN PERCENTAGES OF THE CANVAS_SIZE, can use absolute integers too)
-    gradients       = UtilityBox.rainbow_gradient_generator(((255, 0, 0),(0, 0, 255)), 5)
-    positions       = UtilityBox.size_position_generator(5, 0.40, 0.05, 0.20, 0)
+    gradients       = UtilityBox.rainbow_gradient_generator(((255, 0, 0),(0, 0, 255)), 6)
+    positions       = UtilityBox.size_position_generator(6, 0.40, 0.05, 0.20, 0)
     button_size     = next(positions)
-    #texture=IMG_FOLDER+"//button.png" #TO USE IN THE FIUTUR
     buttonStart     = UIElement.factory('button_start', "start_game_go_main_board", USEREVENTS.MAINMENU_USEREVENT, next(positions), button_size,\
                                         INIT_PARAMS.INITIAL_RESOLUTION, text="Start new game", keep_aspect_ratio = False,\
+                                        gradient=next(gradients), gradient_type='vertical', texture=PATHS.SHORT_BUTTON)
+    buttonOnline    = UIElement.factory('button_online', "network_start_online_game_go_main_board", USEREVENTS.MAINMENU_USEREVENT, next(positions), button_size,\
+                                        INIT_PARAMS.INITIAL_RESOLUTION, text="Start LAN game", keep_aspect_ratio = False,\
                                         gradient=next(gradients), gradient_type='vertical', texture=PATHS.SHORT_BUTTON)
     buttonContinue  = UIElement.factory('button_continue', "continue_game_go_main_board", USEREVENTS.MAINMENU_USEREVENT, next(positions), button_size,\
                                         INIT_PARAMS.INITIAL_RESOLUTION, text="Continue last game", keep_aspect_ratio = False,\
@@ -81,7 +83,7 @@ def create_main_menu():
     
     #Create Menu
     bg = AnimationGenerator.factory(STRINGS.INITIAL_ANIMATED_BG, INIT_PARAMS.INITIAL_RESOLUTION, PARAMS.ANIMATION_TIME, INIT_PARAMS.ALL_FPS, INIT_PARAMS.INITIAL_FPS)
-    main_menu   = Menu('main_menu', USEREVENTS.MAINMENU_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, buttonStart, buttonContinue, buttonConfig, buttonSound, buttonGraphics,
+    main_menu   = Menu('main_menu', USEREVENTS.MAINMENU_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, buttonStart, buttonOnline, buttonContinue, buttonConfig, buttonSound, buttonGraphics,
                         animated_background=bg, background_path=PATHS.DEFAULT_BG, songs_paths=MENU_SONGS, do_align=False)
     main_menu.add_dialogs(create_exit_dialog())
     return main_menu 

@@ -17,6 +17,7 @@ from settings import USEREVENTS, STRINGS, PARAMS, CHARACTERS
 
 class BoardGenerator(object):
     def __init__(self):
+        self.online = False
         self.players = 2
         self.game_mode = 'classic'
         self.prefab_size = 'default'
@@ -40,11 +41,7 @@ class BoardGenerator(object):
         self.board_params.update(params)
 
     @time_it
-    def generate_board(self, resolution, network=False):
-        constructor = Board
-        if not network:
-            constructor = NetworkBoard
-        
+    def generate_board(self, resolution):
         #Check type of board
         if self.players > 2:
             self.board_params['quadrants_overlap'] = False
@@ -58,7 +55,7 @@ class BoardGenerator(object):
             return self.generate_classic(resolution)
         elif 'great' in self.game_mode:
             return self.generate_great_wheel(resolution)
-        #else custom or unrecognized
+        #else gamemode is custom or unrecognized
         if any(kw in self.prefab_size for kw in ('default', 'normal', 'medium')):
             board = self.generate_default(resolution)
         elif any(kw in self.prefab_size for kw in ('lite', 'light')):
@@ -81,14 +78,18 @@ class BoardGenerator(object):
     def generate_default(self, resolution):
         return Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **self.board_params)
 
-    def generate_classic(self, resolution, network=False):
+    def generate_classic(self, resolution):
         board_params = self.board_params.copy()
         board_params['max_levels'] = 4
         board_params['circles_per_lvl'] = 16
         board_params['random_filling'] = False
         board_params['center_cell'] = False
-
-        board = Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **board_params)
+        if self.online:
+            board = NetworkBoard(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **board_params)
+        else:
+            board = Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **board_params)
+        
+        #When to do this??
         char_settings = self.characters_params.copy()
         if self.players <= 2:
             char_settings['pawn']['ammount'] = 7
@@ -107,6 +108,12 @@ class BoardGenerator(object):
         for i in range (0, 4, 4//self.players):
             board.create_player(random.choice(STRINGS.PLAYER_NAMES), i, (200, 200), **char_settings)
         return board
+
+    def add_players(self, board, **char_settings):
+        for i in range (0, 4, 4//self.players):
+            board.create_player(random.choice(STRINGS.PLAYER_NAMES), i, (200, 200), **char_settings)
+            if self.online:
+                pass    #Send the playas.
 
     def generate_great_wheel(self, resolution, network=False):
         board_params = self.board_params.copy()

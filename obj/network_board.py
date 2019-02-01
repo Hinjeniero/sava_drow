@@ -1,17 +1,43 @@
 from obj.board import Board
+from obj.utilities.decorators import run_async
 from settings import NETWORK
 from external.Mastermind import MastermindServerTCP, MastermindClientTCP
 from external.Mastermind._mm_errors import *
+import threading
 
-class Server(object):
+class Server(MastermindServerTCP):
     def __init__(self):
-        pass
+        super().__init__(self, NETWORK.SERVER_REFRESH_TIME, NETWORK.SERVER_CONNECTION_REFRESH, NETWORK.SERVER_CONNECTION_TIMEOUT)
+        self.lock = threading.Lock()
+
+    @run_async
+    def start(self):
+        self.connect(NETWORK.SERVER_IP, NETWORK.SERVER_PORT) #This connect is way more like a bind to the socket.
+        try:
+            self.accepting_allow_wait_forever()
+        except:
+            #Only way to break is with an exception
+            pass
+        self.accepting_disallow()
+        self.disconnect_clients()
+        self.disconnect()
 
 class NetworkBoard(Board):
     def __init__(self, id_, event_id, end_event_id, resolution, *players, **params):
         super().__init__(id_, event_id, end_event_id, resolution, *players, **params)
         self.client = None
         self.server = None
+        NetworkBoard.generate(self)
+
+    def generate(self):
+        pass
+
+    def send_data(self, data):
+        pass
+
+    #This to be a queue that is checked once in every frame? Or a thread to be checked and results saved in a queue when ready?
+    def receive_data(self, data):
+        pass
 
     @staticmethod
     def generate(self, server): #Check if im the fuckins server or not

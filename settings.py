@@ -84,11 +84,17 @@ class STATES:
     SCREEN = ('idle', 'stopped', 'cutscene')
 
 class NETWORK:
-    SERVER_IP: ''
-    SERVER_PORT:
-    CLIENT_TIMEOUT_CONNECT:
-    CLIENT_TIMEOUT_RECEIVE:
-    TIMEOUT
+    #Settings if yo are the server
+    SERVER_REFRESH_TIME: 1
+    SERVER_CONNECTION_REFRESH: 1
+    SERVER_CONNECTION_TIMEOUT: 10
+    SERVER_IP: '0.0.0.0'
+    SERVER_PORT: 23123
+    #Settings to connect to
+    CLIENT_LOCAL_IP: 'localhost'    #USED IF IM THE SERVER
+    CLIENT_IP: '192.168.1.254'      #USED TO CONNECT TO AN EXTERNAL COMPUTER AS A SERVER
+    CLIENT_TIMEOUT_CONNECT: 10
+    CLIENT_TIMEOUT_RECEIVE: 10
 
 #PATHS TO FILES/IMAGES/SOUNDS
 #---Global paths(Container paths)

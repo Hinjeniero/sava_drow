@@ -10,6 +10,7 @@ __author__ = 'David Flaity Pardo'
 import random
 import pygame
 from obj.board import Board
+from obj.network_board import NetworkBoard
 from obj.utilities.logger import Logger as LOG
 from obj.utilities.decorators import time_it
 from settings import USEREVENTS, STRINGS, PARAMS, CHARACTERS
@@ -39,7 +40,11 @@ class BoardGenerator(object):
         self.board_params.update(params)
 
     @time_it
-    def generate_board(self, resolution):
+    def generate_board(self, resolution, network=False):
+        constructor = Board
+        if not network:
+            constructor = NetworkBoard
+        
         #Check type of board
         if self.players > 2:
             self.board_params['quadrants_overlap'] = False
@@ -76,7 +81,7 @@ class BoardGenerator(object):
     def generate_default(self, resolution):
         return Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **self.board_params)
 
-    def generate_classic(self, resolution):
+    def generate_classic(self, resolution, network=False):
         board_params = self.board_params.copy()
         board_params['max_levels'] = 4
         board_params['circles_per_lvl'] = 16
@@ -103,7 +108,7 @@ class BoardGenerator(object):
             board.create_player(random.choice(STRINGS.PLAYER_NAMES), i, (200, 200), **char_settings)
         return board
 
-    def generate_great_wheel(self, resolution):
+    def generate_great_wheel(self, resolution, network=False):
         board_params = self.board_params.copy()
         board_params['max_levels'] = 5
         board_params['circles_per_lvl'] = 16

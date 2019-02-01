@@ -11,8 +11,8 @@ class Server(MastermindServerTCP):
         self.lock = threading.Lock()
 
     @run_async
-    def start(self):
-        self.connect(NETWORK.SERVER_IP, NETWORK.SERVER_PORT) #This connect is way more like a bind to the socket.
+    def start(self, ip, port):
+        self.connect(ip, port) #This connect is way more like a bind to the socket.
         try:
             self.accepting_allow_wait_forever()
         except:
@@ -27,10 +27,31 @@ class NetworkBoard(Board):
         super().__init__(id_, event_id, end_event_id, resolution, *players, **params)
         self.client = None
         self.server = None
+        self.actions_queue = []
         NetworkBoard.generate(self)
 
-    def generate(self):
-        pass
+    @staticmethod
+    def generate(self, server): #Check if im the fuckins server or not
+        client = MastermindClientTCP(NETWORK.CLIENT_TIMEOUT_CONNECT, NETWORK.CLIENT_TIMEOUT_RECEIVE)
+        try:
+            print("Client connecting on \""+NETWORK.SERVER_IP+"\", port "+str(NETWORK.SERVER_PORT)+" . . .")
+            client.connect(NETWORK.CLIENT_IP, NETWORK.SERVER_PORT)
+        except MastermindError:
+            print("No server found; starting server!")
+            server = Server()
+            server.start(NETWORK.SERVER_IP, NETWORK.SERVER_PORT)
+
+            print("Client connecting on \""+NETWORK.CLIENT_LOCAL_IP+"\", port "+str(NETWORK.SERVER_PORT)+" . . .")
+            client.connect(NETWORK.CLIENT_LOCAL_IP, NETWORK.SERVER_PORT)
+        print("Client connected!")
+        self.send_handshake()
+
+    def send_handshake(self):
+        self.client.send(["update"], None)
+        reply = None
+        while reply == None:
+            reply = client.receive(False)
+        print(reply)
 
     def send_data(self, data):
         pass
@@ -38,22 +59,6 @@ class NetworkBoard(Board):
     #This to be a queue that is checked once in every frame? Or a thread to be checked and results saved in a queue when ready?
     def receive_data(self, data):
         pass
-
-    @staticmethod
-    def generate(self, server): #Check if im the fuckins server or not
-        client = MastermindClientTCP(NETWORK.CLIENT_TIMEOUT_CONNECT, NETWORK.CLIENT_TIMEOUT_RECEIVE)
-        try:
-            print("Client connecting on \""+NETWORK.SERVER_IP+"\", port "+str(NETWORK.SERVER_PORT)+" . . .")
-            client.connect(NETWORK.SERVER_IP, NETWORK.SERVER_PORT)
-        except MastermindError:
-            print("No server found; starting server!")
-            server = chat_server.ServerChat()
-            server.connect('0.0.0.0', NETWORK.SERVER_PORT)
-            server.accepting_allow()
-
-            print("Client connecting on \""+'localhost'+"\", port "+str(NETWORK.SERVER_PORT)+" . . .")
-            client.connect('localhost', NETWORK.SERVER_PORT)
-        print("Client connected!")
     
     def mouse_handler(self, event, mouse_movement, mouse_position):
         super().mouse_handler(event, mouse_movement, mouse_position)

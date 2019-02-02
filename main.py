@@ -61,14 +61,17 @@ def create_exit_dialog(text='Are you sure that you want to exit?'):
 
 def create_main_menu():
     #Create elements, main menu buttons (POSITIONS AND SIZES ARE IN PERCENTAGES OF THE CANVAS_SIZE, can use absolute integers too)
-    gradients       = UtilityBox.rainbow_gradient_generator(((255, 0, 0),(0, 0, 255)), 6)
-    positions       = UtilityBox.size_position_generator(6, 0.40, 0.05, 0.20, 0)
+    gradients       = UtilityBox.rainbow_gradient_generator(((255, 0, 0),(0, 0, 255)), 7)
+    positions       = UtilityBox.size_position_generator(7, 0.40, 0.05, 0.20, 0)
     button_size     = next(positions)
     buttonStart     = UIElement.factory('button_start', "start_game_go_main_board", USEREVENTS.MAINMENU_USEREVENT, next(positions), button_size,\
                                         INIT_PARAMS.INITIAL_RESOLUTION, text="Start new game", keep_aspect_ratio = False,\
                                         gradient=next(gradients), gradient_type='vertical', texture=PATHS.SHORT_BUTTON)
-    buttonOnline    = UIElement.factory('button_online', "network_start_online_game_go_main_board", USEREVENTS.MAINMENU_USEREVENT, next(positions), button_size,\
-                                        INIT_PARAMS.INITIAL_RESOLUTION, text="Start LAN game", keep_aspect_ratio = False,\
+    buttonOnline    = UIElement.factory('button_online_host', "host_network_start_online_game_go_main_board", USEREVENTS.MAINMENU_USEREVENT, next(positions), button_size,\
+                                        INIT_PARAMS.INITIAL_RESOLUTION, text="Host LAN game", keep_aspect_ratio = False,\
+                                        gradient=next(gradients), gradient_type='vertical', texture=PATHS.SHORT_BUTTON)
+    buttonOnline    = UIElement.factory('button_online_client', "client_network_start_online_game_go_main_board", USEREVENTS.MAINMENU_USEREVENT, next(positions), button_size,\
+                                        INIT_PARAMS.INITIAL_RESOLUTION, text="Connec to LAN game", keep_aspect_ratio = False,\
                                         gradient=next(gradients), gradient_type='vertical', texture=PATHS.SHORT_BUTTON)
     buttonContinue  = UIElement.factory('button_continue', "continue_game_go_main_board", USEREVENTS.MAINMENU_USEREVENT, next(positions), button_size,\
                                         INIT_PARAMS.INITIAL_RESOLUTION, text="Continue last game", keep_aspect_ratio = False,\

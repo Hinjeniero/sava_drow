@@ -6,55 +6,37 @@ from settings import NETWORK
 from external.Mastermind import *   #I dont like this one a bit, since it has to import everything
 import threading, traceback
 
-class Server(MastermindServerCallbacksEcho, MastermindServerTCP):
-    def __init__(self):
-        MastermindServerTCP.__init__(self, NETWORK.SERVER_REFRESH_TIME, NETWORK.SERVER_CONNECTION_REFRESH, NETWORK.SERVER_CONNECTION_TIMEOUT)
-        self.lock = threading.Lock()
-
-    @run_async
-    def start(self, ip, port):
-        self.connect(ip, port) #This connect is way more like a bind to the socket.
-        try:
-            self.accepting_allow_wait_forever()
-        except:
-            #Only way to break is with an exception
-            pass
-        self.accepting_disallow()
-        self.disconnect_clients()
-        self.disconnect()
-
 class NetworkBoard(Board):
-    def __init__(self, id_, event_id, end_event_id, resolution, *players, **params):
-        super().__init__(id_, event_id, end_event_id, resolution, *players, **params)
+    def __init__(self, id_, event_id, end_event_id, resolution, players_ammount, *players, **params):
+        #super().__init__(id_, event_id, end_event_id, resolution, *players, **params) #To use this when shit is gud
         self.client = None
         self.server = None
         self.my_player = None
-        self.actions_queue = []
+        self.players_connected = None
         NetworkBoard.generate(self)
 
     @staticmethod
-    def generate(self):
+    def generate(self): #TODO CHANGE THIS TO SEPARATE TOTALLY CLIENT AND SERVER
         self.client = MastermindClientTCP(NETWORK.CLIENT_TIMEOUT_CONNECT, NETWORK.CLIENT_TIMEOUT_RECEIVE)
         try:
             print("Client connecting on \""+NETWORK.CLIENT_IP+"\", port "+str(NETWORK.SERVER_PORT)+" . . .")
             self.client.connect(NETWORK.CLIENT_IP, NETWORK.SERVER_PORT)
-        except MastermindError:
+            self.send_handshake()
+            #TODO Use received data to generate shit.
+        except MastermindError: #If you ARE the host
             print("No server found; starting server!")
             self.server = Server()
-            print("SERVER CREATED")
             self.server.start(NETWORK.SERVER_IP, NETWORK.SERVER_PORT)
-            print("SERVER STARTED!")
-            print("Client connecting on \""+NETWORK.CLIENT_LOCAL_IP+"\", port "+str(NETWORK.SERVER_PORT)+" . . .")
+            print("My client connecting locally on \""+NETWORK.CLIENT_LOCAL_IP+"\", port "+str(NETWORK.SERVER_PORT)+" . . .")
             self.client.connect(NETWORK.CLIENT_LOCAL_IP, NETWORK.SERVER_PORT)
-        print("Client connected!")
-        self.send_handshake()
+            super().__init__(id_, event_id, end_event_id, resolution, *players, **params)
+        print("Client connected!")  #If you are not the host
 
     def send_handshake(self):
-        self.client.send(["update"], None)
+        self.client.send(['update'], None)
         reply = None
         print("WAITING FDOR HANDSHAKE")
         reply = self.client.receive(True)
-        print("YEs.")
         print(reply)
 
     def send_data(self, data):

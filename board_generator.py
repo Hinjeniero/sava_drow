@@ -18,6 +18,7 @@ from settings import USEREVENTS, STRINGS, PARAMS, CHARACTERS
 class BoardGenerator(object):
     def __init__(self):
         self.online = False
+        self.server = False
         self.players = 2
         self.game_mode = 'classic'
         self.prefab_size = 'default'

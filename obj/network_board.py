@@ -12,7 +12,7 @@ class NetworkBoard(Board):
         self.client = None
         self.server = None
         self.my_player = None
-        self.players_connected = None
+        self.queue = [] #This is the queue of received actions
         NetworkBoard.generate(self)
 
     @staticmethod

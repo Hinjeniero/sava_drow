@@ -111,6 +111,7 @@ class PATHS:
     WARRIOR = IMAGE_FOLDER+'Warrior'
     PRIESTESS = IMAGE_FOLDER+'Priestess'
     MATRONMOTHER = IMAGE_FOLDER+'Matronmother'
+    HOLYCHAMPION = IMAGE_FOLDER+'Matronmother'
     SANS = IMAGE_FOLDER+'sans_hd'
     #---Specific paths, animation_generator
     CHARS = (PAWN, WARRIOR, WIZARD, PRIESTESS,MATRONMOTHER)

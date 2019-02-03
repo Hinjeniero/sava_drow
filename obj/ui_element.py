@@ -674,7 +674,7 @@ class Dialog (InfoBoard):
                         'cols'  : 4
     }
 
-    def __init__(self, id_, user_event_id, element_size, canvas_size, *elements, **params):
+    def __init__(self, id_, user_event_id, element_size, canvas_size, **params):
         UtilityBox.join_dicts(params, Dialog.__default_config)
         super().__init__(id_, user_event_id, (0, 0), element_size, canvas_size, **params)
         self.buttons = pygame.sprite.OrderedUpdates()
@@ -708,7 +708,8 @@ class Dialog (InfoBoard):
         self.image.blit(button.image, button.rect.topleft)
 
 class TextBox(UIElement):
-    def __init__(self):
+    def __init__(self, id_, user_event_id, element_size, canvas_size, **params):
+        super().__init__(id_, user_event_id, (0, 0), element_size, canvas_size, **params)
         self.text = ''
         self.char_limit = 0 #0 is unlimited
         TextBox.generate(self)
@@ -725,4 +726,9 @@ class TextBox(UIElement):
     def delete_char(self):
         self.text = self.text[:-1]  #Or something like this
         self.regenerate()
+
+class ScrollingText(UIElement):
+    #Half transparent background with text on it.
+    def __init__(self, id_, user_event_id, element_size, canvas_size, **params):
+        super().__init__(id_, user_event_id, (0, 0), element_size, canvas_size, **params)
     

@@ -4,48 +4,80 @@ from settings import NETWORK
 #from external.Mastermind import MastermindServerTCP, MastermindClientTCP
 #from external.Mastermind._mm_errors import *   #This one doesnt catch the exception for some fuckin reasoni
 from external.Mastermind import *   #I dont like this one a bit, since it has to import everything
+from obj.board_server import Server
 import threading, traceback
 
 class NetworkBoard(Board):
-    def __init__(self, id_, event_id, end_event_id, resolution, players_ammount, *players, **params):
-        #super().__init__(id_, event_id, end_event_id, resolution, *players, **params) #To use this when shit is gud
+    def __init__(self, id_, event_id, end_event_id, resolution, players_ammount, host=False, server=None, **params):
+        if host:
+            super().__init__(id_, event_id, end_event_id, resolution, **params) #To use this when shit is gud
         self.client = None
-        self.server = None
+        self.server = server
         self.my_player = None
         self.queue = [] #This is the queue of received actions
-        NetworkBoard.generate(self)
+        NetworkBoard.generate(self, host)
 
     @staticmethod
-    def generate(self): #TODO CHANGE THIS TO SEPARATE TOTALLY CLIENT AND SERVER
+    def generate(self, host, **params):
         self.client = MastermindClientTCP(NETWORK.CLIENT_TIMEOUT_CONNECT, NETWORK.CLIENT_TIMEOUT_RECEIVE)
         try:
-            print("Client connecting on \""+NETWORK.CLIENT_IP+"\", port "+str(NETWORK.SERVER_PORT)+" . . .")
-            self.client.connect(NETWORK.CLIENT_IP, NETWORK.SERVER_PORT)
-            self.send_handshake()
-            #TODO Use received data to generate shit.
-        except MastermindError: #If you ARE the host
-            print("No server found; starting server!")
-            self.server = Server()
-            self.server.start(NETWORK.SERVER_IP, NETWORK.SERVER_PORT)
-            print("My client connecting locally on \""+NETWORK.CLIENT_LOCAL_IP+"\", port "+str(NETWORK.SERVER_PORT)+" . . .")
-            self.client.connect(NETWORK.CLIENT_LOCAL_IP, NETWORK.SERVER_PORT)
-            super().__init__(id_, event_id, end_event_id, resolution, *players, **params)
-        print("Client connected!")  #If you are not the host
+            if host:
+                print("IM HOST YES")
+                self.server.start(NETWORK.SERVER_IP, NETWORK.SERVER_PORT)
+                self.client.connect(NETWORK.CLIENT_LOCAL_IP, NETWORK.SERVER_PORT)
+            else:
+                print("Im normal client")
+                self.client.connect(NETWORK.CLIENT_IP, NETWORK.SERVER_PORT)
+            print("Client connected!")  #If you are not the host
+            self.send_handshake(host, **params)
+        except MastermindError: #If there was an error connecting
+            raise Exception("MASTERMINDERROR BRO")
 
-    def send_handshake(self):
-        self.client.send(['update'], None)
-        reply = None
-        print("WAITING FDOR HANDSHAKE")
+    def get_board_params(self):
+        """Chisels down the entire parameters to get just the one that all the clients must share."""
+        '''inter_path_frequency'  : 2,
+        'circles_per_lvl'       : 16,
+        'max_levels'            : 4,
+        'center_cell'           : False,
+        ['quadrants_overlap'] = True
+        '''
+        return True
+
+    def get_char_params(self):
+        """Chisels down the entire params to get the one that cliens must share."""
+        return True
+
+    def send_data(self, sent_data, compression=None):
+        """Blocking call to the server. (if run_async as decorator can be not blocking, just a subthread blocked)"""
+        self.client.send(sent_data, compression=compression)
         reply = self.client.receive(True)
-        print(reply)
+        return reply
 
-    def send_data(self, data):
-        pass
+    def send_handshake(self, host):
+        if host:
+            reply = self.send_data({'host': True})
+            print("Sending host "+reply)
+            #Create board
+            reply = self.send_data({'params': self.get_board_params()})    #Send those 4 params
+            players = self.send_data({'players': True})
+            print("How many players: "+reply)
+            for _ in range(0, players):
+                pass #Create player
+            reply = self.send_data({'positions_and_shit': True})
+            print(reply)
+        else:
+            reply = self.send_data({'params': True})
+            #super().__init__(id_, event_id, end_event_id, resolution, **params)
+            reply = self.send_data({'positions': True})
+        reply = self.client.send_data({'ready': True})
+        print("FINAL REPLY, WE ARE IN BUSINESS "+str())
 
     #This to be a queue that is checked once in every frame? Or a thread to be checked and results saved in a queue when ready?
-    def receive_data(self, data):
-        pass
+    def send_update(self, data):
+        reply = self.client.send_data({'update': True})
+        print(reply)
     
+    #####FOLLOW HERE; GOING TO DINE NOW
     def mouse_handler(self, event, mouse_movement, mouse_position):
         super().mouse_handler(event, mouse_movement, mouse_position)
         if mouse_movement:

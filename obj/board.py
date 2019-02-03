@@ -92,7 +92,7 @@ class Board(Screen):
                         'inter_path_frequency'  : 2,
                         'circles_per_lvl'       : 16,
                         'max_levels'            : 4,
-                        'center_cell'           : False, #TODO MAKE CENTER CELL
+                        'center_cell'           : False,
                         'path_color'            : WHITE,
                         'path_width'            : 5,
                         'platform_sprite'       : None
@@ -203,7 +203,9 @@ class Board(Screen):
             *cells (:obj: Cell):    Cells to sort and assign to the quadrants. Separated by commas."""
         quadrants = {}
         for cell in cells:
-            if cell.get_level() < 1: continue   #We are not interested in this cell, next one
+            if cell.get_level() < 1\
+            or cell.get_real_index() >= self.params['circles_per_lvl']*self.params['max_levels']: 
+                continue   #We are not interested in this cell, next one
             quads = self.__get_quadrant(cell.get_index())
             for quadrant in quads:
                 try:                quadrants[quadrant].append(cell)

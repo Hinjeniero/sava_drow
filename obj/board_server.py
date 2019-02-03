@@ -4,11 +4,12 @@ from settings import NETWORK
 from external.Mastermind import *
 
 class Server(MastermindServerTCP):
-    def __init__(self):
+    def __init__(self, number_of_players):
         MastermindServerTCP.__init__(self, NETWORK.SERVER_REFRESH_TIME, NETWORK.SERVER_CONNECTION_REFRESH, NETWORK.SERVER_CONNECTION_TIMEOUT)
-        self.clients = []   #Connections objects
-        self.players = None
-        self.board_params = None
+        self.host = None    #COnnection object. This is another client, but its the host. I dunno if this will be useful yet.
+        self.clients = []   #Connections objects (Includes host)
+        self.total_players = number_of_players
+        self.players_ready = 0
         self.current_map = None
         self.queue = []
         self.lock = threading.Lock()
@@ -37,10 +38,25 @@ class Server(MastermindServerTCP):
 
     def callback_client_handle(self, connection_object, data):
         reply = None
-        if 'start' in data or 'ready' in data:
-            pass   #Increment variable
+        if 'host' in data:
+            if not self.host:
+                self.host = connection_object
+            else:
+                reply = 'There is already a host. No hacking pls.'
+        if 'params' in data and not self.board_params:
+            if connection_object is self.host:
+                self.add_to_queue(data)
+            else:
+                reply = True #Returns the params of the board
+        if 'start' in data or 'ready' in data:  #IN THIS ONE WAIT FOR ALL OF THEM TO BE ONLINE
+            self.players_ready += 1
+            if self.players_ready < self.total_players:
+                return  #So the clients stay blocked until we reply with an ACK
         if 'player' in data: #At start
-            pass #Saves the player info(name and shit), and replies the final board. reply=board
+            if connection_object is self.host:
+                pass #Saves the player info
+            else:
+                pass #Saves the player info(name and shit), and replies the final board. reply=board
         if 'update' in data:
             reply = 'UPDATE' #reply = changes, Sends the info of the board to the whatever client requested it. (If there is new actions)
         if 'move_char' in data:

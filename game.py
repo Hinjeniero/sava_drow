@@ -138,7 +138,7 @@ class Game(object):
         elif 'size' in command:
             self.board_generator.set_board_size(value)
         elif 'player' in command:
-            self.board_generator.players = value
+            self.board_generator.set_players(value)
         elif any(char in command for char in characters):
             self.board_generator.set_character_ammount(command, value)
         elif 'loading' in command:

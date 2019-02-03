@@ -23,7 +23,14 @@ class BoardGenerator(object):
         self.game_mode = 'classic'
         self.prefab_size = 'default'
         self.characters_params = CHARACTERS.CHARACTER_SETTINGS.copy()
-        self.board_params = {}
+        self.board_params = {'quadrants_overlap': True}
+
+    def set_players(self, players):
+        self.players = players
+        if self.players <= 2:
+            self.board_params['quadrants_overlap'] = True
+        else:
+            self.board_params['quadrants_overlap'] = False
 
     def set_game_mode(self, gamemode):
         self.game_mode = gamemode.lower()
@@ -37,27 +44,27 @@ class BoardGenerator(object):
                 self.characters_params[type_of_char]['ammount'] = ammount
                 LOG.log('INFO', 'Changed ', type_of_char, ' ammount to ', ammount)
                 return
-
+                
     def set_board_params(self, **params):
         self.board_params.update(params)
 
+    def add_players(self, board, **char_settings):
+        for i in range (0, 4, 4//self.players):
+            if self.online and not self.server:
+                board.create_player(random.choice(STRINGS.PLAYER_NAMES), i, (200, 200), empty=True, **char_settings)
+            else:   #online and host or not online
+                board.create_player(random.choice(STRINGS.PLAYER_NAMES), i, (200, 200), **char_settings)
+            
     @time_it
     def generate_board(self, resolution):
-        #Check type of board
-        if self.players > 2:
-            self.board_params['quadrants_overlap'] = False
-        else:
-            self.board_params['quadrants_overlap'] = True
-
         LOG.log('info', 'Selected gamemode is ', self.game_mode)
         LOG.log('info', 'Selected size is ', self.prefab_size)
-
         if 'classic' in self.game_mode:
             return self.generate_classic(resolution)
         elif 'great' in self.game_mode:
             return self.generate_great_wheel(resolution)
         #else gamemode is custom or unrecognized
-        if any(kw in self.prefab_size for kw in ('default', 'normal', 'medium')):
+        elif any(kw in self.prefab_size for kw in ('default', 'normal', 'medium')):
             board = self.generate_default(resolution)
         elif any(kw in self.prefab_size for kw in ('lite', 'light')):
             board = self.generate_lite(resolution)
@@ -72,103 +79,100 @@ class BoardGenerator(object):
         elif any(kw in self.prefab_size for kw in ('test', 'impossible', 'notreal', 'purpose', 'zero', 'memoryerror')):
             board = self.generate_test(resolution)
         #END
-        for i in range (0, 4, 4//self.players):
-            board.create_player(random.choice(STRINGS.PLAYER_NAMES), i, (200, 200), **self.characters_params)
+        self.add_players(board, **self.characters_params)
         return board
 
-    def generate_default(self, resolution):
-        return Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **self.board_params)
-
+    def generate_base_board(self, resolution, **board_params):
+        if self.online:
+            return NetworkBoard(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **board_params)
+        return Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **board_params)
+            
     def generate_classic(self, resolution):
         board_params = self.board_params.copy()
         board_params['max_levels'] = 4
         board_params['circles_per_lvl'] = 16
         board_params['random_filling'] = False
         board_params['center_cell'] = False
-        if self.online:
-            board = NetworkBoard(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **board_params)
-        else:
-            board = Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **board_params)
-        
-        #When to do this??
+        board = self.generate_base_board(resolution, **board_params)
+        #SETTING CHARS AMMOUNTS
         char_settings = self.characters_params.copy()
-        if self.players <= 2:
+        if self.board_params['quadrants_overlap']:
             char_settings['pawn']['ammount'] = 7
             char_settings['warrior']['ammount'] = 3
             char_settings['wizard']['ammount'] = 2
             char_settings['priestess']['ammount'] = 2
-            char_settings['matron_mother']['ammount'] = 1
             #TOTAL 15
         else:
             char_settings['pawn']['ammount'] = 5
             char_settings['warrior']['ammount'] = 1
             char_settings['wizard']['ammount'] = 1
             char_settings['priestess']['ammount'] = 1
-            char_settings['matron_mother']['ammount'] = 1
             #TOTAL 9
-        for i in range (0, 4, 4//self.players):
-            board.create_player(random.choice(STRINGS.PLAYER_NAMES), i, (200, 200), **char_settings)
+        char_settings['matron_mother']['ammount'] = 1
+        #ADDING PLAYERS AND RETURNING
+        self.add_players(board, **char_settings)
         return board
 
-    def add_players(self, board, **char_settings):
-        for i in range (0, 4, 4//self.players):
-            board.create_player(random.choice(STRINGS.PLAYER_NAMES), i, (200, 200), **char_settings)
-            if self.online:
-                pass    #Send the playas.
-
-    def generate_great_wheel(self, resolution, network=False):
+    def generate_great_wheel(self, resolution):
         board_params = self.board_params.copy()
         board_params['max_levels'] = 5
         board_params['circles_per_lvl'] = 16
         board_params['random_filling'] = False
         board_params['center_cell'] = True
-        board = Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **board_params)
+        board = self.generate_base_board(resolution, **board_params)
+        #SETTING CHARS AMMOUNTS
         char_settings = self.characters_params.copy()
         if self.players <= 2:
             char_settings['pawn']['ammount'] = 9
             char_settings['warrior']['ammount'] = 4
-            char_settings['wizard']['ammount'] = 3 # 2 later
-            char_settings['priestess']['ammount'] = 3# 2 later
-            char_settings['holy_champion']['ammount'] = 0 #2 later
+            char_settings['wizard']['ammount'] = 2
+            char_settings['priestess']['ammount'] = 2
+            char_settings['holy_champion']['ammount'] = 2
             #TOTAL 20
         else:
             char_settings['pawn']['ammount'] = 7
-            char_settings['warrior']['ammount'] = 2 # 1 later
+            char_settings['warrior']['ammount'] = 1
             char_settings['wizard']['ammount'] = 1
             char_settings['priestess']['ammount'] = 1
-            char_settings['holy_champion']['ammount'] = 0 #1 later
+            char_settings['holy_champion']['ammount'] = 1
             #TOTAL 12
-        #Those dont change
         char_settings['matron_mother']['ammount'] = 1
-        for i in range (0, 4, 4//self.players):
-            board.create_player(random.choice(STRINGS.PLAYER_NAMES), i, (200, 200), **char_settings)
+        #ADDING PLAYERS AND RETURNING
+        self.add_players(board, **char_settings)
         return board
+
+    #PREFABRICATED SIZES FROM HERE ON
+    def generate_default(self, resolution):
+        self.board_params['max_levels'] = 4
+        self.board_params['circles_per_lvl'] = 16
+        return self.generate_base_board(resolution, **self.board_params)
 
     def generate_lite(self, resolution):
         self.board_params['max_levels'] = 3
-        return Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **self.board_params)
+        self.board_params['circles_per_lvl'] = 16
+        return self.generate_base_board(resolution, **self.board_params)
 
     def generate_small(self, resolution):
         self.board_params['max_levels'] = 3
         self.board_params['circles_per_lvl'] = 8
-        return Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **self.board_params)
+        return self.generate_base_board(resolution, **self.board_params)
     
     def generate_extra(self, resolution):
         self.board_params['max_levels'] = 5
         self.board_params['circles_per_lvl'] = 16
-        return Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **self.board_params)
+        return self.generate_base_board(resolution, **self.board_params)
 
     def generate_huge(self, resolution):
         self.board_params['max_levels'] = 5
         self.board_params['circles_per_lvl'] = 32
-        return Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **self.board_params)
+        return self.generate_base_board(resolution, **self.board_params)
 
     def generate_insane(self, resolution):
         self.board_params['max_levels'] = 6
         self.board_params['circles_per_lvl'] = 32
-        return Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **self.board_params)
+        return self.generate_base_board(resolution, **self.board_params)
 
     def generate_test(self, resolution):
         self.board_params['max_levels'] = 6
         self.board_params['circles_per_lvl'] = 64
-        return Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **self.board_params)
+        return self.generate_base_board(resolution, **self.board_params)

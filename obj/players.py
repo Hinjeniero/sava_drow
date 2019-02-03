@@ -133,20 +133,14 @@ class Player(object):
     def has_lost(self):
         return self.dead
 
-    def json(self):
-        return shit
+    def stats_json(self):
+        pass #TODO DO THIS WHEN WINNER
 
-        '''def __init__(self, name, order, sprite_size, canvas_size, infoboard=None, uuid=None, **character_params):
-        self.uuid       = uuid
-        self.name       = name
-        self.order      = order
-        self.characters = Character.factory(name, sprite_size, canvas_size, **character_params)
-        self.infoboard  = None  #Created in generate
-        self.turn       = 0
-        self.kills      = 0
-        self.corpses    = []    #Contains dead chars.
-        self.movements  = 0
-        self.dead       = False #If the player has already lost'''
+    def json(self):
+        return  {self.uuid: {'name': self.name,
+                            'order': self.order,
+                            'turn': self.turn,
+                            'dead': self.dead}}
 
 class Character(AnimatedSprite):
     """Character class. Inherits from AnimatedSprite.

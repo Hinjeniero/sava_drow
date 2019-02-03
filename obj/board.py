@@ -98,7 +98,7 @@ class Board(Screen):
                         'platform_sprite'       : None
     }
     #CHANGE MAYBE THE THREADS OF CHARACTER TO JOIN INSTEAD OF NUM PLAYERS AND SHIT
-    def __init__(self, id_, event_id, end_event_id, resolution, *players, **params):
+    def __init__(self, id_, event_id, end_event_id, resolution, *players, empty=False, **params):
         """Board constructor. Inherits from Screen.
         Args:
             id_ (str):  Identifier of the Screen.
@@ -144,10 +144,10 @@ class Board(Screen):
         #Started
         self.started        = False
         self.end_event      = pygame.event.Event(end_event_id)
-        Board.generate(self, *players)
+        Board.generate(self, empty, *players)
     
     @staticmethod
-    def generate(self, *players):
+    def generate(self, empty, *players):
         UtilityBox.join_dicts(self.params, Board.__default_config)
         #INIT
         axis_size = self.params['circles_per_lvl']*self.params['max_levels']
@@ -170,13 +170,17 @@ class Board(Screen):
             self.platform = Rectangle(self.id+"_platform", platform_pos, platform_size, self.resolution)
         else:
             self.platform = self.params['platform_sprite']
+        if not empty:
+            self.generate_environment()
+        self.add_players(*players)
+
+    def generate_environment(self):
         self.generate_all_cells()
-        self.assign_quadrants(*self.cells)
+        self.assign_quadrants()
         self.generate_paths(offset=True)
         self.generate_inter_paths()
         self.generate_map_board()
-        self.add_players(*players)
-        self.save_sprites()
+        self.save_sprites()        
 
     def set_scroll(self, value):
         """We dont want scrolls in the board"""
@@ -197,12 +201,12 @@ class Board(Screen):
             self.params['inter_path_frecuency'] = circles//math.ceil(circles/paths) 
             LOG.log('DEBUG', "Changed number of paths from ", paths, " to ", self.params['inter_path_frecuency'])
     
-    def assign_quadrants(self, *cells):
+    def assign_quadrants(self):
         """Get the cells, sorts them, and inserts them in the appropiate quadrant.
         Args:
             *cells (:obj: Cell):    Cells to sort and assign to the quadrants. Separated by commas."""
         quadrants = {}
-        for cell in cells:
+        for cell in self.cells:
             if cell.get_level() < 1\
             or cell.get_real_index() >= self.params['circles_per_lvl']*self.params['max_levels']: 
                 continue   #We are not interested in this cell, next one

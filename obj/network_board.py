@@ -8,12 +8,15 @@ from obj.board_server import Server
 import threading, traceback
 
 class NetworkBoard(Board):
-    def __init__(self, id_, event_id, end_event_id, resolution, players_ammount, host=False, server=None, **params):
+    def __init__(self, id_, event_id, end_event_id, resolution, host=False, server=None, **params):
         if host:
-            super().__init__(id_, event_id, end_event_id, resolution, **params) #To use this when shit is gud
+            super().__init__(id_, event_id, end_event_id, resolution, **params)
+        else:
+            super().__init__(id_, event_id, end_event_id, empty=True, **params) #To generate the environment later
         self.client = None
         self.server = server
         self.my_player = None
+        self.waiting_for_event = False
         self.queue = [] #This is the queue of received actions
         NetworkBoard.generate(self, host)
 
@@ -22,26 +25,26 @@ class NetworkBoard(Board):
         self.client = MastermindClientTCP(NETWORK.CLIENT_TIMEOUT_CONNECT, NETWORK.CLIENT_TIMEOUT_RECEIVE)
         try:
             if host:
-                print("IM HOST YES")
+                print("IM THE HOST YES")
                 self.server.start(NETWORK.SERVER_IP, NETWORK.SERVER_PORT)
                 self.client.connect(NETWORK.CLIENT_LOCAL_IP, NETWORK.SERVER_PORT)
             else:
-                print("Im normal client")
-                self.client.connect(NETWORK.CLIENT_IP, NETWORK.SERVER_PORT)
+                print("Im a normal client")
+                #self.client.connect(NETWORK.CLIENT_IP, NETWORK.SERVER_PORT)
+                self.client.connect(NETWORK.CLIENT_LOCAL_IP, NETWORK.SERVER_PORT)   #Testing in local machine
             print("Client connected!")  #If you are not the host
-            self.send_handshake(host, **params)
+            self.send_handshake(host)
         except MastermindError: #If there was an error connecting
             raise Exception("MASTERMINDERROR BRO")
 
     def get_board_params(self):
         """Chisels down the entire parameters to get just the one that all the clients must share."""
-        '''inter_path_frequency'  : 2,
-        'circles_per_lvl'       : 16,
-        'max_levels'            : 4,
-        'center_cell'           : False,
-        ['quadrants_overlap'] = True
-        '''
-        return True
+        params = {'inter_path_frequency'  : self.params['inter_path_frequency'],
+                'circles_per_lvl'       : self.params['circles_per_lvl'],
+                'max_levels'            : self.params['max_levels'] ,
+                'center_cell'           : self.params['center_cell'],
+                'quadrants_overlap' : self.params['quadrants_overlap']}
+        return params
 
     def get_char_params(self):
         """Chisels down the entire params to get the one that cliens must share."""
@@ -53,29 +56,37 @@ class NetworkBoard(Board):
         reply = self.client.receive(True)
         return reply
 
+    def request_data(self, command, compression=None):
+        self.client.send({command:True}, compression=compression)
+        reply = self.client.receive(True)
+        return reply
+
     def send_handshake(self, host):
         if host:
             reply = self.send_data({'host': True})
-            print("Sending host "+reply)
-            #Create board
-            reply = self.send_data({'params': self.get_board_params()})    #Send those 4 params
-            players = self.send_data({'players': True})
-            print("How many players: "+reply)
-            for _ in range(0, players):
+            reply = self.send_data({'params': self.get_board_params()})    #Send those 5 params
+            players = self.send_data({'players': True}) #Send the uuid, order, and name
+            for _ in range(0, players['players']):
                 pass #Create player
             reply = self.send_data({'positions_and_shit': True})
-            print(reply)
+            print(str(reply))
         else:
-            reply = self.send_data({'params': True})
+            reply = self.request_data('params')
+            #RECEIVE PARAMS TO CREATE THIS SHIT
+            print("RECEIVED PARAMS "+str(reply))
+            raise Exception
             #super().__init__(id_, event_id, end_event_id, resolution, **params)
+            reply = self.send_data({'players': True}) #TO get the number of players
+            for _ in range(0, reply):
+                print("ADDING PLAYER")
             reply = self.send_data({'positions': True})
-        reply = self.client.send_data({'ready': True})
+        reply = self.send_data({'ready': True})
         print("FINAL REPLY, WE ARE IN BUSINESS "+str())
 
     #This to be a queue that is checked once in every frame? Or a thread to be checked and results saved in a queue when ready?
     def send_update(self, data):
         reply = self.client.send_data({'update': True})
-        print(reply)
+        print(str(reply))
     
     #####FOLLOW HERE; GOING TO DINE NOW
     def mouse_handler(self, event, mouse_movement, mouse_position):

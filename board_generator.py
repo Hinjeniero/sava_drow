@@ -11,6 +11,7 @@ import random
 import pygame
 from obj.board import Board
 from obj.network_board import NetworkBoard
+from obj.board_server import Server
 from obj.utilities.logger import Logger as LOG
 from obj.utilities.decorators import time_it
 from settings import USEREVENTS, STRINGS, PARAMS, CHARACTERS
@@ -49,11 +50,10 @@ class BoardGenerator(object):
         self.board_params.update(params)
 
     def add_players(self, board, **char_settings):
-        for i in range (0, 4, 4//self.players):
-            if self.online and not self.server:
-                board.create_player(random.choice(STRINGS.PLAYER_NAMES), i, (200, 200), empty=True, **char_settings)
-            else:   #online and host or not online
-                board.create_player(random.choice(STRINGS.PLAYER_NAMES), i, (200, 200), **char_settings)
+        if self.online and not self.server:
+            return
+        for i in range (0, 4, 4//self.players): #Im the host or a local game.
+            board.create_player(random.choice(STRINGS.PLAYER_NAMES), i, (200, 200), **char_settings)
             
     @time_it
     def generate_board(self, resolution):
@@ -84,6 +84,9 @@ class BoardGenerator(object):
 
     def generate_base_board(self, resolution, **board_params):
         if self.online:
+            if self.server:
+                server = Server(self.players)
+                return NetworkBoard(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, host=True, server=server, **board_params)
             return NetworkBoard(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **board_params)
         return Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **board_params)
             

@@ -343,7 +343,6 @@ class Game(object):
         screen = None
         count = 0
         for i in range(0, len(self.screens)):
-            print(i)
             matches = len([0 for j in keywords if j in self.screens[i].id])
             if matches > count:   
                 screen = self.screens[i]

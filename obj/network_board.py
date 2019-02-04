@@ -35,6 +35,7 @@ class NetworkBoard(Board):
             print("Client connected!")  #If you are not the host
             self.send_handshake(host)
         except MastermindError: #If there was an error connecting
+            print("ERERRRORO")
             raise Exception("MASTERMINDERROR BRO")
 
     @run_async
@@ -84,23 +85,28 @@ class NetworkBoard(Board):
 
     def ALL_PLAYERS_LOADED(self):
         super().ALL_PLAYERS_LOADED()
-        if (self.loaded_players is self.total_players):
-            players = self.send_data({'players': True}) #Send the uuid, order, and name.    #DO THIS ASYNC
-            reply = self.send_data({'positions_and_shit': True})
+        print("ALL PLAYERS ARE LOADED YES")
+        if self.server and self.started:
+            for player in self.players:
+                self.send_data_async({'player_data': player.json()})
+            for cell in self.cells:
+                if cell.has_char():
+                    self.send_data_async({'character_data': cell.get_char().json(cell.get_real_index())})
 
     def send_handshake(self, host):
         if host:
-            reply = self.send_data({'host': True})
+            self.send_data({'host': True})  #The next call needs this setted up in the server
             self.send_data_async({'params': self.get_board_params()})
         else:
             params = self.request_data('params')
             self.params.update(params)
             self.generate_environment()
-            players_ammount = self.request_data({'players': True}) #TO get the number of players
-            for _ in range(0, players_ammount['players']):
-                print("ADDING PLAYER")  #CREATE WITH EMPTY = TRUE
-            reply = self.request_data({'positions': True})
-        reply = self.send_data({'ready': True})
+            players_ammount = self.request_data('players') #To get the number of players
+            print("NUMBER OF PLAYAS :"+str(players_ammount))
+            #for _ in range(0, players_ammount['players']):
+                #print("ADDING PLAYER")  #CREATE WITH EMPTY = TRUE
+            #reply = self.request_data({'positions': True})  #THIS ONE IMPORTANT
+        self.send_data_async({'ready': True})
         print("FINAL REPLY, WE ARE IN BUSINESS ")
 
     #This to be a queue that is checked once in every frame? Or a thread to be checked and results saved in a queue when ready?
@@ -147,3 +153,10 @@ class NetworkBoard(Board):
                 self.current_player.unpause_characters()
                 self.update_map()
                 break
+
+    def destroy(self):
+        self.client.disconnect()
+        if self.server:
+            self.server.accepting_disallow()
+            self.server.disconnect_clients()
+            self.server.disconnect()

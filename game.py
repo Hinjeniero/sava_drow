@@ -439,7 +439,9 @@ class Game(object):
                     pygame.display.update()
                 except GameEndException:
                     end = True
-            sys.exit()
-        except Exception as exc:
-            raise exc
+        except Exception:
+            print("EXCEPTION BRO")
+        for screen in self.screens:
+            screen.destroy()
+        sys.exit()
 

@@ -6,21 +6,37 @@ from external.Mastermind import *
 class Server(MastermindServerTCP):
     def __init__(self, number_of_players):
         MastermindServerTCP.__init__(self, NETWORK.SERVER_REFRESH_TIME, NETWORK.SERVER_CONNECTION_REFRESH, NETWORK.SERVER_CONNECTION_TIMEOUT)
-        self.host = None    #COnnection object. This is another client, but its the host. I dunno if this will be useful yet.
+        self.host = None    #Connection object. This is another client, but its the host. I dunno if this will be useful yet.
         self.clients = []   #Connections objects (Includes host)
         self.waiting = []   #Connections waiting for an event to occur. This acts as a barrier
         self.total_players = number_of_players
         self.players_ready = 0
         self.current_map = None
         self.data = {}
-        self.players_data = {}
-        self.chars_data = {}
         self.lock = threading.Lock()
+        self.players_data = {}
+        self.player_lock = threading.Lock()
+        self.chars_data = {}
+        self.char_lock = threading.Lock()
 
     def add_data(self, key, data):
         self.lock.acquire()
         self.data[key] = data
         self.lock.release()
+
+    def add_player(self, player):
+        self.player_lock.acquire()
+        self.players_data[player['uuid']] = player['data']
+        print("ADDING")
+        print(str(self.players_data))
+        self.player_lock.release()
+
+    def add_char(self, character):
+        self.char_lock.acquire()
+        self.chars_data[character['uuid']] = character['data']
+        print("ADDING CHAR")
+        print("Current chars: "+str(len(self.chars_data.keys())))
+        self.char_lock.release()
 
     def get_data(self, key):
         self.lock.acquire()
@@ -67,7 +83,9 @@ class Server(MastermindServerTCP):
             elif 'players' in key: #At start
                 reply = {'players': self.total_players}
             elif 'player_data' in key:
-                pass
+                self.add_player(data['player_data'])
+            elif 'character_data' in key:
+                self.add_char(data['character_data'])
             elif 'update' in key:
                 reply = 'UPDATE' #reply = changes, Sends the info of the board to the whatever client requested it. (If there is new actions)
             elif 'move_char' in key:

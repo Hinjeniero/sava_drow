@@ -322,6 +322,11 @@ class Screen(object):
             if all(kw in sprite.get_id() for kw in keywords):
                 sprite.set_enabled(state)
 
+    def destroy(self):
+        """Called when exiting the game, in case we have some subthreads we need dead.
+        To overload."""
+        pass
+
 class LoadingScreen(Screen):
     """LoadingScreen class. Inherits from Screen.
     Its purpose it's pretty obvious, being a middle screen until whatever

@@ -11,7 +11,7 @@ Have the following classes, inheriting represented by tabs:
         ↑MatronMother
 --------------------------------------------"""
 
-__all__ = ["Player", "Character", "Warrior", "Wizard", "Priestess", "Pawn", "MatronMother"]
+__all__ = ["Player", "Character", "Warrior", "Wizard", "Priestess", "Pawn", "MatronMother", "HolyChampion"]
 __version__ = '0.9'
 __author__ = 'David Flaity Pardo'
 
@@ -67,7 +67,7 @@ class Player(object):
     @staticmethod
     def generate(self, canvas_size, sprite_size, empty, **character_params):
         if not self.uuid:
-            self.uuid = uuid.uuid1()
+            self.uuid = uuid.uuid1().int
         if not empty:
             self.characters = Character.factory(self.name, self.uuid, sprite_size, canvas_size, **character_params)
         infoboard = InfoBoard(self.name+'_infoboard', 0, (0, 0), (0.15*canvas_size[0], canvas_size[1]),\
@@ -137,10 +137,11 @@ class Player(object):
         pass #TODO DO THIS WHEN WINNER
 
     def json(self):
-        return  {self.uuid: {'name': self.name,
-                            'order': self.order,
-                            'turn': self.turn,
-                            'dead': self.dead}}
+        return  {'uuid': self.uuid,
+                'data': {'name': self.name,
+                        'order': self.order,
+                        'turn': self.turn,
+                        'dead': self.dead}}
 
 class Character(AnimatedSprite):
     """Character class. Inherits from AnimatedSprite.
@@ -206,10 +207,21 @@ class Character(AnimatedSprite):
     @staticmethod
     def generate(self):
         if not self.uuid:
-            self.uuid = uuid.uuid1()
+            self.uuid = uuid.uuid1().int
     
-    def json(self):
-        return shit
+    def get_type(self):
+        """This to overload."""
+        return 'character'
+
+    def json(self, cell_index=None):
+        """This to share in the online variant and drop in the same positions."""
+        response = {'uuid': self.uuid,
+                    'data': {'id': self.id,
+                            'player': self.master_uuid,
+                            'type': self.get_type()}}
+        if cell_index:
+            response['data']['cell'] = cell_index    
+        return response
 
     def get_paths(self, graph, distances, current_map, index, level_size, movement_restriction):
         """Gets all the possible paths for each cell (of a specific subclass) with this overloaded method.
@@ -445,6 +457,10 @@ class Warrior(Character):
                             Each path is composed by all the steps to take (all the cell indexes from start until destiny).
         """
         return super().get_paths(graph, distances, current_map, index, level_size, Warrior.RESTRICTIONS)
+    
+    def get_type(self):
+        """This to overload."""
+        return 'warrior'
 
 class Wizard(Character):
     """Wizard class. Inherits from Character.
@@ -490,6 +506,10 @@ class Wizard(Character):
                             Each path is composed by all the steps to take (all the cell indexes from start until destiny).
         """
         return super().get_paths(graph, distances, current_map, index, level_size, Wizard.RESTRICTIONS)
+
+    def get_type(self):
+        """This to overload."""
+        return 'wizard'
 
 class Priestess(Character):
     """Priestess class. Inherits from Character.
@@ -546,6 +566,10 @@ class Priestess(Character):
         print("AFTER CHECKING FOR allies and enemies in the middle of the path ")
         print(results)
         return results
+
+    def get_type(self):
+        """This to overload."""
+        return 'priestess'
 
 class Pawn(Character):
     """Pawn class. Inherits from Character.
@@ -625,7 +649,11 @@ class Pawn(Character):
             if not any(current_map[path[i]].has_ally() or current_map[path[i]].has_enemy() for i in range(1, len(path)-1)): #Checking if in the middle steps there is an ally
                 enemies[path[-1]] = len(path)-1
         return enemies
-            
+
+    def get_type(self):
+        """This to overload."""
+        return 'pawn'
+
 class MatronMother(Character):
     """MatronMother class. Inherits from Character.
     Pawn can move in 1 turn a distance of 1. In short, can only move to immediate cells.
@@ -675,6 +703,10 @@ class MatronMother(Character):
                             Each path is composed by all the steps to take (all the cell indexes from start until destiny).
         """
         return super().get_paths(graph, distances, current_map, index, level_size, MatronMother.RESTRICTIONS)
+
+    def get_type(self):
+        """This to overload."""
+        return 'matron_mother'
 
 class HolyChampion(Character):
     """HolyChampion class. Inherits from Character.
@@ -734,3 +766,7 @@ class HolyChampion(Character):
             and path not in results:
                 results.append(path)
         return results
+
+    def get_type(self):
+        """This to overload."""
+        return 'holy_champion'

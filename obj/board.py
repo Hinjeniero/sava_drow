@@ -175,7 +175,7 @@ class Board(Screen):
             self.generate_environment()
         self.add_players(*players)
 
-    @run_async
+    #@run_async
     def generate_environment(self):
         self.generate_all_cells()
         self.assign_quadrants()
@@ -183,7 +183,8 @@ class Board(Screen):
         self.generate_inter_paths()
         self.generate_map_board()
         self.save_sprites()
-        self.generated = True    
+        self.generated = True
+        print("ALL GENERATED ")
 
     def set_scroll(self, value):
         """We dont want scrolls in the board"""

@@ -1,11 +1,15 @@
+import threading
+import traceback
+import time
+import uuid
 from obj.board import Board
 from obj.utilities.decorators import run_async
+from obj.utilities.logger import Logger as LOG
 from settings import NETWORK
 #from external.Mastermind import MastermindServerTCP, MastermindClientTCP
 #from external.Mastermind._mm_errors import *   #This one doesnt catch the exception for some fuckin reasoni
 from external.Mastermind import *   #I dont like this one a bit, since it has to import everything
 from obj.board_server import Server
-import threading, traceback
 
 class NetworkBoard(Board):
     def __init__(self, id_, event_id, end_event_id, resolution, host=False, server=None, **params):
@@ -13,30 +17,57 @@ class NetworkBoard(Board):
             super().__init__(id_, event_id, end_event_id, resolution, **params)
         else:
             super().__init__(id_, event_id, end_event_id, empty=True, **params) #To generate the environment later
+        self.uuid = uuid.uuid1().int    #Using this if crashing would led to more conns than players
+        self.ip = None
+        self.port = None
         self.client = None
+        self.client_lock = threading.Lock()
         self.server = server
         self.my_player = None
         self.waiting_for_event = False
         self.queue = [] #This is the queue of received actions
+        self.reconnect = True
         NetworkBoard.generate(self, host)
 
     @staticmethod
     def generate(self, host, **params):
+        self.port = NETWORK.SERVER_PORT
         self.client = MastermindClientTCP(NETWORK.CLIENT_TIMEOUT_CONNECT, NETWORK.CLIENT_TIMEOUT_RECEIVE)
         try:
             if host:
                 print("IM THE HOST YES")
                 self.server.start(NETWORK.SERVER_IP, NETWORK.SERVER_PORT)
-                self.client.connect(NETWORK.CLIENT_LOCAL_IP, NETWORK.SERVER_PORT)
+                self.ip = NETWORK.CLIENT_LOCAL_IP
             else:
                 print("Im a normal client")
-                #self.client.connect(NETWORK.CLIENT_IP, NETWORK.SERVER_PORT)
-                self.client.connect(NETWORK.CLIENT_LOCAL_IP, NETWORK.SERVER_PORT)   #Testing in local machine
-            print("Client connected!")  #If you are not the host
+                self.ip = NETWORK.CLIENT_LOCAL_IP   #Testing rn
+                #self.ip = NETWORK.CLIENT_IP
+            self.connect()
+            self.keep_alive() #Creating thread
             self.send_handshake(host)
         except MastermindError: #If there was an error connecting
-            print("ERERRRORO")
-            raise Exception("MASTERMINDERROR BRO")
+            LOG.log('ERROR', traceback.format_exc())
+    
+    def connect(self):
+        if self.ip and self.port:
+            self.client_lock.acquire()
+            self.client.disconnect()
+            self.client.connect(self.ip, self.port)
+            self.client_lock.release()
+            print("Client connected!")
+
+    @run_async
+    def keep_alive(self, compression=None): #Also works as a keep-alive-connection. How to kill this thread later on...
+        while True:
+            try:
+                self.request_data_async('keep-alive')   #Response will be handled in the receiving thread
+                time.sleep(1)
+            except MastermindErrorClient:   #If disconnectes from server
+                if self.reconnect:
+                    self.connect()
+                    self.send_data({'id': self.uuid}, compression=compression)
+                else:
+                    break
 
     @run_async
     def receive_worker(self):
@@ -44,10 +75,11 @@ class NetworkBoard(Board):
             try:
                 data = self.client.receive(True)
                 self.response_handler(data)
-            except MastermindErrorClient:   #Timeout!
-                continue
-            except Exception:
-                break
+            except MastermindErrorClient:   #Timeout/disconnection
+                if self.reconnect:
+                    self.connect()
+                else:
+                    break
     
     def response_handler(self, response):
         print("YESSE")
@@ -85,7 +117,6 @@ class NetworkBoard(Board):
 
     def ALL_PLAYERS_LOADED(self):
         super().ALL_PLAYERS_LOADED()
-        print("ALL PLAYERS ARE LOADED YES")
         if self.server and self.started:
             for player in self.players:
                 self.send_data_async({'player_data': player.json()})
@@ -102,7 +133,8 @@ class NetworkBoard(Board):
             self.params.update(params)
             self.generate_environment()
             players_ammount = self.request_data('players') #To get the number of players
-            print("NUMBER OF PLAYAS :"+str(players_ammount))
+            print("NUMBER OF PLAYAS :"+str(players_ammount))    #Better to do this in the server. When all players arrive, broadcast them until clients full.
+            #Same shit with 
             #for _ in range(0, players_ammount['players']):
                 #print("ADDING PLAYER")  #CREATE WITH EMPTY = TRUE
             #reply = self.request_data({'positions': True})  #THIS ONE IMPORTANT
@@ -155,6 +187,7 @@ class NetworkBoard(Board):
                 break
 
     def destroy(self):
+        self.reconnect = False
         self.client.disconnect()
         if self.server:
             self.server.accepting_disallow()

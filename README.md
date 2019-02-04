@@ -3,9 +3,8 @@ TO START THE GAME: 'python.exe main.py' in command line
 DEPENDENCIES: pygame, numpy, wrapt
 
 TODO CURRENT:
-    2.- Make your server-clint thing already (~50%)
-    3.- Implement spider dice + sprite. Needs to randomize the game a little bit.
-    4.- Set game between separete computers (Over LAN or something)
+    1.- Make your server-clint thing already (~75%)
+    2.- Implement spider dice + sprite. Needs to randomize the game a little bit.
 
 TODO WHENEVER:
     1.- Make graphics for the sliders.

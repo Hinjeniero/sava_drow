@@ -143,6 +143,7 @@ class Board(Screen):
         self.player_index   = 0
         #Started
         self.started        = False
+        self.generated      = False
         self.end_event      = pygame.event.Event(end_event_id)
         Board.generate(self, empty, *players)
     
@@ -174,13 +175,15 @@ class Board(Screen):
             self.generate_environment()
         self.add_players(*players)
 
+    @run_async
     def generate_environment(self):
         self.generate_all_cells()
         self.assign_quadrants()
         self.generate_paths(offset=True)
         self.generate_inter_paths()
         self.generate_map_board()
-        self.save_sprites()        
+        self.save_sprites()
+        self.generated = True    
 
     def set_scroll(self, value):
         """We dont want scrolls in the board"""
@@ -487,7 +490,7 @@ class Board(Screen):
     def ALL_PLAYERS_LOADED(self):
         """Returns:
             (boolean): True if all the requested players have been loaded already."""
-        if not self.started and (self.loaded_players is self.total_players):
+        if not self.started and (self.loaded_players is self.total_players) and self.generated:
             self.play_sound('success')
             if not self.current_player: #If this is the first player added
                 self.current_player = self.players[0]

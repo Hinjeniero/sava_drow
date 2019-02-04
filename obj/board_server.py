@@ -64,7 +64,7 @@ class Server(MastermindServerTCP):
                 self.waiting.append(connection_object)
                 if self.players_ready >= self.total_players:
                     self.broadcast_data(self.waiting, {'unlock': True})
-            elif 'player' in key: #At start
+            elif 'players' in key: #At start
                 reply = {'players': self.total_players}
             elif 'player_data' in key:
                 pass

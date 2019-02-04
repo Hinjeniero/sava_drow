@@ -37,6 +37,20 @@ class NetworkBoard(Board):
         except MastermindError: #If there was an error connecting
             raise Exception("MASTERMINDERROR BRO")
 
+    @run_async
+    def receive_worker(self):
+        while True:
+            try:
+                data = self.client.receive(True)
+                self.response_handler(data)
+            except MastermindErrorClient:   #Timeout!
+                continue
+            except Exception:
+                break
+    
+    def response_handler(self, response):
+        print("YESSE")
+
     def get_board_params(self):
         """Chisels down the entire parameters to get just the one that all the clients must share."""
         params = {'inter_path_frequency'  : self.params['inter_path_frequency'],
@@ -56,39 +70,44 @@ class NetworkBoard(Board):
         reply = self.client.receive(True)
         return reply
 
+    def send_data_async(self, sent_data, compression=None):
+        """Blocking call to the server. (if run_async as decorator can be not blocking, just a subthread blocked)"""
+        self.client.send(sent_data, compression=compression)
+
     def request_data(self, command, compression=None):
         self.client.send({command:True}, compression=compression)
         reply = self.client.receive(True)
         return reply
 
+    def request_data_async(self, command, compression=None):
+        self.client.send({command:False}, compression=compression)
+
+    def ALL_PLAYERS_LOADED(self):
+        super().ALL_PLAYERS_LOADED()
+        if (self.loaded_players is self.total_players):
+            players = self.send_data({'players': True}) #Send the uuid, order, and name.    #DO THIS ASYNC
+            reply = self.send_data({'positions_and_shit': True})
+
     def send_handshake(self, host):
         if host:
             reply = self.send_data({'host': True})
-            reply = self.send_data({'params': self.get_board_params()})    #Send those 5 params
-            players = self.send_data({'players': True}) #Send the uuid, order, and name
-            for _ in range(0, players['players']):
-                pass #Create player
-            reply = self.send_data({'positions_and_shit': True})
-            print(str(reply))
+            self.send_data_async({'params': self.get_board_params()})
         else:
-            reply = self.request_data('params')
-            #RECEIVE PARAMS TO CREATE THIS SHIT
-            print("RECEIVED PARAMS "+str(reply))
-            raise Exception
-            #super().__init__(id_, event_id, end_event_id, resolution, **params)
-            reply = self.send_data({'players': True}) #TO get the number of players
-            for _ in range(0, reply):
-                print("ADDING PLAYER")
-            reply = self.send_data({'positions': True})
+            params = self.request_data('params')
+            self.params.update(params)
+            self.generate_environment()
+            players_ammount = self.request_data({'players': True}) #TO get the number of players
+            for _ in range(0, players_ammount['players']):
+                print("ADDING PLAYER")  #CREATE WITH EMPTY = TRUE
+            reply = self.request_data({'positions': True})
         reply = self.send_data({'ready': True})
-        print("FINAL REPLY, WE ARE IN BUSINESS "+str())
+        print("FINAL REPLY, WE ARE IN BUSINESS ")
 
     #This to be a queue that is checked once in every frame? Or a thread to be checked and results saved in a queue when ready?
     def send_update(self, data):
         reply = self.client.send_data({'update': True})
         print(str(reply))
     
-    #####FOLLOW HERE; GOING TO DINE NOW
     def mouse_handler(self, event, mouse_movement, mouse_position):
         super().mouse_handler(event, mouse_movement, mouse_position)
         if mouse_movement:

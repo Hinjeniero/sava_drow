@@ -13,6 +13,7 @@ import pygame
 import os
 import threading
 import sys
+import traceback
 from pygame.locals import *
 from pygame.key import *
 from obj.screen import Screen
@@ -440,7 +441,7 @@ class Game(object):
                 except GameEndException:
                     end = True
         except Exception:
-            print("EXCEPTION BRO")
+            LOG.log('ERROR', traceback.format_exc())
         for screen in self.screens:
             screen.destroy()
         sys.exit()

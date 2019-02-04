@@ -279,30 +279,29 @@ class Character(AnimatedSprite):
         """Changes the current state of the character (The action that the char is performing).
         Args:
             state (str): New state to set."""
-        state = state.lower()
-        for key_alias, alias in self.aliases.items():
-            if state in key_alias or key_alias in state or state in alias or alias in state:
-                self.state  = self.aliases[key_alias]
-                break
-        for index in range (0, len(self.names)):
-            if self.state in self.names[index].lower() or self.names[index].lower() in self.state:
-                self.animation_index = index
-                return True
-        raise StateNotFoundException("Character doesn't have the state "+str(state))
+        if any(state.lower() in name.lower() for name in self.names)\
+        or any(name.lower() in state.lower() for name in self.names):  #If the current state has any sprite
+            state = state.lower()
+            for key_alias, alias in self.aliases.items():
+                if state in key_alias or key_alias in state or state in alias or alias in state:
+                    self.state  = self.aliases[key_alias]
+                    break
+            for index in range (0, len(self.names)):
+                if self.state in self.names[index].lower() or self.names[index].lower() in self.state:
+                    self.animation_index = index
+                    return True
+            raise StateNotFoundException("Character doesn't have the state "+str(state))    #Should never reach here
 
     def animation_frame(self):
         """Does the animation between frames. Should only be called when the self.animation_delay is reached.
         Searchs in the list of sprites the following one of the current sprite, that matches with the state of the character."""
-        if any(self.state in name for name in self.names):  #If the current state has any sprite
-            index = self.animation_index
-            while True:
-                #TODO implement the super method to avoid shit
-                index=index+1 if index < (len(self.surfaces)-1) else 0  #going back to start
-                if self.state in self.names[index].lower():
-                    self.animation_index = index
-                    break
-                if index is self.animation_index:           #A complete loop with no matches, only one sprite of the action in self.state
-                    break
+        old_index = self.animation_index
+        while True:
+            super().animation_frame()
+            if self.state.lower() in self.names[self.animation_index].lower()\
+            or self.names[self.animation_index].lower() in self.state.lower()\
+            or self.animation_index == old_index:
+                break
 
     def hitbox_action(self, command, value=-1):
         """Action performed when the character is interacted with.

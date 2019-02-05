@@ -35,13 +35,11 @@ class Server(MastermindServerTCP):
         print("Current chars: "+str(len(self.chars_data.keys())))
 
     def get_data(self, key):
-        self.lock.acquire()
         response = {}
         try:
-            response[key] = self.get_item(key)
+            response[key] = self.data.get_item(key)
         except KeyError:
             response = {'success': False, 'error': 'The data with the key '+key+' was not found in the server'}
-        self.lock.release()
         return response
 
     def send_updates(self):
@@ -68,7 +66,7 @@ class Server(MastermindServerTCP):
                     self.host = connection_object
                 else:
                     reply = {'success': False, 'error': 'There is already an host.'}
-            elif 'params' in key and connection_object is self.host:
+            elif 'params' in key:
                 if connection_object is self.host:
                     self.add_data('params', data['params'])
                 else:

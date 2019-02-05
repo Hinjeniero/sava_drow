@@ -151,12 +151,7 @@ class Board(Screen):
     def generate(self, empty, *players):
         UtilityBox.join_dicts(self.params, Board.__default_config)
         #INIT
-        axis_size = self.params['circles_per_lvl']*self.params['max_levels']
-        if self.params['center_cell']:
-            axis_size += 1
-        dimensions          = (axis_size, axis_size)
-        self.distances      = numpy.full(dimensions, -888, dtype=int)   #Says the distance between cells
-        self.enabled_paths  = numpy.zeros(dimensions, dtype=bool)       #Shows if the path exist
+
         if self.params['loading_screen']:
             self.loading_screen = LoadingScreen(self.id+"_loading", self.event_id, self.resolution, text="Loading, hang tight")
         #REST
@@ -172,8 +167,17 @@ class Board(Screen):
         else:
             self.platform = self.params['platform_sprite']
         if not empty:
+            self.generate_mapping()
             self.generate_environment()
         self.add_players(*players)
+
+    def generate_mapping(self):
+        axis_size = self.params['circles_per_lvl']*self.params['max_levels']
+        if self.params['center_cell']:
+            axis_size += 1
+        dimensions          = (axis_size, axis_size)
+        self.distances      = numpy.full(dimensions, -888, dtype=int)   #Says the distance between cells
+        self.enabled_paths  = numpy.zeros(dimensions, dtype=bool)       #Shows if the path exist
 
     #@run_async
     def generate_environment(self):

@@ -16,7 +16,8 @@ class NetworkBoard(Board):
         if host:
             super().__init__(id_, event_id, end_event_id, resolution, **params)
         else:
-            super().__init__(id_, event_id, end_event_id, empty=True, **params) #To generate the environment later
+            super().__init__(id_, event_id, end_event_id, resolution, empty=True, **params) #To generate the environment later
+            self.started = True
         self.uuid = uuid.uuid1().int    #Using this if crashing would led to more conns than players
         self.ip = None
         self.port = None
@@ -124,13 +125,18 @@ class NetworkBoard(Board):
                 if cell.has_char():
                     self.send_data_async({'character_data': cell.get_char().json(cell.get_real_index())})
 
+    #WHEN CONNECTIONS == 4 AND LEN(PLAYERS_DATA) == 4 BROADCAST THAT SHIT
+    #SAME WITH CHARACTERS; BROADCAST THAT SHIT
+
     def send_handshake(self, host):
         if host:
             self.send_data({'host': True})  #The next call needs this setted up in the server
             self.send_data_async({'params': self.get_board_params()})
         else:
             params = self.request_data('params')
-            self.params.update(params)
+            print("RECEIVED PARAMS "+str(params))
+            self.params.update(params['params'])
+            self.generate_mapping()
             self.generate_environment()
             players_ammount = self.request_data('players') #To get the number of players
             print("NUMBER OF PLAYAS :"+str(players_ammount))    #Better to do this in the server. When all players arrive, broadcast them until clients full.

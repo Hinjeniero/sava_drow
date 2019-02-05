@@ -12,6 +12,8 @@ class Server(MastermindServerTCP):
         self.players_ready = 0
         self.current_map = None
         #
+        self.petitions_lock = threading.Lock()
+        self.petitions = []
         self.clients = Dictionary()   #Connections objects (Includes host)
         self.waiting = []   #Connections waiting for an event to occur. This acts as a barrier
         self.data = Dictionary()
@@ -56,7 +58,12 @@ class Server(MastermindServerTCP):
         for conn in list_of_conns:
             self.callback_client_send(conn, data)
 
+    @run_async
+    def petition_handler(self):
+        pass
+
     def callback_client_handle(self, connection_object, data):
+        """Adds the petition to the petition queue"""
         reply = None
         for key in data.keys(): #FOLLOWING JSON FORM
             if 'id' in key:
@@ -64,6 +71,7 @@ class Server(MastermindServerTCP):
             if 'host' in key:
                 if not self.host:
                     self.host = connection_object
+                    #self.clients.append(connection_object)
                 else:
                     reply = {'success': False, 'error': 'There is already an host.'}
             elif 'params' in key:

@@ -530,19 +530,20 @@ class Board(Screen):
             BadPlayerTypeException: If the player argument is not of type Player."""
         if isinstance(player, Player): 
             self.players.append(player)
-            current_level = self.quadrants[player.order].max_border_lvl()
-            rank = player.characters.sprites()[0].rank
-            for character in player.characters:
-                if character.rank < rank:
-                    current_level -= 1
-                    rank = character.rank
-                character.set_size(self.cells.sprites()[0].rect.size)
-                cell = self.quadrants[player.order].get_cell(border_level=current_level, random_cell=self.params['random_filling'])
-                cell.add_char(character)
-                character.set_cell(cell)
-                self.characters.add(character)
-                LOG.log('DEBUG', "Character ", character.id, " spawned with position ", cell.pos)
-            player.pause_characters()
+            if len(player.characters.sprites()) > 0:
+                current_level = self.quadrants[player.order].max_border_lvl()
+                rank = player.characters.sprites()[0].rank
+                for character in player.characters:
+                    if character.rank < rank:
+                        current_level -= 1
+                        rank = character.rank
+                    character.set_size(self.cells.sprites()[0].rect.size)
+                    cell = self.quadrants[player.order].get_cell(border_level=current_level, random_cell=self.params['random_filling'])
+                    cell.add_char(character)
+                    character.set_cell(cell)
+                    self.characters.add(character)
+                    LOG.log('DEBUG', "Character ", character.id, " spawned with position ", cell.pos)
+                player.pause_characters()
             self.loaded_players += 1
             self.ALL_PLAYERS_LOADED()
             return True

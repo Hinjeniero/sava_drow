@@ -3,6 +3,7 @@ import traceback
 import time
 import uuid
 from obj.board import Board
+from obj.players import Character
 from obj.utilities.decorators import run_async
 from obj.utilities.logger import Logger as LOG
 from settings import NETWORK
@@ -61,7 +62,7 @@ class NetworkBoard(Board):
             self.request_data_async("params")
             self.request_data_async("players")          #To get the number of players
             self.request_data_async("players_data")     #To get the data of the players
-            self.request_data_async("character_data")  #To get the data of the characters
+            self.request_data_async("characters_data")  #To get the data of the characters
             print("ALL THE SHIT REQUESTED")
 
     def connect(self):
@@ -81,8 +82,7 @@ class NetworkBoard(Board):
                 time.sleep(1)
             except MastermindErrorClient:   #If disconnectes from server
                 if self.reconnect:
-                    self.connect()
-                    self.send_data({"id": self.uuid}, compression=compression)
+                    self.connect()  #TODO SEND ID IN CONNECT
                 else:
                     break
     ####ANOTHER THREAD
@@ -102,34 +102,43 @@ class NetworkBoard(Board):
     def response_handler(self, response):
         if not self.server: #If im not host
             if "params" in response:
-                print("RECEIVED PARAMS")
                 self.params.update(response["params"])
                 self.generate_mapping()
                 self.generate_environment()
                 self.flags["board_done"].set()
             elif "players" in response:
-                print("RECEIVED PLAYERS AMMOUNT")
                 self.flags["board_done"].wait()
                 for i in range (0, 4, 4//response["players"]):
                     self.create_player("null", i, (200, 200), empty=True)  #The name will be overwritten later on
             elif "players_data" in response:
-                print("RECEIVED PLAYERS DATA")
                 self.flags["board_done"].wait()
                 self.flags["players_ammount_done"].wait()
-                for player in self.players: #Once per player
-                    if response["players_data"]["data"]["order"] is player.order:
-                        player.uuid = response["players_data"]["uuid"]
-                        player.name = response["players_data"]["name"]
-                        break
+                for received_player in response["players_data"]:
+                    for player in self.players: #Once per player
+                        if received_player["order"] is player.order:
+                            player.uuid = received_player["uuid"]
+                            player.name = received_player["name"]
+                            break
                 self.flags["players_data_done"].set()
-            elif "character_data" in response:
-                print("RECEIVED CHRS DATA")
+            elif "characters_data" in response:
                 self.flags["board_done"].wait()
                 self.flags["players_ammount_done"].wait()
                 self.flags["players_data_done"].wait()
-                print("CHARS ARE HERE")
-                print(response) #THIS SHOULD BE CHARACTERS
-                #SET CHARACTERS.
+                for character in response['characters_data']:
+                    char = None
+                    for player in self.players:
+                        if character['player'] == player.uuid:
+                            constructor = Character.get_constructor_by_key(character['type'])
+                            sprite_folder = Character.get_sprite_folder_by_key(character['type'])
+                            char = constructor(player.name, player.uuid, character['id'], (0, 0), (200, 200),\
+                                                self.resolution, sprite_folder, uuid=character['uuid'])
+                            player.characters.add(char)
+                    if char:
+                        cell = self.get_cell_by_real_index(character['cell'])
+                        cell.set_char(char)
+                        char.set_cell(cell)
+                        self.characters.add(char)
+                        self.request_data_async('ready')
             else:
                 print("THE FUCK, WEIRD RESPONSE")
                 print(response)
@@ -153,7 +162,6 @@ class NetworkBoard(Board):
     def send_data(self, sent_data, compression=None):
         """Blocking call to the server. (if run_async as decorator can be not blocking, just a subthread blocked)"""
         self.client.send(sent_data, compression=compression)
-        print("nmdsanidsa")
         reply = self.client.receive(True)
         return reply
 
@@ -162,12 +170,12 @@ class NetworkBoard(Board):
         self.client.send(sent_data, compression=compression)
 
     def request_data(self, command, compression=None):
-        self.client.send({command:True}, compression=compression)
+        self.client.send({command: True}, compression=compression)
         reply = self.client.receive(True)
         return reply
 
     def request_data_async(self, command, compression=None):
-        self.client.send({command:False}, compression=compression)
+        self.client.send({command: True}, compression=compression)
 
     def ALL_PLAYERS_LOADED(self):
         super().ALL_PLAYERS_LOADED()
@@ -183,21 +191,12 @@ class NetworkBoard(Board):
         for player in self.players:
             players.append(player.json())
         self.send_data_async({"players_data": players})
-        characters = []
+        chars = []
         for cell in self.cells:
             if cell.has_char():
-                characters.append(cell.get_char().json(cell.get_real_index()))
-        self.send_data_async({"characters_data": characters})
-
-
-
-
-
-
-
-
-
-
+                chars.append(cell.get_char().json(cell.get_real_index()))
+        print(chars[0])
+        self.send_data_async({"characters_data": chars})
 
     #This to be a queue that is checked once in every frame? Or a thread to be checked and results saved in a queue when ready?
     def send_update(self, data):

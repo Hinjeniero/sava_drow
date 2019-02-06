@@ -114,7 +114,6 @@ class Server(MastermindServerTCP):
                 pass #Changing screens, sohuld check what to do
         except KeyError:    #Can"t attend this petition right now.
             self.hold_lock.acquire()
-            print("HOLDING "+str(data))
             self.on_hold_resp.append((connection_object, data))
             self.hold_lock.release()
         if reply:

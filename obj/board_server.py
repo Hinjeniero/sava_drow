@@ -9,16 +9,20 @@ class Server(MastermindServerTCP):
         MastermindServerTCP.__init__(self, NETWORK.SERVER_REFRESH_TIME, NETWORK.SERVER_CONNECTION_REFRESH, NETWORK.SERVER_CONNECTION_TIMEOUT)
         self.host = None    #Connection object. This is another client, but its the host. I dunno if this will be useful yet.
         self.total_players = number_of_players
+        self.total_chars = None
         self.players_ready = 0
         self.current_map = None
-        #
-        self.petitions_lock = threading.Lock()
-        self.petitions = []
+
+        self.hold_lock = threading.Lock()
+        self.on_hold_resp = []
         self.clients = Dictionary()   #Connections objects (Includes host)
         self.waiting = []   #Connections waiting for an event to occur. This acts as a barrier
-        self.data = Dictionary()
-        self.players_data = Dictionary()
-        self.chars_data = Dictionary()
+        self.data = Dictionary(exceptions=True)
+        self.players_data = Dictionary(exceptions=True)
+        self.chars_data = Dictionary(exceptions=True)
+
+    def set_chars(self, number_of_chars):
+        self.total_chars = number_of_chars
 
     def add_data(self, key, data):
         self.data.add_item(key, data)
@@ -27,20 +31,20 @@ class Server(MastermindServerTCP):
         self.clients.add_item(id_, conn_client)
 
     def add_player(self, player):
-        self.players_data.add_item(player['uuid'], player['data'])
-        print("ADDING")
-        print(str(self.players_data.dict))
+        self.players_data.add_item(player['uuid'], player)
+        '''print("ADDING")
+        print(str(self.players_data.dict))'''
 
     def add_char(self, character):
-        self.chars_data.add_item(character['uuid'], character['data'])
-        print("ADDING CHAR")
-        print("Current chars: "+str(len(self.chars_data.keys())))
+        self.chars_data.add_item(character['uuid'], character)
+        '''print("ADDING CHAR")
+        print("Current chars: "+str(len(self.chars_data.keys())))'''
 
     def get_data(self, key):
         response = {}
         try:
             response[key] = self.data.get_item(key)
-        except KeyError:
+        except KeyError:    #This will never raise, since data is
             response = {'success': False, 'error': 'The data with the key '+key+' was not found in the server'}
         return response
 
@@ -50,54 +54,67 @@ class Server(MastermindServerTCP):
             for client in self.clients.values(): #Connections
                 self.callback_client_handle(client, command)
 
-    def send_start_info(self):
-        for conn in self.clients.values():
-            self.callback_client_handle(conn, 'player')
-
     def broadcast_data(self, list_of_conns, data):
         for conn in list_of_conns:
             self.callback_client_send(conn, data)
 
     @run_async
-    def petition_handler(self):
-        pass
+    def petition_worker(self):
+        self.hold_lock.acquire()
+        petition = self.on_hold_resp.pop(0)
+        self.hold_lock.release()
+        self.callback_client_handle(*petition)  #This to unpack the tuple of conn,data
 
     def callback_client_handle(self, connection_object, data):
-        """Adds the petition to the petition queue"""
         reply = None
-        for key in data.keys(): #FOLLOWING JSON FORM
-            if 'id' in key:
+        try:
+            if 'host' in data:   #This is a handshake
+                if data['host']:
+                    if not self.host:
+                        self.host = connection_object
+                    else:
+                        reply = {'success': False, 'error': 'There is already an host.'}
                 self.add_client(data['id'], connection_object)
-            if 'host' in key:
-                if not self.host:
-                    self.host = connection_object
-                    #self.clients.append(connection_object)
-                else:
-                    reply = {'success': False, 'error': 'There is already an host.'}
-            elif 'params' in key:
+            elif 'params' in data:
                 if connection_object is self.host:
                     self.add_data('params', data['params'])
                 else:
                     reply = self.get_data('params')
-            elif 'start' in key or 'ready' in data:  #IN THIS ONE WAIT FOR ALL OF THEM TO BE ONLINE
+            elif 'start' in data or 'ready' in data:  #IN THIS ONE WAIT FOR ALL OF THEM TO BE ONLINE
                 self.players_ready += 1
                 self.waiting.append(connection_object)
                 if self.players_ready >= self.total_players:
                     self.broadcast_data(self.waiting, {'unlock': True})
-            elif 'players' in key: #At start
+            elif 'players' in data: #At start
                 reply = {'players': self.total_players}
-            elif 'player_data' in key:
-                self.add_player(data['player_data'])
-            elif 'character_data' in key:
-                self.add_char(data['character_data'])
-            elif 'update' in key:
+            elif 'players_data' in data:
+                if connection_object == self.host:
+                    for player in data['players_data']:
+                        self.add_player(player)
+                else:
+                    if len(self.players_data.keys()) < self.total_players:
+                        raise KeyError
+                    reply = self.players_data.values()
+            elif 'characters_data' in data:
+                if connection_object == self.host:
+                    for character in data['character_data']:
+                        self.add_char(character)
+                else:
+                    if len(self.chars_data.keys()) < self.total_chars:
+                        raise KeyError
+                    reply = self.players_data.values()
+            elif 'update' in data:
                 reply = 'UPDATE' #reply = changes, Sends the info of the board to the whatever client requested it. (If there is new actions)
-            elif 'move_char' in key:
+            elif 'move_char' in data:
                 reply = 'MOVE' #Save the info of the char.
-            elif 'menu' in key:
+            elif 'menu' in data:
                 pass #Changing screens, sohuld check what to do
-            if not reply:   #If it wanst a request but a push of data
-                reply = {'success': True}
+        except KeyError:    #Can't attend this petition right now.
+            self.hold_lock.acquire()
+            self.on_hold_resp.append((connection_object, data))
+            self.hold_lock.release()
+        if not reply:   #If it wanst a request but a push of data
+            reply = {'success': True}
         self.callback_client_send(connection_object, reply)
 
     @run_async

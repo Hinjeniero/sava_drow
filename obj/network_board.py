@@ -17,7 +17,6 @@ class NetworkBoard(Board):
             super().__init__(id_, event_id, end_event_id, resolution, **params)
         else:
             super().__init__(id_, event_id, end_event_id, resolution, empty=True, **params) #To generate the environment later
-            self.started = True
         self.uuid = uuid.uuid1().int    #Using this if crashing would led to more conns than players
         self.ip = None
         self.port = None
@@ -56,9 +55,9 @@ class NetworkBoard(Board):
         except MastermindError: #If there was an error connecting
             LOG.log('ERROR', traceback.format_exc())
 
-    def send_handshake(self, host):  
+    def send_handshake(self, host):
+        self.send_data({'host': host, 'id': self.uuid})
         if host:
-            self.send_data({'host': True})  #The next call needs this setted up in the server
             self.send_data_async({'params': self.get_board_params()})
         else:
             self.request_data_async('params')
@@ -123,6 +122,7 @@ class NetworkBoard(Board):
                 self.conditions['board_done'].wait_for(self.generated)
                 self.conditions['players_ammount_done'].wait_for(self.started)
                 self.conditions['players_data_done'].wait_for(self.loaded)
+                print("CHARS ARE HERE")
                 print(response) #THIS SHOULD BE CHARACTERS
                 #SET CHARACTERS.
         #HANDLING OF NORMAL RESPONSES DURING THE GAME
@@ -169,12 +169,15 @@ class NetworkBoard(Board):
             self.request_data_async('chars_data') #To get the chars data AFTER we have created the empty player
 
     def send_player_and_chars_data(self):
+        players = []
         for player in self.players:
-            self.send_data_async({'player_data': player.json()})
+            players.append(player.())
+        self.send_data_async({'players_data': players})
+        characters = []
         for cell in self.cells:
             if cell.has_char():
-                self.send_data_async({'character_data': cell.get_char().json(cell.get_real_index())})
-
+                characters.append(cell.get_char().(cell.get_real_index()))
+        self.send_data_async({'characters_data': characters})
 
 
 

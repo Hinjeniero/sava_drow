@@ -19,10 +19,11 @@ class Dictionary:
         is_empty (boolean): True if the dictionary doesn't contain any element.
     """
     
-    def __init__(self):
+    def __init__(self, exceptions=False):
         """Dictionary constructor."""
         self.dict = {}
         self.is_empty = True
+        self.exceptions = exceptions
 
     @synchronized
     def get_item(self, key):
@@ -35,6 +36,8 @@ class Dictionary:
         try:
             return self.dict[key]
         except KeyError:
+            if self.exceptions:
+                raise KeyError
             return None
 
     @synchronized

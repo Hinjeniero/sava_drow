@@ -137,11 +137,11 @@ class Player(object):
         pass #TODO DO THIS WHEN WINNER
 
     def json(self):
-        return  {'uuid': self.uuid,
-                'data': {'name': self.name,
-                        'order': self.order,
-                        'turn': self.turn,
-                        'dead': self.dead}}
+        return  {'id': self.uuid,           
+                'name': self.name,
+                'order': self.order,
+                'turn': self.turn,
+                'dead': self.dead}
 
 class Character(AnimatedSprite):
     """Character class. Inherits from AnimatedSprite.
@@ -216,11 +216,11 @@ class Character(AnimatedSprite):
     def json(self, cell_index=None):
         """This to share in the online variant and drop in the same positions."""
         response = {'uuid': self.uuid,
-                    'data': {'id': self.id,
-                            'player': self.master_uuid,
-                            'type': self.get_type()}}
+                    'id': self.id,
+                    'player': self.master_uuid,
+                    'type': self.get_type()}
         if cell_index:
-            response['data']['cell'] = cell_index    
+            response['cell'] = cell_index    
         return response
 
     def get_paths(self, graph, distances, current_map, index, level_size, movement_restriction):

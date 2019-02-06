@@ -54,6 +54,8 @@ class BoardGenerator(object):
             return
         for i in range (0, 4, 4//self.players): #Im the host or a local game.
             board.create_player(random.choice(STRINGS.PLAYER_NAMES), i, (200, 200), **char_settings)
+        if self.online:
+            board.server.set_chars(sum(x['ammount'] for x in char_settings.values()))
             
     @time_it
     def generate_board(self, resolution):

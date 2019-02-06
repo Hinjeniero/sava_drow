@@ -3,7 +3,7 @@ TO START THE GAME: 'python.exe main.py' in command line
 DEPENDENCIES: pygame, numpy, wrapt
 
 TODO CURRENT:
-    1.- Make your server-clint thing already (~75%)
+    1.- Make your server-clint thing already (~90%)
     2.- Implement spider dice + sprite. Needs to randomize the game a little bit.
 
 TODO WHENEVER:

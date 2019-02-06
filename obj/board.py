@@ -503,7 +503,7 @@ class Board(Screen):
                 self.update_map()       #This goes according to current_player
             self.started = True
 
-    def create_player(self, name, number, chars_size, **player_settings):
+    def create_player(self, name, number, chars_size, empty=False, **player_settings):
         """Queues the creation of a player on the async method.
         Args:
             name (str): Identifier of the player
@@ -516,9 +516,9 @@ class Board(Screen):
         for player in self.players:
             if name == player.name: 
                 raise PlayerNameExistsException("The player name "+name+" already exists")
-        if sum(x['ammount'] for x in player_settings.values()) > len(self.quadrants[0].cells):
+        if not empty and sum(x['ammount'] for x in player_settings.values()) > len(self.quadrants[0].cells):
             raise TooManyCharactersException('There are too many characters in player for a quadrant.')
-        self.__create_player(name, number, chars_size, **player_settings)
+        self.__create_player(name, number, chars_size, empty, **player_settings)
         LOG.log('DEBUG', "Queue'd player to load, total players ", self.total_players, " already loaded ", self.loaded_players)
 
     def __add_player(self, player):
@@ -556,7 +556,7 @@ class Board(Screen):
         for player in players:  self.__add_player(player)
 
     @run_async
-    def __create_player(self, player_name, player_number, chars_size, **player_params):
+    def __create_player(self, player_name, player_number, chars_size, empty, **player_params):
         """Asynchronous method (@run_async decorator). Creates a player with the the arguments and adds him to the board.
         Args:
             player_name (str):  Identifier of the player
@@ -566,7 +566,7 @@ class Board(Screen):
                                         Ammount of each type of char, name of their actions, and their folder paths.
         Returns:
             (:obj:Threading.thread):    The thread doing the work. It is returned by the decorator."""
-        player = Player(player_name, player_number, chars_size, self.resolution, **player_params)
+        player = Player(player_name, player_number, chars_size, self.resolution, empty=empty, **player_params)
         self.__add_player(player)
 
     def draw(self, surface):

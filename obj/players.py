@@ -70,6 +70,8 @@ class Player(object):
             self.uuid = uuid.uuid1().int
         if not empty:
             self.characters = Character.factory(self.name, self.uuid, sprite_size, canvas_size, **character_params)
+        else:
+            self.characters = pygame.sprite.OrderedUpdates()
         infoboard = InfoBoard(self.name+'_infoboard', 0, (0, 0), (0.15*canvas_size[0], canvas_size[1]),\
                             canvas_size, texture=PATHS.INFOBOARD, keep_aspect_ratio = False, cols=6)
         cols = infoboard.get_cols()
@@ -137,7 +139,7 @@ class Player(object):
         pass #TODO DO THIS WHEN WINNER
 
     def json(self):
-        return  {'id': self.uuid,           
+        return  {'uuid': self.uuid,           
                 'name': self.name,
                 'order': self.order,
                 'turn': self.turn,

@@ -51,7 +51,7 @@ class CHARACTERS:
 
 class SOUND_PARAMS:
     SOUND_CHANNELS_AMMOUNT = 8
-    INIT_VOLUME = 0.15
+    INIT_VOLUME = 0.01
 
 #---Miscellaneous
 class SCREEN_FLAGS:

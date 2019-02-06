@@ -70,6 +70,9 @@ class Dictionary:
     @synchronized
     def values(self):
         return self.dict.values()
+    @synchronized
+    def values_list(self):
+        return list(self.dict.values())
 
     @synchronized
     def clear(self):

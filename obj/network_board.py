@@ -25,8 +25,8 @@ class NetworkBoard(Board):
         self.server = server
         self.my_player = None
         self.waiting_for_event = False
-        self.queue = [] #This is the queue of received actions
-        self.conditions = {}    #Used if client and not host.
+        self.queue = []     #This is the queue of received actions
+        self.flags = {}     #Used if client and not host.
         self.reconnect = True
         NetworkBoard.generate(self, host)
 
@@ -41,29 +41,28 @@ class NetworkBoard(Board):
                 self.ip = NETWORK.CLIENT_LOCAL_IP
             else:
                 print("Im a normal client")
-                self.loaded=False
-                self.conditions['board_done'] = threading.Condition()
-                self.conditions['players_ammount_done'] = threading.Condition()
-                self.conditions['players_data_done'] = threading.Condition()
-                '''for cond in self.conditions.values():
-                    cond.acquire()'''
+                self.flags["board_done"] = threading.Event()
+                self.flags["players_ammount_done"] = threading.Event()
+                self.flags["players_data_done"] = threading.Event()
                 self.ip = NETWORK.CLIENT_LOCAL_IP   #Testing rn
                 #self.ip = NETWORK.CLIENT_IP
             self.connect()
             self.keep_alive() #Creating thread
+            self.receive_worker()
             self.send_handshake(host)
         except MastermindError: #If there was an error connecting
-            LOG.log('ERROR', traceback.format_exc())
+            LOG.log("ERROR", traceback.format_exc())
 
     def send_handshake(self, host):
-        self.send_data({'host': host, 'id': self.uuid})
+        self.send_data({"host": host, "id": self.uuid})
         if host:
-            self.send_data_async({'params': self.get_board_params()})
+            self.send_data_async({"params": self.get_board_params()})
         else:
-            self.request_data_async('params')
-            self.request_data_async('players')          #To get the number of players
-            self.request_data_async('players_data')     #To get the data of the players
-            self.request_data_async('character_data')  #To get the data of the characters
+            self.request_data_async("params")
+            self.request_data_async("players")          #To get the number of players
+            self.request_data_async("players_data")     #To get the data of the players
+            self.request_data_async("character_data")  #To get the data of the characters
+            print("ALL THE SHIT REQUESTED")
 
     def connect(self):
         if self.ip and self.port:
@@ -78,12 +77,12 @@ class NetworkBoard(Board):
     def keep_alive(self, compression=None): #Also works as a keep-alive-connection. How to kill this thread later on...
         while True:
             try:
-                self.request_data_async('keep-alive')   #Response will be handled in the receiving thread
+                self.request_data_async("keep-alive")   #Response will be handled in the receiving thread
                 time.sleep(1)
             except MastermindErrorClient:   #If disconnectes from server
                 if self.reconnect:
                     self.connect()
-                    self.send_data({'id': self.uuid}, compression=compression)
+                    self.send_data({"id": self.uuid}, compression=compression)
                 else:
                     break
     ####ANOTHER THREAD
@@ -99,43 +98,52 @@ class NetworkBoard(Board):
                 else:
                     break
     
+    @run_async
     def response_handler(self, response):
         if not self.server: #If im not host
-            if 'params' in response:
-                self.params.update(self.params['params'])
+            if "params" in response:
+                print("RECEIVED PARAMS")
+                self.params.update(response["params"])
                 self.generate_mapping()
                 self.generate_environment()
-            elif 'players' in response:
-                self.conditions['board_done'].wait_for(self.generated)
-                for i in range (0, 4, 4//response['players']):
-                    self.create_player('null', i, (200, 200), empty=True)  #The name will be overwritten later on
-            elif 'players_data' in response:
-                self.conditions['board_done'].wait_for(self.generated)
-                self.conditions['players_ammount_done'].wait_for(self.started)
+                self.flags["board_done"].set()
+            elif "players" in response:
+                print("RECEIVED PLAYERS AMMOUNT")
+                self.flags["board_done"].wait()
+                for i in range (0, 4, 4//response["players"]):
+                    self.create_player("null", i, (200, 200), empty=True)  #The name will be overwritten later on
+            elif "players_data" in response:
+                print("RECEIVED PLAYERS DATA")
+                self.flags["board_done"].wait()
+                self.flags["players_ammount_done"].wait()
                 for player in self.players: #Once per player
-                    if response['players_data']['data']['order'] is player.order:
-                        player.uuid = response['players_data']['uuid']
-                        player.name = response['players_data']['name']
+                    if response["players_data"]["data"]["order"] is player.order:
+                        player.uuid = response["players_data"]["uuid"]
+                        player.name = response["players_data"]["name"]
                         break
-                self.loaded=True
-            elif 'character_data' in response:
-                self.conditions['board_done'].wait_for(self.generated)
-                self.conditions['players_ammount_done'].wait_for(self.started)
-                self.conditions['players_data_done'].wait_for(self.loaded)
+                self.flags["players_data_done"].set()
+            elif "character_data" in response:
+                print("RECEIVED CHRS DATA")
+                self.flags["board_done"].wait()
+                self.flags["players_ammount_done"].wait()
+                self.flags["players_data_done"].wait()
                 print("CHARS ARE HERE")
                 print(response) #THIS SHOULD BE CHARACTERS
                 #SET CHARACTERS.
+            else:
+                print("THE FUCK, WEIRD RESPONSE")
+                print(response)
         #HANDLING OF NORMAL RESPONSES DURING THE GAME
     #####END OF THREAD
 
 
     def get_board_params(self):
         """Chisels down the entire parameters to get just the one that all the clients must share."""
-        params = {'inter_path_frequency'  : self.params['inter_path_frequency'],
-                'circles_per_lvl'       : self.params['circles_per_lvl'],
-                'max_levels'            : self.params['max_levels'] ,
-                'center_cell'           : self.params['center_cell'],
-                'quadrants_overlap' : self.params['quadrants_overlap']}
+        params = {"inter_path_frequency"  : self.params["inter_path_frequency"],
+                "circles_per_lvl"       : self.params["circles_per_lvl"],
+                "max_levels"            : self.params["max_levels"] ,
+                "center_cell"           : self.params["center_cell"],
+                "quadrants_overlap" : self.params["quadrants_overlap"]}
         return params
 
     def get_char_params(self):
@@ -145,6 +153,7 @@ class NetworkBoard(Board):
     def send_data(self, sent_data, compression=None):
         """Blocking call to the server. (if run_async as decorator can be not blocking, just a subthread blocked)"""
         self.client.send(sent_data, compression=compression)
+        print("nmdsanidsa")
         reply = self.client.receive(True)
         return reply
 
@@ -166,18 +175,19 @@ class NetworkBoard(Board):
             if self.server:
                 self.send_player_and_chars_data()
                 return
-            self.request_data_async('chars_data') #To get the chars data AFTER we have created the empty player
+            else:
+                self.flags["players_ammount_done"].set()
 
     def send_player_and_chars_data(self):
         players = []
         for player in self.players:
-            players.append(player.())
-        self.send_data_async({'players_data': players})
+            players.append(player.json())
+        self.send_data_async({"players_data": players})
         characters = []
         for cell in self.cells:
             if cell.has_char():
-                characters.append(cell.get_char().(cell.get_real_index()))
-        self.send_data_async({'characters_data': characters})
+                characters.append(cell.get_char().json(cell.get_real_index()))
+        self.send_data_async({"characters_data": characters})
 
 
 
@@ -191,7 +201,7 @@ class NetworkBoard(Board):
 
     #This to be a queue that is checked once in every frame? Or a thread to be checked and results saved in a queue when ready?
     def send_update(self, data):
-        reply = self.client.send_data({'update': True})
+        reply = self.client.send_data({"update": True})
         print(str(reply))
     
     def mouse_handler(self, event, mouse_movement, mouse_position):
@@ -202,13 +212,13 @@ class NetworkBoard(Board):
             #Also, DO NOT allow to drop your chars if its not your turn
 
     def pickup_character(self):
-        if 'its my turn':
+        if "its my turn":
             super().pickup_character()
         else:
-            'Do whatever you want m8, you can move the char around anyway'
+            "Do whatever you want m8, you can move the char around anyway"
 
     def drop_character(self):
-        if 'its my turn':
+        if "its my turn":
             super().drop_character()
 
     def update_cells(self, *cells):

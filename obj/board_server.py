@@ -157,10 +157,10 @@ class Server(MastermindServerTCP):
                 else:
                     reply = self.get_data("params")
             elif "start" in data or "ready" in data:  #IN THIS ONE WAIT FOR ALL OF THEM TO BE ONLINE
-                self.players_ready += 1
-                self.waiting.append(connection_object)
-                if self.players_ready >= self.total_players:
-                    self.broadcast_data(self.waiting, {"unlock": True})
+                pass
+                #self.players_ready += 1
+                #if self.players_ready >= self.total_players:
+                    #self.broadcast_data(self.waiting, {"unlock": True})
             elif "players" in data: #At start
                 reply = {"players": self.total_players}
             elif "players_data" in data:
@@ -207,6 +207,7 @@ class Server(MastermindServerTCP):
             port(int):  Port that the server will bind to. It will listen on this one."""
         self.connect(ip, port) #This connect is way more like a bind to the socket.
         try:
+            self.petition_worker()
             self.accepting_allow_wait_forever()
         except:                 #Only way to break is with an exception
             pass

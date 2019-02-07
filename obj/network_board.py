@@ -194,12 +194,12 @@ class NetworkBoard(Board):
                         if character['player'] == player.uuid:
                             constructor = Character.get_constructor_by_key(character['type'])
                             sprite_folder = Character.get_sprite_folder_by_key(character['type'])
-                            char = constructor(player.name, player.uuid, character['id'], (0, 0), (200, 200),\
+                            char = constructor(player.name, player.uuid, character['id'], (0, 0), (50, 50),\
                                                 self.resolution, sprite_folder, uuid=character['uuid'])
                             player.characters.add(char)
                     if char:
                         cell = self.get_cell_by_real_index(character['cell'])
-                        cell.set_char(char)
+                        cell.add_char(char)
                         char.set_cell(cell)
                         self.characters.add(char)
                         self.request_data_async('ready')
@@ -289,9 +289,9 @@ class NetworkBoard(Board):
         self.send_data_async({"players_data": players})
         chars = []
         for cell in self.cells:
-            char = cell.has_char()
+            char = cell.get_char()
             if char:
-                chars.append(char.json())
+                chars.append(char.json(cell.get_real_index()))
         self.send_data_async({"characters_data": chars})
 
     #AFTER THIS THE NEXT METHODS ARE VERY TO CHANGE (I dont know london at those hours)

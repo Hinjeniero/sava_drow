@@ -60,11 +60,6 @@ class Cell(Circle):
         if self.active:
             pygame.draw.circle(surface, UtilityBox.random_rgb_color(), self.rect.center, self.rect.height//2)
 
-    def get_char(self):
-        if self.chars.sprite:
-            return self.chars.sprite
-        return False
-
     def add_char(self, character):
         """Args:
             character (:obj: Character):    Character to add to the Cell when it arrives."""
@@ -90,6 +85,9 @@ class Cell(Circle):
         """Returns:
             (int):  Absolute index of the Cell (Positioning) (level*level_size+index)."""
         return self.index
+
+    def get_char(self):
+        return self.has_char()
 
     def has_char(self):
         return self.chars.sprite if self.chars.sprite else False

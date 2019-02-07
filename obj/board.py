@@ -576,18 +576,20 @@ class Board(Screen):
         Args:
             surface (:obj: pygame.Surface): Surface to draw the board.
         """
-        if not self.started and self.params['loading_screen']:
-            self.loading_screen.draw(surface)
-            return
-        super().draw(surface)                                                                           #Draws background
-        for dest in self.possible_dests:
-            pygame.draw.circle(surface, WHITE, dest.center, dest.radius)
-        for char in self.characters:
-            char.draw(surface)
-        if self.current_player:
-            self.current_player.draw(surface)   #This draws the player's infoboard
+        try:
+            if not self.started and self.params['loading_screen']:
+                self.loading_screen.draw(surface)
+                return
+            super().draw(surface)                                                                           #Draws background
+            for dest in self.possible_dests:
+                pygame.draw.circle(surface, WHITE, dest.center, dest.radius)
+            for char in self.characters:
+                char.draw(surface)
+            if self.current_player:
+                self.current_player.draw(surface)   #This draws the player's infoboard
+        except pygame.error: 
+            LOG.log('Warning', 'A surface was locked during the blit, skipping until next frame.')
             
-        
     def event_handler(self, event, keys_pressed, mouse_buttons_pressed, mouse_movement=False, mouse_pos=(0, 0)):
         """Handles any pygame event. This allows for user interaction with the object.
         Args:

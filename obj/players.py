@@ -685,7 +685,7 @@ class MatronMother(Character):
     DEFAULT_PATH    = PATHS.MATRONMOTHER
     DEFAULT_AMMOUNT = 1
 
-    def __init__(self, my_player, player_uuid, id_, position, size, canvas_size, sprites_path, aliases={}, uuid=uuid, **params):
+    def __init__(self, my_player, player_uuid, id_, position, size, canvas_size, sprites_path, aliases={}, uuid=None, **params):
         """MatronMother constructor. 
         Args:       
             my_player (str):    Owning/Master player of this Character.

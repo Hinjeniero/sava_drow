@@ -152,6 +152,9 @@ class NetworkBoard(Board):
                     self.connect()
                 else:
                     break
+            except ValueError:
+                LOG.log('warning', 'RECEIVE_WORKER: There was a problem receiving the packet in the sockets, retrying...')
+                LOG.log('warning', 'Mockingly: iNvAliD litERaL for iNt() with BASe 10: b\"{\"')
     
     @run_async
     def response_handler(self, response):
@@ -223,9 +226,14 @@ class NetworkBoard(Board):
             compression (int, default=None):    Level of compression of the data when sending it.
         Returns:
             (dict): Reply of the server. Usually a Success=True, or an ACK=True."""
-        self.client.send(data_to_send, compression=compression)
-        reply = self.client.receive(True)
-        return reply
+        while True:
+            try:
+                self.client.send(data_to_send, compression=compression)
+                reply = self.client.receive(True)
+                return reply
+            except ValueError:
+                LOG.log('warning', 'SEND_DATA: There was a problem receiving the packet in the sockets, retrying...')
+                LOG.log('warning', 'Mockingly: iNvAliD litERaL for iNt() with BASe 10: b\"{\"')
 
     def send_data_async(self, data_to_send, compression=None):
         """Sends data to the server with a non-blocking call and exits without waiting for a reply.
@@ -241,9 +249,14 @@ class NetworkBoard(Board):
             compression (int, default=None):    Level of compression of the request petition.
         Returns:
             (dict): Reply of the server. Success=True if the data couldn't be provided now, or the data itself."""
-        self.client.send({command: True}, compression=compression)
-        reply = self.client.receive(True)
-        return reply
+        while True:
+            try:
+                self.client.send({command: True}, compression=compression)
+                reply = self.client.receive(True)
+                return reply
+            except ValueError:
+                LOG.log('warning', 'REQUEST_DATA: There was a problem receiving the packet in the sockets, retrying...')
+                LOG.log('warning', 'Mockingly: iNvAliD litERaL for iNt() with BASe 10: b\"{\"')
 
     def request_data_async(self, command, compression=None):
         """Requests data to the server with a non-blocking call and exits without waiting for a reply.
@@ -276,8 +289,9 @@ class NetworkBoard(Board):
         self.send_data_async({"players_data": players})
         chars = []
         for cell in self.cells:
-            if cell.has_char():
-                chars.append(cell.get_char().json(cell.get_real_index()))
+            char = cell.has_char()
+            if char:
+                chars.append(char.json())
         self.send_data_async({"characters_data": chars})
 
     #AFTER THIS THE NEXT METHODS ARE VERY TO CHANGE (I dont know london at those hours)

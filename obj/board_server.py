@@ -38,6 +38,7 @@ class Server(MastermindServerTCP):
                                         This one is intended to be broadcasted initially to the slave clients, more than updated
                                         in each turn to follow the game.
     """
+    
     def __init__(self, number_of_players):
         """Constructor of the server.
         Args:

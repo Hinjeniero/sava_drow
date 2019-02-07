@@ -58,7 +58,7 @@ class Board(Screen):
             max_levels (int):   Number of levels/big circles/circumferences.
             path_color (:tuple: int, int, int): RGB color of the paths of the board.
             path_width (int):   Size of the paths themselves. In pixels.
-    Args:
+    Attributes:
         turn (int): Current turn in the board.
         loading (:obj: LoadingScreen):  Loading Screen that will be shown when the board hasn't ended loading stuff.
         cells (:obj: pygame.sprite.Group):  The cells/circles themselves. A SpriteGroup containing them.

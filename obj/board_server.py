@@ -108,13 +108,6 @@ class Server(MastermindServerTCP):
             response = {"success": False, "error": "The data with the key "+key+" was not found in the server"}
         return response
 
-    def send_updates(self):
-        """NOT USED YET"""
-        while len(self.queue) > 0:
-            command = self.get_from_queue()
-            for client in self.clients.values(): #Connections
-                self.callback_client_handle(client, command)
-
     def broadcast_data(self, list_of_conns, data):
         """NOT USED YET"""
         for conn in list_of_conns:
@@ -218,9 +211,11 @@ class Server(MastermindServerTCP):
             elif "update" in data:
                 reply = "UPDATE" #reply = changes, Sends the info of the board to the whatever client requested it. (If there is new actions)
             elif "move_char" in data:
-                reply = "MOVE" #Save the info of the char.
-            elif "menu" in data:
-                pass #Changing screens, sohuld check what to do
+                self.broadcast_data(self.clients.values(), data)
+            elif "drop_char" in data:
+                self.broadcast_data(self.clients.values(), data)
+            elif "end_turn" in data:
+                self.broadcast_data(self.clients.values(), {'next_turn': True, 'uuid': data['uuid']})
         except (KeyError, IndexError):    #Can't attend this petition right now, most likely due to lack of data.
             self.hold_petition(connection_object, data)
         if not reply:

@@ -67,6 +67,7 @@ class NetworkBoard(Board):
         self.client_lock = threading.Lock()
         self.server = server
         self.my_player = None
+        self.my_turn = False
         self.flags = {}     #Used if client and not host.
         self.reconnect = True
         NetworkBoard.generate(self, host)
@@ -84,11 +85,9 @@ class NetworkBoard(Board):
         self.client = MastermindClientTCP(NETWORK.CLIENT_TIMEOUT_CONNECT, NETWORK.CLIENT_TIMEOUT_RECEIVE)
         try:
             if host:
-                print("IM THE HOST YES")
                 self.server.start(NETWORK.SERVER_IP, NETWORK.SERVER_PORT)
                 self.ip = NETWORK.CLIENT_LOCAL_IP
             else:
-                print("Im a normal client")
                 self.flags["board_done"] = threading.Event()
                 self.flags["players_ammount_done"] = threading.Event()
                 self.flags["players_data_done"] = threading.Event()
@@ -166,62 +165,75 @@ class NetworkBoard(Board):
         be put on motion after some requirements are fulfilled. Thus, it can block on some of the flags.
         Args:
             response (dict):JSON schema. Contains the various replies of the server."""
-        if not self.server: #If im not host, I MUST receive the following info
-            if "params" in response:    #REQUESTING THE BOARD GENERATION PARAMETERS
-                self.params.update(response["params"])
-                self.generate_mapping()
-                self.generate_environment()
-                self.flags["board_done"].set()
-            elif "players" in response:
-                self.flags["board_done"].wait()
-                for i in range (0, 4, 4//response["players"]):
-                    self.create_player("null", i, (200, 200), empty=True)  #The name will be overwritten later on
-            elif "players_data" in response:
-                self.flags["board_done"].wait()
-                self.flags["players_ammount_done"].wait()
-                for received_player in response["players_data"]:
-                    for player in self.players: #Once per player
-                        if received_player["order"] is player.order:
-                            player.uuid = received_player["uuid"]
-                            player.name = received_player["name"]
-                            break
-                self.flags["players_data_done"].set()
-            elif "characters_data" in response:
-                self.flags["board_done"].wait()
-                self.flags["players_ammount_done"].wait()
-                self.flags["players_data_done"].wait()
-                for character in response['characters_data']:
-                    char = None
-                    for player in self.players:
-                        if character['player'] == player.uuid:
-                            size = self.cells.sprites()[0].rect.size
-                            constructor = Character.get_constructor_by_key(character['type'])
-                            sprite_folder = Character.get_sprite_folder_by_key(character['type'])
-                            char = constructor(player.name, player.uuid, character['id'], (0, 0), size,\
-                                                self.resolution, sprite_folder, uuid=character['uuid'])
-                            char.set_active(True)
-                            player.characters.add(char)
-                    if char:
-                        cell = self.get_cell_by_real_index(character['cell'])
-                        cell.add_char(char)
-                        char.set_cell(cell)
-                        self.characters.add(char)
-                        self.request_data_async('ready')
+        if "params" in response and not self.server:    #REQUESTING THE BOARD GENERATION PARAMETERS
+            self.params.update(response["params"])
+            self.generate_mapping()
+            self.generate_environment()
+            self.flags["board_done"].set()
+        elif "players" in response and not self.server:
+            self.flags["board_done"].wait()
+            for i in range (0, 4, 4//response["players"]):
+                self.create_player("null", i, None, empty=True)  #The name will be overwritten later on
+        elif "players_data" in response and not self.server:
+            self.flags["board_done"].wait()
+            self.flags["players_ammount_done"].wait()
+            for received_player in response["players_data"]:
+                for player in self.players: #Once per player
+                    if received_player["order"] is player.order:
+                        player.uuid = received_player["uuid"]
+                        player.name = received_player["name"]
+                        break
+            self.flags["players_data_done"].set()
+        elif "characters_data" in response and not self.server:
+            self.flags["board_done"].wait()
+            self.flags["players_ammount_done"].wait()
+            self.flags["players_data_done"].wait()
+            for character in response['characters_data']:
+                char = None
                 for player in self.players:
-                    player.update()
+                    if character['player'] == player.uuid:
+                        size = self.cells.sprites()[0].rect.size
+                        constructor = Character.get_constructor_by_key(character['type'])
+                        sprite_folder = Character.get_sprite_folder_by_key(character['type'])
+                        char = constructor(player.name, player.uuid, character['id'], (0, 0), size,\
+                                            self.resolution, sprite_folder, uuid=character['uuid'])
+                        if player.uuid == self.my_player:
+                            char.set_active(True)
+                        player.characters.add(char)
+                if char:
+                    cell = self.get_cell_by_real_index(character['cell'])
+                    cell.add_char(char)
+                    char.set_cell(cell)
+                    self.characters.add(char)
+            for player in self.players:
+                player.update()
+            self.send_ready()
+        elif "start" in response:
+            pass
         elif "player_id" in response:
             self.my_player = response['player_id']
         elif "success" in response: #This one needs no action
             pass
         elif "move_char" in response:   #Moving around drag_char by other players.
-            pass
+            for char in self.characters:
+                if char.uuid == response['uuid']:
+                    char.rect.center = tuple(x*self.resolution for x in response['center'])
+                    break 
         elif "drop_char" in response:   #Dropping the opponent char somewhere.
-            pass
+            for char in self.characters:
+                if char.uuid == response['character']:
+                    cell = self.get_cell_by_real_index(response['cell'])
+                    char.set_cell(cell)             #Positioning the char
+                    if not cell.is_empty():
+                        self.kill_character(cell)   #Killing char if there is one 
+                    cell.add_char(char)
         elif "next_turn" in response:    #Next turn with the player that should play it
-            pass
+            if response['player'] is not self.my_player:  #If the last play wasn't me
+                self.next_player_turn()
+                if self.current_player.uuid == self.my_player:
+                    self.my_turn = True
         else:
             LOG.log('info', 'Unexpected response: ', response)
-    #####END OF THREAD
 
     def get_board_params(self):
         """Chisels down the entire parameters to get just the ones that all the clients must share."""
@@ -306,9 +318,12 @@ class NetworkBoard(Board):
             if char:
                 chars.append(char.json(cell.get_real_index()))
         self.send_data_async({"characters_data": chars})
+        self.send_ready()
 
-    #AFTER THIS THE NEXT METHODS ARE VERY TO CHANGE (I dont know london at those hours)
-    #This to be a queue that is checked once in every frame? Or a thread to be checked and results saved in a queue when ready?
+    def send_ready(self):
+        self.send_data_async({'ready': True})
+
+    #TODO CONTINUE HEEEERE
     def send_update(self, data):
         reply = self.client.send_data({"update": True})
         print(str(reply))
@@ -316,42 +331,28 @@ class NetworkBoard(Board):
     def mouse_handler(self, event, mouse_movement, mouse_position):
         super().mouse_handler(event, mouse_movement, mouse_position)
         if mouse_movement:
-            pass
-            #Send to the other computer the drag char movement, so it can show it in screen.
-            #Also, DO NOT allow to drop your chars if its not your turn
+            if self.drag_char:
+                self.client.send_data_async({}) #TODO Send drag_char position
 
     def pickup_character(self):
-        if "its my turn":
+        if self.my_turn:
             super().pickup_character()
         else:
-            "Do whatever you want m8, you can move the char around anyway. BUT NOT DESTINIES NOR PATHS IF YOU ARE NOT THE CUYRRENT PLAYUER"
+            super().pickup_character(get_dests=False)
 
     def drop_character(self):
-        if "its my turn":
+        if self.my_turn:
             super().drop_character()
-
-    def update_cells(self, *cells):
-        #This changes depending on who you are (The map itself).
-        super().update_cells(*cells)
-        #Send to other parties the info
-
-    def next_char_turn(self, char):
-        super().next_char_turn(char)
+            self.send_data_async({'drop_character': True, 'character': self.drag_char.sprite.uuid,\
+                                'cell':self.active_cell.sprite.get_real_index()})
+        else:
+            self.client.send_data_async({}) #TODO Send drag_char position
 
     def next_player_turn(self):
-        #Check how to work this so we can have you stay quiet but move the chars whle
-        self.current_player.turn += 1
-        while True:
-            self.player_index += 1
-            if self.player_index >= len(self.players):
-                self.player_index = 0
-                self.turn += 1
-            if self.players[self.player_index].turn is self.turn:
-                self.current_player.pause_characters()
-                self.current_player = self.players[self.player_index]
-                self.current_player.unpause_characters()
-                self.update_map()
-                break
+        super().next_player_turn()
+        if self.my_turn:
+            self.my_turn = False
+            self.send_data_async({"end_turn": True, "player": self.my_player})
 
     def destroy(self):
         self.reconnect = False

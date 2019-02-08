@@ -50,7 +50,7 @@ class Parser:
             str_obj = '{'
             for key, value in obj.items():
                 str_obj += Parser.parse_text(key)+': '+Parser.parse_text(value)+'\n'
-            return str_obj + '}'
+            return str_obj + '\b}'
         else:
             return Parser.parse_text(obj)
 

@@ -605,7 +605,7 @@ class Board(Screen):
             if event.type == pygame.KEYDOWN:    self.keyboard_handler(keys_pressed)
             else:                               self.mouse_handler(event, mouse_movement, mouse_pos)  
 
-    def pickup_character(self):
+    def pickup_character(self, get_dests=True):
         """Picks up a character. Adds it to the drag char Group, and check in the LUT table
         the movements that are possible taking into account the character restrictions.
         Then it draws an overlay on the possible destinations."""
@@ -613,10 +613,11 @@ class Board(Screen):
         self.drag_char.add(self.active_char.sprite)
         self.drag_char.sprite.set_selected(True)
         self.last_cell.add(self.active_cell.sprite)
-        destinations = self.drag_char.sprite.get_paths( self.enabled_paths, self.distances, self.current_map,\
-                                                        self.active_cell.sprite.index, self.params['circles_per_lvl'])
-        for cell_index in destinations:
-            self.possible_dests.add(self.get_cell_by_real_index(cell_index[-1]))
+        if get_dests:
+            destinations = self.drag_char.sprite.get_paths( self.enabled_paths, self.distances, self.current_map,\
+                                                            self.active_cell.sprite.index, self.params['circles_per_lvl'])
+            for cell_index in destinations:
+                self.possible_dests.add(self.get_cell_by_real_index(cell_index[-1]))
 
     def drop_character(self):
         """Drops a character. Deletes it from the drag char Group, and checks if the place in which
@@ -760,10 +761,10 @@ class Board(Screen):
             if self.active_char.sprite: self.pickup_character()
         elif event.type == pygame.MOUSEBUTTONUP:  #If we are dragging it we will have a char in here
             if self.drag_char.sprite:   self.drop_character()
-        if self.drag_char.sprite:   
-            self.drag_char.sprite.rect.center = mouse_position
 
         if mouse_movement:
+            if self.drag_char.sprite:   
+                self.drag_char.sprite.rect.center = mouse_position
             mouse_sprite = UtilityBox.get_mouse_sprite()
             
             #Checking collision with cells

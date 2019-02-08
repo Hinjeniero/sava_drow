@@ -209,7 +209,11 @@ class NetworkBoard(Board):
                 player.update()
             self.send_ready()
         elif "start" in response:
-            pass
+            if self.current_player == self.my_player:
+                self.my_turn = True
+            LOG.log('info', 'My player is ', self.my_player, ', current player is ', self.current_player.uuid)
+            for i in range(0, len(self.players)):
+                LOG.log('info', "player ", i, " has uuid of ", self.players[i].uuid, " and an order of ", self.players[i].order)
         elif "player_id" in response:
             self.my_player = response['player_id']
         elif "success" in response: #This one needs no action

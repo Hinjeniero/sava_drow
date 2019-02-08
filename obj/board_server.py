@@ -109,7 +109,6 @@ class Server(MastermindServerTCP):
         return response
 
     def broadcast_data(self, list_of_conns, data):
-        """NOT USED YET"""
         for conn in list_of_conns:
             self.callback_client_send(conn, data)
 
@@ -127,9 +126,10 @@ class Server(MastermindServerTCP):
         if 'dice' in self.barrier[0][1].keys():
             #Tuples - (conn, data(json)), 'dice' in saved json
             self.barrier.sort(key=lambda tuple_: tuple_[1]['dice'])
-            uuids = list(self.players_data.keys())
+            players = list(self.players_data.values())
+            players.sort(key=lambda player: player['order'])
             for i in range (0, self.total_players):
-                self.callback_client_send(self.barrier[i][0], {'player_id': uuids[i]})  
+                self.callback_client_send(self.barrier[i][0], {'player_id': players[i]['uuid']})  
                 #The players in there should be ordered by 'order' already. Sending uuid.
     
     def hold_petition(self, conn_obj, data):
@@ -139,14 +139,13 @@ class Server(MastermindServerTCP):
         self.hold_lock.release()
 
     @run_async
-    def petition_worker(self): #TODO THIS COULD USE AN EVENT :)
+    def petition_worker(self):
         """SubThread witn an infinite loop that checks the list of the server unanswered petitions,
         and issues them again to the client_handle to try again. If they are still not ready, the request/petition
         will be appended at the end of this list again.
         Uses a flag to check if there are items, and a Lock to make the list thread-safe."""
         try:
             while True:
-                print("HELLO ")
                 self.on_hold_empty.wait()
                 self.hold_lock.acquire()
                 petition = self.on_hold_resp.pop(0)

@@ -214,14 +214,14 @@ class NetworkBoard(Board):
             self.my_player = response['player_id']
         elif "success" in response: #This one needs no action
             pass
-        elif "move_char" in response:   #Moving around drag_char by other players.
+        elif "move_character" in response:   #Moving around drag_char by other players.
             for char in self.characters:
-                if char.uuid == response['uuid']:
-                    char.rect.center = tuple(x*self.resolution for x in response['center'])
+                if char.uuid == response['move_character']:
+                    char.rect.center = tuple(x*y for x,y in zip(self.resolution ,response['center']))
                     break 
-        elif "drop_char" in response:   #Dropping the opponent char somewhere.
+        elif "drop_character" in response:   #Dropping the opponent char somewhere.
             for char in self.characters:
-                if char.uuid == response['character']:
+                if char.uuid == response['drop_character']:
                     cell = self.get_cell_by_real_index(response['cell'])
                     char.set_cell(cell)             #Positioning the char
                     if not cell.is_empty():
@@ -322,17 +322,13 @@ class NetworkBoard(Board):
 
     def send_ready(self):
         self.send_data_async({'ready': True})
-
-    #TODO CONTINUE HEEEERE
-    def send_update(self, data):
-        reply = self.client.send_data({"update": True})
-        print(str(reply))
     
     def mouse_handler(self, event, mouse_movement, mouse_position):
         super().mouse_handler(event, mouse_movement, mouse_position)
         if mouse_movement:
             if self.drag_char:
-                self.client.send_data_async({}) #TODO Send drag_char position
+                center = tuple(x/y for x,y in zip(self.drag_char.sprite.rect.center, self.resolution))
+                self.send_data_async({"move_character":self.drag_char.sprite.uuid, "center": center}) #TODO Send drag_char position
 
     def pickup_character(self):
         if self.my_turn:
@@ -341,12 +337,13 @@ class NetworkBoard(Board):
             super().pickup_character(get_dests=False)
 
     def drop_character(self):
-        if self.my_turn:
-            super().drop_character()
-            self.send_data_async({'drop_character': True, 'character': self.drag_char.sprite.uuid,\
-                                'cell':self.active_cell.sprite.get_real_index()})
+        character = self.drag_char.sprite
+        movement = super().drop_character()
+        if movement:
+            self.send_data_async({'drop_character': character.uuid, 'cell':self.active_cell.sprite.get_real_index()})
         else:
-            self.client.send_data_async({}) #TODO Send drag_char position
+            center = tuple(x/y for x,y in zip(character.rect.center, self.resolution))
+            self.send_data_async({"move_character": character.uuid, "center": center})
 
     def next_player_turn(self):
         super().next_player_turn()

@@ -624,17 +624,20 @@ class Board(Screen):
         has been dropped is a possible destination. If it is, it drops the character in that cell.
         Otherwise, the character will be returned to the last Cell it was in."""
         LOG.log('INFO', 'Dropped ', self.drag_char.sprite.id)
+        moved = False
         self.drag_char.sprite.set_selected(False)
         self.drag_char.sprite.set_hover(False)
         if self.possible_dests.has(self.active_cell.sprite):
             self.move_character(self.drag_char.sprite)
             self.next_char_turn(self.drag_char.sprite)
+            moved = True
         else:
             self.drag_char.sprite.rect.center = self.last_cell.sprite.center
             self.play_sound('warning')
             LOG.log('debug', 'Cant move the char there')
         self.drag_char.empty()
         self.possible_dests.empty()
+        return moved
 
     def move_character(self, character):
         LOG.log('debug', 'The chosen cell is possible, moving')

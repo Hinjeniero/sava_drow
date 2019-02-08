@@ -48,7 +48,7 @@ class Parser:
             (str): The parsed string representation of the input object."""
         if isinstance(obj, dict):
             str_obj = '{'
-            for key, value in obj.items:
+            for key, value in obj.items():
                 str_obj += Parser.parse_text(key)+': '+Parser.parse_text(value)+'\n'
             return str_obj + '}'
         else:

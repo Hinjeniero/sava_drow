@@ -115,7 +115,7 @@ class NetworkBoard(Board):
             self.request_data_async("players")          #To get the number of players
             self.request_data_async("players_data")     #To get the data of the players
             self.request_data_async("characters_data")  #To get the data of the characters
-        self.send_data_async({"dice": random.randint(1, 6)})    #Sending dice result for the player assignments
+        self.send_data_async({"dice": random.randint(1, 6), "id":self.uuid})    #Sending dice result for the player assignments
 
     def connect(self):   #TODO SEND ID IN CONNECT?
         """Connects the client to the server if the ip and port are available."""
@@ -166,7 +166,7 @@ class NetworkBoard(Board):
         be put on motion after some requirements are fulfilled. Thus, it can block on some of the flags.
         Args:
             response (dict):JSON schema. Contains the various replies of the server."""
-        if not self.server: #If im not host
+        if not self.server: #If im not host, I MUST receive the following info
             if "params" in response:    #REQUESTING THE BOARD GENERATION PARAMETERS
                 self.params.update(response["params"])
                 self.generate_mapping()
@@ -199,6 +199,7 @@ class NetworkBoard(Board):
                             sprite_folder = Character.get_sprite_folder_by_key(character['type'])
                             char = constructor(player.name, player.uuid, character['id'], (0, 0), size,\
                                                 self.resolution, sprite_folder, uuid=character['uuid'])
+                            char.set_active(True)
                             player.characters.add(char)
                     if char:
                         cell = self.get_cell_by_real_index(character['cell'])
@@ -208,17 +209,18 @@ class NetworkBoard(Board):
                         self.request_data_async('ready')
                 for player in self.players:
                     player.update()
-            elif "success" in response: #This one needs no action
-                pass
-            elif "move_char" in response:   #Moving around drag_char by other players.
-                pass
-            elif "drop_char" in response:   #Dropping the opponent char somewhere.
-                pass
-            elif "turn" in response:    #Next turn with the player that should play it
-                pass
-            else:
-                LOG.log('info', 'Unexpected response: ', response)
-        #HANDLING OF NORMAL RESPONSES DURING THE GAME
+        elif "player_id" in response:
+            self.my_player = response['player_id']
+        elif "success" in response: #This one needs no action
+            pass
+        elif "move_char" in response:   #Moving around drag_char by other players.
+            pass
+        elif "drop_char" in response:   #Dropping the opponent char somewhere.
+            pass
+        elif "next_turn" in response:    #Next turn with the player that should play it
+            pass
+        else:
+            LOG.log('info', 'Unexpected response: ', response)
     #####END OF THREAD
 
     def get_board_params(self):
@@ -322,7 +324,7 @@ class NetworkBoard(Board):
         if "its my turn":
             super().pickup_character()
         else:
-            "Do whatever you want m8, you can move the char around anyway"
+            "Do whatever you want m8, you can move the char around anyway. BUT NOT DESTINIES NOR PATHS IF YOU ARE NOT THE CUYRRENT PLAYUER"
 
     def drop_character(self):
         if "its my turn":

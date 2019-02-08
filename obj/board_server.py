@@ -13,6 +13,7 @@ from external.Mastermind import *
 from settings import NETWORK
 from obj.utilities.decorators import run_async
 from obj.utilities.synch_dict import Dictionary
+from obj.utilities.logger import Logger as LOG
 
 class Server(MastermindServerTCP):
     """"Class Server. Inherits from MastermindServerTCP.
@@ -120,35 +121,50 @@ class Server(MastermindServerTCP):
             self.callback_client_send(conn, data)
 
     def add_to_barrier(self, conn_object, data):
-        self.barrier_lock.acquire()
-        if len(self.barrier) == 0 or data.keys()[0] == self.barrier[0][1].keys[0]:
+        self.barrier_lock.acquire() 
+        if len(self.barrier) == 0\
+        or all(key in data.keys() for key in self.barrier[0][1].keys()):
             self.barrier.append((conn_object, data))
-        if len(self.barrier) == self.total_players:
-            self.group_barrier_handler()
+        if len(self.barrier) >= self.total_players:
+            self.group_responses_handler()
             self.barrier.clear()
         self.barrier_lock.release()
 
     def group_responses_handler(self):  #ALready got the lock to barrier
-        if 'dice' in self.barrier[0][1].keys[0]:
+        if 'dice' in self.barrier[0][1].keys():
+            #Tuples - (conn, data(json)), 'dice' in saved json
             self.barrier.sort(key=lambda tuple_: tuple_[1]['dice'])
+            uuids = list(self.players_data.keys())
             for i in range (0, self.total_players):
-                self.callback_client_send(self.barrier[i][0], self.players_data.keys()[i])  
+                self.callback_client_send(self.barrier[i][0], {'player_id': uuids[i]})  
                 #The players in there should be ordered by 'order' already. Sending uuid.
     
+    def hold_petition(self, conn_obj, data):
+        self.hold_lock.acquire()
+        self.on_hold_resp.append((conn_obj, data))
+        self.on_hold_empty.set()
+        self.hold_lock.release()
+
     @run_async
     def petition_worker(self): #TODO THIS COULD USE AN EVENT :)
         """SubThread witn an infinite loop that checks the list of the server unanswered petitions,
         and issues them again to the client_handle to try again. If they are still not ready, the request/petition
         will be appended at the end of this list again.
         Uses a flag to check if there are items, and a Lock to make the list thread-safe."""
-        while True:
-            self.hold_lock.acquire()
-            self.on_hold_empty.wait()
-            petition = self.on_hold_resp.pop(0)
-            if len(self.on_hold_resp) == 0:
-                self.on_hold_empty.clear()
-            self.hold_lock.release()
-            self.callback_client_handle(*petition)  #This to unpack the tuple of conn,data
+        try:
+            while True:
+                print("HELLO ")
+                self.on_hold_empty.wait()
+                self.hold_lock.acquire()
+                petition = self.on_hold_resp.pop(0)
+                if 'end' in petition[1]:
+                    raise Exception
+                if len(self.on_hold_resp) == 0:
+                    self.on_hold_empty.clear()
+                self.hold_lock.release()
+                self.callback_client_handle(*petition)  #This to unpack the tuple of conn,data
+        except:
+            pass    #The server disconnected, byebye
     
     def callback_client_handle(self, connection_object, data):
         """Handles the petitions of the clients, be requests or sending of data. Uses JSON forms.
@@ -197,6 +213,7 @@ class Server(MastermindServerTCP):
                         raise KeyError
                     reply = {"characters_data": self.chars_data.values_list()}
             elif "dice" in data:
+                LOG.log('info', 'Client ',data['id'], ' rolled a ', data['dice'])
                 self.add_to_barrier(connection_object, data)
             elif "update" in data:
                 reply = "UPDATE" #reply = changes, Sends the info of the board to the whatever client requested it. (If there is new actions)
@@ -205,10 +222,7 @@ class Server(MastermindServerTCP):
             elif "menu" in data:
                 pass #Changing screens, sohuld check what to do
         except (KeyError, IndexError):    #Can't attend this petition right now, most likely due to lack of data.
-            self.hold_lock.acquire()
-            self.on_hold_resp.append((connection_object, data))
-            self.on_hold_empty.set()
-            self.hold_lock.release()
+            self.hold_petition(connection_object, data)
         if not reply:
             reply = {"success": True}
         self.callback_client_send(connection_object, reply)
@@ -226,6 +240,7 @@ class Server(MastermindServerTCP):
             self.accepting_allow_wait_forever()
         except:                 #Only way to break is with an exception
             pass
+        self.hold_petition(-1, {'end': True})
         self.accepting_disallow()
         self.disconnect_clients()
         self.disconnect()

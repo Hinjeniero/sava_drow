@@ -10,6 +10,7 @@ import threading
 import traceback
 import time
 import uuid
+import random
 #External libraries
 #from external.Mastermind import MastermindServerTCP, MastermindClientTCP
 #from external.Mastermind._mm_errors import *   #This one doesnt catch the exception for some fuckin reasoni
@@ -114,6 +115,7 @@ class NetworkBoard(Board):
             self.request_data_async("players")          #To get the number of players
             self.request_data_async("players_data")     #To get the data of the players
             self.request_data_async("characters_data")  #To get the data of the characters
+        self.send_data_async({"dice": random.randint(1, 6)})    #Sending dice result for the player assignments
 
     def connect(self):   #TODO SEND ID IN CONNECT?
         """Connects the client to the server if the ip and port are available."""
@@ -165,7 +167,7 @@ class NetworkBoard(Board):
         Args:
             response (dict):JSON schema. Contains the various replies of the server."""
         if not self.server: #If im not host
-            if "params" in response:
+            if "params" in response:    #REQUESTING THE BOARD GENERATION PARAMETERS
                 self.params.update(response["params"])
                 self.generate_mapping()
                 self.generate_environment()
@@ -192,9 +194,10 @@ class NetworkBoard(Board):
                     char = None
                     for player in self.players:
                         if character['player'] == player.uuid:
+                            size = self.cells.sprites()[0].rect.size
                             constructor = Character.get_constructor_by_key(character['type'])
                             sprite_folder = Character.get_sprite_folder_by_key(character['type'])
-                            char = constructor(player.name, player.uuid, character['id'], (0, 0), (50, 50),\
+                            char = constructor(player.name, player.uuid, character['id'], (0, 0), size,\
                                                 self.resolution, sprite_folder, uuid=character['uuid'])
                             player.characters.add(char)
                     if char:
@@ -203,12 +206,20 @@ class NetworkBoard(Board):
                         char.set_cell(cell)
                         self.characters.add(char)
                         self.request_data_async('ready')
+                for player in self.players:
+                    player.update()
+            elif "success" in response: #This one needs no action
+                pass
+            elif "move_char" in response:   #Moving around drag_char by other players.
+                pass
+            elif "drop_char" in response:   #Dropping the opponent char somewhere.
+                pass
+            elif "turn" in response:    #Next turn with the player that should play it
+                pass
             else:
-                print("THE FUCK, WEIRD RESPONSE")
-                print(response)
+                LOG.log('info', 'Unexpected response: ', response)
         #HANDLING OF NORMAL RESPONSES DURING THE GAME
     #####END OF THREAD
-
 
     def get_board_params(self):
         """Chisels down the entire parameters to get just the ones that all the clients must share."""

@@ -48,6 +48,9 @@ class Server(MastermindServerTCP):
         self.total_players = number_of_players
         self.total_chars = None
         self.players_ready = 0
+        self.ready = threading.Event()
+        self.barrier = []
+        self.barrier_lock = threading.Lock()
         self.hold_lock = threading.Lock()
         self.on_hold_empty= threading.Event()
         self.on_hold_resp = []
@@ -116,6 +119,22 @@ class Server(MastermindServerTCP):
         for conn in list_of_conns:
             self.callback_client_send(conn, data)
 
+    def add_to_barrier(self, conn_object, data):
+        self.barrier_lock.acquire()
+        if len(self.barrier) == 0 or data.keys()[0] == self.barrier[0][1].keys[0]:
+            self.barrier.append((conn_object, data))
+        if len(self.barrier) == self.total_players:
+            self.group_barrier_handler()
+            self.barrier.clear()
+        self.barrier_lock.release()
+
+    def group_responses_handler(self):  #ALready got the lock to barrier
+        if 'dice' in self.barrier[0][1].keys[0]:
+            self.barrier.sort(key=lambda tuple_: tuple_[1]['dice'])
+            for i in range (0, self.total_players):
+                self.callback_client_send(self.barrier[i][0], self.players_data.keys()[i])  
+                #The players in there should be ordered by 'order' already. Sending uuid.
+    
     @run_async
     def petition_worker(self): #TODO THIS COULD USE AN EVENT :)
         """SubThread witn an infinite loop that checks the list of the server unanswered petitions,
@@ -143,7 +162,7 @@ class Server(MastermindServerTCP):
             data (dict):JSON form that contains the request or sending of data."""
         reply = None
         try:
-            if "host" in data:   #This is a handshake
+            if "host" in data:
                 if data["host"]:
                     if not self.host:
                         self.host = connection_object
@@ -151,16 +170,14 @@ class Server(MastermindServerTCP):
                         reply = {"success": False, "error": "There is already an host."}
                 self.add_client(data["id"], connection_object)
             elif "params" in data:
-                print("A CLIENT REQUESTED PARAMS")
                 if connection_object is self.host:
                     self.add_data("params", data["params"])
                 else:
                     reply = self.get_data("params")
-            elif "start" in data or "ready" in data:  #IN THIS ONE WAIT FOR ALL OF THEM TO BE ONLINE
-                pass
-                #self.players_ready += 1
-                #if self.players_ready >= self.total_players:
-                    #self.broadcast_data(self.waiting, {"unlock": True})
+            elif "start" in data or "ready" in data:
+                self.players_ready += 1
+                if self.players_ready >= self.total_players:
+                    self.broadcast_data(self.clients.values(), {"start": True})
             elif "players" in data: #At start
                 reply = {"players": self.total_players}
             elif "players_data" in data:
@@ -168,7 +185,6 @@ class Server(MastermindServerTCP):
                     for player in data["players_data"]:
                         self.add_player(player)
                 else:
-                    print("A CLIENT REQUESTED PLAYERS DATA")
                     if len(self.players_data.keys()) < self.total_players:
                         raise KeyError
                     reply = {"players_data": self.players_data.values_list()}
@@ -177,24 +193,23 @@ class Server(MastermindServerTCP):
                     for character in data["characters_data"]:
                         self.add_char(character)
                 else:
-                    print("A CLIENT REQUESTED CHARS DATA")
                     if len(self.chars_data.keys()) < self.total_chars:
                         raise KeyError
                     reply = {"characters_data": self.chars_data.values_list()}
+            elif "dice" in data:
+                self.add_to_barrier(connection_object, data)
             elif "update" in data:
                 reply = "UPDATE" #reply = changes, Sends the info of the board to the whatever client requested it. (If there is new actions)
             elif "move_char" in data:
                 reply = "MOVE" #Save the info of the char.
             elif "menu" in data:
                 pass #Changing screens, sohuld check what to do
-        except KeyError:    #Can"t attend this petition right now.
+        except (KeyError, IndexError):    #Can't attend this petition right now, most likely due to lack of data.
             self.hold_lock.acquire()
             self.on_hold_resp.append((connection_object, data))
             self.on_hold_empty.set()
             self.hold_lock.release()
-        if reply:
-            print("SERVER REPLIED WITH "+str(reply))
-        if not reply:   #If it wanst a request but a push of data
+        if not reply:
             reply = {"success": True}
         self.callback_client_send(connection_object, reply)
 

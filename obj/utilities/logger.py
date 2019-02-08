@@ -70,11 +70,11 @@ class Logger:
         for msg in messages:    message += Parser.to_string(msg)
         priority = priority.lower()
 
-        if 'debug' in priority:         LOG.debug((message))
-        elif 'info' in priority:        LOG.info((message))
-        elif 'warning' in priority:     LOG.warning((message))
-        elif 'error' in priority:       LOG.error((message))
-        elif 'critical' in priority:    LOG.critical((message))
+        if 'debug' in priority:         LOG.debug(message)
+        elif 'info' in priority:        LOG.info(message)
+        elif 'warning' in priority:     LOG.warning('--WARNING--'+message)
+        elif 'error' in priority:       LOG.error('---ERROR---'+message)
+        elif 'critical' in priority:    LOG.critical('----CRITICAL----'+message)
         else:                           
             raise TypeError('Invalid priority, accepted strings are: DEBUG | INFO | WARNING | ERROR | CRITICAL')
 

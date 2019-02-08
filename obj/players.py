@@ -106,7 +106,8 @@ class Player(object):
                 return char
 
     def update(self):
-        self.infoboard.get_sprite('char').set_text('characters: '+str(len(self.characters)))
+        self.infoboard.get_sprite('name').set_text(self.name)
+        self.infoboard.get_sprite('chars').set_text('characters: '+str(len(self.characters)))
         self.infoboard.regenerate_image()
 
     def draw(self, surface):

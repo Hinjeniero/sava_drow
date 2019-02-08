@@ -773,3 +773,7 @@ class Board(Screen):
             #Checking collision with paths
             path = pygame.sprite.spritecollideany(mouse_sprite, self.paths, collided=pygame.sprite.collide_mask)
             self.set_active_path(path)
+    
+    def destroy(self):
+        pass
+        #TODO KILL THREADS IF STILL LOADING OR DECREASE PLAYER COUNT TO END FASTER, I DUNNO, WHATEVER

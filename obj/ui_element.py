@@ -579,7 +579,7 @@ class InfoBoard (UIElement):
         InfoBoard.generate(self, *elements)
 
     @staticmethod
-    def generate(self, *elements):
+    def generate(self, *elements, draw_grid=False):
         """Raises:
             InvalidUIElementException:  If one of the elements doesn't follow the tuple schema (uielement, spaces_taken)"""
         self.clear()
@@ -593,9 +593,21 @@ class InfoBoard (UIElement):
                 raise InvalidUIElementException("Elements of infoboard must follow the [(element, spaces_to_occupy), ...] scheme.")
         #Test passed
         self.add_and_adjust_sprites(*elements)
-        #UtilityBox.draw_grid(self.image, self.params['rows'], self.params['cols']) #TODO delete
+        if draw_grid:   #Testing purposes
+            UtilityBox.draw_grid(self.image, self.params['rows'], self.params['cols'])
     
     def add_text_element(self, id_, text, spaces, scale=0.95):
+        """Creates and adds a text sprite with a size matching the number of occupied spaces
+        defined on the input.
+        The position and size are determined with helping methods. 
+        Args:
+            id_ (str):  Id of the text sprite that will be created.
+            text (str): Text to render and blit to the infoboard.
+            spaces (int):  Number of spaces occupied by the text. Will determine the size and the position to some extent.
+            scale (float, default=0.95):    Proportional size of the text (Against the full size (looking purely at spaces).
+        Raises:
+            NotEnoughSpaceException:    If the number of spaces of the element plus the already taken spaces is more than the 
+                                        total spaces of the infoboard."""
         if spaces > self.spaces-self.taken_spaces:
             raise NotEnoughSpaceException("There is not enough space in the infoboard to add that sprite")
         spaces = self.parse_element_spaces(spaces)
@@ -607,12 +619,26 @@ class InfoBoard (UIElement):
         self.taken_spaces += spaces
     
     def get_element_size(self, spaces, scale):
+        """Calculates the size of the input spaces. The scale is the proportion in a real number.
+        Args:
+            spaces (int):   The spaces that the size should match.
+            scale (float):  The proportion of the size against the full/max size in a real interval (0->1)
+                            (Full proportion->1).
+        Returns:
+            (tuple->(int, int)):    The size (in pixels) of the element that takes the input spaces."""
         cols = self.params['cols']
         width_element = spaces%cols*self.element_size[0] if spaces < cols else self.rect.width
         height_element = math.ceil(spaces/cols)*self.element_size[1]
         return (int(width_element*scale), int(height_element*scale))
 
     def get_element_position(self, spaces, size):
+        """Calculates the position taking as a basis the input spaces. Takes into account the 
+        already taken spaces, and the possible offset in the row in the case of odd spaces.
+        Args:
+            spaces (int):   The spaces that will determine the topleft position.
+            size (int): The size of the element.
+        Returns:
+            (tuple->(int, int)):    The position (in pixels) of the element inside the infoboard."""
         cols = self.params['cols']
         if self.taken_spaces%cols + spaces > cols: #Modifies taken spaces to align again
             self.taken_spaces = int(math.ceil(self.taken_spaces/cols)*cols)
@@ -658,15 +684,27 @@ class InfoBoard (UIElement):
                 raise TooManyElementsException("Too many elements in infoboard") 
 
     def parse_element_spaces(self, spaces):
+        """Gets the input spaces, and check if it is essential to add to them to maintain a decent layout on
+        the infoboard. Basically, if it's over a row spaces, but with an odd divission, it makes the math.ceil of
+        the value to occupy a row more.
+        Args:
+            spaces (int):   Spaces to parse.
+        Returns:
+            The parsed number of spaces, ready to be used for whatever."""
         return self.params['cols']*math.ceil(spaces/self.params['cols']) if spaces > self.params['cols'] else spaces
 
     def get_cols(self):
+        """Returns:
+            (int):  Number of columns that this infoboard possesses."""
         return self.params['cols']
 
     def get_rows(self):
+        """Returns:
+            (int):  Number of columns that this infoboard possesses."""
         return self.params['rows']
 
     def clear(self):
+        """Deletes all the sprites of the infoboard. Useful when deleting the texts."""
         self.sprites.empty()
         
 class Dialog (InfoBoard):
@@ -716,19 +754,38 @@ class TextBox(UIElement):
 
     @staticmethod
     def generate(self):
-        self.set_text('|')
+        self.add_text_sprite('prompt', '|'+self.text)
         self.regenerate_shit()
 
     def add_char(self, char):
         self.text += char
-        self.regenerate_shit()
+        self.update_text()
 
     def delete_char(self):
-        self.text = self.text[:-1]  #Or something like this
-        self.regenerate()
+        self.text = self.text[:-1]
+        self.update_text()
+
+    def update_text(self):
+        self.get_sprite('prompt').set_text('|'+self.text)
+        self.regenerate_image() #TODO CHECK WELL HOW TO BLIT THIS SHIT ONTO THE IMAGE. SAME WITH SCROLLING TEXT OVERLAY
 
 class ScrollingText(UIElement):
     #Half transparent background with text on it.
-    def __init__(self, id_, user_event_id, element_size, canvas_size, **params):
-        super().__init__(id_, user_event_id, (0, 0), element_size, canvas_size, **params)
+    def __init__(self, id_, user_event_id, canvas_size, **params):
+        super().__init__(id_, user_event_id, (0, 0), canvas_size, canvas_size, **params)
+        self.image.set_alpha(128)
+        self.texts = pygame.sprite.OrderedUpdates()
+
+    def add_msg(self, text, msg_size=(0.85, 0.10)):
+        self.add_text_sprite('screen_msg_'+str(len(self.texts.sprites())), msg,\b
+                            text_size=tuple(x*y for x,y in zip(self.rect.size, msg_size)))
+        self.texts.add(self.sprites.sprites()[0])
+        self.sprites.empty()
+        for sprite in self.texts:
+            sprite.rect.y += msg_size[1]*self.rect.height
+        self.regenerate_image()
+
+    def regenerate_image(self):
+        super().regenerate_image()
+        self.image.set_alpha(128)
     

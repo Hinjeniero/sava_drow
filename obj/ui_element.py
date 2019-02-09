@@ -19,12 +19,12 @@ import pygame
 import math
 #Selfmade libraries
 from obj.polygons import Circle, Rectangle
+from obj.sprite import Sprite, MultiSprite, TextSprite
 from obj.utilities.resizer import Resizer
 from obj.utilities.colors import WHITE, RED, DARKGRAY, LIGHTGRAY, GREEN, BLACK
 from obj.utilities.exceptions import    InvalidUIElementException, BadUIElementInitException, InvalidCommandValueException,\
                                         TooManyElementsException, InvalidSliderException, NotEnoughSpaceException
 from obj.utilities.utility_box import UtilityBox
-from obj.sprite import Sprite, MultiSprite, TextSprite
 from obj.utilities.logger import Logger as LOG
 
 class UIElement(MultiSprite):
@@ -562,7 +562,6 @@ class InfoBoard (UIElement):
         """InfoBoard constructor.
         Args:
             id_ (str):  Identifier of the Sprite.
-            command (str):  Command linked with the element. Will be sent in the payload of the event.
             user_event_id (int): Identifier of the event that will be sent.
             position (:tuple: int,int): Position of the Sprite in the screen. In pixels.
             size (:tuple: int,int):     Size of the Sprite in the screen. In pixels.
@@ -580,7 +579,9 @@ class InfoBoard (UIElement):
 
     @staticmethod
     def generate(self, *elements, draw_grid=False):
-        """Raises:
+        """Clears the useless params filled in superclasses, and generates the useful ones that are still empty.
+        Called at the end of the constructor. Also adds the input elements to the infoboard.
+        Raises:
             InvalidUIElementException:  If one of the elements doesn't follow the tuple schema (uielement, spaces_taken)"""
         self.clear()
         UtilityBox.join_dicts(self.params, InfoBoard.__default_config)
@@ -708,11 +709,34 @@ class InfoBoard (UIElement):
         self.sprites.empty()
         
 class Dialog (InfoBoard):
+    """Dialog class. Inherits from InfoBoard.
+    It's a grid of different sprites. A confirmation/dialog window. The normal way to use it is 
+    with one or two texts, and some buttons, normally to confirm or decline. 
+    The grid can have a different ammount of columns and rows, it will adjust the Sprites to them. 
+    General class attributes:
+        __default_config (:dict:): Contains parameters about the text looks and positioning.
+            rows (int): rows of the grid
+            cols (int): columns of the grid
+    Attributes:
+        buttons (:obj: pygame.sprite.OrderedUpdates):   All the buttons that the dialog posseses.
+    """   
     __default_config = {'rows'  : 3,
                         'cols'  : 4
     }
 
     def __init__(self, id_, user_event_id, element_size, canvas_size, **params):
+        """Dialog constructor.
+        Args:
+            id_ (str):  Identifier of the Sprite.
+            user_event_id (int): Identifier of the event that will be sent.
+            position (:tuple: int,int): Position of the Sprite in the screen. In pixels.
+            element_size (:tuple: int,int):     Size of the Sprite in the screen. In pixels.
+            canvas_size (:tuple: int,int):  Size of the display. In pixels.
+            *elements (:tuple: UI_Element, int):    Subelements to be added, separated by commas. Usually TextSprites.
+                                                    The tuple follows the schema (UIElement, infoboard spaces taken).
+            **params (:dict:):  Dict of keywords and values as parameters to create the self.image attribute.
+                                Variety going from fill_color and use_gradient to text_only.
+            """
         UtilityBox.join_dicts(params, Dialog.__default_config)
         super().__init__(id_, user_event_id, (0, 0), element_size, canvas_size, **params)
         self.buttons = pygame.sprite.OrderedUpdates()
@@ -720,23 +744,41 @@ class Dialog (InfoBoard):
 
     @staticmethod
     def generate(self):
+        """Clear the previous texts from the dialog (The ones created in super classes), and set the position
+        to the middle of the screen."""
         self.clear()    #To delete the text fromn the button
         position = tuple(x//2 - y//2 for x, y in zip(self.resolution, self.rect.size))
         self.set_position(position)
         #self.add_text_element(self.id+'_text', self.params['text'], (self.params['rows']*self.params['cols'])-self.params['cols'])
 
     def set_active(self, active):
+        """Sets the active state in the dialog, and in the contained buttons.
+        Args:
+            active (boolean):   True if active, False otherwise."""
         super().set_active(active)
         for button in self.buttons:
             button.set_active(active)
 
     def draw(self, surface):
+        """Draws the dialog over the input surface, drawing an overlay in the active
+        button for visual recognition.
+        Args:
+            surface (:obj: pygame.Surface): The surface to draw this dialog onto."""
         super().draw(surface)
         for button in self.buttons:
             if button.active:
                 button.draw_overlay(surface, offset=self.rect.topleft)
 
     def add_button(self, spaces, text, command, scale=1, **button_params):
+        """Adds a button to the dialog, that follows the input parameters.
+        After creating it and adding it to self.buttons, it is blitted onto the dialog image.
+        Args:
+            spaces (int):   Spaces occupied by the button. Row spaces//2 is recommended.
+            text (str): Text of the button.
+            command (str):  Command triggered by the button.
+            scale (float):  Scale of the button compared with the spaces taken by it.
+            **button_params (:dict:):   Dict of keywords and values as parameters to create the self.image of the button.
+                                        Variety going from fill_color and use_gradient to text_only."""
         spaces = self.parse_element_spaces(spaces)
         size = self.get_element_size(spaces, scale)
         position = self.get_element_position(spaces, size)

@@ -39,6 +39,7 @@ class NetworkBoard(Board):
         client_lock (:obj: threading.Lock): Lock to make the access to the client thread-safe.
         server (:obj: BoardServer): Server object. Only the host contains it to start it, otherwise is None.
         my_player (int):Uuid of the player that we will be controlling on the board.
+        my_turn(boolean):   True if is the turn of my player, False otherwise.
         flags (dict):   Dict of threading.Event objects that block threads when they try to make an action that needs a not ready yet asset.
         reconnect (boolean):    True if to reconnect after losing connection, False otherwise.
     """
@@ -48,6 +49,7 @@ class NetworkBoard(Board):
         Args:
             id_ (str):  Identifier of the Screen.
             event_id (int): Identifier of the Screen event.
+            end_event_id (int): Event that signals the end of the game in this board.
             resolution (:tuple: int,int):   Size of the Screen. In pixels.
             host (boolean, default=False):  True if this Board is the host, False otherwhise.
             server (:obj: BoardServer, default=None):   Server to connect all the clients. Essential if host is True.
@@ -240,7 +242,9 @@ class NetworkBoard(Board):
             LOG.log('info', 'Unexpected response: ', response)
 
     def get_board_params(self):
-        """Chisels down the entire parameters to get just the ones that all the clients must share."""
+        """Chisels down the entire parameters to get just the ones that all the clients must share.
+        Returns:
+            (:Dict:):   Dict with the essential parameters for the generation of a board on other clients."""
         params = {"inter_path_frequency"  : self.params["inter_path_frequency"],
                 "circles_per_lvl"       : self.params["circles_per_lvl"],
                 "max_levels"            : self.params["max_levels"] ,
@@ -325,9 +329,17 @@ class NetworkBoard(Board):
         self.send_ready()
 
     def send_ready(self):
+        """Sends the command 'ready' to the server, signalizing that this client is ready to start the game."""
         self.send_data_async({'ready': True})
     
     def mouse_handler(self, event, mouse_movement, mouse_position):
+        """Captures the mouse and handles the events regarding this one. More info in method in superclass.
+        In this subclass, if mouse_movement is detected, the character under that movement is broadcasted to the rest of
+        the clients.
+        Args:
+            event (:obj: pygame.event): Event received from the pygame queue.
+            mouse_movement( boolean, default=False):    True if there was mouse movement since the last call.
+            mouse_position (:tuple: int, int, default=(0,0)):   Current mouse position. In pixels."""
         super().mouse_handler(event, mouse_movement, mouse_position)
         if mouse_movement:
             if self.drag_char:
@@ -335,12 +347,16 @@ class NetworkBoard(Board):
                 self.send_data_async({"move_character":self.drag_char.sprite.uuid, "center": center}) #TODO Send drag_char position
 
     def pickup_character(self):
+        """Picks up a character, and get the possible destinies if it is our turn. More info in this case in superclass method.
+        Otherwise only allows to wiggling around."""
         if self.my_turn:
             super().pickup_character()
         else:
             super().pickup_character(get_dests=False)
 
     def drop_character(self):
+        """Makes the action of the superclass if my_turn is True. Otherwise, just moves the character to the last cell
+        where it was. After this, it broadcast the result to the rest of the clients (sending it to the server)."""
         character = self.drag_char.sprite
         movement = super().drop_character()
         if movement:
@@ -350,12 +366,15 @@ class NetworkBoard(Board):
             self.send_data_async({"move_character": character.uuid, "center": center})
 
     def next_player_turn(self):
+        """Makes the actions needed to advance a turn, and communicates with the server if my_turn is True."""
         super().next_player_turn()
         if self.my_turn:
             self.my_turn = False
             self.send_data_async({"end_turn": True, "player": self.my_player})
 
     def destroy(self):
+        """Sets the flags to signal the end of the threads and disconnects 
+        clients, and the server if this networkboard is the host."""
         self.reconnect = False
         self.client.disconnect()
         if self.server:

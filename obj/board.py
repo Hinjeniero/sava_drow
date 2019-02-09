@@ -103,6 +103,7 @@ class Board(Screen):
         Args:
             id_ (str):  Identifier of the Screen.
             event_id (int): Identifier of the Screen event.
+            end_event_id (int): Event that signals the end of the game in this board.
             resolution (:tuple: int,int):   Size of the Screen. In pixels.
             *players (:obj: Player):    All the players that will play on this board, separated by commas.
             **params (:dict:):  Dict of keywords and values as parameters to create the Screen.

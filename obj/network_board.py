@@ -124,6 +124,7 @@ class NetworkBoard(Board):
             self.client_lock.acquire()
             self.client.disconnect()
             self.client.connect(self.ip, self.port)
+            self.connected.set()
             self.client_lock.release()
             LOG.log('info', 'Client ', self.uuid, ' connected to the server in the address ',\
                     self.ip, ':', self.port)
@@ -136,9 +137,9 @@ class NetworkBoard(Board):
             try:
                 self.request_data_async("keep-alive")   #Response will be handled in the receiving thread
                 time.sleep(1)
-            except MastermindErrorClient:               #If disconnectes from server
+            except MastermindErrorClient:               #If disconnected from server
                 if self.reconnect:
-                    self.connect()  #TODO USE A FLAG TO SET THE CONNECTED STATE, TO BLOCK WHEN NOT CONNECTED.
+                    self.connect()
                 else:
                     break
 
@@ -152,7 +153,7 @@ class NetworkBoard(Board):
                 self.response_handler(data)
             except MastermindErrorClient:   #Timeout/disconnection
                 if self.reconnect:
-                    self.connect()
+                    self.connected.wait()
                 else:
                     break
             except ValueError:
@@ -211,11 +212,13 @@ class NetworkBoard(Board):
                 player.update()
             self.send_ready()
         elif "start" in response:
-            if self.current_player == self.my_player:
+            self.activate_my_characters()
+            if self.current_player.uuid == self.my_player:
+                self.update_map()
                 self.my_turn = True
-            LOG.log('info', 'My player is ', self.my_player, ', current player is ', self.current_player.uuid)
-            for i in range(0, len(self.players)):
-                LOG.log('info', "player ", i, " has uuid of ", self.players[i].uuid, " and an order of ", self.players[i].order)
+            #LOG.log('info', 'My player is ', self.my_player, ', current player is ', self.current_player.uuid)
+            #for i in range(0, len(self.players)):
+                #LOG.log('info', "player ", i, " has uuid of ", self.players[i].uuid, " and an order of ", self.players[i].order)
         elif "player_id" in response:
             self.my_player = response['player_id']
         elif "success" in response: #This one needs no action
@@ -226,20 +229,28 @@ class NetworkBoard(Board):
                     char.rect.center = tuple(x*y for x,y in zip(self.resolution ,response['center']))
                     break 
         elif "drop_character" in response:   #Dropping the opponent char somewhere.
+            cell = self.get_cell_by_real_index(response['cell'])
             for char in self.characters:
                 if char.uuid == response['drop_character']:
-                    cell = self.get_cell_by_real_index(response['cell'])
-                    char.set_cell(cell)             #Positioning the char
-                    if not cell.is_empty():
-                        self.kill_character(cell)   #Killing char if there is one 
+                    if cell.has_char():
+                        self.kill_character(cell, char)     #Killing char if there is one 
+                    char.set_cell(cell)                     #Positioning the char
                     cell.add_char(char)
+                    break
         elif "next_turn" in response:    #Next turn with the player that should play it
-            if response['player'] is not self.my_player:  #If the last play wasn't me
-                self.next_player_turn()
-                if self.current_player.uuid == self.my_player:
-                    self.my_turn = True
+            self.next_player_turn()
+            if self.current_player.uuid == self.my_player:
+                self.update_map()
+                self.my_turn = True
         else:
             LOG.log('info', 'Unexpected response: ', response)
+
+    def activate_my_characters(self):
+        if self.my_player:
+            for char in self.characters:
+                char.set_state('idle')
+                if char.master_uuid == self.my_player:
+                    char.set_active(True)
 
     def get_board_params(self):
         """Chisels down the entire parameters to get just the ones that all the clients must share.

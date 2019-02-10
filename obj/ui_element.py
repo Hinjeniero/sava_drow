@@ -819,7 +819,7 @@ class ScrollingText(UIElement):
         self.texts = pygame.sprite.OrderedUpdates()
 
     def add_msg(self, text, msg_size=(0.85, 0.10)):
-        self.add_text_sprite('screen_msg_'+str(len(self.texts.sprites())), msg,\b
+        self.add_text_sprite('screen_msg_'+str(len(self.texts.sprites())), msg,\
                             text_size=tuple(x*y for x,y in zip(self.rect.size, msg_size)))
         self.texts.add(self.sprites.sprites()[0])
         self.sprites.empty()

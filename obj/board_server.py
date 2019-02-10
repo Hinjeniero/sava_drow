@@ -108,9 +108,10 @@ class Server(MastermindServerTCP):
             response = {"success": False, "error": "The data with the key "+key+" was not found in the server"}
         return response
 
-    def broadcast_data(self, list_of_conns, data):
+    def broadcast_data(self, list_of_conns, data, *excluded_conns):
         for conn in list_of_conns:
-            self.callback_client_send(conn, data)
+            if not any(conn == excluded for excluded in excluded_conns): 
+                self.callback_client_send(conn, data)
 
     def add_to_barrier(self, conn_object, data):
         self.barrier_lock.acquire() 
@@ -125,7 +126,7 @@ class Server(MastermindServerTCP):
     def group_responses_handler(self):  #ALready got the lock to barrier
         if 'dice' in self.barrier[0][1].keys():
             #Tuples - (conn, data(json)), 'dice' in saved json
-            self.barrier.sort(key=lambda tuple_: tuple_[1]['dice'])
+            self.barrier.sort(key=lambda tuple_: tuple_[1]['dice'], reverse=True)
             players = list(self.players_data.values())
             players.sort(key=lambda player: player['order'])
             for i in range (0, self.total_players):
@@ -210,11 +211,11 @@ class Server(MastermindServerTCP):
             elif "update" in data:
                 reply = "UPDATE" #reply = changes, Sends the info of the board to the whatever client requested it. (If there is new actions)
             elif "move_character" in data:
-                self.broadcast_data(self.clients.values(), data)
+                self.broadcast_data(self.clients.values(), data, connection_object)
             elif "drop_character" in data:
-                self.broadcast_data(self.clients.values(), data)
+                self.broadcast_data(self.clients.values(), data, connection_object)
             elif "end_turn" in data:
-                self.broadcast_data(self.clients.values(), {'next_turn': True, 'uuid': data['uuid']})
+                self.broadcast_data(self.clients.values(), {'next_turn': True, 'uuid': data['uuid']}, connection_object)
             elif "keepalive" in data or "keep_alive" in data or "keep-alive" in data:
                 pass
             else:

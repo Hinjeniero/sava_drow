@@ -497,6 +497,7 @@ class Board(Screen):
         """Returns:
             (boolean): True if all the requested players have been loaded already."""
         if not self.started and (self.loaded_players is self.total_players) and self.generated:
+            self.players.sort(key=lambda player:player.order)
             self.play_sound('success')
             if not self.current_player: #If this is the first player added
                 self.current_player = self.players[0]
@@ -646,7 +647,7 @@ class Board(Screen):
         self.last_cell.sprite.empty_cell() #Emptying to delete the active char from there
         character.set_cell(active_cell)  #Positioning the char
         if not active_cell.is_empty():
-            self.kill_character(active_cell) #Killing char if there is one 
+            self.kill_character(active_cell, self.drag_char.sprite) #Killing char if there is one 
         active_cell.add_char(character)
         self.current_player.register_movement(character)
         self.update_cells(self.last_cell.sprite, active_cell)
@@ -676,17 +677,17 @@ class Board(Screen):
                 self.update_map()
                 break
 
-    def kill_character(self, cell):
+    def kill_character(self, cell, killer):
         #Badass Animation
         corpse = cell.kill_char()
         self.update_cells(cell)
         self.characters.remove(corpse)  #To delete it from the char list in board. It's dead.
-        #Search for it in players to delete it :)
+        #Search for it in players to delete it
         for player in self.players:
             if player.has_char(corpse):
                 player.remove_char(corpse)
                 self.check_player(player)
-        self.current_player.add_kill(corpse, self.drag_char.sprite)
+        self.current_player.add_kill(corpse, killer)
         LOG.log('debug', 'The character ', corpse.id,' was killed!')
         self.play_sound('oof')
 

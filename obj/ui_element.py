@@ -118,7 +118,6 @@ class UIElement(MultiSprite):
         """
         if any(0 <= x <= 1 for x in size):      size    = tuple(x*y for x,y in zip(size, canvas_size))
         if any(0 <= x <= 1 for x in position):  position= tuple(x*y for x,y in zip(position, canvas_size))
-        print(position)
         if len(elements) > 0:
             if isinstance(elements[0], ButtonAction):   #Only interested in the first one, the following ones could vary
                 return Dialog(id_, command, user_event_id, position, size, canvas_size, *elements, **params)

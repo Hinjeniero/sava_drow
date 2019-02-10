@@ -68,6 +68,7 @@ class NetworkBoard(Board):
         self.connected = threading.Event()
         self.change_turn = threading.Event()
         self.next_turn_event = pygame.event.Event(event_id, command='next_turn_network_board')
+        self.connection_error_event = pygame.event.Event(event_id, command='connection_error')
         self.client = None
         self.client_lock = threading.Lock()
         self.server = server
@@ -102,8 +103,12 @@ class NetworkBoard(Board):
             self.keep_alive() #Creating thread
             self.receive_worker()
             self.send_handshake(host)
-        except MastermindError: #If there was an error connecting
+        except MastermindErrorSocket:   #If there was an error connecting
             LOG.log("ERROR", traceback.format_exc())
+            pygame.event.post(self.connection_error_event)
+        except MastermindError:         #If there was an error connecting
+            LOG.log("ERROR", traceback.format_exc())
+            pygame.event.post(self.connection_error_event)
 
     def send_handshake(self, host):
         """"Sends the first request to the server, with our ID and a host boolean.

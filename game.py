@@ -107,15 +107,18 @@ class Game(object):
             else:
                 self.dialog_handler(event.command.lower())
         elif event.type is USEREVENTS.END_CURRENT_GAME:
-            self.show_popup('win')
-            self.current_screen.play_sound('win')
+            self.restart_main_menu(win=True)
+        elif event.type is USEREVENTS.TIMER_ONE_SEC:
+            self.fps_text = UtilityBox.generate_fps(self.clock, size=tuple(int(x*0.05) for x in self.resolution))
+
+    def restart_main_menu(self, win=False): #TODO REstart params of params menu
+            if win:
+                self.show_popup('win')
+                self.current_screen.play_sound('win')
             self.started = False
             self.change_screen('main', 'menu')
             self.get_screen('params', 'menu', 'config').enable_all_sprites(True)
             self.get_screen('main', 'menu').enable_sprites(False, 'continue')
-            #TODO REstart params of params menu
-        elif event.type is USEREVENTS.TIMER_ONE_SEC:
-            self.fps_text = UtilityBox.generate_fps(self.clock, size=tuple(int(x*0.05) for x in self.resolution))
 
     def dialog_handler(self, command):
         if 'cancel' in command or 'no' in command or 'false' in command:
@@ -162,10 +165,10 @@ class Game(object):
 
     def board_handler(self, command):
         if 'turn' in command:
-            print("SHOW TURN")
             self.show_popup('turn')
-        else:
-            print("DUDE WHAT")
+        elif 'conn' in command and 'error' in command:
+            self.show_popup('conn')
+            self.restart_main_menu()
 
     def graphic_handler(self, command, value):
         if 'fps' in command:          
@@ -260,9 +263,8 @@ class Game(object):
 
     def set_easter_eggs(self):  #TODO THose are not jsut easter eggs anymore.
         res = self.resolution
-        size = (0.80, 0.15)
+        size = (0.80, 0.10)
         position = tuple(0.5-x/2 for x in size)
-        print(position)
         image = PATHS.LONG_POPUP
         text_size = 0.95
         popup_acho = UIElement.factory( 'secret_acho', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
@@ -281,7 +283,9 @@ class Game(object):
                                         text='Gz, you won!', text_proportion=text_size)
         popup_turn = UIElement.factory('next_turn', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
                                         text='It`s your turn! Wreck him!', text_proportion=text_size)
-        self.add_popups(popup_acho, popup_running, popup_dejavu, popup_winner, popup_chars, popup_turn)
+        popup_conn_error  = UIElement.factory('connection_error', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
+                                        text='There was a connection error, check the console for details.', text_proportion=text_size)
+        self.add_popups(popup_acho, popup_running, popup_dejavu, popup_winner, popup_chars, popup_turn, popup_conn_error)
 
     def add_popups(self, *popups):
         for popup in popups:
@@ -292,7 +296,6 @@ class Game(object):
     def show_popup(self, id_):
         for popup in self.popups.sprites():
             if id_ in popup.id:
-                print("FOUND IT ")
                 popup.set_visible(True)
                 popup.set_active(True)
                 return

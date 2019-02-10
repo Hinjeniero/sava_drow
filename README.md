@@ -3,7 +3,8 @@ TO START THE GAME: 'python.exe main.py' in command line
 DEPENDENCIES: pygame, numpy, wrapt
 
 TODO CURRENT:
-    1.- Make your server-clint thing already (~95%)
+    0.- Implement overlay and textbox to alow the writing of the IP in game
+    1.- Send Win event to other players along with the game stats.
     2.- Implement spider dice + sprite. Needs to randomize the game a little bit.
 
 TODO WHENEVER:

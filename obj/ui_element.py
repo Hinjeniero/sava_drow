@@ -93,7 +93,7 @@ class UIElement(MultiSprite):
         """Sets the event id of the element. This will be sent when a trigger happens."""
         self.__event_id = event_id
 
-    @staticmethod
+    @staticmethod   #TODO UPDATE THE RETURNING OF PARAMS
     def factory(id_, command, user_event_id, position, size, canvas_size, *elements, default_values=None, **params):
         """Method that returns a different subclass of UI_Element, taking into account the input arguments.
         If the devault_values it's an int/float, a Slider will be created. 
@@ -116,8 +116,9 @@ class UIElement(MultiSprite):
             AttributeError: In case of values mismatch. Need to be a set of values, or a numerical one.
 
         """
-        if any(x < 1 for x in size):    size        = tuple(x*y for x,y in zip(size, canvas_size))
-        if any(y < 1 for y in position):position    = tuple(x*y for x,y in zip(position, canvas_size))
+        if any(0 <= x <= 1 for x in size):      size    = tuple(x*y for x,y in zip(size, canvas_size))
+        if any(0 <= x <= 1 for x in position):  position= tuple(x*y for x,y in zip(position, canvas_size))
+        print(position)
         if len(elements) > 0:
             if isinstance(elements[0], ButtonAction):   #Only interested in the first one, the following ones could vary
                 return Dialog(id_, command, user_event_id, position, size, canvas_size, *elements, **params)

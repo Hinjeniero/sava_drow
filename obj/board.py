@@ -662,18 +662,21 @@ class Board(Screen):
             char.set_state('idle')
             char.active = True  #Only can move this one afterwards
 
-    def next_player_turn(self):
+    def next_player_turn(self, use_stop_state=True):
         self.current_player.turn += 1
+        old_index = self.player_index
         while True:
             self.player_index += 1
             if self.player_index >= len(self.players):
                 self.player_index = 0
                 self.turn += 1
-            if self.players[self.player_index].turn is self.turn:
-                self.current_player.pause_characters()
-                self.current_player = self.players[self.player_index]
-                self.current_player.unpause_characters()
+            if self.players[self.player_index].turn is self.turn\
+            or self.player_index == old_index:
+                self.current_player = self.players[self.player_index] 
                 self.update_map()
+                if use_stop_state:
+                    self.players[old_index].pause_characters()
+                    self.current_player.unpause_characters()
                 break
 
     def kill_character(self, cell, killer):

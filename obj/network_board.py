@@ -11,6 +11,7 @@ import traceback
 import time
 import uuid
 import random
+import pygame
 #External libraries
 #from external.Mastermind import MastermindServerTCP, MastermindClientTCP
 #from external.Mastermind._mm_errors import *   #This one doesnt catch the exception for some fuckin reasoni
@@ -66,6 +67,7 @@ class NetworkBoard(Board):
         self.port = None
         self.connected = threading.Event()
         self.change_turn = threading.Event()
+        self.next_turn_event = pygame.event.Event(event_id, command='next_turn_network_board')
         self.client = None
         self.client_lock = threading.Lock()
         self.server = server
@@ -216,6 +218,7 @@ class NetworkBoard(Board):
             self.activate_my_characters()
             if self.current_player.uuid == self.my_player:
                 self.update_map()
+                self.show_my_turn_popup()
                 self.my_turn = True
         elif "player_id" in response:
             self.my_player = response['player_id']
@@ -245,11 +248,17 @@ class NetworkBoard(Board):
             LOG.log('info', 'Unexpected response: ', response)
 
     def activate_my_characters(self):
+        """Called each turn."""
         if self.my_player:
             for char in self.characters:
                 char.set_state('idle')
                 if char.master_uuid == self.my_player:
                     char.set_active(True)
+                else:
+                    char.set_active(False)
+
+    def show_my_turn_popup(self):
+        pygame.event.post(self.next_turn_event)
 
     def get_board_params(self):
         """Chisels down the entire parameters to get just the ones that all the clients must share.
@@ -377,13 +386,14 @@ class NetworkBoard(Board):
 
     def next_player_turn(self):
         """Makes the actions needed to advance a turn, and communicates with the server if my_turn is True."""
-        super().next_player_turn()
+        super().next_player_turn(use_stop_state=False)
         if self.my_turn:
             self.my_turn = False
             self.send_data_async({"end_turn": True})
         else:
             if self.current_player.uuid == self.my_player:
                 self.my_turn = True
+                self.show_my_turn_popup()
 
     def destroy(self):
         """Sets the flags to signal the end of the threads and disconnects 

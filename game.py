@@ -99,6 +99,8 @@ class Game(object):
             self.graphic_handler(event.command.lower(), event.value)
         elif event.type is USEREVENTS.CONFIG_USEREVENT:  
             self.config_handler(event.command.lower(), event.value)
+        elif event.type is USEREVENTS.BOARD_USEREVENT:
+            self.board_handler(event.command.lower())
         elif event.type is USEREVENTS.DIALOG_USEREVENT:
             if 'scroll' in event.command:
                 self.current_screen.set_scroll(event.value)
@@ -157,6 +159,13 @@ class Game(object):
                 self.board_generator.set_board_params(random_filling=True)
             else:
                 self.board_generator.set_board_params(random_filling=False)
+
+    def board_handler(self, command):
+        if 'turn' in command:
+            print("SHOW TURN")
+            self.show_popup('turn')
+        else:
+            print("DUDE WHAT")
 
     def graphic_handler(self, command, value):
         if 'fps' in command:          
@@ -249,27 +258,30 @@ class Game(object):
         self.last_inputs.append(pygame.key.name(event.key))
         self.check_easter_eggs()
 
-    def set_easter_eggs(self):
+    def set_easter_eggs(self):  #TODO THose are not jsut easter eggs anymore.
         res = self.resolution
-        size = (900, 80)
-        position = tuple(x//2 - y//2 for x, y in zip(res, size))
+        size = (0.80, 0.15)
+        position = tuple(0.5-x/2 for x in size)
+        print(position)
         image = PATHS.LONG_POPUP
         text_size = 0.95
-        popup_acho = UIElement.factory( 'secret_acho', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
+        popup_acho = UIElement.factory( 'secret_acho', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
                                         text='Gz, you found a secret! all your SFXs will be achos now.', text_proportion=text_size)
         popup_acho.use_overlay = False
-        popup_running = UIElement.factory('secret_running90s', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
+        popup_running = UIElement.factory('secret_running90s', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
                                         text='Gz, you found a secret! The background music is now Running in the 90s.', text_proportion=text_size)
         popup_running.use_overlay = False
-        popup_dejavu = UIElement.factory('secret_dejavu', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
+        popup_dejavu = UIElement.factory('secret_dejavu', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
                                         text='Gz, you found a secret! The background music is now Dejavu.', text_proportion=text_size)
         popup_dejavu.use_overlay = False
-        popup_chars  = UIElement.factory('toomany_chars', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
+        popup_chars  = UIElement.factory('toomany_chars', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
                                         text='Too many chars, change the params.', text_proportion=text_size)
         popup_chars.use_overlay = False
-        popup_winner = UIElement.factory('winner', '', 0, position, size, res, texture=image, keep_aspect_ratio=False,
-                                        text='Gz, you won!', text_proportion=text_size)                                        
-        self.add_popups(popup_acho, popup_running, popup_dejavu, popup_winner, popup_chars)
+        popup_winner = UIElement.factory('winner', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
+                                        text='Gz, you won!', text_proportion=text_size)
+        popup_turn = UIElement.factory('next_turn', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
+                                        text='It`s your turn! Wreck him!', text_proportion=text_size)
+        self.add_popups(popup_acho, popup_running, popup_dejavu, popup_winner, popup_chars, popup_turn)
 
     def add_popups(self, *popups):
         for popup in popups:
@@ -280,10 +292,11 @@ class Game(object):
     def show_popup(self, id_):
         for popup in self.popups.sprites():
             if id_ in popup.id:
+                print("FOUND IT ")
                 popup.set_visible(True)
                 popup.set_active(True)
                 return
-        LOG.log('debug', 'Popup ', id_,'not found')
+        LOG.log('warning', 'Popup ', id_,'not found')
     
     def hide_popups(self):
         for popup in self.popups.sprites():
@@ -435,7 +448,7 @@ class Game(object):
                     end = self.event_handler(pygame.event.get())
                     if self.fps_text:
                         self.display.blit(self.fps_text, tuple(int(x*0.02) for x in self.resolution))
-                    for popup in self.popups.sprites():
+                    for popup in self.popups:
                         popup.draw(self.display)
                     pygame.display.update()
                 except GameEndException:

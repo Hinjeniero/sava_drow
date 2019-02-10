@@ -189,7 +189,6 @@ class Board(Screen):
         self.generate_map_board()
         self.save_sprites()
         self.generated = True
-        print("ALL GENERATED ")
 
     def set_scroll(self, value):
         """We dont want scrolls in the board"""

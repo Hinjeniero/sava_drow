@@ -65,6 +65,7 @@ class NetworkBoard(Board):
         self.ip = None
         self.port = None
         self.connected = threading.Event()
+        self.change_turn = threading.Event()
         self.client = None
         self.client_lock = threading.Lock()
         self.server = server
@@ -216,11 +217,9 @@ class NetworkBoard(Board):
             if self.current_player.uuid == self.my_player:
                 self.update_map()
                 self.my_turn = True
-            #LOG.log('info', 'My player is ', self.my_player, ', current player is ', self.current_player.uuid)
-            #for i in range(0, len(self.players)):
-                #LOG.log('info', "player ", i, " has uuid of ", self.players[i].uuid, " and an order of ", self.players[i].order)
         elif "player_id" in response:
             self.my_player = response['player_id']
+            LOG.log('info', 'My player is ', self.my_player)
         elif "success" in response: #This one needs no action
             pass
         elif "move_character" in response:   #Moving around drag_char by other players.
@@ -228,7 +227,7 @@ class NetworkBoard(Board):
                 if char.uuid == response['move_character']:
                     char.rect.center = tuple(x*y for x,y in zip(self.resolution ,response['center']))
                     break 
-        elif "drop_character" in response:   #Dropping the opponent char somewhere.
+        elif "drop_character" in response:
             cell = self.get_cell_by_real_index(response['cell'])
             for char in self.characters:
                 if char.uuid == response['drop_character']:
@@ -237,11 +236,11 @@ class NetworkBoard(Board):
                     char.set_cell(cell)                     #Positioning the char
                     cell.add_char(char)
                     break
-        elif "next_turn" in response:    #Next turn with the player that should play it
+            self.change_turn.set()
+        elif "end_turn" in response:    #Next turn with the player that should play it
+            self.change_turn.wait()
             self.next_player_turn()
-            if self.current_player.uuid == self.my_player:
-                self.update_map()
-                self.my_turn = True
+            self.change_turn.clear()
         else:
             LOG.log('info', 'Unexpected response: ', response)
 
@@ -381,7 +380,10 @@ class NetworkBoard(Board):
         super().next_player_turn()
         if self.my_turn:
             self.my_turn = False
-            self.send_data_async({"end_turn": True, "player": self.my_player})
+            self.send_data_async({"end_turn": True})
+        else:
+            if self.current_player.uuid == self.my_player:
+                self.my_turn = True
 
     def destroy(self):
         """Sets the flags to signal the end of the threads and disconnects 

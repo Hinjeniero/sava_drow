@@ -15,7 +15,7 @@ class USEREVENTS:
 #GLOBAL VARIABLES, LIKE ALL THE FPS ALLOWED; ETC; ETC
 #---Graphics/PARAMS
 class INIT_PARAMS:
-    INITIAL_RESOLUTION = (1280, 720)
+    INITIAL_RESOLUTION = (848, 480)
     RESOLUTIONS = (INITIAL_RESOLUTION, (1366, 768), (1600, 900), (1920, 1080), (256, 144), (640, 360), (848, 480), (1024, 576))
     INITIAL_FPS = 60
     ALL_FPS     = (INITIAL_FPS, 120, 20, 30)
@@ -131,6 +131,7 @@ class PATHS:
     #---Screen
     DEFAULT_BG = IMAGE_FOLDER+'background.jpg'
     LOADING_BG = IMAGE_FOLDER+'loading_background.png'
+    START_BG = IMAGE_FOLDER+'start_background.png'
     LOADING_STATIC_CIRCLE = IMAGE_FOLDER+'loading_circle.png'
     LOADING_ANIMATED_CIRCLE = ''
     #---Menus, buttons and such

@@ -9,25 +9,26 @@ import pygame
 import os
 import threading
 import sys
+import faulthandler
 from pygame.locals import *
 from pygame.key import *
 from obj.screen import Screen
 #Selfmade Libraries
+from settings import USEREVENTS, INIT_PARAMS, PATHS, CHARACTERS, PARAMS,\
+                    STRINGS, EXTENSIONS, SCREEN_FLAGS, SOUND_PARAMS
+from game import Game
+from animation_generator import AnimationGenerator
 from obj.board import Board
 from obj.menu import Menu
+from obj.sprite import AnimatedSprite
 from obj.ui_element import UIElement, TextSprite, InfoBoard, Dialog
 from obj.utilities.colors import RED, BLACK, WHITE, GREEN
 from obj.utilities.logger import Logger as LOG
+from obj.utilities.surface_loader import ResizedSurface, no_size_limit
 from obj.utilities.utility_box import UtilityBox
-from game import Game
-from animation_generator import AnimationGenerator
-from obj.sprite import AnimatedSprite
 from obj.utilities.decorators import time_it
-from settings import USEREVENTS, INIT_PARAMS, PATHS, CHARACTERS, PARAMS,\
-                    STRINGS, EXTENSIONS, SCREEN_FLAGS, SOUND_PARAMS
 
 #This because segmentation fault
-import faulthandler
 faulthandler.enable()
 
 #MUSIC
@@ -59,6 +60,7 @@ def create_exit_dialog(text='Are you sure that you want to exit?'):
     dialog.add_button(dialog.get_cols()//2, 'Cancel', 'no_cancel_false', gradient=((0, 0, 255, 255),(128, 128, 255, 255)))
     return dialog
 
+@time_it
 def create_main_menu():
     #Create elements, main menu buttons (POSITIONS AND SIZES ARE IN PERCENTAGES OF THE CANVAS_SIZE, can use absolute integers too)
     gradients       = UtilityBox.rainbow_gradient_generator(((255, 0, 0),(0, 0, 255)), 7)
@@ -91,6 +93,7 @@ def create_main_menu():
     main_menu.add_dialogs(create_exit_dialog())
     return main_menu 
 
+@time_it
 def create_config_menu():
     #positions           = UtilityBox.size_position_generator(9, 0.60, 0.05)
     #button_size         = next(positions)
@@ -139,6 +142,7 @@ def create_config_menu():
                         background_path=PATHS.DEFAULT_BG, gradient = (RED, BLACK), do_align=False, songs_paths=None)
     return params_menu
 
+@time_it
 def create_sound_menu():
     #Sliders/buttons of the music and sound menu
     positions           = UtilityBox.size_position_generator(6, 0.80, 0.05)
@@ -166,6 +170,7 @@ def create_sound_menu():
     sound_menu.add_animation(AnimationGenerator.characters_crossing_screen(INIT_PARAMS.INITIAL_RESOLUTION, *INIT_PARAMS.ALL_FPS))
     return sound_menu
 
+@time_it
 def create_video_menu():
     positions           = UtilityBox.size_position_generator(5, 0.80, 0.10, 0.10, final_offset=0.15)
     button_size         = next(positions)
@@ -195,10 +200,17 @@ def create_board_params():
 @time_it
 def pre_start():
     start_pygame()
+    draw_start_bg()
     game = Game('sava_drow', INIT_PARAMS.INITIAL_RESOLUTION, INIT_PARAMS.INITIAL_FPS)
     game.add_screens(create_main_menu(), create_sound_menu(), create_config_menu(), create_video_menu())
     game.update_board_params(**create_board_params())
     return game
+
+@no_size_limit
+def draw_start_bg():
+    start_bg = ResizedSurface.get_surface(PATHS.START_BG, INIT_PARAMS.INITIAL_RESOLUTION, 'fill', False)
+    pygame.display.get_surface().blit(start_bg, (0, 0))
+    pygame.display.flip()
 
 if __name__ == "__main__":
     game = pre_start()

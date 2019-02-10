@@ -49,6 +49,7 @@ class AnimationGenerator(object):
         return animation
 
     @staticmethod
+    @time_it
     def animated_tree_platform(resolution):
         tree_sprite = AnimatedSprite('tree', (0, 0), resolution, resolution, sprite_folder=PATHS.ANIMATED_TREE,\
                                     resize_smooth=False)
@@ -56,11 +57,13 @@ class AnimationGenerator(object):
         return tree_sprite
 
     @staticmethod
+    @time_it
     def industrial_layered_background(resolution, time, *fps):
         return AnimationGenerator.layered_animated_background(resolution, time, fps, PATHS.INDUSTRIAL_LAYERED_BG,\
                                                             'background', 'far', 'front', 'foreground')
 
     @staticmethod
+    @time_it
     def forest_layered_background(resolution, time, *fps):
         return AnimationGenerator.layered_animated_background(resolution, time, fps, PATHS.INDUSTRIAL_LAYERED_BG,\
                                                             'background', 'far', 'front', 'foreground')
@@ -107,25 +110,29 @@ class AnimationGenerator(object):
         return animation
 
     @staticmethod
+    @time_it
     def animated_waterfall_background(resolution, time, *fps):
         return AnimationGenerator.animated_static_background('waterfall', PATHS.ANIMATED_WATERFALL_BG, resolution, time, *fps)
 
     @staticmethod
+    @time_it
     def animated_cave_waterfall_background(resolution, time, *fps):
         return AnimationGenerator.animated_static_background('waterfall_cave', PATHS.ANIMATED_CAVE_WATERFALL_BG, resolution, time, *fps)
 
     @staticmethod
+    @time_it
     def animated_rain_tree(resolution, time, *fps):
         return AnimationGenerator.animated_static_background('spirit_tree', PATHS.ANIMATED_RAIN_TREE_BG, resolution, time, *fps)
     
     @staticmethod
+    @time_it
     def animated_rain_chinese(resolution, time, *fps):
         return AnimationGenerator.animated_static_background('chinese_chon_hon', PATHS.ANIMATED_RAIN_CHINESE_BG, resolution, time, *fps)
     
     ####NORMAL ANIMATIONS FORM HERE ON
     @staticmethod
     def explosions_bottom(resolution, *fps, bottom_offset=0.00, init_ratio=0.05):
-        animation = LoopedAnimation('EXPLOSIUNS')
+        animation = LoopedAnimation('MICHAEL BAY')
         folder = PATHS.EXPLOSIONS
         index = 1
         ratio = init_ratio
@@ -214,6 +221,7 @@ class AnimationGenerator(object):
         return animation
 
     @staticmethod
+    @time_it
     def sprite_teleporting_screen(resolution, time, folder, *fps, start_pos=0.20, end_pos=0.80):
         if not isinstance(fps, tuple):
             fps = fps,

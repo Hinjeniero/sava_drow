@@ -91,9 +91,6 @@ def create_main_menu():
     main_menu   = Menu('main_menu', USEREVENTS.MAINMENU_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, buttonStart, buttonOnlineHost, buttonOnlineCli, buttonContinue, buttonConfig, buttonSound, buttonGraphics,
                         animated_background=bg, background_path=PATHS.DEFAULT_BG, songs_paths=MENU_SONGS, do_align=False)
     main_menu.add_dialogs(create_exit_dialog())
-    input_box = TextBox('tyes', 0, (0, 0), (800, 80), INIT_PARAMS.INITIAL_RESOLUTION, texture=PATHS.SHORT_BUTTON, keep_aspect_ratio=False)
-    main_menu.add_sprites(input_box)
-
     return main_menu 
 
 @time_it

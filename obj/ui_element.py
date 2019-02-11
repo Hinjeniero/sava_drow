@@ -789,6 +789,7 @@ class Dialog (InfoBoard):
         self.image.blit(button.image, button.rect.topleft)
 
 class TextBox(UIElement):
+    CURSOR_CHAR = 'I'
     def __init__(self, id_, user_event_id, position, element_size, canvas_size, char_limit=0, **params):
         params['overlay'] = False
         super().__init__(id_, None, user_event_id, position, element_size, canvas_size, **params)
@@ -800,12 +801,23 @@ class TextBox(UIElement):
 
     @staticmethod
     def generate(self):
-        self.add_text_sprite('prompt', '|'+self.text)
+        self.add_text_sprite('prompt', TextBox.CURSOR_CHAR)
 
     def hitbox_action(self, command, value):
         """Executes the associated action of the element. To be called when a click or key-press happens."""
-        if ('mouse' in command and ('click' in command or 'button' in command)):  #Set the cursor whenever
-            print("MOUSE")
+        if ('mouse' in command and ('click' in command or 'button' in command)):  #TODO Set the cursor in its place whenever
+            x_mouse = value[0]-self.rect.x
+            text_sprite = self.sprites.sprites()[0]
+            if x_mouse-text_sprite.rect.x < 0:                              #Before the entire text
+                cursor_position = 0
+            elif (text_sprite.rect.x+text_sprite.rect.width)-x_mouse < 0:   #After the entire text
+                cursor_position = len(self.text)
+            else:
+                cursor_position = int(((x_mouse-text_sprite.rect.x)/text_sprite.rect.width)*len(self.text))
+                if cursor_position < self.cursor_pos:                       #The +1 is due to the cursor in the middle of everything
+                    cursor_position += 1
+                self.change_cursor_position(int(cursor_position))
+            self.change_cursor_position(cursor_position)
         elif 'dec' in command or 'left' in command:       
             self.change_cursor_position(self.cursor_pos-1)
         elif 'inc' in command or 'right' in command:    
@@ -840,7 +852,7 @@ class TextBox(UIElement):
 
     def update_text(self):
         self.sprites.empty()    #Deleting the text inside
-        text = self.text[:self.cursor_pos]+'I'+self.text[self.cursor_pos:] if self.active else self.text
+        text = self.text[:self.cursor_pos]+TextBox.CURSOR_CHAR+self.text[self.cursor_pos:] if self.active else self.text
         self.add_text_sprite('text', text, text_size=tuple(0.95*x for x in self.rect.size))
         self.regenerate_image()
 

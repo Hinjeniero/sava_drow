@@ -19,7 +19,7 @@ from external.Mastermind import *   #I dont like this one a bit, since it has to
 from obj.board_server import Server
 from obj.ui_element import ScrollingText
 #Selfmade libraries
-from settings import NETWORK
+from settings import NETWORK, MESSAGES
 from obj.board import Board
 from obj.players import Character
 from obj.utilities.decorators import run_async
@@ -127,7 +127,7 @@ class NetworkBoard(Board):
         self.send_data({"host": host, "id": self.uuid})
         if host:
             self.send_data_async({"params": self.get_board_params()})
-            self.log_on_screen("Sent board creation settings to server")
+            self.log_on_screen("sent board creation settings to server")
         else:
             self.request_data_async("params")
             self.request_data_async("players")          #To get the number of players
@@ -135,7 +135,7 @@ class NetworkBoard(Board):
             self.request_data_async("characters_data")  #To get the data of the characters
         dice = random.randint(1, 6)
         self.send_data_async({"dice": dice, "id":self.uuid})    #Sending dice result for the player assignments
-        self.log_on_screen("Rolled a "+str(dice))
+        self.log_on_screen("rolled a "+str(dice))
 
     def connect(self):   #TODO SEND ID IN CONNECT?
         """Connects the client to the server if the ip and port are available."""
@@ -188,20 +188,20 @@ class NetworkBoard(Board):
         Args:
             response (dict):JSON schema. Contains the various replies of the server."""
         if "params" in response and not self.server:    #REQUESTING THE BOARD GENERATION PARAMETERS
-            self.log_on_screen('Received the board params, creating board...')
+            self.log_on_screen('received the board params, creating board...')
             self.params.update(response["params"])
             self.generate_mapping()
-            self.log_on_screen('Created map...')
+            self.log_on_screen('created map...')
             self.generate_environment()
-            self.log_on_screen('Created the board...')
+            self.log_on_screen('created the board...')
             self.flags["board_done"].set()
         elif "players" in response and not self.server:
-            self.log_on_screen('Received the players number, creating mock players...')
+            self.log_on_screen('received the players number, creating mock players...')
             self.flags["board_done"].wait()
             for i in range (0, 4, 4//response["players"]):
                 self.create_player("null", i, None, empty=True)  #The name will be overwritten later on
         elif "players_data" in response and not self.server:
-            self.log_on_screen('Received the players data, updating players...')
+            self.log_on_screen('received the players data, updating players...')
             self.flags["board_done"].wait()
             self.flags["players_ammount_done"].wait()
             for received_player in response["players_data"]:
@@ -367,13 +367,13 @@ class NetworkBoard(Board):
             if char:
                 chars.append(char.json(cell.get_real_index()))
         self.send_data_async({"characters_data": chars})
-        self.log_on_screen("Sent the characters and players data to the server")
+        self.log_on_screen("sent the characters and players data to the server")
         self.send_ready()
 
     def send_ready(self):
         """Sends the command 'ready' to the server, signalizing that this client is ready to start the game."""
         self.send_data_async({'ready': True})
-        self.log_on_screen("Ready sent, waiting for the players...")
+        self.log_on_screen("ready, waiting for the other players...")
     
     def mouse_handler(self, event, mouse_movement, mouse_position):
         """Captures the mouse and handles the events regarding this one. More info in method in superclass.
@@ -426,7 +426,7 @@ class NetworkBoard(Board):
             if not self.ready:
                 self.overlay_text.draw(surface)
         except pygame.error:
-            LOG.log('Warning', 'A surface was locked during the blit, skipping until next frame.')
+            LOG.log(*MESSAGES.LOCKED_SURFACE_EXCEPTION)
 
     def destroy(self):
         """Sets the flags to signal the end of the threads and disconnects 

@@ -96,6 +96,9 @@ class NETWORK:
     CLIENT_TIMEOUT_CONNECT = 30
     CLIENT_TIMEOUT_RECEIVE = 30
 
+class MESSAGES:
+    LOCKED_SURFACE_EXCEPTION = ('Warning', 'A surface was locked during the blit, skipping until next frame.')
+
 #PATHS TO FILES/IMAGES/SOUNDS
 #---Global paths(Container paths)
 class PATHS:

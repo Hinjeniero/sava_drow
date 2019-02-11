@@ -18,6 +18,7 @@ from os.path import isfile, join, dirname
 #External libraries
 import external.gradients as gradients
 #Selfmade libraries
+from settings import MESSAGES
 from obj.utilities.colors import WHITE, RED, LIGHTGRAY, DARKGRAY
 from obj.utilities.resizer import Resizer
 from obj.utilities.utility_box import UtilityBox
@@ -130,14 +131,17 @@ class Sprite(pygame.sprite.Sprite):
             surface (:obj: pygame.Surface): Surface to draw the Sprite. It's usually the display.
         """
         if self.visible:
-            if offset:
-                surface.blit(self.image, tuple(off+pos for off, pos in zip(offset, self.rect.topleft)))
-            else:
-                surface.blit(self.image, self.rect)
-            if self.enabled:
-                if self.overlay and self.use_overlay and self.active:    
-                    self.draw_overlay(surface, offset=offset)               
-                self.update()
+            try:
+                if offset:
+                    surface.blit(self.image, tuple(off+pos for off, pos in zip(offset, self.rect.topleft)))
+                else:
+                    surface.blit(self.image, self.rect)
+                if self.enabled:
+                    if self.overlay and self.use_overlay and self.active:    
+                        self.draw_overlay(surface, offset=offset)               
+                    self.update()
+            except pygame.error:
+                LOG.log(*MESSAGES.LOCKED_SURFACE_EXCEPTION)
 
     def update_mask(self):
         """Updates the mask attribute afther the image attribute. To use after a change in self.image."""
@@ -660,7 +664,9 @@ class MultiSprite(Sprite):
             sprite (Sprite):    sprite to add."""
         sprite.use_overlay   = False #Not interested in overlays from a lot of sprites at the same time
         self.sprites.add(sprite)
-        self.image.blit(sprite.image, sprite.rect.topleft)
+        while self.image.get_locked():
+            pass
+        sprite.draw(self.image)
 
     def regenerate_image(self):
         """Generates the image again, blitting the Sprites in the sprite list.
@@ -669,7 +675,7 @@ class MultiSprite(Sprite):
         super().regenerate_image()
         self.copy_read_only_texture()
         for sprite in self.sprites:   
-            self.image.blit(sprite.image, sprite.rect.topleft)
+            sprite.draw(self.image)
 
     def set_size(self, size, update_rects=True):
         """Changes the size of the MultiSprite. All the internal Sprites are resized too as result.
@@ -714,7 +720,7 @@ class MultiSprite(Sprite):
             params (:dict:):    Dict of keywords and values as parameters to create the TextSprite
                                 text_color, e.g.
         '''
-        size = self.rect.size if text_size is None else text_size
+        size = self.rect.size if not text_size else text_size
         #The (0, 0) relative positoin is a decoy so the constructor of textsprite doesn't get cocky
         text = TextSprite(id_, (0, 0), size, self.rect.size, text, **params)
         #We calculate the center AFTER because the text size may vary due to the badly proportionated sizes.W

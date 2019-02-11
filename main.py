@@ -21,7 +21,7 @@ from animation_generator import AnimationGenerator
 from obj.board import Board
 from obj.menu import Menu
 from obj.sprite import AnimatedSprite
-from obj.ui_element import UIElement, TextSprite, InfoBoard, Dialog
+from obj.ui_element import UIElement, TextSprite, InfoBoard, Dialog, TextBox
 from obj.utilities.colors import RED, BLACK, WHITE, GREEN
 from obj.utilities.logger import Logger as LOG
 from obj.utilities.surface_loader import ResizedSurface, no_size_limit
@@ -78,7 +78,7 @@ def create_main_menu():
     buttonContinue  = UIElement.factory('button_continue', "continue_game_go_main_board", USEREVENTS.MAINMENU_USEREVENT, next(positions), button_size,\
                                         INIT_PARAMS.INITIAL_RESOLUTION, text="Continue last game", keep_aspect_ratio = False,\
                                         gradient=next(gradients), gradient_type='vertical', texture=PATHS.SHORT_BUTTON)
-    buttonConfig    = UIElement.factory('button_params_menu', "go_menu_params_config", USEREVENTS.MAINMENU_USEREVENT, next(positions),button_size,\
+    buttonConfig    = UIElement.factory('button_params_menu', "go_menu_params_config", USEREVENTS.MAINMENU_USEREVENT, next(positions), button_size,\
                                         INIT_PARAMS.INITIAL_RESOLUTION, text="Parameters", gradient = next(gradients), gradient_type='vertical', texture=PATHS.SHORT_BUTTON, keep_aspect_ratio = False)
     buttonSound     = UIElement.factory('button_sound', "go_menu_sound_music", USEREVENTS.MAINMENU_USEREVENT, next(positions), button_size,\
                                         INIT_PARAMS.INITIAL_RESOLUTION, text="Music menu", gradient = next(gradients), gradient_type='vertical', texture=PATHS.SHORT_BUTTON, keep_aspect_ratio = False)
@@ -91,6 +91,9 @@ def create_main_menu():
     main_menu   = Menu('main_menu', USEREVENTS.MAINMENU_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, buttonStart, buttonOnlineHost, buttonOnlineCli, buttonContinue, buttonConfig, buttonSound, buttonGraphics,
                         animated_background=bg, background_path=PATHS.DEFAULT_BG, songs_paths=MENU_SONGS, do_align=False)
     main_menu.add_dialogs(create_exit_dialog())
+    input_box = TextBox('tyes', 0, (0, 0), (800, 80), INIT_PARAMS.INITIAL_RESOLUTION, texture=PATHS.SHORT_BUTTON, keep_aspect_ratio=False)
+    main_menu.add_sprites(input_box)
+
     return main_menu 
 
 @time_it

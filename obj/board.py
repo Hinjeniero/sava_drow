@@ -15,9 +15,10 @@ import math
 import numpy
 import os
 import random
-#Selfmade libraries
-from obj.utilities.utility_box import UtilityBox
 from pygame.locals import *
+#Selfmade libraries
+from settings import MESSAGES
+from obj.utilities.utility_box import UtilityBox
 from obj.polygons import Circle, Rectangle, Circumference
 from obj.utilities.colors import RED, WHITE, DARKGRAY, LIGHTGRAY, TRANSPARENT_GRAY
 from obj.screen import Screen, LoadingScreen
@@ -590,7 +591,7 @@ class Board(Screen):
             if self.current_player:
                 self.current_player.draw(surface)   #This draws the player's infoboard
         except pygame.error: 
-            LOG.log('Warning', 'A surface was locked during the blit, skipping until next frame.')
+            LOG.log(*MESSAGES.LOCKED_SURFACE_EXCEPTION)
             
     def event_handler(self, event, keys_pressed, mouse_buttons_pressed, mouse_movement=False, mouse_pos=(0, 0)):
         """Handles any pygame event. This allows for user interaction with the object.

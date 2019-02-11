@@ -51,8 +51,9 @@ class UIElement(MultiSprite):
         params['shape'] = 'rectangle'
         super().__init__(id_, position, size, canvas_size, **params) 
         #Basic parameters on top of those inherited from Sprite
-        self.action       = command
-        self.event_id     = user_event_id
+        self.action     = command
+        self.event_id   = user_event_id
+        self.has_input  = False    
 
     def get_id(self):
         """Returns:
@@ -788,29 +789,64 @@ class Dialog (InfoBoard):
         self.image.blit(button.image, button.rect.topleft)
 
 class TextBox(UIElement):
-    def __init__(self, id_, user_event_id, element_size, canvas_size, **params):
-        super().__init__(id_, user_event_id, (0, 0), element_size, canvas_size, **params)
+    def __init__(self, id_, user_event_id, position, element_size, canvas_size, char_limit=0, **params):
+        params['overlay'] = False
+        super().__init__(id_, None, user_event_id, position, element_size, canvas_size, **params)
         self.text = ''
+        self.has_input  = True
         self.cursor_pos = 0
-        self.char_limit = 0 #0 is unlimited
+        self.char_limit = char_limit #0 is unlimited
         TextBox.generate(self)
 
     @staticmethod
     def generate(self):
         self.add_text_sprite('prompt', '|'+self.text)
-        self.regenerate_shit()
+
+    def hitbox_action(self, command, value):
+        """Executes the associated action of the element. To be called when a click or key-press happens."""
+        if ('mouse' in command and ('click' in command or 'button' in command)):  #Set the cursor whenever
+            print("MOUSE")
+        elif 'dec' in command or 'left' in command:       
+            self.change_cursor_position(self.cursor_pos-1)
+        elif 'inc' in command or 'right' in command:    
+            self.change_cursor_position(self.cursor_pos+1)
+        else:   #TODO Could add a couple more of commands, like home and shit. but that's a lot of work for little benefit
+            value = str(value).lower()
+            if 'backspace' in value:
+                self.delete_char()
+            elif 'space' in value:
+                self.add_char(' ')
+            else:
+                if len(value) == 1:
+                    self.add_char(str(value))
+
+    def change_cursor_position(self, position):
+        self.cursor_pos = int(position)
+        self.cursor_pos = len(self.text) if self.cursor_pos>len(self.text)\
+        else 0 if self.cursor_pos < 0 else self.cursor_pos
+        self.update_text()
 
     def add_char(self, char):
-        self.text += char
-        self.update_text()
+        if self.char_limit == 0 or len(self.text) < self.char_limit:
+            self.text = self.text[:self.cursor_pos]+char+self.text[self.cursor_pos:]
+            self.cursor_pos = self.cursor_pos+1 
+            self.update_text()
 
     def delete_char(self):
-        self.text = self.text[:-1]
-        self.update_text()
+        if len(self.text) > 0:
+            self.text = self.text[:self.cursor_pos-1]+self.text[self.cursor_pos:]
+            self.cursor_pos = self.cursor_pos-1 
+            self.update_text()
 
     def update_text(self):
-        self.get_sprite('prompt').set_text('|'+self.text)
-        self.regenerate_image() #TODO CHECK WELL HOW TO BLIT THIS SHIT ONTO THE IMAGE. SAME WITH SCROLLING TEXT OVERLAY
+        self.sprites.empty()    #Deleting the text inside
+        text = self.text[:self.cursor_pos]+'I'+self.text[self.cursor_pos:] if self.active else self.text
+        self.add_text_sprite('text', text, text_size=tuple(0.95*x for x in self.rect.size))
+        self.regenerate_image()
+
+    def set_active(self, state):
+        super().set_active(state)
+        self.update_text()
 
 class ScrollingText(UIElement):
     #Half transparent background with text on it.
@@ -819,21 +855,15 @@ class ScrollingText(UIElement):
         self.transparency = transparency
         self.image = self.image.convert()
         self.image.set_alpha(transparency)
-        self.texts = pygame.sprite.OrderedUpdates()
 
     def add_msg(self, text, msg_size=(0.85, 0.10)):
-        self.add_text_sprite('screen_msg_'+str(len(self.texts.sprites())), text,\
+        self.add_text_sprite('screen_msg_'+str(len(self.sprites.sprites())), text,\
                             text_size=tuple(x*y for x,y in zip(self.rect.size, msg_size)))
-        text_sprite = self.sprites.sprites()[0]
-        self.sprites.empty()
-        #Drawing it at the bottom
-        text_sprite.set_position((text_sprite.rect.x, self.resolution[1]-text_sprite.rect.height))
-        self.texts.add(text_sprite)
-        for sprite in self.texts:
+        text_sprite = self.sprites.sprites()[-1]
+        text_sprite.set_position((text_sprite.rect.x, self.resolution[1]))
+        for sprite in self.sprites:
             sprite.set_position((sprite.rect.x, sprite.rect.y-text_sprite.rect.height))
         self.regenerate_image()
-        for text in self.texts:
-            text.draw(self.image)
 
     def regenerate_image(self):
         super().regenerate_image()

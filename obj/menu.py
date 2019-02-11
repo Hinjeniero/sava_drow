@@ -105,12 +105,12 @@ class Menu (Screen):
             mouse_movement (boolean, default=False):    True if there was mouse movement since the last call.
             mouse_pos (:tuple: int, int, default=(0,0)):Current mouse position. In pixels.
         """
-        if event.type == pygame.KEYDOWN:                    
-            self.keyboard_handler(keys_pressed)
+        if event.type == pygame.KEYDOWN:                 
+            self.keyboard_handler(keys_pressed, event)
         if mouse_movement or event.type == pygame.MOUSEBUTTONDOWN or event.type == pygame.MOUSEBUTTONUP:    
             self.mouse_handler(event, mouse_buttons_pressed, mouse_movement, mouse_pos)                 
 
-    def keyboard_handler(self, keys_pressed):
+    def keyboard_handler(self, keys_pressed, event):
         """Handles any pygame keyboard related event. This allows for user interaction with the object.
         Posibilities:
         TODO
@@ -119,6 +119,8 @@ class Menu (Screen):
                                                 Said booleans will be True if that specific key was pressed.
         """
         self.play_sound('key')
+        if self.active_sprite.sprite and self.active_sprite.sprite.has_input:
+            self.execute_active_sprite('add_input_character', pygame.key.name(event.key))
         if keys_pressed[pygame.K_DOWN]:
             if self.active_sprite.sprite is self.scroll_sprite:
                 self.execute_active_sprite('right_arrow', -1)

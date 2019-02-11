@@ -248,7 +248,7 @@ class Game(object):
                     self.esc_handler()
                 elif event.key == pygame.K_F4 and (all_keys[pygame.K_LALT] or all_keys[pygame.K_RALT]):
                     return True
-                else:
+                else:   #How to differentiate when to writing in an input box and when to start an easter egg
                     self.process_last_input(event)
             elif event.type >= pygame.USEREVENT:        
                 self.user_command_handler(event)

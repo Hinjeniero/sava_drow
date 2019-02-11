@@ -65,7 +65,6 @@ class Screen(object):
         self.resolution = resolution
         #Sprites
         self.background = None  #Created in generate
-        self.input_box  = None  #Added after creation if needed
         self.dialog     = None
         self.dialogs    = pygame.sprite.Group()
         self.sprites    = pygame.sprite.OrderedUpdates()

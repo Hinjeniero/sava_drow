@@ -724,4 +724,4 @@ class MultiSprite(Sprite):
         #With the actual center according to the alignment, we now associate it
         text.rect.center = center
         text.set_position(text.rect.topleft) #To reset the real_rect argument
-        self.add_sprite(text)  
+        self.add_sprite(text)

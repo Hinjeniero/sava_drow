@@ -95,7 +95,8 @@ class Board(Screen):
                         'center_cell'           : False,
                         'path_color'            : WHITE,
                         'path_width'            : 5,
-                        'platform_sprite'       : None
+                        'platform_sprite'       : None,
+                        'loading_screen_text'   : "Loading, hang tight"
     }
     #CHANGE MAYBE THE THREADS OF CHARACTER TO JOIN INSTEAD OF NUM PLAYERS AND SHIT
     def __init__(self, id_, event_id, end_event_id, resolution, *players, empty=False, **params):
@@ -154,7 +155,7 @@ class Board(Screen):
         #INIT
 
         if self.params['loading_screen']:
-            self.loading_screen = LoadingScreen(self.id+"_loading", self.event_id, self.resolution, text="Loading, hang tight")
+            self.loading_screen = LoadingScreen(self.id+"_loading", self.event_id, self.resolution, text=self.params['loading_screen_text'])
         #REST
         platform_size   = tuple(min(self.resolution)*self.params['platform_proportion'] for _ in self.resolution)
         centered_pos    = tuple(x//2-y//2 for x, y in zip(self.resolution, platform_size))

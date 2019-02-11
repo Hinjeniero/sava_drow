@@ -791,6 +791,7 @@ class TextBox(UIElement):
     def __init__(self, id_, user_event_id, element_size, canvas_size, **params):
         super().__init__(id_, user_event_id, (0, 0), element_size, canvas_size, **params)
         self.text = ''
+        self.cursor_pos = 0
         self.char_limit = 0 #0 is unlimited
         TextBox.generate(self)
 
@@ -813,21 +814,29 @@ class TextBox(UIElement):
 
 class ScrollingText(UIElement):
     #Half transparent background with text on it.
-    def __init__(self, id_, user_event_id, canvas_size, **params):
-        super().__init__(id_, user_event_id, (0, 0), canvas_size, canvas_size, **params)
-        self.image.set_alpha(128)
+    def __init__(self, id_, user_event_id, canvas_size, transparency=128, **params):
+        super().__init__(id_, None, user_event_id, (0, 0), canvas_size, canvas_size, **params)
+        self.transparency = transparency
+        self.image = self.image.convert()
+        self.image.set_alpha(transparency)
         self.texts = pygame.sprite.OrderedUpdates()
 
     def add_msg(self, text, msg_size=(0.85, 0.10)):
-        self.add_text_sprite('screen_msg_'+str(len(self.texts.sprites())), msg,\
+        self.add_text_sprite('screen_msg_'+str(len(self.texts.sprites())), text,\
                             text_size=tuple(x*y for x,y in zip(self.rect.size, msg_size)))
-        self.texts.add(self.sprites.sprites()[0])
+        text_sprite = self.sprites.sprites()[0]
         self.sprites.empty()
+        #Drawing it at the bottom
+        text_sprite.set_position((text_sprite.rect.x, self.resolution[1]-text_sprite.rect.height))
+        self.texts.add(text_sprite)
         for sprite in self.texts:
-            sprite.rect.y += msg_size[1]*self.rect.height
+            sprite.set_position((sprite.rect.x, sprite.rect.y-text_sprite.rect.height))
         self.regenerate_image()
+        for text in self.texts:
+            text.draw(self.image)
 
     def regenerate_image(self):
         super().regenerate_image()
-        self.image.set_alpha(128)
+        self.image = self.image.convert()
+        self.image.set_alpha(self.transparency)
     

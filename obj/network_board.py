@@ -17,6 +17,7 @@ import pygame
 #from external.Mastermind._mm_errors import *   #This one doesnt catch the exception for some fuckin reasoni
 from external.Mastermind import *   #I dont like this one a bit, since it has to import everything
 from obj.board_server import Server
+from obj.ui_element import ScrollingText
 #Selfmade libraries
 from settings import NETWORK
 from obj.board import Board
@@ -58,6 +59,7 @@ class NetworkBoard(Board):
                                 platform_proportion, platform_alignment, inter_path_frequency, circles_per_lvl,\
                                 max_levels, path_color, path_width.
         """
+        params['loading_screen_text'] = ''
         if host:
             super().__init__(id_, event_id, end_event_id, resolution, **params)
         else:
@@ -65,6 +67,8 @@ class NetworkBoard(Board):
         self.uuid = uuid.uuid1().int    #Using this if crashing would led to more conns than players
         self.ip = None
         self.port = None
+        self.overlay_text = None
+        self.ready = False
         self.connected = threading.Event()
         self.change_turn = threading.Event()
         self.next_turn_event = pygame.event.Event(event_id, command='next_turn_network_board')
@@ -87,6 +91,7 @@ class NetworkBoard(Board):
         Args:
             self (:obj: NetworkBoard):  NetworkBoard object calling this method
             host (boolean): True if this board is the host, False otherwise."""
+        self.overlay_text = ScrollingText('updates', self.event_id, self.resolution, transparency=180)
         self.port = NETWORK.SERVER_PORT
         self.client = MastermindClientTCP(NETWORK.CLIENT_TIMEOUT_CONNECT, NETWORK.CLIENT_TIMEOUT_RECEIVE)
         try:
@@ -110,6 +115,9 @@ class NetworkBoard(Board):
             LOG.log("ERROR", traceback.format_exc())
             pygame.event.post(self.connection_error_event)
 
+    def log_on_screen(self, msg):
+        self.overlay_text.add_msg(msg)
+
     def send_handshake(self, host):
         """"Sends the first request to the server, with our ID and a host boolean.
         If this is the host, will send the parameters for the board creation.
@@ -119,12 +127,15 @@ class NetworkBoard(Board):
         self.send_data({"host": host, "id": self.uuid})
         if host:
             self.send_data_async({"params": self.get_board_params()})
+            self.log_on_screen("Sent board creation settings to server")
         else:
             self.request_data_async("params")
             self.request_data_async("players")          #To get the number of players
             self.request_data_async("players_data")     #To get the data of the players
             self.request_data_async("characters_data")  #To get the data of the characters
-        self.send_data_async({"dice": random.randint(1, 6), "id":self.uuid})    #Sending dice result for the player assignments
+        dice = random.randint(1, 6)
+        self.send_data_async({"dice": dice, "id":self.uuid})    #Sending dice result for the player assignments
+        self.log_on_screen("Rolled a "+str(dice))
 
     def connect(self):   #TODO SEND ID IN CONNECT?
         """Connects the client to the server if the ip and port are available."""
@@ -177,15 +188,20 @@ class NetworkBoard(Board):
         Args:
             response (dict):JSON schema. Contains the various replies of the server."""
         if "params" in response and not self.server:    #REQUESTING THE BOARD GENERATION PARAMETERS
+            self.log_on_screen('Received the board params, creating board...')
             self.params.update(response["params"])
             self.generate_mapping()
+            self.log_on_screen('Created map...')
             self.generate_environment()
+            self.log_on_screen('Created the board...')
             self.flags["board_done"].set()
         elif "players" in response and not self.server:
+            self.log_on_screen('Received the players number, creating mock players...')
             self.flags["board_done"].wait()
             for i in range (0, 4, 4//response["players"]):
                 self.create_player("null", i, None, empty=True)  #The name will be overwritten later on
         elif "players_data" in response and not self.server:
+            self.log_on_screen('Received the players data, updating players...')
             self.flags["board_done"].wait()
             self.flags["players_ammount_done"].wait()
             for received_player in response["players_data"]:
@@ -220,6 +236,7 @@ class NetworkBoard(Board):
                 player.update()
             self.send_ready()
         elif "start" in response:
+            self.ready = True
             self.activate_my_characters()
             if self.current_player.uuid == self.my_player:
                 self.update_map()
@@ -350,11 +367,13 @@ class NetworkBoard(Board):
             if char:
                 chars.append(char.json(cell.get_real_index()))
         self.send_data_async({"characters_data": chars})
+        self.log_on_screen("Sent the characters and players data to the server")
         self.send_ready()
 
     def send_ready(self):
         """Sends the command 'ready' to the server, signalizing that this client is ready to start the game."""
         self.send_data_async({'ready': True})
+        self.log_on_screen("Ready sent, waiting for the players...")
     
     def mouse_handler(self, event, mouse_movement, mouse_position):
         """Captures the mouse and handles the events regarding this one. More info in method in superclass.
@@ -364,11 +383,12 @@ class NetworkBoard(Board):
             event (:obj: pygame.event): Event received from the pygame queue.
             mouse_movement( boolean, default=False):    True if there was mouse movement since the last call.
             mouse_position (:tuple: int, int, default=(0,0)):   Current mouse position. In pixels."""
-        super().mouse_handler(event, mouse_movement, mouse_position)
-        if mouse_movement:
-            if self.drag_char:
-                center = tuple(x/y for x,y in zip(self.drag_char.sprite.rect.center, self.resolution))
-                self.send_data_async({"move_character":self.drag_char.sprite.uuid, "center": center}) #TODO Send drag_char position
+        if self.ready:
+            super().mouse_handler(event, mouse_movement, mouse_position)
+            if mouse_movement:
+                if self.drag_char:
+                    center = tuple(x/y for x,y in zip(self.drag_char.sprite.rect.center, self.resolution))
+                    self.send_data_async({"move_character":self.drag_char.sprite.uuid, "center": center})
 
     def pickup_character(self):
         """Picks up a character, and get the possible destinies if it is our turn. More info in this case in superclass method.
@@ -399,6 +419,14 @@ class NetworkBoard(Board):
             if self.current_player.uuid == self.my_player:
                 self.my_turn = True
                 self.show_my_turn_popup()
+
+    def draw(self, surface):
+        try:
+            super().draw(surface)
+            if not self.ready:
+                self.overlay_text.draw(surface)
+        except pygame.error:
+            LOG.log('Warning', 'A surface was locked during the blit, skipping until next frame.')
 
     def destroy(self):
         """Sets the flags to signal the end of the threads and disconnects 

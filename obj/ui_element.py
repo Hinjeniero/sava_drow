@@ -882,3 +882,6 @@ class ScrollingText(UIElement):
         self.image = self.image.convert()
         self.image.set_alpha(self.transparency)
     
+class Table(InfoBoard):
+    def __init__(self, id_, user_event_id, element_size, canvas_size, **params):
+        super().__init__(id_, user_event_id, element_size, canvas_size, **params)

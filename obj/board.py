@@ -783,6 +783,12 @@ class Board(Screen):
             #Checking collision with paths
             path = pygame.sprite.spritecollideany(mouse_sprite, self.paths, collided=pygame.sprite.collide_mask)
             self.set_active_path(path)
+
+    def show_end_stats(self):
+        pass
+
+    def show_scoreboard(self):
+        pass
     
     def destroy(self):
         pass

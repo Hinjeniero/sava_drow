@@ -428,6 +428,9 @@ class NetworkBoard(Board):
         except pygame.error:
             LOG.log(*MESSAGES.LOCKED_SURFACE_EXCEPTION)
 
+    def show_end_stats(self):
+        pass
+
     def destroy(self):
         """Sets the flags to signal the end of the threads and disconnects 
         clients, and the server if this networkboard is the host."""

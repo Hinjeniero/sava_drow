@@ -9,6 +9,7 @@ Have the following classes, inheriting represented by tabs:
         ↑Priestess
         ↑Pawn
         ↑MatronMother
+        ↑HolyChampion
 --------------------------------------------"""
 
 __all__ = ["Player", "Character", "Warrior", "Wizard", "Priestess", "Pawn", "MatronMother", "HolyChampion"]
@@ -21,19 +22,20 @@ import uuid
 from os import listdir
 from os.path import isfile, join, dirname
 #Selfmade libraries
-from obj.utilities.exceptions import BadCharacterInitException, StateNotFoundException
-from obj.utilities.resizer import Resizer
-from obj.paths import Restriction, Movements
-from obj.utilities.logger import Logger as LOG
-from obj.utilities.decorators import run_async
+from settings import PATHS
 from obj.sprite  import AnimatedSprite
 from obj.ui_element import InfoBoard
+from obj.paths import Restriction, Movements
+from obj.utilities.exceptions import BadCharacterInitException, StateNotFoundException
+from obj.utilities.resizer import Resizer
+from obj.utilities.logger import Logger as LOG
+from obj.utilities.decorators import run_async
 from obj.utilities.utility_box import UtilityBox
-from settings import PATHS
 
 class Player(object):
     """Player class. Each player has a name, some characters and his own turn.
     Attributes:
+        uuid (int): Unique identifier of this player.
         name (str): Name of the player.
         order (int):Order of arrival. A numerical identifier, if you prefer.
         characters (:obj: pygame.sprite.Group): Group of AnimatedSprites that contains all the
@@ -41,7 +43,10 @@ class Player(object):
         infoboard (:obj: InfoBoard):    UiElement subclass. A graphic element that shows all the information
                                         of the player. To be drawn when is the player's turn.
         turn (int): Current turn of this player.
-    
+        kills (int):Number of kills of this player (Captured enemy characters).
+        movements (int):    Number of movements of this player across the board (Sum of all the characters).
+        corpses (list->Character):  The captured characters. Saved to use the information on captures and such.
+        dead (boolean): True if this player has lost the essential characters, and cannot continue playing. False otherwise.
     """
     def __init__(self, name, order, sprite_size, canvas_size, infoboard=None, uuid=None, empty=False, **character_params):
         """Player constructor.
@@ -50,6 +55,10 @@ class Player(object):
             order (int):    Order of arrival. A numerical identifier, if you prefer.
             sprite_size (:tuple: int, int): Size of the image of the characters. In pixels.
             canvas_size (:tuple: int, int): Resolution of the screen. In pixels.
+            infoboard (:obj: Infoboard, default=None):  Infoboard of the player. It's shown through the game.
+            uuid (int, default=None):   Unique id of this player. If it's not supplied, it will be generated later.
+            empty (boolean, default=False): True if we create this player without characters (They will be added later).
+                                            In this case the character_params will not be used, and are not necessary.
             **character_params (:dict:):    Contains the more specific parameters to create the characters.
                                             Ammount of each type of char, name of their actions, and their folder paths."""
         self.uuid       = uuid
@@ -59,13 +68,23 @@ class Player(object):
         self.infoboard  = None  #Created in generate
         self.turn       = 0
         self.kills      = 0
-        self.corpses    = []    #Contains dead chars.
         self.movements  = 0
+        self.corpses    = []    #Contains dead chars.
         self.dead       = False #If the player has already lost
-        Player.generate(self, canvas_size, sprite_size, empty, **character_params)
+        Player.generate(self, sprite_size, canvas_size, empty, **character_params)
 
     @staticmethod
-    def generate(self, canvas_size, sprite_size, empty, **character_params):
+    def generate(self, sprite_size, canvas_size, empty, **character_params):
+        """Called at the end of the constructor. Generates the uuid, the characters, and the infoboard
+        (Following the input parameters, and if it's needed).
+        Args:
+            self (:obj: Player):    Player that needs to have its attributes generated.
+            sprite_size (:tuple:-> int, int): Size of the image of the characters. In pixels.
+            canvas_size (:tuple:-> int, int): Resolution of the screen. In pixels.
+            empty (boolean):    True if we want to generate the player's characters too.
+            **character_params (:dict:):Contains the more specific parameters to create the characters.
+                                        Ammount of each type of char, name of their actions, and their folder paths.
+            """
         if not self.uuid:
             self.uuid = uuid.uuid1().int
         if not empty:
@@ -78,52 +97,92 @@ class Player(object):
         infoboard.add_text_element('initial_padding', '', cols)
         infoboard.add_text_element('player_name', self.name, cols-2)   #Player name
         infoboard.add_text_element('player_number', 'id: '+str(self.order+1), cols-2)   #Player order
-        infoboard.add_text_element('player_chars', 'characters: '+str(len(self.characters)), cols-2)   #Player total ammount of chars
+        infoboard.add_text_element('player_chars', 'Total characters: '+str(len(self.characters)), cols)   #Player total ammount of chars
+        infoboard.add_text_element('player_kills', 'Total kills: '+str(self.kills), cols)
+        infoboard.add_text_element('player_movements', 'Total movements: '+str(self.movements), cols)
         self.infoboard = infoboard
 
     def register_movement(self, character):
+        """Saves the movements into the stats of the player and character.
+        Args:
+            character (:obj: Character):    Character that did the movements."""
         self.movements += 1
         self.get_character(character).movements += 1
 
     def add_kill(self, corpse, killer):
+        """Adds a kill to the player and to the character that did the kill/capture.
+        Also saves the captured/killed character, just in case that we need to show some stats about it later.
+        Args:
+            corpse (:obj: Character):   Character that was killed/captured.
+            killer (:obj: Character):   Character that did the kill/capture."""
         self.kills+=1
         self.corpses.append(corpse)
         self.get_character(killer).kills += 1
 
     def pause_characters(self):
+        """Set the state of all the characters of this player to 'stop'. Depending on the sprites, this
+        will set them to a grayscale animation, to simbolize that they are 'stopped'.
+        Also sets the active attribute of all of them to False."""
         for character in self.characters:
             character.set_state("stop")
             character.set_active(False)
 
     def unpause_characters(self):
+        """Set the state of all the characters of this player to 'idle'. Depending on the sprites, this
+        will set them to a full color animation, to simbolize that they are in movement and active again.
+        Also sets the active attribute of all of them to True."""
         for character in self.characters:
             character.set_state("idle")
             character.set_active(True)
 
     def get_character(self, character):
+        """Tries to get a character from this player.
+        Args:
+            character (:obj: Character):    Character that is searched for in this player.
+        Returns:
+            (Character||None):  Returns the asked character if it's found, None otherwise."""
         for char in self.characters:
             if character is char:
                 return char
 
     def update(self):
+        """Updates the infoboard of the player with the current stats."""
         self.infoboard.get_sprite('name').set_text(self.name)
-        self.infoboard.get_sprite('chars').set_text('characters: '+str(len(self.characters)))
+        self.infoboard.get_sprite('chars').set_text('Total characters: '+str(len(self.characters)))
+        self.infoboard.get_sprite('movements').set_text('Total movements: '+str(self.movements))
+        self.infoboard.get_sprite('kills').set_text('Total kills: '+str(self.kills))
         self.infoboard.regenerate_image()
 
     def draw(self, surface):
+        """Draws the infoboard of the player containing all of the current stats.
+        Args:
+            surface (:obj: pygame.Surface): Surface to draw the infoboard onto."""
         self.infoboard.draw(surface)
 
     def set_resolution(self, resolution):
-        """Resizes the infoboard and the player's characters"""
+        """Resizes the infoboard and the player's characters.
+        Args:
+            resolution (tuple -> int, int): New resolution of the player."""
         if self.infoboard:
             self.infoboard.set_canvas_size(resolution)
         for char in self.characters:
             char.set_canvas_size(resolution)
 
     def has_char(self, char):
+        """Checks if a character exists/is contained in this player.
+        Args:
+            char (:obj: Character): Character to search for.
+        Returns:
+            (boolean):  True if the character is within this player, False otherwise."""
         return self.characters.has(char)
 
     def remove_char(self, char):
+        """Removes the input character from the player. Obviously, if it's not found in this player
+        this doesn't remove anything.
+        If its founf and after removing it, a check is done in this player to see if it still has an
+        essential piece/character. If it doesn't, the dead flag is set to True..
+        Args:
+            char (:obj: Character): Character to be found and removed."""
         if self.has_char(char):
             self.characters.remove(char)
             self.update()
@@ -134,12 +193,66 @@ class Player(object):
                 self.dead = True
     
     def has_lost(self):
+        """Returns:
+            (boolean): True if the dead flag is True, False otherwise."""
         return self.dead
 
+    def most_used_class(self):
+        """Returns the current most used class of this player, by total number of movements
+        across all the characters belonging to the same class.
+        Returns:
+            ()"""
+        classes = {}
+        for char in self.characters:
+            try:
+                classes[char.get_type()] += char.movements
+            except KeyError:
+                classes[char.get_type()] = char.movements
+        return max(classes, key=lambda key: classes[key])
+
+    def best_class(self):
+        """Returns the current best class of this player, by total ammount of kills
+        across all the characters belonging to the same class.
+        Returns:
+            ()"""
+        classes = {}
+        for char in self.characters:
+            try:
+                classes[char.get_type()] += char.kills
+            except KeyError:
+                classes[char.get_type()] = char.kills
+        return max(classes, key=lambda key: classes[key])
+
+    def most_used_character(self):#TODO same shit as below
+        """Returns ths player character with the most movements.
+        Returns:
+            ()"""
+        return max(self.characters.sprites(), key=lambda char: char.movements)
+
+    def best_character(self):   #TODO Return name or something
+        """Returns this player characther with the most kills.
+        Returns:
+            ()"""
+        return max(self.characters.sprites(), key=lambda char: char.kills)
+
     def stats_json(self):
-        pass #TODO DO THIS WHEN WINNER
+        """Builds a json with the current information and state of the player.
+        The main key is 'stats', followed by a list of tuples with the schema (key(str), value(anything))
+        Returns:
+            (Dict->List->Tuples->(str, any)):   JSON with all the player current info."""
+        return {'stats':['key': 'Player name', 'value': self.name,
+                        'key': 'Player number', 'value': str(self.order),
+                        'key': 'Total kills', 'value': str(self.kills),
+                        'key': 'Total movements', 'value': str(self.movements),
+                        'key': 'Best class', 'value': self.best_class(),
+                        'key': 'Best character', 'value': self.best_character(),
+                        'key': 'Most used class', 'value': self.most_used_class(),
+                        'key': 'Most used character', 'value': self.most_used_character(),]}
 
     def json(self):
+        """Builds a JSON with the player most essential info.
+        Returns:
+            (Dict): JSON with the player essential info, like uuid, name, order, etc."""
         return  {'uuid': self.uuid,           
                 'name': self.name,
                 'order': self.order,

@@ -115,7 +115,6 @@ class Board(Screen):
         super().__init__(id_, event_id, resolution, **params)
         self.turn           = 0
         self.char_turns     = 0
-        self.end            = 0     
         #Graphic elements
         self.loading_screen = None  #Created in Board.generate
         self.cells          = pygame.sprite.Group()
@@ -125,7 +124,8 @@ class Board(Screen):
         self.paths          = pygame.sprite.Group()
         self.characters     = pygame.sprite.OrderedUpdates()
         self.current_player = None  #Created in add_player
-        
+        self.scoreboard     = None  #Created in Board.generate
+
         #Utilities to keep track
         self.active_cell    = pygame.sprite.GroupSingle()
         self.last_cell      = pygame.sprite.GroupSingle()
@@ -680,6 +680,7 @@ class Board(Screen):
                     self.players[old_index].pause_characters()
                     self.current_player.unpause_characters()
                 break
+        print(self.current_player.stats_json())
 
     def kill_character(self, cell, killer):
         #Badass Animation

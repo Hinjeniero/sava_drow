@@ -115,7 +115,7 @@ class Player(object):
         Args:
             corpse (:obj: Character):   Character that was killed/captured.
             killer (:obj: Character):   Character that did the kill/capture."""
-        self.kills+=1
+        self.kills += 1
         self.corpses.append(corpse)
         self.get_character(killer).kills += 1
 
@@ -147,7 +147,7 @@ class Player(object):
 
     def update(self):
         """Updates the infoboard of the player with the current stats."""
-        self.infoboard.get_sprite('name').set_text(self.name)
+        self.infoboard.get_sprite('name').set_text(self.name)   #The name can change in infoboard
         self.infoboard.get_sprite('chars').set_text('Total characters: '+str(len(self.characters)))
         self.infoboard.get_sprite('movements').set_text('Total movements: '+str(self.movements))
         self.infoboard.get_sprite('kills').set_text('Total kills: '+str(self.kills))
@@ -208,7 +208,8 @@ class Player(object):
                 classes[char.get_type()] += char.movements
             except KeyError:
                 classes[char.get_type()] = char.movements
-        return max(classes, key=lambda key: classes[key])
+        subclass = max(classes, key=lambda key: classes[key])
+        return (subclass, classes[subclass])
 
     def best_class(self):
         """Returns the current best class of this player, by total ammount of kills
@@ -221,7 +222,8 @@ class Player(object):
                 classes[char.get_type()] += char.kills
             except KeyError:
                 classes[char.get_type()] = char.kills
-        return max(classes, key=lambda key: classes[key])
+        subclass = max(classes, key=lambda key: classes[key])
+        return (subclass, classes[subclass])
 
     def most_used_character(self):#TODO same shit as below
         """Returns ths player character with the most movements.
@@ -240,14 +242,16 @@ class Player(object):
         The main key is 'stats', followed by a list of tuples with the schema (key(str), value(anything))
         Returns:
             (Dict->List->Tuples->(str, any)):   JSON with all the player current info."""
-        return {'stats':['key': 'Player name', 'value': self.name,
-                        'key': 'Player number', 'value': str(self.order),
-                        'key': 'Total kills', 'value': str(self.kills),
-                        'key': 'Total movements', 'value': str(self.movements),
-                        'key': 'Best class', 'value': self.best_class(),
-                        'key': 'Best character', 'value': self.best_character(),
-                        'key': 'Most used class', 'value': self.most_used_class(),
-                        'key': 'Most used character', 'value': self.most_used_character(),]}
+        best_char = self.best_character()
+        most_char = self.most_used_character()
+        return {'stats':[('Player name: ', self.name),
+                        ('Player number: ', str(self.order)),
+                        ('Total kills: ', str(self.kills)),
+                        ('Total movements: ', str(self.movements)),
+                        ('Best class (kills): ', str(self.best_class())),
+                        ('Best character (kills): ', best_char.id+" - "+str(best_char.kills)),
+                        ('Most used class (movements): ', str(self.most_used_class())),
+                        ('Most used character (movements): ', most_char.id+" - "+str(most_char.movements))]}
 
     def json(self):
         """Builds a JSON with the player most essential info.

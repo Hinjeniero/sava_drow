@@ -60,6 +60,15 @@ def create_exit_dialog(text='Are you sure that you want to exit?'):
     dialog.add_button(dialog.get_cols()//2, 'Cancel', 'no_cancel_false', gradient=((0, 0, 255, 255),(128, 128, 255, 255)))
     return dialog
 
+def create_input_dialog(text='IP, PORT'):
+    #Dialog
+    dialog = Dialog('exit_dialog', USEREVENTS.DIALOG_USEREVENT, (500, 200), INIT_PARAMS.INITIAL_RESOLUTION, text=text, rows=3, cols=2)
+    dialog.add_text_element('exit_dialog_text', text, dialog.get_cols())
+    dialog.add_text_element('exit_dialog_text', 'you will lose all your unsaved changes.', dialog.get_cols())
+    dialog.add_button(dialog.get_cols()//2, 'Ok', 'yes_ok_true', gradient=((0, 0, 255, 255),(128, 128, 255, 255)))
+    dialog.add_button(dialog.get_cols()//2, 'Cancel', 'no_cancel_false', gradient=((0, 0, 255, 255),(128, 128, 255, 255)))
+    return dialog
+
 @time_it
 def create_main_menu():
     #Create elements, main menu buttons (POSITIONS AND SIZES ARE IN PERCENTAGES OF THE CANVAS_SIZE, can use absolute integers too)

@@ -11,7 +11,7 @@ Have the following classes, inheriting represented by tabs:
 --------------------------------------------"""
 
 __all__ = ["UIElement", "TextSprite", "ButtonAction", "ButtonValue", "Slider", "InfoBoard", "Dialog"]
-__version__ = '0.5'
+__version__ = '0.8'
 __author__ = 'David Flaity Pardo'
 
 #Python libraries
@@ -97,10 +97,19 @@ class UIElement(MultiSprite):
     @staticmethod   #TODO UPDATE THE RETURNING OF PARAMS
     def factory(id_, command, user_event_id, position, size, canvas_size, *elements, default_values=None, **params):
         """Method that returns a different subclass of UI_Element, taking into account the input arguments.
-        If the devault_values it's an int/float, a Slider will be created. 
-        If its a tuple of options, a ButtonValues with those predetermined options.
-        If it's nothing, a ButtonAction with only the command and user_event_id.
-        If there are *elements, an InfoBoard or Dialog is returned, if the first element is a TextSprite or a ButtonAction.
+        The following inputs will return the following objects:
+            -If the size is None or has the exact same size as the resolution, a SCROLLINGTEXT will be created.
+            If the command is None/False/0, 
+                -if there are input elements, an INFOBOARD will be created.
+                -else, a DIALOG will be created.
+            If there are default_values,
+                if default_values is an int/float,
+                    -if the width>height, a SLIDER will be created.
+                    -else, a VERTICALSLIDER will be created. 
+                -elif its a tuple of options, a BUTTONVALUE will be created.
+            Elif there are not default_values,
+                -if there is a 'text' key in params with actual text, a BUTTONACTION will be created
+                -else a TEXTBOX will be created.
         Uses the Factory pattern.
 
         Args:
@@ -117,26 +126,32 @@ class UIElement(MultiSprite):
             AttributeError: In case of values mismatch. Need to be a set of values, or a numerical one.
 
         """
+        if not size or size == 1 or size == canvas_size:
+            return ScrollingText(id_, user_event_id, position, canvas_size, *elements, **params)
         if any(0 <= x <= 1 for x in size):      size    = tuple(x*y for x,y in zip(size, canvas_size))
         if any(0 <= x <= 1 for x in position):  position= tuple(x*y for x,y in zip(position, canvas_size))
-        if len(elements) > 0:
-            if isinstance(elements[0], ButtonAction):   #Only interested in the first one, the following ones could vary
-                return Dialog(id_, command, user_event_id, position, size, canvas_size, *elements, **params)
-            elif isinstance(elements[0], (TextSprite, pygame.sprite.Sprite)):
-                return InfoBoard(id_, command, user_event_id, position, size, canvas_size, *elements, **params)
-            else:    
-                raise BadUIElementInitException("Can't create an object with those *elements of type "+str(type(elements[0])))
-        if isinstance(default_values, (list, tuple)):
-            return ButtonValue(id_, command, user_event_id, position, size, canvas_size, tuple(default_values), **params)
-        elif isinstance(default_values, (int, float)):
-            if size[0] > size[1]:
-                return Slider(id_, command, user_event_id, position, size, canvas_size, float(default_values), **params)
+        if not command:
+            if len(elements) > 0:
+                if isinstance(elements[0], tuple):
+                    return InfoBoard(id_, command, user_event_id, position, size, canvas_size, *elements, **params)
             else:
-                return VerticalSlider(id_, command, user_event_id, position, size, canvas_size, float(default_values), **params)
-        elif default_values is None:
-            return ButtonAction(id_, command, user_event_id, position, size, canvas_size, **params)    
+                return Dialog(id_, user_event_id, size, canvas_size, **params)
+        if default_values or default_values == 0:
+            if isinstance(default_values, (list, tuple)):
+                return ButtonValue(id_, command, user_event_id, position, size, canvas_size, tuple(default_values), **params)
+            elif isinstance(default_values, (int, float)):
+                if size[0] > size[1]:
+                    return Slider(id_, command, user_event_id, position, size, canvas_size, float(default_values), **params)
+                else:
+                    return VerticalSlider(id_, command, user_event_id, position, size, canvas_size, float(default_values), **params)
         else:
-            raise BadUIElementInitException("Can't create an object with those default_values of type "+str(type(default_values)))
+            try:
+                if params['text'] != '':
+                    return ButtonAction(id_, command, user_event_id, position, size, canvas_size, **params)
+            except KeyError:
+                pass
+            return TextBox(id_, command, user_event_id, position, size, canvas_size, **params)
+        raise BadUIElementInitException("Can't create an object with those input parameters")
 
 class ButtonAction(UIElement):
     """ButtonAction class. Inherits from UIElement.
@@ -483,7 +498,7 @@ class Slider (UIElement):
         else:                               pygame.draw.rect(surface, color, dial_rect)
 
 class VerticalSlider(Slider):
-    def __init__(self, id_, command, user_event_id, position, size, canvas_size, default_value, **params):
+    def __init__(self, id_, command, user_event_id, position, size, canvas_size, default_value=0.0, **params):
         """VerticalSlider constructor.
         Args:
             id_ (str):  Identifier of the Sprite.
@@ -740,7 +755,7 @@ class Dialog (InfoBoard):
             """
         UtilityBox.join_dicts(params, Dialog.__default_config)
         super().__init__(id_, user_event_id, (0, 0), element_size, canvas_size, **params)
-        self.buttons = pygame.sprite.OrderedUpdates()
+        self.elements = pygame.sprite.OrderedUpdates()  #Elements that can collide with the mouse and do actions
         Dialog.generate(self)
 
     @staticmethod
@@ -757,8 +772,8 @@ class Dialog (InfoBoard):
         Args:
             active (boolean):   True if active, False otherwise."""
         super().set_active(active)
-        for button in self.buttons:
-            button.set_active(active)
+        for element in self.elements:
+            element.set_active(active)
 
     def draw(self, surface):
         """Draws the dialog over the input surface, drawing an overlay in the active
@@ -766,9 +781,9 @@ class Dialog (InfoBoard):
         Args:
             surface (:obj: pygame.Surface): The surface to draw this dialog onto."""
         super().draw(surface)
-        for button in self.buttons:
-            if button.active:
-                button.draw_overlay(surface, offset=self.rect.topleft)
+        for element in self.elements:
+            if element.active and element.overlay:
+                element.draw_overlay(surface, offset=self.rect.topleft)
 
     def add_button(self, spaces, text, command, scale=1, **button_params):
         """Adds a button to the dialog, that follows the input parameters.
@@ -780,20 +795,54 @@ class Dialog (InfoBoard):
             scale (float):  Scale of the button compared with the spaces taken by it.
             **button_params (:dict:):   Dict of keywords and values as parameters to create the self.image of the button.
                                         Variety going from fill_color and use_gradient to text_only."""
+        self.add_ui_element(spaces, text, command, scale=scale, constructor=ButtonAction, **button_params)
+
+    def add_input_box(self, spaces, text, command, scale=1, **textbox_params):
+        """Adds a textbox to the dialog, that follows the input parameters.
+        After creating it and adding it to self.buttons, it is blitted onto the dialog image.
+        Args:
+            spaces (int):   Spaces occupied by the button. Row spaces//2 is recommended.
+            text (str): Text of the button.
+            command (str):  Command triggered by the button.
+            scale (float):  Scale of the button compared with the spaces taken by it.
+            **textbox_params (:dict:):  Dict of keywords and values as parameters to create the self.image of the button.
+                                        Variety going from fill_color and use_gradient to text_only."""
+        self.add_ui_element(spaces, text, command, scale=scale, constructor=TextBox, **textbox_params)
+
+    def add_ui_element(self, spaces, text, command, scale=1, constructor=None, *elements, **params):
+        """Adds an ui_element to the dialog, that follows the input parameters.
+        After creating it and adding it to self.buttons, it is blitted onto the dialog image.
+        Args:
+            spaces (int):   Spaces occupied by the button. Row spaces//2 is recommended.
+            text (str): Text of the button.
+            command (str):  Command triggered by the button.
+            scale (float):  Scale of the button compared with the spaces taken by it.
+            constructor (method -> __init__, default=None): Class of the uielement that we want added. Not tested with all the possible options.
+            **params (:dict:):  Dict of keywords and values as parameters to create the self.image of the button.
+                                Variety going from fill_color and use_gradient to text_only."""
         spaces = self.parse_element_spaces(spaces)
         size = self.get_element_size(spaces, scale)
         position = self.get_element_position(spaces, size)
-        button = ButtonAction(self.id+"_button", command, self.event_id, position, size, self.rect.size, text=text, **button_params)
-        self.buttons.add(button)
+        if constructor:
+            try:
+                element = constructor(self.id+"_element", command, self.event_id, position, size, self.rect.size, text=text, **params)
+            except:
+                try:
+                    element = constructor(self.id+"_element", self.event_id, position, size, self.rect.size, text=text, **params)
+                except:
+                    element = constructor(self.id+"_element", self.event_id, position, self.rect.size, text=text, **params)
+        else:
+            element = UIElement.factory(self.id+"_element", command, self.event_id, position, size, self.rect.size, *elements, default_values=None, **params) 
+        self.elements.add(element)
         self.taken_spaces += spaces
-        self.image.blit(button.image, button.rect.topleft)
+        element.draw(self.image)
 
 class TextBox(UIElement):
     CURSOR_CHAR = 'I'
-    def __init__(self, id_, user_event_id, position, element_size, canvas_size, char_limit=0, **params):
+    def __init__(self, id_, command, user_event_id, position, element_size, canvas_size, initial_text='', placeholder='', char_limit=0, **params):
         params['overlay'] = False
-        super().__init__(id_, None, user_event_id, position, element_size, canvas_size, **params)
-        self.text = ''
+        super().__init__(id_, command, user_event_id, position, element_size, canvas_size, **params)
+        self.text = initial_text
         self.has_input  = True
         self.cursor_pos = 0
         self.char_limit = char_limit #0 is unlimited
@@ -828,6 +877,8 @@ class TextBox(UIElement):
                 self.delete_char()
             elif 'space' in value:
                 self.add_char(' ')
+            elif 'enter' in value:
+                self.send_event()
             else:
                 if len(value) == 1:
                     self.add_char(str(value))
@@ -860,10 +911,19 @@ class TextBox(UIElement):
         super().set_active(state)
         self.update_text()
 
+    def send_event(self):
+        """Post the event associated with this element, along with the current value and the command.
+        Posts it in the pygame.event queue. Can be retrieved with pygame.event.get()"""
+        my_event = pygame.event.Event(self.get_event_id(), command=self.get_action(), value=self.text)
+        pygame.event.post(my_event)
+
 class ScrollingText(UIElement):
     #Half transparent background with text on it.
-    def __init__(self, id_, user_event_id, canvas_size, transparency=128, **params):
-        super().__init__(id_, None, user_event_id, (0, 0), canvas_size, canvas_size, **params)
+    def __init__(self, id_, user_event_id, canvas_size, size=None, transparency=128, **params):
+        if not size:
+            super().__init__(id_, None, user_event_id, (0, 0), canvas_size, canvas_size, **params)
+        else:
+            super().__init__(id_, None, user_event_id, (0, 0), size, canvas_size, **params)
         self.transparency = transparency
         self.image = self.image.convert()
         self.image.set_alpha(transparency)
@@ -882,6 +942,3 @@ class ScrollingText(UIElement):
         self.image = self.image.convert()
         self.image.set_alpha(self.transparency)
     
-class Table(InfoBoard):
-    def __init__(self, id_, user_event_id, element_size, canvas_size, **params):
-        super().__init__(id_, user_event_id, element_size, canvas_size, **params)

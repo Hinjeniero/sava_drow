@@ -431,6 +431,10 @@ class NetworkBoard(Board):
     def show_end_stats(self):
         pass
 
+    def win(self):
+        super().win()
+        #TODO send win event to the server
+
     def destroy(self):
         """Sets the flags to signal the end of the threads and disconnects 
         clients, and the server if this networkboard is the host."""

@@ -79,8 +79,7 @@ class Menu (Screen):
             overload = max((sprite.rect.y+sprite.rect.height)-self.resolution[1] for sprite in self.sprites)
             self.scroll_length = int(self.resolution[1]*0.10+overload)
             self.scroll_sprite  = UIElement.factory('slider_scroll_menu', "menu_scroll", USEREVENTS.DIALOG_USEREVENT,\
-                                                    (0.95, 0), (0.05, 1),\
-                                                    self.resolution, text="", default_values=0)
+                                                    (0.95, 0), (0.05, 1), self.resolution, text="", default_values=0.0)
 
     def center_sprites(self, alignment='center'):
         """Center the current sprites of Menu. The alignment itself depends on the argument.
@@ -197,13 +196,14 @@ class Menu (Screen):
     def get_colliding_sprite(self):
         colliding_sprite = None
         mouse_sprite = UtilityBox.get_mouse_sprite()
-        #Check if colliding with scroll
+        #Check if colliding with dialog
         if self.dialog and self.dialog.visible:
-            for button in self.dialog.buttons:
-                rect = pygame.Rect(self.dialog.get_sprite_abs_position(button), button.rect.size)
+            for element in self.dialog.elements:
+                rect = pygame.Rect(self.dialog.get_sprite_abs_position(element), element.rect.size)
                 if rect.colliderect(mouse_sprite):
-                    return button
+                    return element
             return None
+        #Check if colliding with scroll
         if self.scroll_sprite and mouse_sprite.rect.colliderect(self.scroll_sprite.rect):
             return self.scroll_sprite
         if self.scroll_offset:

@@ -325,7 +325,8 @@ class Slider (UIElement):
                         'dial_border': True, 
                         'dial_border_color': BLACK,
                         'dial_border_width': 2,
-                        'dial_shape': 'rectangular'
+                        'dial_shape': 'rectangular',
+                        'loop'      : False
     }
 
     def __init__(self, id_, command, user_event_id, position, size, canvas_size, default_value, **params):
@@ -439,8 +440,8 @@ class Slider (UIElement):
         Args:
             value (float):  Value to set. Must be between 0 and 1, will be parsed otherwise."""
         if value != self.get_value():
-            if      (self.value == 0 and value<0):  self.value = 1              #It goes all the way around from 0 to 1
-            elif    (self.value == 1 and value>1):  self.value = 0              #It goes all the way around from 1 to 0
+            if      (self.value == 0 and value<0):  self.value = 1 if self.params['loop'] else 0
+            elif    (self.value == 1 and value>1):  self.value = 0 if self.params['loop'] else 1
             else:   self.value = 0 if value < 0 else 1 if value > 1 else value  #The value it not yet absolute 1 or 0.
             self.set_dial_position(self.value)
 
@@ -780,10 +781,12 @@ class Dialog (InfoBoard):
         button for visual recognition.
         Args:
             surface (:obj: pygame.Surface): The surface to draw this dialog onto."""
-        super().draw(surface)
         for element in self.elements:
-            if element.active and element.overlay:
-                element.draw_overlay(surface, offset=self.rect.topleft)
+            if element.active:
+                element.draw(self.image)
+                if element.overlay:
+                    element.draw_overlay(surface, offset=self.rect.topleft)
+        super().draw(surface)
 
     def add_button(self, spaces, text, command, scale=1, **button_params):
         """Adds a button to the dialog, that follows the input parameters.
@@ -835,7 +838,11 @@ class Dialog (InfoBoard):
             element = UIElement.factory(self.id+"_element", command, self.event_id, position, size, self.rect.size, *elements, default_values=None, **params) 
         self.elements.add(element)
         self.taken_spaces += spaces
-        element.draw(self.image)
+    
+    def set_canvas_size(self, resolution):
+        super().set_canvas_size(resolution)
+        for element in self.elements:
+            element.set_canvas_size(resolution)
 
 class TextBox(UIElement):
     CURSOR_CHAR = 'I'
@@ -871,7 +878,7 @@ class TextBox(UIElement):
             self.change_cursor_position(self.cursor_pos-1)
         elif 'inc' in command or 'right' in command:    
             self.change_cursor_position(self.cursor_pos+1)
-        else:   #TODO Could add a couple more of commands, like home and shit. but that's a lot of work for little benefit
+        else:
             value = str(value).lower()
             if 'backspace' in value:
                 self.delete_char()
@@ -909,7 +916,6 @@ class TextBox(UIElement):
 
     def set_active(self, state):
         super().set_active(state)
-        self.update_text()
 
     def send_event(self):
         """Post the event associated with this element, along with the current value and the command.

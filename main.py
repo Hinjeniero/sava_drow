@@ -60,13 +60,14 @@ def create_exit_dialog(text='Are you sure that you want to exit?'):
     dialog.add_button(dialog.get_cols()//2, 'Cancel', 'no_cancel_false', gradient=((0, 0, 255, 255),(128, 128, 255, 255)))
     return dialog
 
-def create_input_dialog(text='IP, PORT'):
+def create_input_dialog(*inputs):
+    """Tkes double space cuz text and then inputbox of the same size.
+    tuple(text input box, command inpout box)"""
     #Dialog
-    dialog = Dialog('exit_dialog', USEREVENTS.DIALOG_USEREVENT, (500, 200), INIT_PARAMS.INITIAL_RESOLUTION, text=text, rows=3, cols=2)
-    dialog.add_text_element('exit_dialog_text', text, dialog.get_cols())
-    dialog.add_text_element('exit_dialog_text', 'you will lose all your unsaved changes.', dialog.get_cols())
-    dialog.add_button(dialog.get_cols()//2, 'Ok', 'yes_ok_true', gradient=((0, 0, 255, 255),(128, 128, 255, 255)))
-    dialog.add_button(dialog.get_cols()//2, 'Cancel', 'no_cancel_false', gradient=((0, 0, 255, 255),(128, 128, 255, 255)))
+    dialog = Dialog('input_dialog', USEREVENTS.DIALOG_USEREVENT, (500, 200), INIT_PARAMS.INITIAL_RESOLUTION, rows=4, cols=1)
+    for input_ in inputs:
+        dialog.add_text_element('text', input_[0], dialog.get_cols())
+        dialog.add_input_box(dialog.get_cols(), '', input_[1], gradient=((0, 0, 255, 255),(128, 128, 255, 255)))
     return dialog
 
 @time_it
@@ -100,6 +101,8 @@ def create_main_menu():
     main_menu   = Menu('main_menu', USEREVENTS.MAINMENU_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, buttonStart, buttonOnlineHost, buttonOnlineCli, buttonContinue, buttonConfig, buttonSound, buttonGraphics,
                         animated_background=bg, background_path=PATHS.DEFAULT_BG, songs_paths=MENU_SONGS, do_align=False)
     main_menu.add_dialogs(create_exit_dialog())
+    #main_menu.add_dialogs(create_input_dialog(('ip', 'send_ip'), ('port', 'send_port')))
+    #main_menu.add_sprites(TextBox('2', 'kill', 0, (0, 0), (800, 80), INIT_PARAMS.INITIAL_RESOLUTION))
     return main_menu 
 
 @time_it

@@ -215,11 +215,14 @@ class Screen(object):
     def show_dialog(self, id_):
         """Makes the Screen's Dialog visible. (If it exists)."""
         for dialog in self.dialogs:
-            if id_ in dialog.id or id_ in dialog.command\
-            or dialog.id in id_ or dialog.command in id_:
-                dialog.set_visible(True)
-                self.dialog = dialog
-                self.dialog.send_event()
+            try:
+                if id_ in dialog.id or dialog.id in id_\
+                or id_ in dialog.command or dialog.command in id_:
+                    dialog.set_visible(True)
+                    self.dialog = dialog
+                    self.dialog.send_event()
+            except AttributeError:  #It doesn't have a command. If its comparing commands, the id_ wasnt found in the id
+                continue
 
     def hide_dialog(self):
         """Makes the Screen's Dialog invisible. (If it exists)."""

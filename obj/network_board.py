@@ -390,6 +390,9 @@ class NetworkBoard(Board):
                     center = tuple(x/y for x,y in zip(self.drag_char.sprite.rect.center, self.resolution))
                     self.send_data_async({"move_character":self.drag_char.sprite.uuid, "center": center})
 
+    def event_handler(self):
+        pass#TODO make this get the ip and port from the inhput boxess
+
     def pickup_character(self):
         """Picks up a character, and get the possible destinies if it is our turn. More info in this case in superclass method.
         Otherwise only allows to wiggling around."""

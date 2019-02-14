@@ -79,7 +79,7 @@ class Menu (Screen):
             overload = max((sprite.rect.y+sprite.rect.height)-self.resolution[1] for sprite in self.sprites)
             self.scroll_length = int(self.resolution[1]*0.10+overload)
             self.scroll_sprite  = UIElement.factory('slider_scroll_menu', "menu_scroll", USEREVENTS.DIALOG_USEREVENT,\
-                                                    (0.95, 0), (0.05, 1), self.resolution, text="", default_values=0.0)
+                                                    (0.95, 0), (0.05, 1), self.resolution, text="", default_values=0.0, loop=False)
 
     def center_sprites(self, alignment='center'):
         """Center the current sprites of Menu. The alignment itself depends on the argument.
@@ -186,7 +186,7 @@ class Menu (Screen):
             if colliding_sprite and colliding_sprite.enabled:
                 if self.sprites.has(colliding_sprite):
                     self.change_active_sprite(self.get_sprite_index(colliding_sprite))
-                else:
+                elif self.active_sprite.sprite is not colliding_sprite:
                     self.set_active_sprite(colliding_sprite)
 
     def execute_active_sprite(self, *payload, **kw_payload):

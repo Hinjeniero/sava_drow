@@ -85,6 +85,10 @@ class Logger:
             *messages (str):    All the messages to write in the log. Separated by comma"""
         Logger.log('CRITICAL', *messages)
 
+    @staticmethod
+    def error_traceback():
+        Logger.log('ERROR', traceback.format_exc())
+
     '''def save(self, *messages):
         hour = time.strftime("_%H_%M_%S")
         today = time.strftime("_%d_%m_%Y")

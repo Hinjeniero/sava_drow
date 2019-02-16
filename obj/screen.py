@@ -68,6 +68,7 @@ class Screen(object):
         self.dialog     = None
         self.dialogs    = pygame.sprite.Group()
         self.sprites    = pygame.sprite.OrderedUpdates()
+        self.hit_sprite = None
         #Sound & Music
         self.songs      = []    #Created in generate
         self.music_chan = None  #Created in generate
@@ -207,6 +208,115 @@ class Screen(object):
                         return True
         return False
 
+
+    def event_handler(self, event, keys_pressed, mouse_buttons_pressed, mouse_movement=False, mouse_pos=(0, 0)):
+        """Handles any pygame event. This allows for user interaction with the object.
+        Args:
+            event (:obj: pygame.event): Event received from the pygame queue.
+            keys_pressed (:dict: pygame.keys):  Dict in which the keys are keys and the items booleans.
+                                                Said booleans will be True if that specific key was pressed.
+            mouse_buttons_pressed (:list: booleans):    List with 3 positions regarding the 3 normal buttons on a mouse.
+                                                        Each will be True if that button was pressed.
+            mouse_movement (boolean, default=False):    True if there was mouse movement since the last call.
+            mouse_pos (:tuple: int, int, default=(0,0)):Current mouse position. In pixels.
+        """
+        if event.type == pygame.KEYDOWN:                 
+            self.keyboard_handler(keys_pressed, event)
+        if mouse_movement or event.type == pygame.MOUSEBUTTONDOWN or event.type == pygame.MOUSEBUTTONUP:    
+            self.mouse_handler(event, mouse_buttons_pressed, mouse_movement, mouse_pos)      
+
+    def keyboard_handler(self, keys_pressed, event):
+        """Handles any pygame keyboard related event. This allows for user interaction with the object.
+        HANDLES ONLY INTERACTION WITH THE DIALOG AND THE SCROLLBAR.
+        Posibilities:
+        TODO
+        Args:
+            keys_pressed (:dict: pygame.keys):  Dict in which the keys are keys and the items booleans.
+                                                Said booleans will be True if that specific key was pressed.
+        """
+        self.play_sound('key')
+        if keys_pressed[pygame.K_DOWN]:
+            if self.dialog:
+                pass
+            elif self.hit_sprite == self.scroll_sprite != None:
+                self.send_to_active_sprite('right_arrow', -1)
+        if keys_pressed[pygame.K_UP]:
+            if self.dialog:
+                pass
+            elif self.hit_sprite == self.scroll_sprite != None:
+                self.send_to_active_sprite('left_arrow', -1)
+        if keys_pressed[pygame.K_KP_ENTER] or keys_pressed[pygame.K_SPACE]:
+            if self.dialog:
+                self.dialog.trigger_all_elements()
+        if keys_pressed[pygame.K_LEFT]:
+            if self.active_sprite_in_dialog() and self.hit_sprite.has_input:
+                self.send_to_active_sprite('left_arrow', -1)
+        if keys_pressed[pygame.K_RIGHT]:
+            if self.active_sprite_in_dialog() and self.hit_sprite.has_input:
+                self.send_to_active_sprite('left_arrow', -1)
+        else:
+            if self.dialog and self.dialog.elements.has(self.hit_sprite) and self.hit_sprite.has_input:
+                self.send_to_active_sprite('add_input_character', pygame.key.name(event.key))
+
+    def mouse_handler(self, event, mouse_buttons, mouse_movement, mouse_position):
+        """Handles any mouse related pygame event. This allows for user interaction with the object.
+        TAKES CARE ONLY OF CONTACT WITH DIALOGS AND THE SCROLL BAR. 
+        Sets in hit_sprite the collided sprite in every mouse movement (This includes also normal sprites)
+        Posibilities:
+        TODO
+        Args:
+            event (:obj: pygame.event): Event received from the pygame queue.
+            mouse_buttons (:list: booleans):    List with 3 positions regarding the 3 normal buttons on a mouse.
+                                                Each will be True if that button was pressed.
+            mouse_movement( boolean, default=False):    True if there was mouse movement since the last call.
+            mouse_position (:tuple: int, int, default=(0,0)):   Current mouse position. In pixels.
+        """
+        if mouse_movement:
+            colliding_sprite = self.get_colliding_sprite()
+            if self.dialog:
+                if self.dialog.elements.has(colliding_sprite):
+                    self.set_hit_sprite(colliding_sprite)
+            elif colliding_sprite and colliding_sprite.enabled:
+                self.set_hit_sprite(colliding_sprite)
+
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if self.active_sprite_in_dialog():
+                if self.hit_sprite.has_input:
+                    self.send_to_active_sprite('mouse_button', value=mouse_position)
+                else:
+                    self.send_to_active_sprite('do_action_or_add_value', -1)
+            elif self.hit_sprite == self.scroll_sprite != None:
+                new_scroll_value = self.scroll_sprite.get_value()
+                if event.button == 4:
+                    new_scroll_value -= 0.05
+                elif event.button == 5:
+                    new_scroll_value += 0.05
+                self.set_scroll(new_scroll_value)
+
+    def active_sprite_in_dialog(self):
+        """True if the dialog is active, and if the active sprite is from the dialog as well."""
+        return (self.dialog and self.dialog.elements.has(self.hit_sprite))
+
+    def send_to_active_sprite(self, *payload, **kw_payload):
+        if self.hit_sprite:
+            self.hit_sprite.hitbox_action(*payload, **kw_payload)
+
+    def set_hit_sprite(self, sprite):
+        """Called to set the hitten sprite. Can be overloaded"""
+        if sprite != self.hit_sprite:
+            if self.hit_sprite: 
+                self.hit_sprite.set_hover(False) #Change the active back to the original state
+                self.hit_sprite.set_active(False)
+            self.hit_sprite = sprite             #Adding the new active sprite
+            self.hit_sprite.set_hover(True)
+            self.hit_sprite.set_active(True)
+
+    def clear_active_sprite(self):
+        if self.hit_sprite != None:   
+            self.hit_sprite.set_hover(False)
+            self.hit_sprite.set_active(False)
+            self.hit_sprite = None
+
     def dialog_active(self):
         """Returns:
             (boolean):  True if the Screen Dialog is active, False otherwise"""
@@ -214,6 +324,7 @@ class Screen(object):
 
     def show_dialog(self, id_):
         """Makes the Screen's Dialog visible. (If it exists)."""
+        print("ASKING FOR "+id_)
         for dialog in self.dialogs:
             try:
                 if id_ in dialog.id or dialog.id in id_\
@@ -221,8 +332,10 @@ class Screen(object):
                     dialog.set_visible(True)
                     self.dialog = dialog
                     self.dialog.send_event()
+                    return
             except AttributeError:  #It doesn't have a command. If its comparing commands, the id_ wasnt found in the id
-                continue
+                LOG.error_traceback()
+        LOG.log('warning', 'The input with id ', id_, 'was not found.')
 
     def hide_dialog(self):
         """Makes the Screen's Dialog invisible. (If it exists)."""
@@ -235,21 +348,22 @@ class Screen(object):
         superclass only draws the background, since the sprites group is empty.
         Args:
             surface (:obj: pygame.Surface): Surface to blit to."""
-        if self.animated_background:
-            self.background.play(surface)
-        else:
-            self.background.draw(surface)
-        for sprite in self.sprites.sprites():
-            if self.scroll_offset != (0, 0):
-                sprite.draw(surface, offset=self.scroll_offset)
-            else:
-                sprite.draw(surface)
-        if self.scroll_sprite:
-            self.scroll_sprite.draw(surface)       
         if self.dialog:
             self.dialog.draw(surface)
-        if self.animation:
-            self.animation.play(surface)
+        else:
+            if self.animated_background:
+                self.background.play(surface)
+            else:
+                self.background.draw(surface)
+            for sprite in self.sprites.sprites():
+                if self.scroll_offset != (0, 0):
+                    sprite.draw(surface, offset=self.scroll_offset)
+                else:
+                    sprite.draw(surface)
+            if self.scroll_sprite:
+                self.scroll_sprite.draw(surface)       
+            if self.animation:
+                self.animation.play(surface)
 
     def set_resolution(self, resolution):
         """Changes the resolution of the screen to input argument.
@@ -325,6 +439,32 @@ class Screen(object):
             if all(kw in sprite.get_id() for kw in keywords):
                 sprite.set_enabled(state)
 
+    def get_colliding_sprite(self):
+        """Collides with dialog, scroll, and sprites taking the scroll into account."""
+        colliding_sprite = None
+        mouse_sprite = UtilityBox.get_mouse_sprite()
+        #Check if colliding with dialog
+        if self.dialog:
+            for element in self.dialog.elements:
+                rect = pygame.Rect(self.dialog.get_sprite_abs_position(element), element.rect.size)
+                if rect.colliderect(mouse_sprite):
+                    return element
+            return None
+        #Check if colliding with scroll
+        if self.scroll_sprite and mouse_sprite.rect.colliderect(self.scroll_sprite.rect):
+            return self.scroll_sprite
+        if self.scroll_offset:
+            for sprite in self.sprites:
+                if sprite.visible and sprite.enabled:
+                    sprite_rect = sprite.rect.copy()
+                    sprite_rect.topleft = tuple(off+pos for off, pos in zip(self.scroll_offset, sprite_rect.topleft))
+                    if sprite_rect.colliderect(mouse_sprite.rect):
+                        colliding_sprite = sprite
+                        break
+        else:
+            colliding_sprite = pygame.sprite.spritecollideany(mouse_sprite, self.sprites.sprites())
+        return colliding_sprite
+        
     def destroy(self):
         """Called when exiting the game, in case we have some subthreads we need dead.
         To overload."""

@@ -7,7 +7,6 @@ Have the following classes.
 
 #Python full fledged libraries
 import threading
-import traceback
 import time
 import uuid
 import random
@@ -16,10 +15,11 @@ import pygame
 #from external.Mastermind import MastermindServerTCP, MastermindClientTCP
 #from external.Mastermind._mm_errors import *   #This one doesnt catch the exception for some fuckin reasoni
 from external.Mastermind import *   #I dont like this one a bit, since it has to import everything
-from obj.board_server import Server
-from obj.ui_element import ScrollingText
 #Selfmade libraries
 from settings import NETWORK, MESSAGES
+from dialog_generator import DialogGenerator
+from obj.board_server import Server
+from obj.ui_element import ScrollingText
 from obj.board import Board
 from obj.players import Character
 from obj.utilities.decorators import run_async
@@ -92,28 +92,47 @@ class NetworkBoard(Board):
             self (:obj: NetworkBoard):  NetworkBoard object calling this method
             host (boolean): True if this board is the host, False otherwise."""
         self.overlay_text = ScrollingText('updates', self.event_id, self.resolution, transparency=180)
-        self.port = NETWORK.SERVER_PORT
         self.client = MastermindClientTCP(NETWORK.CLIENT_TIMEOUT_CONNECT, NETWORK.CLIENT_TIMEOUT_RECEIVE)
         try:
             if host:
                 self.server.start(NETWORK.SERVER_IP, NETWORK.SERVER_PORT)
-                self.ip = NETWORK.CLIENT_LOCAL_IP
+                self.set_ip_port(NETWORK.CLIENT_LOCAL_IP, NETWORK.SERVER_PORT)
             else:
+                self.dialogs.add(DialogGenerator.create_input_dialog(tuple(x//3 for x in self.resolution), self.resolution, ('ip', 'send_ip', str(NETWORK.CLIENT_IP)), ('port', 'send_port', str(NETWORK.SERVER_PORT))))
+                self.flags["ip_port_done"] = threading.Event()
                 self.flags["board_done"] = threading.Event()
                 self.flags["players_ammount_done"] = threading.Event()
                 self.flags["players_data_done"] = threading.Event()
-                self.ip = NETWORK.CLIENT_LOCAL_IP   #Testing rn
-                #self.ip = NETWORK.CLIENT_IP
-            self.connect()
-            self.keep_alive() #Creating thread
-            self.receive_worker()
-            self.send_handshake(host)
+                self.show_dialog('input')   #To input IP and PORT
+            self.start(host)
         except MastermindErrorSocket:   #If there was an error connecting
-            LOG.log("ERROR", traceback.format_exc())
+            LOG.error_traceback()
             pygame.event.post(self.connection_error_event)
         except MastermindError:         #If there was an error connecting
-            LOG.log("ERROR", traceback.format_exc())
+            LOG.error_traceback()
             pygame.event.post(self.connection_error_event)
+
+    def set_ip_port(self, ip=None, port=None):
+        """Done in this way so it's possible to set only one to set the other one later."""
+        if ip:
+            self.ip = ip
+        if port:
+            self.port = port
+        if self.ip and self.port:
+            try:
+                self.flags["ip_port_done"].set()
+            except KeyError:
+                pass
+
+    @run_async
+    def start(self, host):
+        if not host:
+            print("GOTTA WAIT")
+            self.flags["ip_port_done"].wait()
+        self.connect()
+        self.keep_alive() #Creating thread
+        self.receive_worker()
+        self.send_handshake(host)
 
     def log_on_screen(self, msg):
         self.overlay_text.add_msg(msg)
@@ -389,9 +408,8 @@ class NetworkBoard(Board):
                 if self.drag_char:
                     center = tuple(x/y for x,y in zip(self.drag_char.sprite.rect.center, self.resolution))
                     self.send_data_async({"move_character":self.drag_char.sprite.uuid, "center": center})
-
-    def event_handler(self):
-        pass#TODO make this get the ip and port from the inhput boxess
+        elif self.dialog and self.dialog.visible:
+            super().mouse_handler(event, mouse_movement, mouse_position)
 
     def pickup_character(self):
         """Picks up a character, and get the possible destinies if it is our turn. More info in this case in superclass method.
@@ -426,8 +444,10 @@ class NetworkBoard(Board):
     def draw(self, surface):
         try:
             super().draw(surface)
-            if not self.ready:
+            if not self.ready and not (self.dialog and self.dialog.visible):
                 self.overlay_text.draw(surface)
+            elif self.dialog and self.dialog.visible:
+                self.dialog.draw(surface)
         except pygame.error:
             LOG.log(*MESSAGES.LOCKED_SURFACE_EXCEPTION)
 

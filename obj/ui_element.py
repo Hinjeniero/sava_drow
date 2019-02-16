@@ -10,8 +10,8 @@ Have the following classes, inheriting represented by tabs:
         ↑Dialog
 --------------------------------------------"""
 
-__all__ = ["UIElement", "TextSprite", "ButtonAction", "ButtonValue", "Slider", "InfoBoard", "Dialog"]
-__version__ = '0.8'
+__all__ = ["UIElement", "TextSprite", "ButtonAction", "ButtonValue", "Slider", "InfoBoard", "Dialog", "TextBox", "ScrollingText"]
+__version__ = '0.9'
 __author__ = 'David Flaity Pardo'
 
 #Python libraries
@@ -326,7 +326,7 @@ class Slider (UIElement):
                         'dial_border_color': BLACK,
                         'dial_border_width': 2,
                         'dial_shape': 'rectangular',
-                        'loop'      : False
+                        'loop'      : True
     }
 
     def __init__(self, id_, command, user_event_id, position, size, canvas_size, default_value, **params):
@@ -776,17 +776,24 @@ class Dialog (InfoBoard):
         for element in self.elements:
             element.set_active(active)
 
+    def trigger_all_elements(self):
+        """Trigger all the elements with variable information (With input=True, that can be modified by the user).
+        Ignores buttons and such. Actually, right now only sends TextBoxes."""
+        for element in self.elements:
+            if element.has_input:
+                element.send_event()
+
     def draw(self, surface):
         """Draws the dialog over the input surface, drawing an overlay in the active
         button for visual recognition.
         Args:
             surface (:obj: pygame.Surface): The surface to draw this dialog onto."""
-        for element in self.elements:
-            if element.active:
+        if self.visible:
+            for element in self.elements:
                 element.draw(self.image)
-                if element.overlay:
+                if element.active and element.overlay:
                     element.draw_overlay(surface, offset=self.rect.topleft)
-        super().draw(surface)
+            super().draw(surface)
 
     def add_button(self, spaces, text, command, scale=1, **button_params):
         """Adds a button to the dialog, that follows the input parameters.
@@ -851,13 +858,13 @@ class TextBox(UIElement):
         super().__init__(id_, command, user_event_id, position, element_size, canvas_size, **params)
         self.text = initial_text
         self.has_input  = True
-        self.cursor_pos = 0
+        self.cursor_pos = len(self.text)
         self.char_limit = char_limit #0 is unlimited
         TextBox.generate(self)
 
     @staticmethod
     def generate(self):
-        self.add_text_sprite('prompt', TextBox.CURSOR_CHAR)
+        self.update_text()
 
     def hitbox_action(self, command, value):
         """Executes the associated action of the element. To be called when a click or key-press happens."""

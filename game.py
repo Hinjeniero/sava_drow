@@ -13,7 +13,6 @@ import pygame
 import os
 import threading
 import sys
-import traceback
 from pygame.locals import *
 from pygame.key import *
 from obj.screen import Screen
@@ -79,59 +78,71 @@ class Game(object):
         USEREVENT+6: Signals the end of the current board.
         USEREVENT+7: Called every second. Timer.
         """
-        if event.type < pygame.USEREVENT:       
-            return False
-        elif event.type is USEREVENTS.MAINMENU_USEREVENT:
-            if 'start' in event.command.lower():
-                if 'online' in event.command.lower() or 'network' in event.command.lower():
-                    self.board_generator.online = True
-                    if 'host' in event.command.lower() or 'server' in event.command.lower():
-                        self.board_generator.server = True
+        try:
+            if event.type < pygame.USEREVENT:       
+                return False
+            elif event.type is USEREVENTS.MAINMENU_USEREVENT:
+                if 'start' in event.command.lower():
+                    if 'online' in event.command.lower() or 'network' in event.command.lower():
+                        self.board_generator.online = True
+                        if 'host' in event.command.lower() or 'server' in event.command.lower():
+                            self.board_generator.server = True
+                        else:
+                            self.board_generator.server = False
                     else:
-                        self.board_generator.server = False
+                        self.board_generator.online = False
+                    self.initiate()
+                self.change_screen(*event.command.lower().split('_'))
+            elif event.type is USEREVENTS.SOUND_USEREVENT:
+                self.sound_handler(event.command.lower(), event.value)
+            elif event.type is USEREVENTS.GRAPHIC_USEREVENT:  
+                self.graphic_handler(event.command.lower(), event.value)
+            elif event.type is USEREVENTS.CONFIG_USEREVENT:  
+                self.config_handler(event.command.lower(), event.value)
+            elif event.type is USEREVENTS.BOARD_USEREVENT:
+                self.board_handler(event.command.lower())
+            elif event.type is USEREVENTS.DIALOG_USEREVENT:
+                if 'scroll' in event.command:
+                    self.current_screen.set_scroll(event.value)
                 else:
-                    self.board_generator.online = False
-                self.initiate()
-            self.change_screen(*event.command.lower().split('_'))
-        elif event.type is USEREVENTS.SOUND_USEREVENT:
-            self.sound_handler(event.command.lower(), event.value)
-        elif event.type is USEREVENTS.GRAPHIC_USEREVENT:  
-            self.graphic_handler(event.command.lower(), event.value)
-        elif event.type is USEREVENTS.CONFIG_USEREVENT:  
-            self.config_handler(event.command.lower(), event.value)
-        elif event.type is USEREVENTS.BOARD_USEREVENT:
-            self.board_handler(event.command.lower())
-        elif event.type is USEREVENTS.DIALOG_USEREVENT:
-            if 'scroll' in event.command:
-                self.current_screen.set_scroll(event.value)
-            else:
-                self.dialog_handler(event.command.lower())
-        elif event.type is USEREVENTS.END_CURRENT_GAME:
-            self.restart_main_menu(win=True)
-        elif event.type is USEREVENTS.TIMER_ONE_SEC:
-            self.fps_text = UtilityBox.generate_fps(self.clock, size=tuple(int(x*0.05) for x in self.resolution))
+                    self.dialog_handler(event.command.lower())
+            elif event.type is USEREVENTS.END_CURRENT_GAME:
+                self.restart_main_menu(win=True)
+            elif event.type is USEREVENTS.TIMER_ONE_SEC:
+                self.fps_text = UtilityBox.generate_fps(self.clock, size=tuple(int(x*0.05) for x in self.resolution))
+        except AttributeError:
+            LOG.error_traceback()
 
-    def restart_main_menu(self, win=False): #TODO REstart params of params menu
-            if win:
-                self.show_popup('win')
-                self.current_screen.play_sound('win')
-            self.started = False
-            self.change_screen('main', 'menu')
-            self.get_screen('params', 'menu', 'config').enable_all_sprites(True)
-            self.get_screen('main', 'menu').enable_sprites(False, 'continue')
+    def restart_main_menu(self, win=False):
+        if win:
+            self.show_popup('win')
+            self.current_screen.play_sound('win')
+        self.started = False
+        self.change_screen('main', 'menu')
+        self.get_screen('params', 'menu', 'config').enable_all_sprites(True)
+        self.get_screen('main', 'menu').enable_sprites(False, 'continue')
 
-    def dialog_handler(self, command):
-        if 'cancel' in command or 'no' in command or 'false' in command:
+    def dialog_handler(self, command, value=None):
+        if 'ip' in command:
+            self.current_screen.set_ip_port(ip=value)
+        elif 'port' in command:
+            self.current_screen.set_ip_port(port=value)
+        elif 'cancel' in command or 'no' in command or 'false' in command:
             self.current_screen.hide_dialog()
             self.last_command = None
         else:
             if not self.last_command:
                 self.last_command = command
-            else:
+            else:   #The OK button was pressed
+                print("OK BUTTON WAS PRESSED")
                 if 'exit' in command:
                     raise GameEndException("Byebye!")
+                elif 'input' in command:
+                    self.current_screen.dialog.trigger_all_elements()
+                    self.current_screen.hide_dialog()
+                    self.last_command = None
                 else:
-                    print("COMMAND STILL NOT IMPLEMENTED! "+command)
+                    LOG.log('warning', 'the command ',command,' is not recognized.')
 
     def config_handler(self, command, value):
         characters = ('pawn', 'warrior', 'wizard', 'priestess', 'matron')
@@ -457,7 +468,7 @@ class Game(object):
                 except GameEndException:
                     end = True
         except Exception:
-            LOG.log('ERROR', traceback.format_exc())
+            LOG.error_traceback()
         for screen in self.screens:
             screen.destroy()
         sys.exit()

@@ -50,8 +50,7 @@ class Menu (Screen):
         """
         #Graphic elements
         super().__init__(id_, event_id, resolution, **params)
-        self.active_sprite          = pygame.sprite.GroupSingle()
-        self.active_sprite_index    = 0
+        self.active_sprite_index = 0
         Menu.generate(self, *elements)
 
     @staticmethod
@@ -59,7 +58,6 @@ class Menu (Screen):
         """Method that executes after the constructor of the superclass.
         Does all the needed work before fully deploying the menu.
         Args:
-            *elements (:obj: Sprite):   Interactive elements/sprites of this menu. Usually buttons.
         Raises:
             NotEnoughSpritesException:  If the menu doesn't have any sprites."""
         UtilityBox.join_dicts(self.params, Menu.__default_config)
@@ -67,7 +65,7 @@ class Menu (Screen):
             self.add_sprites(*elements)
         else:   
             raise NotEnoughSpritesException("A menu needs at least one element prior to the generation.")
-        self.set_active_sprite(self.sprites.sprites()[0])
+        self.set_hit_sprite(self.sprites.sprites()[0])
         if self.params['do_align']:   
             self.center_sprites(alignment=self.params['alignment'])
         self.check_sprites()
@@ -104,10 +102,11 @@ class Menu (Screen):
             mouse_movement (boolean, default=False):    True if there was mouse movement since the last call.
             mouse_pos (:tuple: int, int, default=(0,0)):Current mouse position. In pixels.
         """
+        #This will take care of handling of scroll bar and dialogs
         if event.type == pygame.KEYDOWN:                 
             self.keyboard_handler(keys_pressed, event)
         if mouse_movement or event.type == pygame.MOUSEBUTTONDOWN or event.type == pygame.MOUSEBUTTONUP:    
-            self.mouse_handler(event, mouse_buttons_pressed, mouse_movement, mouse_pos)                 
+            self.mouse_handler(event, mouse_buttons_pressed, mouse_movement, mouse_pos)
 
     def keyboard_handler(self, keys_pressed, event):
         """Handles any pygame keyboard related event. This allows for user interaction with the object.
@@ -117,45 +116,39 @@ class Menu (Screen):
             keys_pressed (:dict: pygame.keys):  Dict in which the keys are keys and the items booleans.
                                                 Said booleans will be True if that specific key was pressed.
         """
-        self.play_sound('key')
-        if self.active_sprite.sprite and self.active_sprite.sprite.has_input:
-            self.execute_active_sprite('add_input_character', pygame.key.name(event.key))
-        if keys_pressed[pygame.K_DOWN]:
-            if self.active_sprite.sprite is self.scroll_sprite:
-                self.execute_active_sprite('right_arrow', -1)
-            else:
-                old_index = self.active_sprite_index
-                while True:
-                    self.change_active_sprite(self.active_sprite_index+1)
-                    if (self.active_sprite.sprite.visible\
-                    and self.active_sprite.sprite.enabled)\
-                    or self.active_sprite_index is old_index:
-                        break
-        if keys_pressed[pygame.K_UP]:
-            if self.active_sprite.sprite is self.scroll_sprite:
-                self.execute_active_sprite('left_arrow', -1)
-            else:
-                old_index = self.active_sprite_index
-                while True:
-                    self.change_active_sprite(self.active_sprite_index-1)
-                    if (self.active_sprite.sprite.visible\
-                    and self.active_sprite.sprite.enabled)\
-                    or self.active_sprite_index is old_index:
-                        break
+        super().keyboard_handler(keys_pressed, event)
+        if self.dialog:
+            return
+        if self.hit_sprite and self.hit_sprite.has_input:
+            self.send_to_active_sprite('add_input_character', pygame.key.name(event.key))
+        if keys_pressed[pygame.K_DOWN] and self.sprites.has(self.hit_sprite):   #Handling of normal sprites
+            old_index = self.active_sprite_index
+            while True:
+                self.change_active_sprite(self.active_sprite_index+1)
+                if (self.hit_sprite.visible and self.hit_sprite.enabled)\
+                or self.active_sprite_index is old_index:
+                    break
+        if keys_pressed[pygame.K_UP] and self.sprites.has(self.hit_sprite):
+            old_index = self.active_sprite_index
+            while True:
+                self.change_active_sprite(self.active_sprite_index-1)
+                if (self.hit_sprite.visible and self.hit_sprite.enabled)\
+                or self.active_sprite_index is old_index:
+                    break
         if keys_pressed[pygame.K_LEFT]:
-            if self.scroll_sprite and self.active_sprite.sprite is self.scroll_sprite:
-                self.set_active_sprite(self.sprites.sprites()[0])
+            if self.hit_sprite == self.scroll_sprite != None:
+                self.set_hit_sprite(self.sprites.sprites()[0])
             else:
-                self.execute_active_sprite('left_arrow', -1)
+                self.set_hit_sprite('left_arrow', -1)
         if keys_pressed[pygame.K_RIGHT]:
-            if self.scroll_sprite and self.active_sprite.sprite is self.scroll_sprite:
-                self.set_active_sprite(self.sprites.sprites()[0])
+            if self.hit_sprite == self.scroll_sprite != None:
+                self.set_hit_sprite(self.sprites.sprites()[0])
             else:
-                self.execute_active_sprite('right_arrow', -1)
+                self.send_to_active_sprite('right_arrow', -1)
         if (keys_pressed[pygame.K_RETURN]\
             or keys_pressed[pygame.K_KP_ENTER]\
             or keys_pressed[pygame.K_SPACE]):
-                self.execute_active_sprite('do_action_or_add_value', -1)
+                self.send_to_active_sprite('do_action_or_add_value', -1)
 
     def mouse_handler(self, event, mouse_buttons, mouse_movement, mouse_position):
         """Handles any mouse related pygame event. This allows for user interaction with the object.
@@ -168,55 +161,19 @@ class Menu (Screen):
             mouse_movement( boolean, default=False):    True if there was mouse movement since the last call.
             mouse_position (:tuple: int, int, default=(0,0)):   Current mouse position. In pixels.
         """
+        super().mouse_handler(event, mouse_buttons, mouse_movement, mouse_position)
+        if self.dialog:
+            return
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if self.scroll_sprite:
-                new_scroll_value = self.scroll_sprite.get_value()
-                if event.button == 4:
-                    new_scroll_value -= 0.05
-                elif event.button == 5:
-                    new_scroll_value += 0.05
-                self.set_scroll(new_scroll_value)
-            if self.get_colliding_sprite():
+            if self.get_colliding_sprite(): #Dont want to have the last active sprite triggering if we are not hovering it
                 if mouse_buttons[0]:
-                    self.execute_active_sprite('first_mouse_button', value=mouse_position)
+                    self.send_to_active_sprite('first_mouse_button', value=mouse_position)
                 elif mouse_buttons[2]:  
-                    self.execute_active_sprite('secondary_mouse_button', value=mouse_position)
+                    self.send_to_active_sprite('secondary_mouse_button', value=mouse_position)
         if mouse_movement:
             colliding_sprite = self.get_colliding_sprite()
-            if colliding_sprite and colliding_sprite.enabled:
-                if self.sprites.has(colliding_sprite):
-                    self.change_active_sprite(self.get_sprite_index(colliding_sprite))
-                elif self.active_sprite.sprite is not colliding_sprite:
-                    self.set_active_sprite(colliding_sprite)
-
-    def execute_active_sprite(self, *payload, **kw_payload):
-        if self.active_sprite.sprite:
-            self.active_sprite.sprite.hitbox_action(*payload, **kw_payload)
-
-    def get_colliding_sprite(self):
-        colliding_sprite = None
-        mouse_sprite = UtilityBox.get_mouse_sprite()
-        #Check if colliding with dialog
-        if self.dialog and self.dialog.visible:
-            for element in self.dialog.elements:
-                rect = pygame.Rect(self.dialog.get_sprite_abs_position(element), element.rect.size)
-                if rect.colliderect(mouse_sprite):
-                    return element
-            return None
-        #Check if colliding with scroll
-        if self.scroll_sprite and mouse_sprite.rect.colliderect(self.scroll_sprite.rect):
-            return self.scroll_sprite
-        if self.scroll_offset:
-            for sprite in self.sprites:
-                if sprite.visible and sprite.enabled:
-                    sprite_rect = sprite.rect.copy()
-                    sprite_rect.topleft = tuple(off+pos for off, pos in zip(self.scroll_offset, sprite_rect.topleft))
-                    if sprite_rect.colliderect(mouse_sprite.rect):
-                        colliding_sprite = sprite
-                        break
-        else:
-            colliding_sprite = pygame.sprite.spritecollideany(mouse_sprite, self.sprites.sprites())
-        return colliding_sprite
+            if self.sprites.has(colliding_sprite):
+                self.change_active_sprite(self.get_sprite_index(colliding_sprite))
 
     def change_active_sprite(self, index):
         """Changes the active sprite of the Menu (The one that will execute if a trigger key is pressed)
@@ -229,29 +186,15 @@ class Menu (Screen):
                 self.active_sprite_index = 0
             elif index < 0:                     
                 self.active_sprite_index = size_sprite_list-1
-            self.set_active_sprite(self.sprites.sprites()[self.active_sprite_index])
+            self.set_hit_sprite(self.sprites.sprites()[self.active_sprite_index])
 
     def show_dialog(self, id_):
         super().show_dialog(id_)
-        self.empty_active_sprite()
+        self.clear_active_sprite()
 
     def hide_dialog(self):
         super().hide_dialog()
-        self.empty_active_sprite()        
-
-    def set_active_sprite(self, sprite):
-        if self.active_sprite.sprite is not None:   
-            self.active_sprite.sprite.set_hover(False) #Change the active back to the original state
-            self.active_sprite.sprite.set_active(False)
-        self.active_sprite.add(sprite)       #Adding the new active sprite
-        self.active_sprite.sprite.set_hover(True)
-        self.active_sprite.sprite.set_active(True)       
-
-    def empty_active_sprite(self):
-        if self.active_sprite.sprite is not None:   
-            self.active_sprite.sprite.set_hover(False) #Change the active back to the original state
-            self.active_sprite.sprite.set_active(False)
-            self.active_sprite.empty()       
+        self.clear_active_sprite()             
 
     def get_sprite_index(self, sprite):
         """Gets the index of a sprite in the sprite list.

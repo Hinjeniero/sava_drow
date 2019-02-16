@@ -590,8 +590,11 @@ class Board(Screen):
                 char.draw(surface)
             if self.current_player:
                 self.current_player.draw(surface)   #This draws the player's infoboard
+            if self.dialog and self.dialog.visible:
+                self.dialog.draw(surface)
         except pygame.error: 
             LOG.log(*MESSAGES.LOCKED_SURFACE_EXCEPTION)
+        
             
     def event_handler(self, event, keys_pressed, mouse_buttons_pressed, mouse_movement=False, mouse_pos=(0, 0)):
         """Handles any pygame event. This allows for user interaction with the object.
@@ -605,8 +608,56 @@ class Board(Screen):
             mouse_pos (:tuple: int, int, default=(0,0)):Current mouse position. In pixels.
         """
         if self.started:
-            if event.type == pygame.KEYDOWN:    self.keyboard_handler(keys_pressed)
-            else:                               self.mouse_handler(event, mouse_movement, mouse_pos)  
+            if event.type == pygame.KEYDOWN:    self.keyboard_handler(keys_pressed, event)
+            else:                               self.mouse_handler(event, mouse_buttons_pressed, mouse_movement, mouse_pos)  
+                
+    def keyboard_handler(self, keys_pressed, event):
+        """Handles any pygame keyboard related event. This allows for user interaction with the object.
+        Posibilities:
+        TODO
+        Args:
+            keys_pressed (:dict: pygame.keys):  Dict in which the keys are keys and the items booleans.
+                                                Said booleans will be True if that specific key was pressed.
+        """
+        super().keyboard_handler(keys_pressed, event)
+        if self.dialog:
+            return
+        #TODO NOTHING HERE YET; COMING SOON
+
+    #Does all the shit related to the mouse hovering an option
+    def mouse_handler(self, event, mouse_buttons, mouse_movement, mouse_position):
+        """Handles any mouse related pygame event. This allows for user interaction with the object.
+        Posibilities:
+        TODO
+        Args:
+            event (:obj: pygame.event): Event received from the pygame queue.
+            mouse_movement( boolean, default=False):    True if there was mouse movement since the last call.
+            mouse_position (:tuple: int, int, default=(0,0)):   Current mouse position. In pixels.
+        """
+        
+        if self.dialog: #Using it here since we wont have ever a scrollbar in a board, and this saves cycles wuen a dialog is not active
+            #Thats why we call the super method here instead of always
+            super().mouse_handler(event, mouse_buttons, mouse_movement, mouse_position)
+            return
+
+        if event.type == pygame.MOUSEBUTTONDOWN:  #On top of the char and clicking on it
+            self.play_sound('key')
+            if self.active_char.sprite: self.pickup_character()
+        elif event.type == pygame.MOUSEBUTTONUP:  #If we are dragging it we will have a char in here
+            if self.drag_char.sprite:   self.drop_character()
+
+        if mouse_movement:
+            if self.drag_char.sprite:   
+                self.drag_char.sprite.rect.center = mouse_position
+            mouse_sprite = UtilityBox.get_mouse_sprite()
+            
+            #Checking collision with cells (Using this instead of hit_sprite because the hit method is different)
+            collided_cell = pygame.sprite.spritecollideany(mouse_sprite, self.cells, collided=pygame.sprite.collide_circle)
+            self.set_active_cell(collided_cell)
+
+            #Checking collision with paths (Using this instead of hit_sprite because the hit method is different)
+            path = pygame.sprite.spritecollideany(mouse_sprite, self.paths, collided=pygame.sprite.collide_mask)
+            self.set_active_path(path)
 
     def pickup_character(self, get_dests=True):
         """Picks up a character. Adds it to the drag char Group, and check in the LUT table
@@ -709,22 +760,6 @@ class Board(Screen):
     def win(self):
         pygame.event.post(self.end_event)
 
-    def keyboard_handler(self, keys_pressed):
-        """Handles any pygame keyboard related event. This allows for user interaction with the object.
-        Posibilities:
-        TODO
-        Args:
-            keys_pressed (:dict: pygame.keys):  Dict in which the keys are keys and the items booleans.
-                                                Said booleans will be True if that specific key was pressed.
-        """
-        self.play_sound('key')
-        if keys_pressed[pygame.K_DOWN]:         LOG.log('DEBUG', "down arrow in board")
-        if keys_pressed[pygame.K_UP]:           LOG.log('DEBUG', "up arrow in board")
-        if keys_pressed[pygame.K_LEFT]:         LOG.log('DEBUG', "left arrow in board")
-        if keys_pressed[pygame.K_RIGHT]:        LOG.log('DEBUG', "right arrow in board")
-        if keys_pressed[pygame.K_KP_ENTER]\
-            or keys_pressed[pygame.K_SPACE]:    LOG.log('DEBUG', "space/enter")
-
     def set_active_cell(self, cell):
         if self.active_cell.sprite: #If there is already an sprite in active_cell
             if cell is not self.active_cell.sprite: #If its not the same cell that is already active, or is None
@@ -755,35 +790,6 @@ class Board(Screen):
             path.set_active(True)
             path.set_hover(True)
             self.active_path.add(path)   
-
-    #Does all the shit related to the mouse hovering an option
-    def mouse_handler(self, event, mouse_movement, mouse_position):
-        """Handles any mouse related pygame event. This allows for user interaction with the object.
-        Posibilities:
-        TODO
-        Args:
-            event (:obj: pygame.event): Event received from the pygame queue.
-            mouse_movement( boolean, default=False):    True if there was mouse movement since the last call.
-            mouse_position (:tuple: int, int, default=(0,0)):   Current mouse position. In pixels.
-        """
-        if event.type == pygame.MOUSEBUTTONDOWN:  #On top of the char and clicking on it
-            self.play_sound('key')
-            if self.active_char.sprite: self.pickup_character()
-        elif event.type == pygame.MOUSEBUTTONUP:  #If we are dragging it we will have a char in here
-            if self.drag_char.sprite:   self.drop_character()
-
-        if mouse_movement:
-            if self.drag_char.sprite:   
-                self.drag_char.sprite.rect.center = mouse_position
-            mouse_sprite = UtilityBox.get_mouse_sprite()
-            
-            #Checking collision with cells
-            collided_cell = pygame.sprite.spritecollideany(mouse_sprite, self.cells, collided=pygame.sprite.collide_circle)
-            self.set_active_cell(collided_cell)
-
-            #Checking collision with paths
-            path = pygame.sprite.spritecollideany(mouse_sprite, self.paths, collided=pygame.sprite.collide_mask)
-            self.set_active_path(path)
 
     def show_end_stats(self):
         pass

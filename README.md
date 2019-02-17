@@ -4,12 +4,13 @@ DEPENDENCIES: pygame, numpy, wrapt
 
 TODO CURRENT:
 
-    1.- Send Win event to other players along with the game stats.
-
-    1.5.- Create screen asking for ip and port in the connect screen.
+    1.- Send Win event to other players along with the game stats. (~40%)
 
     2.- Implement spider dice + sprite. Needs to randomize the game a little bit.
 
+    3.- Game infoboard in the right side
+
+    4.- Making the winning screen hang out a bit before changing to the main menu (~80%)
 
 TODO WHENEVER:
 
@@ -19,10 +20,8 @@ TODO WHENEVER:
 
     2.- Create animated graphics for menu sprites when active? Can't reuse surfaces, since they blit text to them.
 
-    3.- Maybe show number of kills and turn over character head? With number of kills changing depending on the number.
-    
-    4.- Score table for the players?
+    3.- Maybe show number of kills and turn over character head? With number of kills color changing depending on the number.
 
-    5.- Bar of taunts below, the cursor turns into whatever and sends the position to the rest of the clients
+    5.- Bar of taunts below, the cursor turns into whatever and sends the position to the rest of the clients.
 
     6.- Show player name over mouse?

@@ -145,9 +145,11 @@ class Board(Screen):
         self.loaded_players = 0
         self.players        = []
         self.player_index   = 0
+
         #Started
         self.started        = False
         self.generated      = False
+        self.admin_mode     = False
         self.end_event      = pygame.event.Event(end_event_id)
         Board.generate(self, empty, *players)
     
@@ -189,7 +191,13 @@ class Board(Screen):
                 for key in player.get_stats().keys():
                     self.scoreboard.add_text_element('text', key, 1)
             for value in player.get_stats().values():
-                self.scoreboard.add_text_element('text', value, 1)
+                if not player.dead:
+                    if player.order is self.current_player.order: #A bit redundant, since a dead player dissapears
+                        self.scoreboard.add_text_element('text', value, 1, color=WHITE)
+                        continue
+                    self.scoreboard.add_text_element('text', value, 1)
+                else:
+                    self.scoreboard.add_text_element('text', value, 1, color=DARKGRAY)
 
     def generate_mapping(self):
         axis_size = self.params['circles_per_lvl']*self.params['max_levels']
@@ -639,11 +647,10 @@ class Board(Screen):
                                                 Said booleans will be True if that specific key was pressed.
         """
         super().keyboard_handler(keys_pressed, event)
-        self.show_score = False
         if self.dialog:
             return
-        if keys_pressed[pygame.K_TAB] and not self.show_score:
-            self.show_score = True
+        if keys_pressed[pygame.K_TAB]:
+            self.show_score = not self.show_score
 
     #Does all the shit related to the mouse hovering an option
     def mouse_handler(self, event, mouse_buttons, mouse_movement, mouse_position):
@@ -702,7 +709,8 @@ class Board(Screen):
         moved = False
         self.drag_char.sprite.set_selected(False)
         self.drag_char.sprite.set_hover(False)
-        if self.possible_dests.has(self.active_cell.sprite):
+        if self.possible_dests.has(self.active_cell.sprite)\
+        or self.admin_mode and self.active_cell.sprite:
             self.move_character(self.drag_char.sprite)
             self.next_char_turn(self.drag_char.sprite)
             moved = True
@@ -744,8 +752,8 @@ class Board(Screen):
             if self.player_index >= len(self.players):
                 self.player_index = 0
                 self.turn += 1
-            if self.players[self.player_index].turn is self.turn\
-            or self.player_index == old_index:
+            if not self.players[self.player_index].dead\
+            and (self.players[self.player_index].turn is self.turn or self.player_index is old_index):
                 self.current_player = self.players[self.player_index] 
                 self.update_map()
                 if use_stop_state:
@@ -770,7 +778,7 @@ class Board(Screen):
 
     def check_player(self, player):
         if player.has_lost():
-            self.players.remove(player)
+            #self.players.remove(player)
             self.characters.remove(player.characters)
             for char in player.characters:
                 self.get_cell_by_real_index(char.current_pos).empty_cell()
@@ -780,6 +788,8 @@ class Board(Screen):
 
     def win(self):
         pygame.event.post(self.end_event)
+        self.started = False    #To disregard events except esc and things like that
+        self.show_score = True  #To show the infoboard.
 
     def set_active_cell(self, cell):
         if self.active_cell.sprite: #If there is already an sprite in active_cell

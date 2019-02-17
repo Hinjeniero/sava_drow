@@ -48,6 +48,10 @@ class Game(object):
         self.board_generator= None  #Created in Game.generate()
         self.popups         = pygame.sprite.OrderedUpdates()  
         self.fullscreen     = False
+        self.count_lock     = threading.Lock()
+        self.countdown      = 0
+        self.waiting_for    = [(0, None, None, None)]  #Waiting for second tuple[0], to do method tuple[1]
+        self.todo           = []
         Game.generate(self)
 
     @staticmethod
@@ -59,6 +63,10 @@ class Game(object):
 
     def set_timers(self):
         pygame.time.set_timer(USEREVENTS.TIMER_ONE_SEC, 1000) #Each second
+
+    def __add_timed_execution(self, second, method, *args, **method_kwargs):
+        """Dunno the effects of this if this is called from another class."""
+        self.waiting_for.append((int(second), method, args, kwargs))
 
     def add_screens(self, *screens):
         for screen in screens:
@@ -112,6 +120,13 @@ class Game(object):
             elif event.type is USEREVENTS.END_CURRENT_GAME:
                 self.restart_main_menu(win=True)
             elif event.type is USEREVENTS.TIMER_ONE_SEC:
+                self.count_lock.acquire()
+                self.countdown += 1
+                for method in self.waiting_for:
+                    if self.countdown == method[0]:
+                        self.todo.append(method[1:])
+                        self.waiting_for.remove(method)
+                self.count_lock.release()
                 self.fps_text = UtilityBox.generate_fps(self.clock, size=tuple(int(x*0.05) for x in self.resolution))
         except AttributeError:
             LOG.error_traceback()
@@ -120,6 +135,8 @@ class Game(object):
         if win:
             self.show_popup('win')
             self.current_screen.play_sound('win')
+            self.__add_timed_execution(self.countdown+5, self.restart_main_menu, win=False)
+            return
         self.started = False
         self.change_screen('main', 'menu')
         self.get_screen('params', 'menu', 'config').enable_all_sprites(True)
@@ -284,6 +301,9 @@ class Game(object):
         popup_acho = UIElement.factory( 'secret_acho', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,\
                                         text='Gz, you found a secret! all your SFXs will be achos now.', text_proportion=text_size,\
                                         text_color=WHITE, rows=1)
+        popup_admin = UIElement.factory('secret_admin', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,\
+                                        text='Admin mode activated! You can move your character to any cell.', text_proportion=text_size,\
+                                        text_color=WHITE, rows=1)
         popup_running = UIElement.factory('secret_running90s', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,\
                                         text='Gz, you found a secret! The background music is now Running in the 90s.', text_proportion=text_size,\
                                         text_color=WHITE, rows=1)
@@ -299,7 +319,7 @@ class Game(object):
         popup_conn_error  = UIElement.factory('connection_error', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
                                         text='There was a connection error, check the console for details.', text_proportion=text_size,\
                                         text_color=WHITE, rows=1)
-        self.add_popups(popup_acho, popup_running, popup_dejavu, popup_winner, popup_chars, popup_turn, popup_conn_error)
+        self.add_popups(popup_acho, popup_admin, popup_running, popup_dejavu, popup_winner, popup_chars, popup_turn, popup_conn_error)
 
     def add_popups(self, *popups):
         for popup in popups:
@@ -324,19 +344,29 @@ class Game(object):
         secret = None
         easter_egg_sound = False
         easter_egg_music = False
+        last_inputs = ''.join(self.last_inputs).lower()
         if len(self.last_inputs) > 3:
-            if 'acho' in ''.join(self.last_inputs).lower():
+            if 'acho' in last_inputs:
                 LOG.log('INFO', 'SECRET DISCOVERED! From now on all the sfxs on all the screens will be achos.')
                 secret = 'acho.ogg'
                 easter_egg_sound = True
-            elif 'running' in ''.join(self.last_inputs).lower():
+            elif 'running' in last_inputs:
                 LOG.log('INFO', 'SECRET DISCOVERED! From now on the music in all your screens will be Running in the 90s.')
                 secret = 'running90s.ogg'
                 easter_egg_music = True
-            elif 'dejavu' in ''.join(self.last_inputs).lower():
+            elif 'dejavu' in last_inputs:
                 LOG.log('INFO', 'SECRET DISCOVERED! From now on the music in all your screens will be Dejavu!')
                 secret = 'dejavu.ogg'
                 easter_egg_music = True
+            elif 'admin' in last_inputs:
+                LOG.log('INFO', 'Admin mode activated!')
+                self.show_popup('admin')
+                for screen in self.screens:
+                    try:
+                        screen.admin_mode = not screen.admin_mode
+                        print(screen.admin_mode)
+                    except AttributeError:
+                        continue
             #If an easter egg was triggered:
             if secret:
                 self.show_popup(secret.split('.')[0])
@@ -461,6 +491,9 @@ class Game(object):
             while not end:
                 try:
                     self.clock.tick(self.fps)
+                    if len(self.todo) > 0:
+                        timed_exec = self.todo.pop(0)                   #One execution per frame
+                        timed_exec[0](*timed_exec[1], **timed_exec[2])  #Executing the method
                     self.current_screen.draw(self.display)
                     end = self.event_handler(pygame.event.get())
                     if self.fps_text:

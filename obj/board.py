@@ -148,6 +148,7 @@ class Board(Screen):
 
         #Started
         self.started        = False
+        self.finished       = False
         self.generated      = False
         self.admin_mode     = False
         self.end_event      = pygame.event.Event(end_event_id)
@@ -216,10 +217,6 @@ class Board(Screen):
         self.generate_map_board()
         self.save_sprites()
         self.generated = True
-
-    def set_scroll(self, value):
-        """We dont want scrolls in the board"""
-        pass
 
     def save_sprites(self):
         """Copies all the references of the sprites to the sprites list declared on the superclass.
@@ -635,7 +632,7 @@ class Board(Screen):
             mouse_movement (boolean, default=False):    True if there was mouse movement since the last call.
             mouse_pos (:tuple: int, int, default=(0,0)):Current mouse position. In pixels.
         """
-        if self.started or self.dialog:
+        if not self.finished and (self.started or self.dialog):
             super().event_handler(event, keys_pressed, mouse_buttons_pressed, mouse_movement=mouse_movement, mouse_pos=mouse_pos)
 
     def keyboard_handler(self, keys_pressed, event):
@@ -778,17 +775,17 @@ class Board(Screen):
 
     def check_player(self, player):
         if player.has_lost():
-            #self.players.remove(player)
             self.characters.remove(player.characters)
             for char in player.characters:
                 self.get_cell_by_real_index(char.current_pos).empty_cell()
-            if len(self.players) == 1:  #WE HAVE A WINNER!
-                self.play_sound('win')
+            if sum(1 for player in self.players if not player.dead) <= 1:  #WE HAVE A WINNER!
                 self.win()
 
     def win(self):
+        LOG.log("info", "Winner winner chicken dinner!")
+        self.play_sound('win')
         pygame.event.post(self.end_event)
-        self.started = False    #To disregard events except esc and things like that
+        self.finished = True    #To disregard events except esc and things like that
         self.show_score = True  #To show the infoboard.
 
     def set_active_cell(self, cell):
@@ -821,12 +818,6 @@ class Board(Screen):
             path.set_active(True)
             path.set_hover(True)
             self.active_path.add(path)   
-
-    def show_end_stats(self):
-        pass
-
-    def show_scoreboard(self):
-        pass
     
     def destroy(self):
         pass

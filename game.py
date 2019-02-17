@@ -64,7 +64,7 @@ class Game(object):
     def set_timers(self):
         pygame.time.set_timer(USEREVENTS.TIMER_ONE_SEC, 1000) #Each second
 
-    def __add_timed_execution(self, second, method, *args, **method_kwargs):
+    def __add_timed_execution(self, second, method, *args, **kwargs):
         """Dunno the effects of this if this is called from another class."""
         self.waiting_for.append((int(second), method, args, kwargs))
 
@@ -296,6 +296,7 @@ class Game(object):
         res = self.resolution
         size = (0.80, 0.10)
         position = tuple(0.5-x/2 for x in size)
+        upper_pos = (position[0], position[1]//3)
         image = PATHS.LONG_POPUP
         text_size = 0.95
         popup_acho = UIElement.factory( 'secret_acho', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,\
@@ -312,8 +313,8 @@ class Game(object):
                                         text_color=WHITE, rows=1)
         popup_chars  = UIElement.factory('toomany_chars', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
                                         text='Too many chars, change the params.', text_proportion=text_size, text_color=WHITE, rows=1)
-        popup_winner = UIElement.factory('winner', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
-                                        text='Gz, you won!', text_proportion=text_size, text_color=WHITE, rows=1)
+        popup_winner = UIElement.factory('winner', None, 0, upper_pos, size, res, texture=image, keep_aspect_ratio=False,
+                                        text='Gz, you won!', text_proportion=text_size, text_color=WHITE, rows=1)   #TODO CHECK WINNER HERE
         popup_turn = UIElement.factory('next_turn', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
                                         text='It`s your turn! Wreck him!', text_proportion=text_size, text_color=WHITE, rows=1)
         popup_conn_error  = UIElement.factory('connection_error', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
@@ -367,6 +368,7 @@ class Game(object):
                         print(screen.admin_mode)
                     except AttributeError:
                         continue
+                self.last_inputs.clear()
             #If an easter egg was triggered:
             if secret:
                 self.show_popup(secret.split('.')[0])

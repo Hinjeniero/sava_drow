@@ -129,7 +129,7 @@ class Game(object):
         if 'ip' in command:
             self.current_screen.set_ip_port(ip=value)
         elif 'port' in command:
-            self.current_screen.set_ip_port(port=value)
+            self.current_screen.set_ip_port(port=int(value))
         elif 'cancel' in command or 'no' in command or 'false' in command:
             self.current_screen.hide_dialog()
             self.last_command = None
@@ -281,24 +281,24 @@ class Game(object):
         position = tuple(0.5-x/2 for x in size)
         image = PATHS.LONG_POPUP
         text_size = 0.95
-        popup_acho = UIElement.factory( 'secret_acho', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
-                                        text='Gz, you found a secret! all your SFXs will be achos now.', text_proportion=text_size)
-        popup_acho.use_overlay = False
-        popup_running = UIElement.factory('secret_running90s', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
-                                        text='Gz, you found a secret! The background music is now Running in the 90s.', text_proportion=text_size)
-        popup_running.use_overlay = False
+        popup_acho = UIElement.factory( 'secret_acho', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,\
+                                        text='Gz, you found a secret! all your SFXs will be achos now.', text_proportion=text_size,\
+                                        text_color=WHITE, rows=1)
+        popup_running = UIElement.factory('secret_running90s', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,\
+                                        text='Gz, you found a secret! The background music is now Running in the 90s.', text_proportion=text_size,\
+                                        text_color=WHITE, rows=1)
         popup_dejavu = UIElement.factory('secret_dejavu', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
-                                        text='Gz, you found a secret! The background music is now Dejavu.', text_proportion=text_size)
-        popup_dejavu.use_overlay = False
+                                        text='Gz, you found a secret! The background music is now Dejavu.', text_proportion=text_size,\
+                                        text_color=WHITE, rows=1)
         popup_chars  = UIElement.factory('toomany_chars', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
-                                        text='Too many chars, change the params.', text_proportion=text_size)
-        popup_chars.use_overlay = False
+                                        text='Too many chars, change the params.', text_proportion=text_size, text_color=WHITE, rows=1)
         popup_winner = UIElement.factory('winner', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
-                                        text='Gz, you won!', text_proportion=text_size)
+                                        text='Gz, you won!', text_proportion=text_size, text_color=WHITE, rows=1)
         popup_turn = UIElement.factory('next_turn', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
-                                        text='It`s your turn! Wreck him!', text_proportion=text_size)
+                                        text='It`s your turn! Wreck him!', text_proportion=text_size, text_color=WHITE, rows=1)
         popup_conn_error  = UIElement.factory('connection_error', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
-                                        text='There was a connection error, check the console for details.', text_proportion=text_size)
+                                        text='There was a connection error, check the console for details.', text_proportion=text_size,\
+                                        text_color=WHITE, rows=1)
         self.add_popups(popup_acho, popup_running, popup_dejavu, popup_winner, popup_chars, popup_turn, popup_conn_error)
 
     def add_popups(self, *popups):

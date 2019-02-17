@@ -94,7 +94,7 @@ class UIElement(MultiSprite):
         """Sets the event id of the element. This will be sent when a trigger happens."""
         self.__event_id = event_id
 
-    @staticmethod   #TODO UPDATE THE RETURNING OF PARAMS
+    @staticmethod
     def factory(id_, command, user_event_id, position, size, canvas_size, *elements, default_values=None, **params):
         """Method that returns a different subclass of UI_Element, taking into account the input arguments.
         The following inputs will return the following objects:
@@ -133,7 +133,7 @@ class UIElement(MultiSprite):
         if not command:
             if len(elements) > 0:
                 if isinstance(elements[0], tuple):
-                    return InfoBoard(id_, command, user_event_id, position, size, canvas_size, *elements, **params)
+                    return InfoBoard(id_, user_event_id, position, size, canvas_size, *elements, **params)
             else:
                 return Dialog(id_, user_event_id, size, canvas_size, **params)
         if default_values or default_values == 0:
@@ -614,7 +614,7 @@ class InfoBoard (UIElement):
         if draw_grid:   #Testing purposes
             UtilityBox.draw_grid(self.image, self.params['rows'], self.params['cols'])
     
-    def add_text_element(self, id_, text, spaces, scale=0.95):
+    def add_text_element(self, id_, text, spaces, color=(0, 0, 0), scale=0.95):
         """Creates and adds a text sprite with a size matching the number of occupied spaces
         defined on the input.
         The position and size are determined with helping methods. 
@@ -630,7 +630,7 @@ class InfoBoard (UIElement):
             raise NotEnoughSpaceException("There is not enough space in the infoboard to add that sprite")
         spaces = self.parse_element_spaces(spaces)
         size        = self.get_element_size(spaces, scale)
-        text        = TextSprite(id_, (0, 0), size, self.rect.size, text, text_color = (0, 0, 0))
+        text        = TextSprite(id_, (0, 0), size, self.rect.size, text, text_color=color)
         position    = self.get_element_position(spaces, text.rect.size)
         text.set_position(position)
         self.add_sprite(text)
@@ -724,6 +724,8 @@ class InfoBoard (UIElement):
     def clear(self):
         """Deletes all the sprites of the infoboard. Useful when deleting the texts."""
         self.sprites.empty()
+        self.taken_spaces = 0
+        self.regenerate_image()
         
 class Dialog (InfoBoard):
     """Dialog class. Inherits from InfoBoard.
@@ -738,7 +740,8 @@ class Dialog (InfoBoard):
         buttons (:obj: pygame.sprite.OrderedUpdates):   All the buttons that the dialog posseses.
     """   
     __default_config = {'rows'  : 3,
-                        'cols'  : 4
+                        'cols'  : 4,
+                        'text_color': WHITE
     }
 
     def __init__(self, id_, user_event_id, element_size, canvas_size, **params):
@@ -766,7 +769,8 @@ class Dialog (InfoBoard):
         self.clear()    #To delete the text fromn the button
         position = tuple(x//2 - y//2 for x, y in zip(self.resolution, self.rect.size))
         self.set_position(position)
-        #self.add_text_element(self.id+'_text', self.params['text'], (self.params['rows']*self.params['cols'])-self.params['cols'])
+        if self.params['text'] and self.params['text'] != '':
+            self.add_text_element(self.id+'_text', self.params['text'], self.params['cols'], color=self.params['text_color'])
 
     def set_active(self, active):
         """Sets the active state in the dialog, and in the contained buttons.

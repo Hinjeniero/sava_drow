@@ -237,6 +237,20 @@ class Player(object):
             ()"""
         return max(self.characters.sprites(), key=lambda char: char.kills)
 
+    def get_stats(self):
+        """Builds a dict with the current information and state of the player.
+        Returns:
+            (Dict):   Dict with all the player current info."""
+        best_char = self.best_character()
+        most_char = self.most_used_character()
+        return {'Player name': self.name,
+                'Total kills': str(self.kills),
+                'Total movements': str(self.movements),
+                'Best class (kills)': str(self.best_class()),
+                'Best character (kills)': best_char.id+" - "+str(best_char.kills),
+                'Most used class (movements)': str(self.most_used_class()),
+                'Most used character (movements)': most_char.id+" - "+str(most_char.movements)}        
+
     def stats_json(self):
         """Builds a json with the current information and state of the player.
         The main key is 'stats', followed by a list of tuples with the schema (key(str), value(anything))

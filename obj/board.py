@@ -17,21 +17,21 @@ import os
 import random
 from pygame.locals import *
 #Selfmade libraries
-from settings import MESSAGES
-from obj.utilities.utility_box import UtilityBox
-from obj.polygons import Circle, Rectangle, Circumference
-from obj.utilities.colors import RED, WHITE, DARKGRAY, LIGHTGRAY, TRANSPARENT_GRAY
+from settings import MESSAGES, USEREVENTS
 from obj.screen import Screen, LoadingScreen
 from obj.cell import Cell, Quadrant
-from obj.utilities.exceptions import BadPlayersParameter, BadPlayerTypeException,\
-                        PlayerNameExistsException, TooManyCharactersException
-from obj.utilities.decorators import run_async
 from obj.players import Player
 from obj.paths import Path
-from obj.ui_element import TextSprite
-from obj.utilities.logger import Logger as LOG
 from obj.players import Character, Restriction
 from obj.sprite import Sprite
+from obj.ui_element import TextSprite, InfoBoard
+from obj.polygons import Circle, Rectangle, Circumference
+from obj.utilities.utility_box import UtilityBox
+from obj.utilities.colors import RED, WHITE, DARKGRAY, LIGHTGRAY, TRANSPARENT_GRAY
+from obj.utilities.exceptions import BadPlayersParameter, BadPlayerTypeException,\
+                                    PlayerNameExistsException, TooManyCharactersException
+from obj.utilities.decorators import run_async
+from obj.utilities.logger import Logger as LOG
 
 #numpy.set_printoptions(threshold=numpy.nan)
 
@@ -125,6 +125,7 @@ class Board(Screen):
         self.characters     = pygame.sprite.OrderedUpdates()
         self.current_player = None  #Created in add_player
         self.scoreboard     = None  #Created in Board.generate
+        self.show_score     = False
 
         #Utilities to keep track
         self.active_cell    = pygame.sprite.GroupSingle()
@@ -173,6 +174,22 @@ class Board(Screen):
             self.generate_mapping()
             self.generate_environment()
         self.add_players(*players)
+
+    def generate_infoboard(self):
+        infoboard = InfoBoard(self.id+'_scoreboard', USEREVENTS.DIALOG_USEREVENT, (0, 0), (self.resolution[0]//1.1, self.resolution[1]//1.5),\
+                    self.resolution, keep_aspect_ratio = False, rows=len(self.players)+1, cols=len(self.players[0].get_stats().keys()))
+        infoboard.set_position(tuple(x//2-y//2 for x, y in zip(self.resolution, infoboard.rect.size)))
+        self.scoreboard = infoboard
+
+    @run_async
+    def update_scoreboard(self):
+        self.scoreboard.clear()
+        for player in self.players:
+            if player.order == 0:
+                for key in player.get_stats().keys():
+                    self.scoreboard.add_text_element('text', key, 1)
+            for value in player.get_stats().values():
+                self.scoreboard.add_text_element('text', value, 1)
 
     def generate_mapping(self):
         axis_size = self.params['circles_per_lvl']*self.params['max_levels']
@@ -505,6 +522,7 @@ class Board(Screen):
                 self.current_player.unpause_characters()
                 self.update_map()       #This goes according to current_player
             self.started = True
+            self.generate_infoboard()
 
     def create_player(self, name, number, chars_size, empty=False, **player_settings):
         """Queues the creation of a player on the async method.
@@ -517,7 +535,7 @@ class Board(Screen):
         """
         self.total_players += 1
         for player in self.players:
-            if name == player.name: 
+            if name == player.name:
                 raise PlayerNameExistsException("The player name "+name+" already exists")
         if not empty and sum(x['ammount'] for x in player_settings.values()) > len(self.quadrants[0].cells):
             raise TooManyCharactersException('There are too many characters in player for a quadrant.')
@@ -583,7 +601,7 @@ class Board(Screen):
             if not self.started and self.params['loading_screen']:
                 self.loading_screen.draw(surface)
                 return
-            super().draw(surface)                                                                           #Draws background
+            super().draw(surface)                   #Draws background
             for dest in self.possible_dests:
                 pygame.draw.circle(surface, WHITE, dest.center, dest.radius)
             for char in self.characters:
@@ -592,6 +610,8 @@ class Board(Screen):
                 self.current_player.draw(surface)   #This draws the player's infoboard
             if self.dialog and self.dialog.visible:
                 self.dialog.draw(surface)
+            if self.show_score and self.scoreboard:
+                self.scoreboard.draw(surface)
         except pygame.error: 
             LOG.log(*MESSAGES.LOCKED_SURFACE_EXCEPTION)
         
@@ -619,9 +639,11 @@ class Board(Screen):
                                                 Said booleans will be True if that specific key was pressed.
         """
         super().keyboard_handler(keys_pressed, event)
+        self.show_score = False
         if self.dialog:
             return
-        #TODO NOTHING HERE YET; COMING SOON
+        if keys_pressed[pygame.K_TAB] and not self.show_score:
+            self.show_score = True
 
     #Does all the shit related to the mouse hovering an option
     def mouse_handler(self, event, mouse_buttons, mouse_movement, mouse_position):
@@ -730,7 +752,7 @@ class Board(Screen):
                     self.players[old_index].pause_characters()
                     self.current_player.unpause_characters()
                 break
-        print(self.current_player.stats_json())
+        self.update_scoreboard()
 
     def kill_character(self, cell, killer):
         #Badass Animation

@@ -789,11 +789,11 @@ class Dialog (InfoBoard):
         Args:
             surface (:obj: pygame.Surface): The surface to draw this dialog onto."""
         if self.visible:
-            for element in self.elements:
+            for element in self.elements:   #Draws elements onto self.imgge
                 element.draw(self.image)
                 if element.active and element.overlay:
                     element.draw_overlay(surface, offset=self.rect.topleft)
-            super().draw(surface)
+            super().draw(surface)           #Draws self.image
 
     def add_button(self, spaces, text, command, scale=1, **button_params):
         """Adds a button to the dialog, that follows the input parameters.
@@ -868,9 +868,10 @@ class TextBox(UIElement):
 
     def hitbox_action(self, command, value):
         """Executes the associated action of the element. To be called when a click or key-press happens."""
-        if ('mouse' in command and ('click' in command or 'button' in command)):  #TODO Set the cursor in its place whenever
+        if ('mouse' in command and ('click' in command or 'button' in command)):
             x_mouse = value[0]-self.rect.x
             text_sprite = self.sprites.sprites()[0]
+            cursor_position = None
             if x_mouse-text_sprite.rect.x < 0:                              #Before the entire text
                 cursor_position = 0
             elif (text_sprite.rect.x+text_sprite.rect.width)-x_mouse < 0:   #After the entire text
@@ -879,7 +880,6 @@ class TextBox(UIElement):
                 cursor_position = int(((x_mouse-text_sprite.rect.x)/text_sprite.rect.width)*len(self.text))
                 if cursor_position < self.cursor_pos:                       #The +1 is due to the cursor in the middle of everything
                     cursor_position += 1
-                self.change_cursor_position(int(cursor_position))
             self.change_cursor_position(cursor_position)
         elif 'dec' in command or 'left' in command:       
             self.change_cursor_position(self.cursor_pos-1)

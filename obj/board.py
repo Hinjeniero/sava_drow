@@ -607,10 +607,9 @@ class Board(Screen):
             mouse_movement (boolean, default=False):    True if there was mouse movement since the last call.
             mouse_pos (:tuple: int, int, default=(0,0)):Current mouse position. In pixels.
         """
-        if self.started:
-            if event.type == pygame.KEYDOWN:    self.keyboard_handler(keys_pressed, event)
-            else:                               self.mouse_handler(event, mouse_buttons_pressed, mouse_movement, mouse_pos)  
-                
+        if self.started or self.dialog:
+            super().event_handler(event, keys_pressed, mouse_buttons_pressed, mouse_movement=mouse_movement, mouse_pos=mouse_pos)
+
     def keyboard_handler(self, keys_pressed, event):
         """Handles any pygame keyboard related event. This allows for user interaction with the object.
         Posibilities:

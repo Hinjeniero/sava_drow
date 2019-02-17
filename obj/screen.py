@@ -253,7 +253,7 @@ class Screen(object):
                 self.send_to_active_sprite('left_arrow', -1)
         if keys_pressed[pygame.K_RIGHT]:
             if self.active_sprite_in_dialog() and self.hit_sprite.has_input:
-                self.send_to_active_sprite('left_arrow', -1)
+                self.send_to_active_sprite('right_arrow', -1)
         else:
             if self.dialog and self.dialog.elements.has(self.hit_sprite) and self.hit_sprite.has_input:
                 self.send_to_active_sprite('add_input_character', pygame.key.name(event.key))
@@ -282,7 +282,8 @@ class Screen(object):
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.active_sprite_in_dialog():
                 if self.hit_sprite.has_input:
-                    self.send_to_active_sprite('mouse_button', value=mouse_position)
+                    adjusted_mouse_pos = tuple(x-y for x, y in zip(mouse_position, self.dialog.rect.topleft))
+                    self.send_to_active_sprite('mouse_button', value=adjusted_mouse_pos)
                 else:
                     self.send_to_active_sprite('do_action_or_add_value', -1)
             elif self.hit_sprite == self.scroll_sprite != None:

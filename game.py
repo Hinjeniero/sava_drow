@@ -105,7 +105,10 @@ class Game(object):
                 if 'scroll' in event.command:
                     self.current_screen.set_scroll(event.value)
                 else:
-                    self.dialog_handler(event.command.lower())
+                    try:
+                        self.dialog_handler(event.command.lower(), value=event.value)
+                    except AttributeError:
+                        self.dialog_handler(event.command.lower())
             elif event.type is USEREVENTS.END_CURRENT_GAME:
                 self.restart_main_menu(win=True)
             elif event.type is USEREVENTS.TIMER_ONE_SEC:

@@ -111,6 +111,15 @@ class NetworkBoard(Board):
         except MastermindError:         #If there was an error connecting
             LOG.error_traceback()
             pygame.event.post(self.connection_error_event)
+    
+    @run_async
+    def start(self, host):
+        if not host:
+            self.flags["ip_port_done"].wait()
+        self.connect()
+        self.keep_alive() #Creating thread
+        self.receive_worker()
+        self.send_handshake(host)
 
     def set_ip_port(self, ip=None, port=None):
         """Done in this way so it's possible to set only one to set the other one later."""
@@ -123,16 +132,6 @@ class NetworkBoard(Board):
                 self.flags["ip_port_done"].set()
             except KeyError:
                 pass
-
-    @run_async
-    def start(self, host):
-        if not host:
-            print("GOTTA WAIT")
-            self.flags["ip_port_done"].wait()
-        self.connect()
-        self.keep_alive() #Creating thread
-        self.receive_worker()
-        self.send_handshake(host)
 
     def log_on_screen(self, msg):
         self.overlay_text.add_msg(msg)
@@ -160,6 +159,7 @@ class NetworkBoard(Board):
         """Connects the client to the server if the ip and port are available."""
         if self.ip and self.port:
             self.client_lock.acquire()
+            self.log_on_screen('Connecting to '+str(self.ip)+' in port '+str(self.port))
             self.client.disconnect()
             self.client.connect(self.ip, self.port)
             self.connected.set()
@@ -394,7 +394,7 @@ class NetworkBoard(Board):
         self.send_data_async({'ready': True})
         self.log_on_screen("ready, waiting for the other players...")
     
-    def mouse_handler(self, event, mouse_movement, mouse_position):
+    def mouse_handler(self, event, mouse_buttons, mouse_movement, mouse_position):
         """Captures the mouse and handles the events regarding this one. More info in method in superclass.
         In this subclass, if mouse_movement is detected, the character under that movement is broadcasted to the rest of
         the clients.
@@ -402,14 +402,15 @@ class NetworkBoard(Board):
             event (:obj: pygame.event): Event received from the pygame queue.
             mouse_movement( boolean, default=False):    True if there was mouse movement since the last call.
             mouse_position (:tuple: int, int, default=(0,0)):   Current mouse position. In pixels."""
+        if self.dialog:
+            super().mouse_handler(event, mouse_buttons, mouse_movement, mouse_position)
+            return
         if self.ready:
-            super().mouse_handler(event, mouse_movement, mouse_position)
+            super().mouse_handler(event, mouse_buttons, mouse_movement, mouse_position)
             if mouse_movement:
                 if self.drag_char:
                     center = tuple(x/y for x,y in zip(self.drag_char.sprite.rect.center, self.resolution))
                     self.send_data_async({"move_character":self.drag_char.sprite.uuid, "center": center})
-        elif self.dialog and self.dialog.visible:
-            super().mouse_handler(event, mouse_movement, mouse_position)
 
     def pickup_character(self):
         """Picks up a character, and get the possible destinies if it is our turn. More info in this case in superclass method.
@@ -463,6 +464,8 @@ class NetworkBoard(Board):
         clients, and the server if this networkboard is the host."""
         self.reconnect = False
         self.client.disconnect()
+        for flag in self.flags.keys():
+            self.flags[flag].set()  #Let those threads crash
         if self.server:
             self.server.accepting_disallow()
             self.server.disconnect_clients()

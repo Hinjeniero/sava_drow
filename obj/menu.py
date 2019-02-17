@@ -91,23 +91,6 @@ class Menu (Screen):
             else (screen_width-sprite.rect.width-0.05*screen_width)
             sprite.set_position((x, sprite.rect.y))
 
-    def event_handler(self, event, keys_pressed, mouse_buttons_pressed, mouse_movement=False, mouse_pos=(0, 0)):
-        """Handles any pygame event. This allows for user interaction with the object.
-        Args:
-            event (:obj: pygame.event): Event received from the pygame queue.
-            keys_pressed (:dict: pygame.keys):  Dict in which the keys are keys and the items booleans.
-                                                Said booleans will be True if that specific key was pressed.
-            mouse_buttons_pressed (:list: booleans):    List with 3 positions regarding the 3 normal buttons on a mouse.
-                                                        Each will be True if that button was pressed.
-            mouse_movement (boolean, default=False):    True if there was mouse movement since the last call.
-            mouse_pos (:tuple: int, int, default=(0,0)):Current mouse position. In pixels.
-        """
-        #This will take care of handling of scroll bar and dialogs
-        if event.type == pygame.KEYDOWN:                 
-            self.keyboard_handler(keys_pressed, event)
-        if mouse_movement or event.type == pygame.MOUSEBUTTONDOWN or event.type == pygame.MOUSEBUTTONUP:    
-            self.mouse_handler(event, mouse_buttons_pressed, mouse_movement, mouse_pos)
-
     def keyboard_handler(self, keys_pressed, event):
         """Handles any pygame keyboard related event. This allows for user interaction with the object.
         Posibilities:

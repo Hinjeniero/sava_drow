@@ -45,6 +45,8 @@ class Cell(Circle):
         self.pos    = grid_position
         self.index  = real_index
         self.chars  = pygame.sprite.GroupSingle()
+        self.promotion = False
+        self.owner  = None
         Cell.generate(self)
 
     @staticmethod
@@ -219,6 +221,8 @@ class Quadrant(object):
                 self.centers[cell.center_level].append(cell)
             except KeyError:
                 self.centers[cell.center_level] = [cell]
+            if cell.center_level > 0:
+                cell.cell.promotion = True
         #self.print_state()
 
     @staticmethod
@@ -262,7 +266,7 @@ class Quadrant(object):
             level = border_levels[0] if border_level < border_levels[0]\
             else border_levels[1] if border_level > border_levels[1] else border_level
             return level
-        
+
     def get_cell(self, border_level=None, center_level=None, random_cell=True):
         """Gets a random cell from the quadrant, returns it and deletes it.
         Args:

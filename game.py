@@ -50,7 +50,7 @@ class Game(object):
         self.fullscreen     = False
         self.count_lock     = threading.Lock()
         self.countdown      = 0
-        self.waiting_for    = [(0, None, None, None)]  #Waiting for second tuple[0], to do method tuple[1]
+        self.waiting_for    = []  #Waiting for second tuple[0], to do method tuple[1]
         self.todo           = []
         Game.generate(self)
 
@@ -67,6 +67,7 @@ class Game(object):
     def __add_timed_execution(self, second, method, *args, **kwargs):
         """Dunno the effects of this if this is called from another class."""
         self.waiting_for.append((int(second), method, args, kwargs))
+        self.waiting_for.sort(key=lambda method: method[0])
 
     def add_screens(self, *screens):
         for screen in screens:
@@ -118,25 +119,29 @@ class Game(object):
                     except AttributeError:
                         self.dialog_handler(event.command.lower())
             elif event.type is USEREVENTS.END_CURRENT_GAME:
-                self.restart_main_menu(win=True)
+                if 'win' in event.command.lower():
+                    self.end_board(win=True)
+                else:
+                    self.end_board()
             elif event.type is USEREVENTS.TIMER_ONE_SEC:
                 self.count_lock.acquire()
                 self.countdown += 1
-                for method in self.waiting_for:
-                    if self.countdown == method[0]:
-                        self.todo.append(method[1:])
-                        self.waiting_for.remove(method)
+                while len(self.waiting_for) > 0 and self.countdown >= self.waiting_for[0][0]:
+                    self.todo.append(self.waiting_for.pop(0)[1:])
                 self.count_lock.release()
                 self.fps_text = UtilityBox.generate_fps(self.clock, size=tuple(int(x*0.05) for x in self.resolution))
         except AttributeError:
             LOG.error_traceback()
 
-    def restart_main_menu(self, win=False):
+    def end_board(self, win=False):
         if win:
             self.show_popup('win')
-            self.current_screen.play_sound('win')
-            self.__add_timed_execution(self.countdown+5, self.restart_main_menu, win=False)
-            return
+        else:
+            self.show_popup('lose')
+        self.__add_timed_execution(self.countdown+5, self.restart_main_menu)
+        self.__add_timed_execution(self.countdown+5, self.hide_popups)
+
+    def restart_main_menu(self):
         self.started = False
         self.change_screen('main', 'menu')
         self.get_screen('params', 'menu', 'config').enable_all_sprites(True)
@@ -292,11 +297,11 @@ class Game(object):
         self.last_inputs.append(pygame.key.name(event.key))
         self.check_easter_eggs()
 
-    def set_easter_eggs(self):  #TODO THose are not jsut easter eggs anymore.
+    def set_easter_eggs(self):  #TODO THose are not jsut easter eggs anymore, popups of all classes
         res = self.resolution
         size = (0.80, 0.10)
         position = tuple(0.5-x/2 for x in size)
-        upper_pos = (position[0], position[1]//3)
+        upper_pos = tuple(x*y for x, y in zip(self.resolution, (position[0], position[1]//3)))
         image = PATHS.LONG_POPUP
         text_size = 0.95
         popup_acho = UIElement.factory( 'secret_acho', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,\
@@ -313,14 +318,18 @@ class Game(object):
                                         text_color=WHITE, rows=1)
         popup_chars  = UIElement.factory('toomany_chars', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
                                         text='Too many chars, change the params.', text_proportion=text_size, text_color=WHITE, rows=1)
-        popup_winner = UIElement.factory('winner', None, 0, upper_pos, size, res, texture=image, keep_aspect_ratio=False,
-                                        text='Gz, you won!', text_proportion=text_size, text_color=WHITE, rows=1)   #TODO CHECK WINNER HERE
+        popup_winner = UIElement.factory('winner', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
+                                        text='Gz, you won!', text_proportion=text_size, text_color=WHITE, rows=1)
+        popup_winner.set_position(upper_pos)
+        popup_loser = UIElement.factory('loser', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
+                                        text='You lost! Use your head more the next time!', text_proportion=text_size, text_color=WHITE, rows=1)
+        popup_loser.set_position(upper_pos)
         popup_turn = UIElement.factory('next_turn', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
                                         text='It`s your turn! Wreck him!', text_proportion=text_size, text_color=WHITE, rows=1)
         popup_conn_error  = UIElement.factory('connection_error', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
                                         text='There was a connection error, check the console for details.', text_proportion=text_size,\
                                         text_color=WHITE, rows=1)
-        self.add_popups(popup_acho, popup_admin, popup_running, popup_dejavu, popup_winner, popup_chars, popup_turn, popup_conn_error)
+        self.add_popups(popup_acho, popup_admin, popup_running, popup_dejavu, popup_winner, popup_loser, popup_chars, popup_turn, popup_conn_error)
 
     def add_popups(self, *popups):
         for popup in popups:
@@ -364,8 +373,7 @@ class Game(object):
                 self.show_popup('admin')
                 for screen in self.screens:
                     try:
-                        screen.admin_mode = not screen.admin_mode
-                        print(screen.admin_mode)
+                        screen.set_admin_mode(not screen.admin_mode)
                     except AttributeError:
                         continue
                 self.last_inputs.clear()

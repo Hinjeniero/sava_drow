@@ -70,6 +70,7 @@ class Player(object):
         self.kills      = 0
         self.movements  = 0
         self.corpses    = []    #Contains dead chars.
+        self.fallen     = []    #Contains my captured/killed pieces
         self.dead       = False #If the player has already lost
         Player.generate(self, sprite_size, canvas_size, empty, **character_params)
 
@@ -185,6 +186,7 @@ class Player(object):
             char (:obj: Character): Character to be found and removed."""
         if self.has_char(char):
             self.characters.remove(char)
+            self.fallen.append(char)
             self.update()
             if char.essential:  #If the killed one was a matron mother or a promoted/bonus char 
                 for character in self.characters:
@@ -245,11 +247,11 @@ class Player(object):
         most_char = self.most_used_character()
         return {'Player name': self.name,
                 'Total kills': str(self.kills),
-                'Total movements': str(self.movements),
-                'Best class (kills)': str(self.best_class()),
-                'Best character (kills)': best_char.id+" - "+str(best_char.kills),
-                'Most used class (movements)': str(self.most_used_class()),
-                'Most used character (movements)': most_char.id+" - "+str(most_char.movements)}        
+                'Total movs': str(self.movements),
+                'Best class (K)': str(self.best_class()),
+                'Best char (K)': best_char.id+" - "+str(best_char.kills),
+                'Most used class (M)': str(self.most_used_class()),
+                'Most used char (M)': most_char.id+" - "+str(most_char.movements)}        
 
     def stats_json(self):
         """Builds a json with the current information and state of the player.
@@ -376,13 +378,13 @@ class Character(AnimatedSprite):
             self.set_paths(graph, distances, movement_restriction, level_size)
             result = Movements.get_movements(hash(movement_restriction))
         paths = []
-        print("RSEULTS INDEX ")
-        print(result[index])
+        #print("RSEULTS INDEX ")
+        #print(result[index])
         for path in result[index]:
             if current_map[path[-1]].accessible():
                 paths.append(path)
-        print("AFTER CHECKING FOR ALLIES ")
-        print(paths)
+        #print("AFTER CHECKING FOR ALLIES ")
+        #print(paths)
         return paths
     
     def set_cell(self, cell):
@@ -708,8 +710,8 @@ class Priestess(Character):
         for path in unfiltered_paths:
             if not any(current_map[path[i]].has_ally() or current_map[path[i]].has_enemy() for i in range(1, len(path)-1)):
                 results.append(path)
-        print("AFTER CHECKING FOR allies and enemies in the middle of the path ")
-        print(results)
+        #print("AFTER CHECKING FOR allies and enemies in the middle of the path ")
+        #print(results)
         return results
 
     def get_type(self):

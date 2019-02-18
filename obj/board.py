@@ -24,7 +24,7 @@ from obj.players import Player
 from obj.paths import Path
 from obj.players import Character, Restriction
 from obj.sprite import Sprite
-from obj.ui_element import TextSprite, InfoBoard
+from obj.ui_element import TextSprite, InfoBoard, Dialog
 from obj.polygons import Circle, Rectangle, Circumference
 from obj.utilities.utility_box import UtilityBox
 from obj.utilities.colors import RED, WHITE, DARKGRAY, LIGHTGRAY, TRANSPARENT_GRAY
@@ -118,6 +118,7 @@ class Board(Screen):
         #Graphic elements
         self.loading_screen = None  #Created in Board.generate
         self.cells          = pygame.sprite.Group()
+        self.promotion_cells= pygame.sprite.Group()
         self.quadrants      = {}
         self.possible_dests = pygame.sprite.Group()
         self.inter_paths    = pygame.sprite.GroupSingle()
@@ -151,7 +152,8 @@ class Board(Screen):
         self.finished       = False
         self.generated      = False
         self.admin_mode     = False
-        self.end_event      = pygame.event.Event(end_event_id)
+        self.win_event      = pygame.event.Event(end_event_id, command='win')
+        self.lose_event     = pygame.event.Event(end_event_id, command='lose')
         Board.generate(self, empty, *players)
     
     @staticmethod
@@ -178,11 +180,14 @@ class Board(Screen):
             self.generate_environment()
         self.add_players(*players)
 
-    def generate_infoboard(self):
-        infoboard = InfoBoard(self.id+'_scoreboard', USEREVENTS.DIALOG_USEREVENT, (0, 0), (self.resolution[0]//1.1, self.resolution[1]//1.5),\
-                    self.resolution, keep_aspect_ratio = False, rows=len(self.players)+1, cols=len(self.players[0].get_stats().keys()))
-        infoboard.set_position(tuple(x//2-y//2 for x, y in zip(self.resolution, infoboard.rect.size)))
-        self.scoreboard = infoboard
+    def generate_dialogs(self):
+        scoreboard = InfoBoard(self.id+'_scoreboard', USEREVENTS.DIALOG_USEREVENT, (0, 0), (self.resolution[0]//1.1, self.resolution[1]//1.5),\
+                                self.resolution, keep_aspect_ratio = False, rows=len(self.players)+1, cols=len(self.players[0].get_stats().keys()))
+        scoreboard.set_position(tuple(x//2-y//2 for x, y in zip(self.resolution, scoreboard.rect.size)))
+        self.scoreboard = scoreboard
+        promotion_table = Dialog(self.id+'_promotion', USEREVENTS.DIALOG_USEREVENT, (self.resolution[0]//1.1, self.resolution[1]//1.5),\
+                                self.resolution, keep_aspect_ratio = False) #We dont insert this in dialogs since we want animated sprites in it, not ui_elements
+        self.promotion_table = promotion_table
 
     @run_async
     def update_scoreboard(self):
@@ -199,6 +204,13 @@ class Board(Screen):
                     self.scoreboard.add_text_element('text', value, 1)
                 else:
                     self.scoreboard.add_text_element('text', value, 1, color=DARKGRAY)
+
+    @run_async
+    def update_promotion_table(self, *chars):
+        self.promotion_table.set_cols(rsadsa)
+        self.promotion_table.set_rows(dsadsadas)
+        for char in chars:
+            self.promotion.add_sprite(char)
 
     def generate_mapping(self):
         axis_size = self.params['circles_per_lvl']*self.params['max_levels']
@@ -384,6 +396,9 @@ class Board(Screen):
             self.cells.add(self.__generate_center_cell(small_radius, self.params['circles_per_lvl'], self.params['max_levels']))
         LOG.log('DEBUG', "Generated cells of ", self.id)
 
+    def set_admin_mode(self, admin):
+        self.admin_mode = admin
+
     def __generate_center_cell(self, radius, circle_number, lvl_number, **cell_params):
         index = circle_number*lvl_number
         for i in range(0, 4):
@@ -527,7 +542,7 @@ class Board(Screen):
                 self.current_player.unpause_characters()
                 self.update_map()       #This goes according to current_player
             self.started = True
-            self.generate_infoboard()
+            self.generate_dialogs()
 
     def create_player(self, name, number, chars_size, empty=False, **player_settings):
         """Queues the creation of a player on the async method.
@@ -567,8 +582,10 @@ class Board(Screen):
                     cell = self.quadrants[player.order].get_cell(border_level=current_level, random_cell=self.params['random_filling'])
                     cell.add_char(character)
                     character.set_cell(cell)
-                    self.characters.add(character)
-                    LOG.log('DEBUG', "Character ", character.id, " spawned with position ", cell.pos)
+                    self.characters.add(character)  
+                    if cell.promotion:
+                        cell.owner = player.uuid
+                    #LOG.log('DEBUG', "Character ", character.id, " spawned with position ", cell.pos)
                 player.pause_characters()
             self.loaded_players += 1
             self.ALL_PLAYERS_LOADED()
@@ -784,7 +801,7 @@ class Board(Screen):
     def win(self):
         LOG.log("info", "Winner winner chicken dinner!")
         self.play_sound('win')
-        pygame.event.post(self.end_event)
+        pygame.event.post(self.win_event)
         self.finished = True    #To disregard events except esc and things like that
         self.show_score = True  #To show the infoboard.
 

@@ -721,6 +721,14 @@ class InfoBoard (UIElement):
             (int):  Number of columns that this infoboard possesses."""
         return self.params['rows']
 
+    def set_rows(self, rows):
+        self.params['rows'] = rows
+        self.spaces = self.params['rows']+self.params['cols']
+
+    def set_cols(self, cols):
+        self.params['cols'] = cols
+        self.spaces = self.params['rows']+self.params['cols']
+
     def clear(self):
         """Deletes all the sprites of the infoboard. Useful when deleting the texts."""
         self.sprites.empty()

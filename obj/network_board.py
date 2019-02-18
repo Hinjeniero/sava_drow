@@ -452,12 +452,15 @@ class NetworkBoard(Board):
         except pygame.error:
             LOG.log(*MESSAGES.LOCKED_SURFACE_EXCEPTION)
 
-    def show_end_stats(self):
-        pass
-
     def win(self):
-        super().win()
-        #TODO send win event to the server
+        if any(self.my_player == player.uuid for player in self.players if not player.dead):
+            super().win()
+        else:
+            LOG.log("info", "Tough luck, you lost this battle!")
+            self.play_sound('lose')
+            pygame.event.post(self.lose_event)
+            self.finished = True    #To disregard events except esc and things like that
+            self.show_score = True  #To show the infoboard.
 
     def destroy(self):
         """Sets the flags to signal the end of the threads and disconnects 

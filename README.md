@@ -4,15 +4,13 @@ DEPENDENCIES: pygame, numpy, wrapt
 
 TODO CURRENT:
 
-    1.- Promotion of chars when reaching adequate cell (~80%)
+    1.- WIP Promotion of chars when reaching adequate cell (~80%)
 
-    2.- Show number of kills and movements over character head. Number of kills color changing depending on the number.
+    2.- WIP Show number of kills and movements over character head. Number of kills color changing depending on the number.
 
-    3.- Show player name over mouse? (In network board)
+    3.- WIP Show player name over mouse? (In network board)
 
     4.- Implement spider dice + sprite. Needs to randomize the game a little bit.
-
-    5.- Game infoboard in the right side
 
 TODO WHENEVER:
 
@@ -23,3 +21,5 @@ TODO WHENEVER:
     4.- Maybe a chat?
 
     5.- Bar of taunts below, the cursor turns into whatever and sends the position to the rest of the clients.
+
+    6.- Game infoboard in the right side

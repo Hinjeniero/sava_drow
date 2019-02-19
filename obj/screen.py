@@ -356,7 +356,7 @@ class Screen(object):
                 self.background.play(surface)
             else:
                 self.background.draw(surface)
-            for sprite in self.sprites.sprites():
+            for sprite in self.sprites:
                 if self.scroll_offset != (0, 0):
                     sprite.draw(surface, offset=self.scroll_offset)
                 else:

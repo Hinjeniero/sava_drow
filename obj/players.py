@@ -23,7 +23,7 @@ from os import listdir
 from os.path import isfile, join, dirname
 #Selfmade libraries
 from settings import PATHS
-from obj.sprite  import AnimatedSprite
+from obj.sprite  import AnimatedSprite, TextSprite
 from obj.ui_element import InfoBoard
 from obj.paths import Restriction, Movements
 from obj.utilities.exceptions import BadCharacterInitException, StateNotFoundException
@@ -332,7 +332,9 @@ class Character(AnimatedSprite):
         self.state      = self.aliases['idle']
         self.index      = 0
         self.kills      = 0
+        self.kill_sprite= None
         self.movements  = 0
+        self.mov_sprite = None
         self.essential  = False
         self.can_kill   = True
         self.can_die    = True
@@ -346,10 +348,34 @@ class Character(AnimatedSprite):
     def generate(self):
         if not self.uuid:
             self.uuid = uuid.uuid1().int
-    
+        self.kill_sprite = TextSprite('kills', (0, 0), tuple(x//1.5 for x in self.rect.size), self.resolution,\
+                                    'K:'+str(self.kills))
+        self.movm_sprite = TextSprite('movements', (0, 0), tuple(x//1.5 for x in self.rect.size), self.resolution,\
+                                    'M:'+str(self.kills))
+
+    def update_info_sprites(self):
+        self.kill_sprite = TextSprite('kills', (0, 0), tuple(x//1.5 for x in self.rect.size), self.resolution,\
+                                    'K:'+str(self.kills))
+        self.movm_sprite = TextSprite('movements', (0, 0), tuple(x//1.5 for x in self.rect.size), self.resolution,\
+                                    'M:'+str(self.kills))
+
+    def update_info_positions(self):
+        self.kill_sprite.set_position((self.rect.x, self.rect.y-self.kill_sprite.rect.height))
+        self.movm_sprite.set_position((self.rect.x+self.kill_sprite.rect.width, self.rect.y-self.movm_sprite.rect.height))
+
+    def set_position(self, position, update_rects=True):
+        super().set_position(position, update_rects=update_rects)
+        self.update_info_positions()
+
     def get_type(self):
         """This to overload."""
         return 'character'
+
+    def draw(self, surface):
+        super().draw(surface)
+        if self.hover:
+            self.kill_sprite.draw(surface)
+            self.movm_sprite.draw(surface)
 
     def json(self, cell_index=None):
         """This to share in the online variant and drop in the same positions."""

@@ -757,6 +757,7 @@ class Board(Screen):
             self.current_player.pause_characters()
             char.set_state('idle')
             char.active = True  #Only can move this one afterwards
+        char.update_info_sprites()
 
     def next_player_turn(self, use_stop_state=True):
         self.current_player.turn += 1

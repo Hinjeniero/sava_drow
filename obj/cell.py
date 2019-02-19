@@ -222,6 +222,7 @@ class Quadrant(object):
             except KeyError:
                 self.centers[cell.center_level] = [cell]
             if cell.center_level > 0:
+                #print(str(cell.cell.grid_position)+" IS CENTER LEVE > 0")
                 cell.cell.promotion = True
         #self.print_state()
 

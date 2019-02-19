@@ -118,7 +118,6 @@ class Board(Screen):
         #Graphic elements
         self.loading_screen = None  #Created in Board.generate
         self.cells          = pygame.sprite.Group()
-        self.promotion_cells= pygame.sprite.Group()
         self.quadrants      = {}
         self.possible_dests = pygame.sprite.Group()
         self.inter_paths    = pygame.sprite.GroupSingle()
@@ -127,6 +126,8 @@ class Board(Screen):
         self.current_player = None  #Created in add_player
         self.scoreboard     = None  #Created in Board.generate
         self.show_score     = False
+        self.promotion_table= None  #Created in Board.generate
+        self.show_promotion = False
 
         #Utilities to keep track
         self.active_cell    = pygame.sprite.GroupSingle()
@@ -186,7 +187,7 @@ class Board(Screen):
         scoreboard.set_position(tuple(x//2-y//2 for x, y in zip(self.resolution, scoreboard.rect.size)))
         self.scoreboard = scoreboard
         promotion_table = Dialog(self.id+'_promotion', USEREVENTS.DIALOG_USEREVENT, (self.resolution[0]//1.1, self.resolution[1]//1.5),\
-                                self.resolution, keep_aspect_ratio = False) #We dont insert this in dialogs since we want animated sprites in it, not ui_elements
+                                self.resolution, keep_aspect_ratio = False)
         self.promotion_table = promotion_table
 
     @run_async
@@ -207,10 +208,12 @@ class Board(Screen):
 
     @run_async
     def update_promotion_table(self, *chars):
-        self.promotion_table.set_cols(rsadsa)
-        self.promotion_table.set_rows(dsadsadas)
+        self.promotion_table.clear()
+        rows = int(math.sqrt(len(chars)))
+        self.promotion_table.set_rows(rows)
+        self.promotion_table.set_cols(rows+1)
         for char in chars:
-            self.promotion.add_sprite(char)
+            self.promotion_table.add_sprite_to_elements(1, char)
 
     def generate_mapping(self):
         axis_size = self.params['circles_per_lvl']*self.params['max_levels']
@@ -630,14 +633,15 @@ class Board(Screen):
                 char.draw(surface)
             if self.current_player:
                 self.current_player.draw(surface)   #This draws the player's infoboard
-            if self.dialog and self.dialog.visible:
-                self.dialog.draw(surface)
+            if self.promotion_table and self.show_promotion:
+                self.promotion_table.draw(surface)
             if self.show_score and self.scoreboard:
                 self.scoreboard.draw(surface)
+            if self.dialog and self.dialog.visible:
+                self.dialog.draw(surface)
         except pygame.error: 
             LOG.log(*MESSAGES.LOCKED_SURFACE_EXCEPTION)
         
-            
     def event_handler(self, event, keys_pressed, mouse_buttons_pressed, mouse_movement=False, mouse_pos=(0, 0)):
         """Handles any pygame event. This allows for user interaction with the object.
         Args:
@@ -746,7 +750,11 @@ class Board(Screen):
         active_cell.add_char(character)
         self.current_player.register_movement(character)
         self.update_cells(self.last_cell.sprite, active_cell)
-        self.last_cell.empty()  #Not last cell anymore, char was droppped succesfully
+        self.last_cell.empty()  #Not last cell anymore, char was dropped succesfully
+        if active_cell.promotion and (None != active_cell.owner != character.master_uuid):  #TODO MAKE THIS SO IT DOESNT GO TO THE NEXT TURN
+            if len(self.current_player.fallen) > 0:
+                self.update_promotion_table(*self.current_player.fallen)
+                self.show_promotion = True
         
     def next_char_turn(self, char):
         self.char_turns += 1

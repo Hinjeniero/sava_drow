@@ -722,10 +722,12 @@ class InfoBoard (UIElement):
         return self.params['rows']
 
     def set_rows(self, rows):
+        rows = 1 if rows < 1 else rows
         self.params['rows'] = rows
         self.spaces = self.params['rows']+self.params['cols']
 
     def set_cols(self, cols):
+        cols = 1 if cols < 1 else cols
         self.params['cols'] = cols
         self.spaces = self.params['rows']+self.params['cols']
 
@@ -804,11 +806,11 @@ class Dialog (InfoBoard):
         Args:
             surface (:obj: pygame.Surface): The surface to draw this dialog onto."""
         if self.visible:
+            super().draw(surface)           #Draws self.image
             for element in self.elements:   #Draws elements onto self.imgge
                 element.draw(self.image)
                 if element.active and element.overlay:
                     element.draw_overlay(surface, offset=self.rect.topleft)
-            super().draw(surface)           #Draws self.image
 
     def add_button(self, spaces, text, command, scale=1, **button_params):
         """Adds a button to the dialog, that follows the input parameters.
@@ -861,6 +863,16 @@ class Dialog (InfoBoard):
         self.elements.add(element)
         self.taken_spaces += spaces
     
+    def add_sprite_to_elements(self, spaces, sprite, scale=1):
+        """Testing this to add animated chars"""
+        spaces = self.parse_element_spaces(spaces)
+        size = self.get_element_size(spaces, scale)
+        position = self.get_element_position(spaces, size)
+        sprite.set_size(size)
+        sprite.set_position(position)
+        self.elements.add(sprite)
+        self.taken_spaces += spaces
+
     def set_canvas_size(self, resolution):
         super().set_canvas_size(resolution)
         for element in self.elements:

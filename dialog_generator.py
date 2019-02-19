@@ -6,7 +6,6 @@ class DialogGenerator(object):
     @staticmethod
     def create_exit_dialog(size, resolution, text='Are you sure that you want to exit?'):
         dialog = Dialog('exit_dialog', USEREVENTS.DIALOG_USEREVENT, size, resolution, text=text, rows=3, cols=2)
-        dialog.add_text_element('exit_dialog_text', text, dialog.get_cols())
         dialog.add_text_element('exit_dialog_text', 'you will lose all your unsaved changes.', dialog.get_cols())
         dialog.add_button(dialog.get_cols()//2, 'Ok', 'ok_yes_exit_already', gradient=((0, 0, 255, 255),(128, 128, 255, 255)))
         dialog.add_button(dialog.get_cols()//2, 'Cancel', 'no_cancel_false', gradient=((0, 0, 255, 255),(128, 128, 255, 255)))

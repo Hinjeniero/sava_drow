@@ -306,7 +306,7 @@ class Game(object):
         self.last_inputs.append(pygame.key.name(event.key))
         self.check_easter_eggs()
 
-    def set_easter_eggs(self):  #TODO THose are not jsut easter eggs anymore, popups of all classes
+    def set_popups(self):
         self.add_popups(*DialogGenerator.generate_popups(self.resolution,\
                         ('secret_acho', 'Gz, you found a secret! all your SFXs will be achos now.'),\
                         ('secret_admin', 'Admin mode activated! You can move your character to any cell.'),\
@@ -487,7 +487,7 @@ class Game(object):
 
     def start(self):
         try:
-            self.set_easter_eggs()
+            self.set_popups()
             self.check_state()
             self.init_log()
             self.current_screen = self.screens[0]

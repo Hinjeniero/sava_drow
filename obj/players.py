@@ -348,24 +348,22 @@ class Character(AnimatedSprite):
     def generate(self):
         if not self.uuid:
             self.uuid = uuid.uuid1().int
-        self.kill_sprite = TextSprite('kills', (0, 0), tuple(x//1.5 for x in self.rect.size), self.resolution,\
-                                    'K:'+str(self.kills))
-        self.movm_sprite = TextSprite('movements', (0, 0), tuple(x//1.5 for x in self.rect.size), self.resolution,\
-                                    'M:'+str(self.kills))
+        self.update_info_sprites()
+
+    def set_size(self, size, update_rects=True):
+        super().set_size(size, update_rects=update_rects)
+        self.update_info_sprites()
 
     def update_info_sprites(self):
-        self.kill_sprite = TextSprite('kills', (0, 0), tuple(x//1.5 for x in self.rect.size), self.resolution,\
+        self.kill_sprite = TextSprite('kills', (0, 0), self.rect.size, self.resolution,\
                                     'K:'+str(self.kills))
-        self.movm_sprite = TextSprite('movements', (0, 0), tuple(x//1.5 for x in self.rect.size), self.resolution,\
-                                    'M:'+str(self.kills))
+        self.movm_sprite = TextSprite('movements', (0, 0), self.rect.size, self.resolution,\
+                                    'M:'+str(self.movements))
+        self.update_info_positions()
 
     def update_info_positions(self):
         self.kill_sprite.set_position((self.rect.x, self.rect.y-self.kill_sprite.rect.height))
         self.movm_sprite.set_position((self.rect.x+self.kill_sprite.rect.width, self.rect.y-self.movm_sprite.rect.height))
-
-    def set_position(self, position, update_rects=True):
-        super().set_position(position, update_rects=update_rects)
-        self.update_info_positions()
 
     def get_type(self):
         """This to overload."""
@@ -418,6 +416,7 @@ class Character(AnimatedSprite):
     def set_cell(self, cell):
         self.set_center(cell.center)
         self.current_pos = cell.get_real_index()
+        self.update_info_positions()
 
     def promote(self):
         self.essential = True

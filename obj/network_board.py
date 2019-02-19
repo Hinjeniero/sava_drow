@@ -285,6 +285,11 @@ class NetworkBoard(Board):
             self.change_turn.wait()
             self.next_player_turn()
             self.change_turn.clear()
+        elif "admin" in response:
+            if response["admin"]:
+                pygame.event.post(pygame.event.Event(self.event_id, command='admin', value=True))
+            else:
+                pygame.event.post(pygame.event.Event(self.event_id, command='admin', value=False))
         else:
             LOG.log('info', 'Unexpected response: ', response)
 
@@ -451,6 +456,13 @@ class NetworkBoard(Board):
                 self.dialog.draw(surface)
         except pygame.error:
             LOG.log(*MESSAGES.LOCKED_SURFACE_EXCEPTION)
+
+    def set_admin_mode(self, admin):
+        self.admin_mode = admin
+        if self.admin_mode:
+            self.send_data_async({"admin": True})
+        else:
+            self.send_data_async({"admin": False})
 
     def win(self):
         if any(self.my_player == player.uuid for player in self.players if not player.dead):

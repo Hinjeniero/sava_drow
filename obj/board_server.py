@@ -210,7 +210,7 @@ class Server(MastermindServerTCP):
                 self.add_to_barrier(connection_object, data)
             elif "update" in data:
                 reply = "UPDATE" #reply = changes, Sends the info of the board to the whatever client requested it. (If there is new actions)
-            elif "move_character" in data or "drop_character" in data or "end_turn" in data:    #Broadcast that
+            elif "move_character" in data or "drop_character" in data or "end_turn" in data or "admin" in data:    #Broadcast that
                 self.broadcast_data(self.clients.values(), data, connection_object)
             elif "keepalive" in data or "keep_alive" in data or "keep-alive" in data:
                 pass

@@ -204,70 +204,72 @@ class Player(object):
         across all the characters belonging to the same class.
         Returns:
             ()"""
-        classes = {}
-        for char in self.characters:
-            try:
-                classes[char.get_type()] += char.movements
-            except KeyError:
-                classes[char.get_type()] = char.movements
-        subclass = max(classes, key=lambda key: classes[key])
-        return (subclass, classes[subclass])
+        if len(self.characters) > 0:
+            classes = {}
+            for char in self.characters:
+                try:
+                    classes[char.get_type()] += char.movements
+                except KeyError:
+                    classes[char.get_type()] = char.movements
+            subclass = max(classes, key=lambda key: classes[key])
+            return (subclass, classes[subclass])
 
     def best_class(self):
         """Returns the current best class of this player, by total ammount of kills
         across all the characters belonging to the same class.
         Returns:
             ()"""
-        classes = {}
-        for char in self.characters:
-            try:
-                classes[char.get_type()] += char.kills
-            except KeyError:
-                classes[char.get_type()] = char.kills
-        subclass = max(classes, key=lambda key: classes[key])
-        return (subclass, classes[subclass])
+        if len(self.characters) > 0:
+            classes = {}
+            for char in self.characters:
+                try:
+                    classes[char.get_type()] += char.kills
+                except KeyError:
+                    classes[char.get_type()] = char.kills
+            subclass = max(classes, key=lambda key: classes[key])
+            return (subclass, classes[subclass])
 
     def most_used_character(self):#TODO same shit as below
         """Returns ths player character with the most movements.
         Returns:
             ()"""
-        return max(self.characters.sprites(), key=lambda char: char.movements)
+        if len(self.characters) > 0:
+            char = max(self.characters, key=lambda char: char.movements)
+            return char.id+" - "+str(char.movements)
 
     def best_character(self):   #TODO Return name or something
         """Returns this player characther with the most kills.
         Returns:
             ()"""
-        return max(self.characters.sprites(), key=lambda char: char.kills)
+        if len(self.characters) > 0:
+            char = max(self.characters, key=lambda char: char.kills)
+            return char.id+" - "+str(char.kills)
 
     def get_stats(self):
         """Builds a dict with the current information and state of the player.
         Returns:
             (Dict):   Dict with all the player current info."""
-        best_char = self.best_character()
-        most_char = self.most_used_character()
         return {'Player name': self.name,
                 'Total kills': str(self.kills),
                 'Total movs': str(self.movements),
                 'Best class (K)': str(self.best_class()),
-                'Best char (K)': best_char.id+" - "+str(best_char.kills),
+                'Best char (K)': self.best_character(),
                 'Most used class (M)': str(self.most_used_class()),
-                'Most used char (M)': most_char.id+" - "+str(most_char.movements)}        
+                'Most used char (M)': self.most_used_character()}        
 
     def stats_json(self):
         """Builds a json with the current information and state of the player.
         The main key is 'stats', followed by a list of tuples with the schema (key(str), value(anything))
         Returns:
             (Dict->List->Tuples->(str, any)):   JSON with all the player current info."""
-        best_char = self.best_character()
-        most_char = self.most_used_character()
         return {'stats':[('Player name: ', self.name),
                         ('Player number: ', str(self.order)),
                         ('Total kills: ', str(self.kills)),
                         ('Total movements: ', str(self.movements)),
                         ('Best class (kills): ', str(self.best_class())),
-                        ('Best character (kills): ', best_char.id+" - "+str(best_char.kills)),
+                        ('Best character (kills): ', self.best_character()),
                         ('Most used class (movements): ', str(self.most_used_class())),
-                        ('Most used character (movements): ', most_char.id+" - "+str(most_char.movements))]}
+                        ('Most used character (movements): ', self.most_used_character())]}
 
     def json(self):
         """Builds a JSON with the player most essential info.

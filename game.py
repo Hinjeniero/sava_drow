@@ -17,6 +17,7 @@ from pygame.locals import *
 from pygame.key import *
 from obj.screen import Screen
 #Selfmade Libraries
+from dialog_generator import DialogGenerator
 from obj.utilities.decorators import run_async
 from obj.board import Board
 from obj.menu import Menu
@@ -109,7 +110,10 @@ class Game(object):
             elif event.type is USEREVENTS.CONFIG_USEREVENT:  
                 self.config_handler(event.command.lower(), event.value)
             elif event.type is USEREVENTS.BOARD_USEREVENT:
-                self.board_handler(event.command.lower())
+                try:
+                    self.board_handler(event.command.lower(), value=event.value)
+                except AttributeError:
+                    self.board_handler(event.command.lower())
             elif event.type is USEREVENTS.DIALOG_USEREVENT:
                 if 'scroll' in event.command:
                     self.current_screen.set_scroll(event.value)
@@ -138,8 +142,8 @@ class Game(object):
             self.show_popup('win')
         else:
             self.show_popup('lose')
-        self.__add_timed_execution(self.countdown+5, self.restart_main_menu)
-        self.__add_timed_execution(self.countdown+5, self.hide_popups)
+        self.__add_timed_execution(self.countdown+3, self.hide_popups)
+        self.__add_timed_execution(self.countdown+7, self.restart_main_menu)
 
     def restart_main_menu(self):
         self.started = False
@@ -199,12 +203,17 @@ class Game(object):
             else:
                 self.board_generator.set_board_params(random_filling=False)
 
-    def board_handler(self, command):
+    def board_handler(self, command, value=None):
         if 'turn' in command:
             self.show_popup('turn')
         elif 'conn' in command and 'error' in command:
             self.show_popup('conn')
             self.restart_main_menu()
+        elif 'admin' in command:
+            if value:
+                self.show_popup('enemy_admin_on')
+            else:
+                self.show_popup('enemy_admin_off')
 
     def graphic_handler(self, command, value):
         if 'fps' in command:          
@@ -298,38 +307,19 @@ class Game(object):
         self.check_easter_eggs()
 
     def set_easter_eggs(self):  #TODO THose are not jsut easter eggs anymore, popups of all classes
-        res = self.resolution
-        size = (0.80, 0.10)
-        position = tuple(0.5-x/2 for x in size)
-        upper_pos = tuple(x*y for x, y in zip(self.resolution, (position[0], position[1]//3)))
-        image = PATHS.LONG_POPUP
-        text_size = 0.95
-        popup_acho = UIElement.factory( 'secret_acho', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,\
-                                        text='Gz, you found a secret! all your SFXs will be achos now.', text_proportion=text_size,\
-                                        text_color=WHITE, rows=1)
-        popup_admin = UIElement.factory('secret_admin', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,\
-                                        text='Admin mode activated! You can move your character to any cell.', text_proportion=text_size,\
-                                        text_color=WHITE, rows=1)
-        popup_running = UIElement.factory('secret_running90s', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,\
-                                        text='Gz, you found a secret! The background music is now Running in the 90s.', text_proportion=text_size,\
-                                        text_color=WHITE, rows=1)
-        popup_dejavu = UIElement.factory('secret_dejavu', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
-                                        text='Gz, you found a secret! The background music is now Dejavu.', text_proportion=text_size,\
-                                        text_color=WHITE, rows=1)
-        popup_chars  = UIElement.factory('toomany_chars', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
-                                        text='Too many chars, change the params.', text_proportion=text_size, text_color=WHITE, rows=1)
-        popup_winner = UIElement.factory('winner', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
-                                        text='Gz, you won!', text_proportion=text_size, text_color=WHITE, rows=1)
-        popup_winner.set_position(upper_pos)
-        popup_loser = UIElement.factory('loser', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
-                                        text='You lost! Use your head more the next time!', text_proportion=text_size, text_color=WHITE, rows=1)
-        popup_loser.set_position(upper_pos)
-        popup_turn = UIElement.factory('next_turn', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
-                                        text='It`s your turn! Wreck him!', text_proportion=text_size, text_color=WHITE, rows=1)
-        popup_conn_error  = UIElement.factory('connection_error', None, 0, position, size, res, texture=image, keep_aspect_ratio=False,
-                                        text='There was a connection error, check the console for details.', text_proportion=text_size,\
-                                        text_color=WHITE, rows=1)
-        self.add_popups(popup_acho, popup_admin, popup_running, popup_dejavu, popup_winner, popup_loser, popup_chars, popup_turn, popup_conn_error)
+        self.add_popups(*DialogGenerator.generate_popups(self.resolution,\
+                        ('secret_acho', 'Gz, you found a secret! all your SFXs will be achos now.'),\
+                        ('secret_admin', 'Admin mode activated! You can move your character to any cell.'),\
+                        ('secret_running90s', 'Gz, you found a secret! The background music is now Running in the 90s.'),\
+                        ('secret_dejavu', 'Gz, you found a secret! The background music is now Dejavu.'),\
+                        ('toomany_chars', 'Too many chars, can`t generate a board. Change the params.'),\
+                        ('winner', 'Gz, you won! You sure showed them!'),\
+                        ('loser', 'You lost! Use your head more the next time!'),\
+                        ('next_turn', 'It`s your turn! Wreak some havoc!'),\
+                        ('connection_error', 'There was a connection error, check the console for details.'),\
+                        ('enemy_admin_on', 'Other player activated the admin mode! Be careful!'),\
+                        ('enemy_admin_off', 'The admin mode was deactivated in another board.'),\
+                        ))
 
     def add_popups(self, *popups):
         for popup in popups:
@@ -338,15 +328,20 @@ class Game(object):
             self.popups.add(popup)
 
     def show_popup(self, id_):
-        for popup in self.popups.sprites():
-            if id_ in popup.id:
+        for popup in self.popups:
+            if id_ in popup.id or popup.id in id_:
                 popup.set_visible(True)
                 popup.set_active(True)
                 return
         LOG.log('warning', 'Popup ', id_,'not found')
+
+    def get_popup(self, id_):
+        for popup in self.popups:
+            if id_ in popup.id or popup.id in id_:
+                return popup
     
     def hide_popups(self):
-        for popup in self.popups.sprites():
+        for popup in self.popups:
             popup.set_active(False)
             popup.set_visible(False)
 

@@ -777,8 +777,11 @@ class Dialog (InfoBoard):
         self.clear()    #To delete the text fromn the button
         position = tuple(x//2 - y//2 for x, y in zip(self.resolution, self.rect.size))
         self.set_position(position)
-        if self.params['text'] and self.params['text'] != '':
-            self.add_text_element(self.id+'_text', self.params['text'], self.params['cols'], color=self.params['text_color'])
+        try:
+            if self.params['text'] and self.params['text'] != '':
+                self.add_text_element(self.id+'_text', self.params['text'], self.params['cols'], color=self.params['text_color'])
+        except KeyError:
+            pass
 
     def set_active(self, active):
         """Sets the active state in the dialog, and in the contained buttons.

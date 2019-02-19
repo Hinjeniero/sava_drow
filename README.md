@@ -4,19 +4,15 @@ DEPENDENCIES: pygame, numpy, wrapt
 
 TODO CURRENT:
 
-    1.- win working in network board(~80%)
+    1.- Promotion of chars when reaching adequate cell (~80%)
 
-    1.1.- Warn clients of other players swithcin on admin mode!
+    2.- Show number of kills and movements over character head. Number of kills color changing depending on the number.
 
-    1.5.- Promotion of chars when reaching adequate cell (~80%)
+    3.- Show player name over mouse? (In network board)
 
-    2.- Implement spider dice + sprite. Needs to randomize the game a little bit.
+    4.- Implement spider dice + sprite. Needs to randomize the game a little bit.
 
-    3.- Game infoboard in the right side
-
-    4.- Show number of kills and movements over character head. Number of kills color changing depending on the number.
-
-    5.- Show player name over mouse? (In network board)
+    5.- Game infoboard in the right side
 
 TODO WHENEVER:
 

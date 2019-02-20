@@ -38,3 +38,13 @@ class DialogGenerator(object):
             popups.append(UIElement.factory(id_text[0], None, 0, position, size, resolution, texture=PATHS.LONG_POPUP, keep_aspect_ratio=False,\
                                             text=id_text[1], text_proportion=text_size, text_color=text_color, rows=1))
         return popups
+
+    @staticmethod
+    def popups_generator(resolution, text_size=0.95, text_color=WHITE):
+        """THIS IS A TEST"""
+        size = (0.80, 0.10)
+        position = tuple(0.5-x/2 for x in size)
+        while True:
+            id_text = yield #To receive here, write gen.send(id_text tuple) where gen is this generator wherever
+            yield UIElement.factory(id_text[0], None, 0, position, size, resolution, texture=PATHS.LONG_POPUP, keep_aspect_ratio=False,\
+                                    text=id_text[1], text_proportion=text_size, text_color=text_color, rows=1)

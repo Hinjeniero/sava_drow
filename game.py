@@ -66,8 +66,9 @@ class Game(object):
         pygame.time.set_timer(USEREVENTS.TIMER_ONE_SEC, 1000) #Each second
 
     def __add_timed_execution(self, second, method, *args, **kwargs):
-        """Dunno the effects of this if this is called from another class."""
-        self.waiting_for.append((int(second), method, args, kwargs))
+        """Dunno the effects of this if this is called from another class.
+        The seconds are the seconds from this instant, not in absolute terms."""
+        self.waiting_for.append((int(self.countdown+second), method, args, kwargs))
         self.waiting_for.sort(key=lambda method: method[0])
 
     def add_screens(self, *screens):
@@ -142,8 +143,8 @@ class Game(object):
             self.show_popup('win')
         else:
             self.show_popup('lose')
-        self.__add_timed_execution(self.countdown+3, self.hide_popups)
-        self.__add_timed_execution(self.countdown+7, self.restart_main_menu)
+        self.__add_timed_execution(3, self.hide_popups)
+        self.__add_timed_execution(7, self.restart_main_menu)
 
     def restart_main_menu(self):
         self.started = False
@@ -207,8 +208,9 @@ class Game(object):
         if 'turn' in command:
             self.show_popup('turn')
         elif 'conn' in command and 'error' in command:
-            self.show_popup('conn')
-            self.restart_main_menu()
+            self.show_popup('connection_error')
+            self.__add_timed_execution(3, self.restart_main_menu)
+            self.__add_timed_execution(3, self.hide_popups)
         elif 'admin' in command:
             if value:
                 self.show_popup('enemy_admin_on')

@@ -808,7 +808,7 @@ class Dialog (InfoBoard):
         if self.visible:
             super().draw(surface)           #Draws self.image
             for element in self.elements:   #Draws elements onto self.imgge
-                element.draw(self.image)
+                element.draw(surface, offset=self.rect.topleft)
                 if element.active and element.overlay:
                     element.draw_overlay(surface, offset=self.rect.topleft)
 

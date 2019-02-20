@@ -69,7 +69,7 @@ class Player(object):
         self.turn       = 0
         self.kills      = 0
         self.movements  = 0
-        self.corpses    = []    #Contains dead chars.
+        self.corpses    = []    #Contains dead chars of the other players.
         self.fallen     = []    #Contains my captured/killed pieces
         self.dead       = False #If the player has already lost
         Player.generate(self, sprite_size, canvas_size, empty, **character_params)
@@ -168,6 +168,11 @@ class Player(object):
             self.infoboard.set_canvas_size(resolution)
         for char in self.characters:
             char.set_canvas_size(resolution)
+
+    def revive_char(self, dead_char, sacrifice):
+        if dead_char in self.fallen and sacrifice in self.fallen:
+            self.characters.add(dead_char)
+            #No need to do more cause kill_character was called before this.
 
     def has_char(self, char):
         """Checks if a character exists/is contained in this player.
@@ -341,7 +346,7 @@ class Character(AnimatedSprite):
         self.turns      = 1
         self.rank       = 0
         self.order      = 0
-        self.current_pos= (0, 0)
+        self.current_pos= 0
         Character.generate(self)
 
     @staticmethod
@@ -369,11 +374,11 @@ class Character(AnimatedSprite):
         """This to overload."""
         return 'character'
 
-    def draw(self, surface):
-        super().draw(surface)
+    def draw(self, surface, offset=None):
+        super().draw(surface, offset=offset)
         if self.hover:
-            self.kill_sprite.draw(surface)
-            self.movm_sprite.draw(surface)
+            self.kill_sprite.draw(surface, offset=offset)
+            self.movm_sprite.draw(surface, offset=offset)
 
     def json(self, cell_index=None):
         """This to share in the online variant and drop in the same positions."""

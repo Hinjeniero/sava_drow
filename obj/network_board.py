@@ -105,21 +105,30 @@ class NetworkBoard(Board):
                 self.flags["players_data_done"] = threading.Event()
                 self.show_dialog('input')   #To input IP and PORT
             self.start(host)
-        except MastermindErrorSocket:   #If there was an error connecting
-            LOG.error_traceback()
-            pygame.event.post(self.connection_error_event)
-        except MastermindError:         #If there was an error connecting
-            LOG.error_traceback()
-            pygame.event.post(self.connection_error_event)
+        except Exception as exc:
+            self.exception_handler(exc)
     
+    def exception_handler(self, exception):
+        try:
+            raise exception
+        except (MastermindErrorSocket, MastermindError):   #If there was an error connecting
+            LOG.error_traceback()
+            pygame.event.post(self.connection_error_event)
+        except Exception:
+            LOG.error_traceback()
+            pygame.event.post(self.connection_error_event)
+
     @run_async
     def start(self, host):
-        if not host:
-            self.flags["ip_port_done"].wait()
-        self.connect()
-        self.keep_alive() #Creating thread
-        self.receive_worker()
-        self.send_handshake(host)
+        try:
+            if not host:
+                self.flags["ip_port_done"].wait()
+            self.connect()
+            self.keep_alive() #Creating thread
+            self.receive_worker()
+            self.send_handshake(host)
+        except Exception as exc:
+            self.exception_handler(exc)
 
     def set_ip_port(self, ip=None, port=None):
         """Done in this way so it's possible to set only one to set the other one later."""

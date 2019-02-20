@@ -155,6 +155,7 @@ class Board(Screen):
         self.admin_mode     = False
         self.win_event      = pygame.event.Event(end_event_id, command='win')
         self.lose_event     = pygame.event.Event(end_event_id, command='lose')
+        self.swapper        = None
         Board.generate(self, empty, *players)
     
     @staticmethod
@@ -180,6 +181,8 @@ class Board(Screen):
             self.generate_mapping()
             self.generate_environment()
         self.add_players(*players)
+        self.swapper = self.character_swapper()
+        self.swapper.send(None) #Needed in the first execution of generator
 
     def generate_dialogs(self):
         scoreboard = InfoBoard(self.id+'_scoreboard', USEREVENTS.DIALOG_USEREVENT, (0, 0), (self.resolution[0]//1.1, self.resolution[1]//1.5),\
@@ -688,14 +691,28 @@ class Board(Screen):
 
         if event.type == pygame.MOUSEBUTTONDOWN:  #On top of the char and clicking on it
             self.play_sound('key')
-            if self.active_char.sprite: self.pickup_character()
+            if self.show_promotion:
+                for element in self.promotion_table.elements:   #TODO THIS COULD BE A METHOD IN DIALOG, OR EVEN IN MULTISPRITE
+                    if element.hover:   #If we activated hover in it earlier
+                        self.swapper.send(element)
+                        self.next_char_turn(element)   #NEW CHAR THAT WE CHOSE
+                        break
+                return
+            elif self.active_char.sprite: 
+                self.pickup_character()
         elif event.type == pygame.MOUSEBUTTONUP:  #If we are dragging it we will have a char in here
             if self.drag_char.sprite:   self.drop_character()
-
         if mouse_movement:
+            mouse_sprite = UtilityBox.get_mouse_sprite()
+            if self.show_promotion:
+                for element in self.promotion_table.elements:   #TODO THIS COULD BE A METHOD IN DIALOG, OR EVEN IN MULTISPRITE
+                    if element.rect.colliderect(mouse_sprite):
+                        element.set_hover(True)
+                    else:
+                        element.set_hover(False)
+                return
             if self.drag_char.sprite:   
                 self.drag_char.sprite.rect.center = mouse_position
-            mouse_sprite = UtilityBox.get_mouse_sprite()
             
             #Checking collision with cells (Using this instead of hit_sprite because the hit method is different)
             collided_cell = pygame.sprite.spritecollideany(mouse_sprite, self.cells, collided=pygame.sprite.collide_circle)
@@ -704,6 +721,17 @@ class Board(Screen):
             #Checking collision with paths (Using this instead of hit_sprite because the hit method is different)
             path = pygame.sprite.spritecollideany(mouse_sprite, self.paths, collided=pygame.sprite.collide_mask)
             self.set_active_path(path)
+
+    def character_swapper(self):
+        """This is to try a generator in a kinda non-generator situation"""
+        while True:
+            original_char = yield
+            new_char = yield
+            cell = self.get_cell_by_real_index(original_char.current_pos)
+            #self.kill_character(cell, new_char) #TODO This does too much unnecesary stuff, chefck how to replace it
+            self.current_player.revive_char(new_char, original_char)
+            new_char.set_cell(cell)
+            new_char.set_size(cell.rect.size)
 
     def pickup_character(self, get_dests=True):
         """Picks up a character. Adds it to the drag char Group, and check in the LUT table
@@ -727,13 +755,15 @@ class Board(Screen):
         moved = False
         self.drag_char.sprite.set_selected(False)
         self.drag_char.sprite.set_hover(False)
-        if self.possible_dests.has(self.active_cell.sprite)\
+        if self.last_cell.sprite is self.active_cell.sprite:#SAMECELL
+            self.drag_char.sprite.set_center(self.last_cell.sprite.center)
+            LOG.log('debug', 'Moves towards the same cell you were in dont count')
+        elif self.possible_dests.has(self.active_cell.sprite)\
         or self.admin_mode and self.active_cell.sprite:
             self.move_character(self.drag_char.sprite)
-            self.next_char_turn(self.drag_char.sprite)
             moved = True
         else:
-            self.drag_char.sprite.rect.center = self.last_cell.sprite.center
+            self.drag_char.sprite.set_center(self.last_cell.sprite.center)
             self.play_sound('warning')
             LOG.log('debug', 'Cant move the char there')
         self.drag_char.empty()
@@ -755,6 +785,9 @@ class Board(Screen):
             if len(self.current_player.fallen) > 0:
                 self.update_promotion_table(*self.current_player.fallen)
                 self.show_promotion = True
+                self.swapper.send(self.drag_char.sprite)
+                return
+        self.next_char_turn(self.drag_char.sprite)
         
     def next_char_turn(self, char):
         self.char_turns += 1

@@ -4,7 +4,7 @@ DEPENDENCIES: pygame, numpy, wrapt
 
 TODO CURRENT:
 
-    1.- WIP Promotion of chars when reaching adequate cell (~80%)
+    1.- WIP Promotion of chars when reaching adequate cell (~95%)
 
     2.- WIP Show number of kills and movements over character head. Number of kills color changing depending on the number.
 

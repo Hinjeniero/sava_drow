@@ -877,6 +877,11 @@ class Dialog (InfoBoard):
         super().set_canvas_size(resolution)
         for element in self.elements:
             element.set_canvas_size(resolution)
+    
+    def full_clear(self):
+        """Deletes all the sprites of the infoboard. Useful when deleting the texts."""
+        super().clear()
+        self.elements.empty()
 
 class TextBox(UIElement):
     CURSOR_CHAR = 'I'

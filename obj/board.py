@@ -211,12 +211,13 @@ class Board(Screen):
 
     @run_async
     def update_promotion_table(self, *chars):
-        self.promotion_table.clear()
+        self.promotion_table.full_clear()
         rows = int(math.sqrt(len(chars)))
         self.promotion_table.set_rows(rows)
         self.promotion_table.set_cols(rows+1)
         for char in chars:
-            self.promotion_table.add_sprite_to_elements(1, char)
+            if not char.upgradable: #Upgradable ones cannot be upgraded to
+                self.promotion_table.add_sprite_to_elements(1, char)
 
     def generate_mapping(self):
         axis_size = self.params['circles_per_lvl']*self.params['max_levels']
@@ -692,10 +693,11 @@ class Board(Screen):
         if event.type == pygame.MOUSEBUTTONDOWN:  #On top of the char and clicking on it
             self.play_sound('key')
             if self.show_promotion:
-                for element in self.promotion_table.elements:   #TODO THIS COULD BE A METHOD IN DIALOG, OR EVEN IN MULTISPRITE
+                for element in self.promotion_table.elements:   #TODO THIS COULD BE A METHOD IN DIALOG, OR EVEN IN MULTISPRITE (get_COLLISIONing sprite bro)
                     if element.hover:   #If we activated hover in it earlier
                         self.swapper.send(element)
-                        self.next_char_turn(element)   #NEW CHAR THAT WE CHOSE
+                        self.next_player_turn()
+                        self.show_promotion = False
                         break
                 return
             elif self.active_char.sprite: 
@@ -728,10 +730,13 @@ class Board(Screen):
             original_char = yield
             new_char = yield
             cell = self.get_cell_by_real_index(original_char.current_pos)
-            #self.kill_character(cell, new_char) #TODO This does too much unnecesary stuff, chefck how to replace it
+            cell.add_char(new_char)
             self.current_player.revive_char(new_char, original_char)
-            new_char.set_cell(cell)
             new_char.set_size(cell.rect.size)
+            new_char.set_cell(cell)
+            new_char.set_hover(False)
+            self.characters.remove(original_char)
+            self.characters.add(new_char)
 
     def pickup_character(self, get_dests=True):
         """Picks up a character. Adds it to the drag char Group, and check in the LUT table
@@ -781,12 +786,14 @@ class Board(Screen):
         self.current_player.register_movement(character)
         self.update_cells(self.last_cell.sprite, active_cell)
         self.last_cell.empty()  #Not last cell anymore, char was dropped succesfully
-        if active_cell.promotion and (None != active_cell.owner != character.master_uuid):  #TODO MAKE THIS SO IT DOESNT GO TO THE NEXT TURN
-            if len(self.current_player.fallen) > 0:
-                self.update_promotion_table(*self.current_player.fallen)
-                self.show_promotion = True
-                self.swapper.send(self.drag_char.sprite)
-                return
+        #THIS CONDITION TO SHOW THE UPGRADE TABLE STARTS HERE
+        if active_cell.promotion and self.drag_char.sprite.upgradable\
+        and (None != active_cell.owner != character.master_uuid)\
+        and any(not char.upgradable for char in self.current_player.fallen):
+            self.update_promotion_table(*tuple(char for char in self.current_player.fallen if not char.upgradable))
+            self.show_promotion = True
+            self.swapper.send(self.drag_char.sprite)
+            return
         self.next_char_turn(self.drag_char.sprite)
         
     def next_char_turn(self, char):
@@ -801,6 +808,7 @@ class Board(Screen):
         char.update_info_sprites()
 
     def next_player_turn(self, use_stop_state=True):
+        print("NEXTY PAYER TURN")
         self.current_player.turn += 1
         old_index = self.player_index
         while True:
@@ -817,6 +825,7 @@ class Board(Screen):
                     self.current_player.unpause_characters()
                 break
         self.update_scoreboard()
+        print(self.current_player.name)
 
     def kill_character(self, cell, killer):
         #Badass Animation

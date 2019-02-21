@@ -66,3 +66,6 @@ class TooManyCharactersException(Exception):
 
 class GameEndException(Exception):
     pass
+
+class SwapFailedException(Exception):
+    pass

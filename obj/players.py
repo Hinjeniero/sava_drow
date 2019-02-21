@@ -26,7 +26,7 @@ from settings import PATHS
 from obj.sprite  import AnimatedSprite, TextSprite
 from obj.ui_element import InfoBoard
 from obj.paths import Restriction, Movements
-from obj.utilities.exceptions import BadCharacterInitException, StateNotFoundException
+from obj.utilities.exceptions import BadCharacterInitException, StateNotFoundException, SwapFailedException
 from obj.utilities.resizer import Resizer
 from obj.utilities.logger import Logger as LOG
 from obj.utilities.decorators import run_async
@@ -170,9 +170,13 @@ class Player(object):
             char.set_canvas_size(resolution)
 
     def revive_char(self, dead_char, sacrifice):
-        if dead_char in self.fallen and sacrifice in self.fallen:
+        if dead_char in self.fallen and self.characters.has(sacrifice):
             self.characters.add(dead_char)
-            #No need to do more cause kill_character was called before this.
+            self.characters.remove(sacrifice)
+            self.fallen.append(sacrifice)
+            self.fallen.remove(dead_char)
+        else:
+            raise SwapFailedException("Either the revived char or the killed orc weren't found in this player")
 
     def has_char(self, char):
         """Checks if a character exists/is contained in this player.
@@ -346,6 +350,7 @@ class Character(AnimatedSprite):
         self.turns      = 1
         self.rank       = 0
         self.order      = 0
+        self.upgradable = False
         self.current_pos= 0
         Character.generate(self)
 
@@ -782,6 +787,7 @@ class Pawn(Character):
             **aliases (:dict:): How each standarized action will be named in the loaded images.
         """
         super().__init__(my_player, player_uuid, id_, position, size, canvas_size, sprites_path, aliases=aliases, uuid=uuid, **params)
+        self.upgradable = True
 
     def get_paths(self, graph, distances, current_map, index, level_size):
         """Gets all the possible paths for each cell for a Pawn type with his Restriction in movement.

@@ -294,6 +294,9 @@ class NetworkBoard(Board):
             self.change_turn.wait()
             self.next_player_turn()
             self.change_turn.clear()
+        elif "swap" in response:
+            self.swapper.send(next(char for char in self.characters if char.uuid == response['original']))
+            self.swapper.send(next(char for char in self.characters if char.uuid == response['new']))
         elif "admin" in response:
             if response["admin"]:
                 pygame.event.post(pygame.event.Event(self.event_id, command='admin', value=True))
@@ -434,14 +437,23 @@ class NetworkBoard(Board):
         else:
             super().pickup_character(get_dests=False)
 
+    def after_swap(self, orig_char, new_char):
+        super().after_swap(orig_char, new_char)
+        self.send_data_async({'swap': True, 'original': orig_char.uuid, 'new': new_char.uuid})
+
     def drop_character(self):
         """Makes the action of the superclass if my_turn is True. Otherwise, just moves the character to the last cell
         where it was. After this, it broadcast the result to the rest of the clients (sending it to the server)."""
         character = self.drag_char.sprite
-        movement = super().drop_character()
-        if movement:
-            self.send_data_async({'drop_character': character.uuid, 'cell':self.active_cell.sprite.get_real_index()})
+        if self.my_turn:
+            movement = super().drop_character()
+            if movement:
+                self.send_data_async({'drop_character': character.uuid, 'cell':self.active_cell.sprite.get_real_index()})
         else:
+            self.drag_char.sprite.set_selected(False)
+            self.drag_char.sprite.set_hover(False)
+            self.drag_char.empty()
+            character.set_center(self.last_cell.sprite.center)
             center = tuple(x/y for x,y in zip(character.rect.center, self.resolution))
             self.send_data_async({"move_character": character.uuid, "center": center})
 

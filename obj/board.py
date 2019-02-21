@@ -696,8 +696,6 @@ class Board(Screen):
                 for element in self.promotion_table.elements:   #TODO THIS COULD BE A METHOD IN DIALOG, OR EVEN IN MULTISPRITE (get_COLLISIONing sprite bro)
                     if element.hover:   #If we activated hover in it earlier
                         self.swapper.send(element)
-                        self.next_player_turn()
-                        self.show_promotion = False
                         break
                 return
             elif self.active_char.sprite: 
@@ -731,12 +729,18 @@ class Board(Screen):
             new_char = yield
             cell = self.get_cell_by_real_index(original_char.current_pos)
             cell.add_char(new_char)
-            self.current_player.revive_char(new_char, original_char)
+            player = next(player for player in self.players if player.uuid == original_char.master_uuid)
+            player.revive_char(new_char, original_char)
             new_char.set_size(cell.rect.size)
             new_char.set_cell(cell)
             new_char.set_hover(False)
             self.characters.remove(original_char)
             self.characters.add(new_char)
+            self.after_swap(original_char, new_char)
+
+    def after_swap(self, orig_char, new_char):
+        self.show_promotion = False
+        self.next_player_turn()
 
     def pickup_character(self, get_dests=True):
         """Picks up a character. Adds it to the drag char Group, and check in the LUT table
@@ -760,7 +764,7 @@ class Board(Screen):
         moved = False
         self.drag_char.sprite.set_selected(False)
         self.drag_char.sprite.set_hover(False)
-        if self.last_cell.sprite is self.active_cell.sprite:#SAMECELL
+        if self.last_cell.sprite is self.active_cell.sprite:
             self.drag_char.sprite.set_center(self.last_cell.sprite.center)
             LOG.log('debug', 'Moves towards the same cell you were in dont count')
         elif self.possible_dests.has(self.active_cell.sprite)\

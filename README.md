@@ -3,16 +3,18 @@ TO START THE GAME: 'python.exe main.py' in command line
 DEPENDENCIES: pygame, numpy, wrapt
 
 TODO CURRENT:
+    0.- Promotion in network boards (~95%)
 
-    1.- WIP Promotion of chars when reaching adequate cell (~95%)
+    0.1.- Proper hitboxes in the promotion table
 
-    2.- WIP Show number of kills and movements over character head. Number of kills color changing depending on the number.
+    0.5 .- Add some animations and shit to promotion of a char, like stars or particles or something
 
-    3.- WIP Show player name over mouse? (In network board)
+    1.- Show player name over mouse? (In network board)
 
-    4.- Implement spider dice + sprite. Needs to randomize the game a little bit.
+    2.- Implement spider dice + sprite. Needs to randomize the game a little bit.
 
 TODO WHENEVER:
+    0.- Effect when chars colliding with each other.
 
     1.- Make graphics for the sliders.
 

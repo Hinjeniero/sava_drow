@@ -132,7 +132,7 @@ class Server(MastermindServerTCP):
             self.all_players_received.wait()
             players = list(self.players_data.values())
             players.sort(key=lambda player: player['order'])
-            for i in range (0, self.total_players): #TODO ERROR, IF ALL DICES ARE SETTED BEFORE PLAYERS ARE CREATED; IT ALL GOES TO SHI(T)
+            for i in range (0, self.total_players):
                 self.callback_client_send(self.barrier[i][0], {'player_id': players[i]['uuid']})
                 #The players in there should be ordered by 'order' already. Sending uuid.
     
@@ -212,11 +212,11 @@ class Server(MastermindServerTCP):
             elif "dice" in data:
                 LOG.log('info', 'Client ', data['id'], ' rolled a ', data['dice'])
                 self.add_to_barrier(connection_object, data)
-            elif "update" in data:
-                reply = "UPDATE" #reply = changes, Sends the info of the board to the whatever client requested it. (If there is new actions)
-            elif "keepalive" in data or "keep_alive" in data or "keep-alive" in data:
+            elif "keepalive" in data or "keep_alive" in data or "keep-alive" in data or "update" in data:
                 pass
-            elif "move_character" in data or "drop_character" in data or "end_turn" in data or "admin" in data or "swap" in data:    #Broadcast that
+            elif "move_character" in data or "drop_character" in data or "end_turn" in data or "admin" in data:    #Broadcast that
+                self.broadcast_data(self.clients.values(), data, connection_object)
+            elif "swap" in data:
                 self.broadcast_data(self.clients.values(), data, connection_object)
             else:
                 LOG.log('warning', 'Petitions commands are not supported ', data)

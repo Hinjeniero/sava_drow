@@ -260,6 +260,8 @@ class NetworkBoard(Board):
                     cell.add_char(char)
                     char.set_cell(cell)
                     self.characters.add(char)
+                    if cell.promotion:
+                        cell.owner = char.master_uuid
             for player in self.players:
                 player.update()
             self.send_ready()
@@ -295,7 +297,6 @@ class NetworkBoard(Board):
             self.next_player_turn()
             self.change_turn.clear()
         elif "swap" in response:
-            print(response)
             original_char = next(char for char in self.characters if char.uuid == response['original'])
             player = next(player for player in self.players if player.uuid == original_char.master_uuid)
             self.swapper.send(original_char)
@@ -442,7 +443,8 @@ class NetworkBoard(Board):
 
     def after_swap(self, orig_char, new_char):
         super().after_swap(orig_char, new_char)
-        self.send_data_async({'swap': True, 'original': orig_char.uuid, 'new': new_char.uuid})
+        if orig_char.master_uuid == self.my_player and new_char.master_uuid == self.my_player:    #If this was a local swap and not a received one in response_handler from another player
+            self.send_data_async({"swap": True, "original": orig_char.uuid, "new": new_char.uuid})
 
     def drop_character(self):
         """Makes the action of the superclass if my_turn is True. Otherwise, just moves the character to the last cell

@@ -736,10 +736,12 @@ class Board(Screen):
             new_char.set_hover(False)
             self.characters.remove(original_char)
             self.characters.add(new_char)
+            #yield(original_char, new_char)
             self.after_swap(original_char, new_char)
 
     def after_swap(self, orig_char, new_char):
         self.show_promotion = False
+        LOG.log('info', 'Character ', orig_char.id, ' upgraded to ', new_char.id)
         self.next_player_turn()
 
     def pickup_character(self, get_dests=True):
@@ -798,6 +800,15 @@ class Board(Screen):
             self.show_promotion = True
             self.swapper.send(self.drag_char.sprite)
             return
+        else:
+            if active_cell.promotion:
+                print("PROMOTIONABLE CELL")
+            if None != active_cell.owner != character.master_uuid:
+                print("ENEMY PROMOTIONABLE CELL")
+            if any(char for char in self.current_player.fallen):
+                print("HAVE FALLEN CHARS")
+            if any(not char.upgradable for char in self.current_player.fallen):
+                print("HAVE FALLEN CHARS TO UPGRADE TO ")
         self.next_char_turn(self.drag_char.sprite)
         
     def next_char_turn(self, char):
@@ -812,7 +823,6 @@ class Board(Screen):
         char.update_info_sprites()
 
     def next_player_turn(self, use_stop_state=True):
-        print("NEXTY PAYER TURN")
         self.current_player.turn += 1
         old_index = self.player_index
         while True:

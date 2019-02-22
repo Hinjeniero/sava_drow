@@ -3,7 +3,9 @@ TO START THE GAME: 'python.exe main.py' in command line
 DEPENDENCIES: pygame, numpy, wrapt
 
 TODO CURRENT:
-    0.- Promotion in network boards (~95%)
+    0.- Promotion in network boards (~95%) (Dont show on client)
+
+    0.01.- Put the bar of promotion on top, and also a gray overlay on top
 
     0.1.- Proper hitboxes in the promotion table
 

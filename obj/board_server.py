@@ -59,6 +59,7 @@ class Server(MastermindServerTCP):
         self.data = Dictionary(exceptions=True)
         self.players_data = Dictionary(exceptions=True)
         self.chars_data = Dictionary(exceptions=True)
+        self.all_players_received = threading.Event()
 
     def set_chars(self, number_of_chars):
         """Sets the total number of characters that the board will have.
@@ -113,8 +114,9 @@ class Server(MastermindServerTCP):
             if not any(conn == excluded for excluded in excluded_conns): 
                 self.callback_client_send(conn, data)
 
+    @run_async
     def add_to_barrier(self, conn_object, data):
-        self.barrier_lock.acquire() 
+        self.barrier_lock.acquire()
         if len(self.barrier) == 0\
         or all(key in data.keys() for key in self.barrier[0][1].keys()):
             self.barrier.append((conn_object, data))
@@ -127,10 +129,11 @@ class Server(MastermindServerTCP):
         if 'dice' in self.barrier[0][1].keys():
             #Tuples - (conn, data(json)), 'dice' in saved json
             self.barrier.sort(key=lambda tuple_: tuple_[1]['dice'], reverse=True)
+            self.all_players_received.wait()
             players = list(self.players_data.values())
             players.sort(key=lambda player: player['order'])
-            for i in range (0, self.total_players):
-                self.callback_client_send(self.barrier[i][0], {'player_id': players[i]['uuid']})  
+            for i in range (0, self.total_players): #TODO ERROR, IF ALL DICES ARE SETTED BEFORE PLAYERS ARE CREATED; IT ALL GOES TO SHI(T)
+                self.callback_client_send(self.barrier[i][0], {'player_id': players[i]['uuid']})
                 #The players in there should be ordered by 'order' already. Sending uuid.
     
     def hold_petition(self, conn_obj, data):
@@ -193,6 +196,7 @@ class Server(MastermindServerTCP):
                 if connection_object == self.host:
                     for player in data["players_data"]:
                         self.add_player(player)
+                    self.all_players_received.set()
                 else:
                     if len(self.players_data.keys()) < self.total_players:
                         raise KeyError
@@ -206,7 +210,7 @@ class Server(MastermindServerTCP):
                         raise KeyError
                     reply = {"characters_data": self.chars_data.values_list()}
             elif "dice" in data:
-                LOG.log('info', 'Client ',data['id'], ' rolled a ', data['dice'])
+                LOG.log('info', 'Client ', data['id'], ' rolled a ', data['dice'])
                 self.add_to_barrier(connection_object, data)
             elif "update" in data:
                 reply = "UPDATE" #reply = changes, Sends the info of the board to the whatever client requested it. (If there is new actions)

@@ -925,6 +925,8 @@ class TextBox(UIElement):
                 self.add_char(' ')
             elif 'enter' in value:
                 self.send_event()
+            elif 'del' in value:
+                self.clear_text()
             else:
                 if len(value) == 1:
                     self.add_char(str(value))
@@ -946,6 +948,10 @@ class TextBox(UIElement):
             self.text = self.text[:self.cursor_pos-1]+self.text[self.cursor_pos:]
             self.cursor_pos = self.cursor_pos-1 
             self.update_text()
+
+    def clear_text(self):
+        self.text = ''
+        self.update_text()
 
     def update_text(self):
         self.sprites.empty()    #Deleting the text inside

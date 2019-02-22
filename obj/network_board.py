@@ -295,8 +295,11 @@ class NetworkBoard(Board):
             self.next_player_turn()
             self.change_turn.clear()
         elif "swap" in response:
-            self.swapper.send(next(char for char in self.characters if char.uuid == response['original']))
-            self.swapper.send(next(char for char in self.characters if char.uuid == response['new']))
+            print(response)
+            original_char = next(char for char in self.characters if char.uuid == response['original'])
+            player = next(player for player in self.players if player.uuid == original_char.master_uuid)
+            self.swapper.send(original_char)
+            self.swapper.send(next(char for char in player.fallen if char.uuid == response['new']))
         elif "admin" in response:
             if response["admin"]:
                 pygame.event.post(pygame.event.Event(self.event_id, command='admin', value=True))

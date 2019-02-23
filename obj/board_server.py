@@ -214,12 +214,10 @@ class Server(MastermindServerTCP):
                 self.add_to_barrier(connection_object, data)
             elif "keepalive" in data or "keep_alive" in data or "keep-alive" in data or "update" in data:
                 pass
-            elif "move_character" in data or "drop_character" in data or "end_turn" in data or "admin" in data:    #Broadcast that
-                self.broadcast_data(self.clients.values(), data, connection_object)
-            elif "swap" in data:
-                self.broadcast_data(self.clients.values(), data, connection_object)
             else:
-                LOG.log('warning', 'Petitions commands are not supported ', data)
+                self.broadcast_data(self.clients.values(), data, connection_object)
+                #elif "move_character" in data or "drop_character" in data or "end_turn" in data or "admin" in data or "swap" in data: 
+                #LOG.log('warning', 'Petitions commands are not supported ', data)
         except (KeyError, IndexError):    #Can't attend this petition right now, most likely due to lack of data.
             self.hold_petition(connection_object, data)
         if not reply:

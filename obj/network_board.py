@@ -277,6 +277,8 @@ class NetworkBoard(Board):
             LOG.log('info', 'My player is ', self.my_player)
         elif "success" in response: #This one needs no action
             pass
+        elif "mouse_position" in response:
+            pass    #TODO Here we receive the position and uuid
         elif "move_character" in response:   #Moving around drag_char by other players.
             for char in self.characters:
                 if char.uuid == response['move_character']:

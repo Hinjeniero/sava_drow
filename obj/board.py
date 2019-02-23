@@ -693,7 +693,7 @@ class Board(Screen):
         if event.type == pygame.MOUSEBUTTONDOWN:  #On top of the char and clicking on it
             self.play_sound('key')
             if self.show_promotion:
-                for element in self.promotion_table.elements:   #TODO THIS COULD BE A METHOD IN DIALOG, OR EVEN IN MULTISPRITE (get_COLLISIONing sprite bro)
+                for element in self.promotion_table.elements:
                     if element.hover:   #If we activated hover in it earlier
                         self.swapper.send(element)
                         self.next_player_turn()
@@ -706,11 +706,15 @@ class Board(Screen):
         if mouse_movement:
             mouse_sprite = UtilityBox.get_mouse_sprite()
             if self.show_promotion:
-                for element in self.promotion_table.elements:   #TODO THIS COULD BE A METHOD IN DIALOG, OR EVEN IN MULTISPRITE
+                for element in self.promotion_table.elements:
+                    element.set_hover(False)
+                for collision in self.promotion_table.get_collisions(mouse_sprite):
+                    collision.set_hover(True)
+                '''for element in self.promotion_table.elements:   #TODO THIS COULD BE A METHOD IN DIALOG, OR EVEN IN MULTISPRITE
                     if element.rect.colliderect(mouse_sprite):
                         element.set_hover(True)
                     else:
-                        element.set_hover(False)
+                        element.set_hover(False)'''
                 return
             if self.drag_char.sprite:   
                 self.drag_char.sprite.rect.center = mouse_position
@@ -737,7 +741,6 @@ class Board(Screen):
             new_char.set_hover(False)
             self.characters.remove(original_char)
             self.characters.add(new_char)
-            #yield(original_char, new_char)
             LOG.log('info', 'Character ', original_char.id, ' upgraded to ', new_char.id)
             self.after_swap(original_char, new_char)
 

@@ -94,6 +94,15 @@ class UIElement(MultiSprite):
         """Sets the event id of the element. This will be sent when a trigger happens."""
         self.__event_id = event_id
 
+    def get_collisions(self, mouse_sprite, list_sprites=None):
+        """list sprites in case a subclass want to check another implemented list"""
+        list_to_check = list_sprites if list_sprites else self.sprites
+        old_mouse_position = mouse_sprite.rect.topleft
+        mouse_sprite.rect.topleft = tuple(x-y for x, y in zip(old_mouse_position, self.rect.topleft))
+        collisions = pygame.sprite.spritecollide(mouse_sprite, list_to_check, False)
+        mouse_sprite.rect.topleft = old_mouse_position
+        return collisions
+
     @staticmethod
     def factory(id_, command, user_event_id, position, size, canvas_size, *elements, default_values=None, **params):
         """Method that returns a different subclass of UI_Element, taking into account the input arguments.
@@ -872,6 +881,11 @@ class Dialog (InfoBoard):
         sprite.set_position(position)
         self.elements.add(sprite)
         self.taken_spaces += spaces
+
+    def get_collisions(self, mouse_sprite):
+        collisions = super().get_collisions(mouse_sprite)
+        collisions.extend(super().get_collisions(mouse_sprite, list_sprites=self.elements))
+        return collisions
 
     def set_canvas_size(self, resolution):
         super().set_canvas_size(resolution)

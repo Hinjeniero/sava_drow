@@ -711,10 +711,8 @@ class Board(Screen):
         if mouse_movement:
             mouse_sprite = UtilityBox.get_mouse_sprite()
             if self.show_promotion:
-                for element in self.promotion_table.elements:
-                    element.set_hover(False)
-                for collision in self.promotion_table.get_collisions(mouse_sprite):
-                    collision.set_hover(True)
+                all(element.set_hover(False) for element in self.promotion_table.elements)
+                all(colliding.set_hover(True) for colliding in self.promotion_table.get_collisions(mouse_sprite))
                 return
             if self.drag_char.sprite:   
                 self.drag_char.sprite.rect.center = mouse_position

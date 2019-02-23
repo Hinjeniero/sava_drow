@@ -18,6 +18,7 @@ from external.Mastermind import *   #I dont like this one a bit, since it has to
 #Selfmade libraries
 from settings import NETWORK, MESSAGES
 from dialog_generator import DialogGenerator
+from obj.sprite import TextSprite
 from obj.board_server import Server
 from obj.ui_element import ScrollingText
 from obj.board import Board
@@ -78,6 +79,7 @@ class NetworkBoard(Board):
         self.server = server
         self.my_player = None
         self.my_turn = False
+        self.players_names = {}
         self.flags = {}     #Used if client and not host.
         self.reconnect = True
         NetworkBoard.generate(self, host)
@@ -108,6 +110,13 @@ class NetworkBoard(Board):
         except Exception as exc:
             self.exception_handler(exc)
     
+    @run_async
+    def generate_players_names(self):
+        for player in self.players:
+            if player.uuid != self.my_player:   #We dont want our player name over our cursor.
+                player_text = TextSprite('sprite_'+player.name, (0, 0), tuple(int(x*0.05) for x in self.resolution), self.resolution, player.name)
+                self.players_names[player.uuid] = player_text
+
     def exception_handler(self, exception):
         try:
             raise exception
@@ -278,12 +287,13 @@ class NetworkBoard(Board):
         elif "success" in response: #This one needs no action
             pass
         elif "mouse_position" in response:
-            pass    #TODO Here we receive the position and uuid
+            player_text = self.players_names[response['mouse_position']]
+            player_text.set_center(response['center'])
         elif "move_character" in response:   #Moving around drag_char by other players.
-            for char in self.characters:
-                if char.uuid == response['move_character']:
-                    char.rect.center = tuple(x*y for x,y in zip(self.resolution ,response['center']))
-                    break 
+            char = next(char for char in self.characters if char.uuid == response['move_character'])
+            center = tuple(x*y for x,y in zip(self.resolution, response['center']))
+            char.set_center(center)
+            self.players_names[char.master_uuid].set_center(center)
         elif "drop_character" in response:
             dest_cell = self.get_cell_by_real_index(response['cell'])
             char = next(char for char in self.characters if char.uuid == response['drop_character'])
@@ -417,6 +427,7 @@ class NetworkBoard(Board):
         """Sends the command 'ready' to the server, signalizing that this client is ready to start the game."""
         self.send_data_async({'ready': True})
         self.log_on_screen("ready, waiting for the other players...")
+        self.generate_players_names()
     
     def mouse_handler(self, event, mouse_buttons, mouse_movement, mouse_position):
         """Captures the mouse and handles the events regarding this one. More info in method in superclass.
@@ -435,6 +446,8 @@ class NetworkBoard(Board):
                 if self.drag_char:
                     center = tuple(x/y for x,y in zip(self.drag_char.sprite.rect.center, self.resolution))
                     self.send_data_async({"move_character":self.drag_char.sprite.uuid, "center": center})
+                else:
+                    self.send_data_async({"mouse_position": self.my_player, "center": mouse_position})
 
     def pickup_character(self):
         """Picks up a character, and get the possible destinies if it is our turn. More info in this case in superclass method.
@@ -479,6 +492,8 @@ class NetworkBoard(Board):
     def draw(self, surface):
         try:
             super().draw(surface)
+            all(name.draw(surface) for name in self.players_names.values())
+            #Special cases from now on
             if not self.ready and not (self.dialog and self.dialog.visible):
                 self.overlay_text.draw(surface)
             elif self.dialog and self.dialog.visible:

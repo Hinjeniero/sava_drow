@@ -94,12 +94,15 @@ class UIElement(MultiSprite):
         """Sets the event id of the element. This will be sent when a trigger happens."""
         self.__event_id = event_id
 
-    def get_collisions(self, mouse_sprite, list_sprites=None):
+    def get_collisions(self, mouse_sprite, list_sprites=None, first_only=False):
         """list sprites in case a subclass want to check another implemented list"""
         list_to_check = list_sprites if list_sprites else self.sprites
         old_mouse_position = mouse_sprite.rect.topleft
         mouse_sprite.rect.topleft = tuple(x-y for x, y in zip(old_mouse_position, self.rect.topleft))
-        collisions = pygame.sprite.spritecollide(mouse_sprite, list_to_check, False)
+        if first_only:
+            collisions = pygame.sprite.spritecollideany(mouse_sprite, list_to_check)
+        else:
+            collisions = pygame.sprite.spritecollide(mouse_sprite, list_to_check, False)
         mouse_sprite.rect.topleft = old_mouse_position
         return collisions
 
@@ -535,8 +538,9 @@ class VerticalSlider(Slider):
                         else dial_position       #Checking if it's out of bounds 
         dial_y = dial_position-(dial.rect.height//2)
         dial.set_position((dial.rect.x, dial_y))
-        value_text = self.get_sprite('value')
-        value_text.set_text(str(round(self.get_value(), 2)))
+        if self.params['shows_value']:
+            value_text = self.get_sprite('value')
+            value_text.set_text(str(round(self.get_value(), 2)))
         self.regenerate_image()  #To compensate the graphical offset of managing center/top-left
 
     def hitbox_action(self, command, value):
@@ -882,9 +886,11 @@ class Dialog (InfoBoard):
         self.elements.add(sprite)
         self.taken_spaces += spaces
 
-    def get_collisions(self, mouse_sprite):
-        collisions = super().get_collisions(mouse_sprite)
-        collisions.extend(super().get_collisions(mouse_sprite, list_sprites=self.elements))
+    def get_collisions(self, mouse_sprite, first_only=False):
+        collisions = super().get_collisions(mouse_sprite, list_sprites=self.elements)
+        collisions.extend(super().get_collisions(mouse_sprite))
+        if first_only and collisions:
+            return collisions[0]
         return collisions
 
     def set_canvas_size(self, resolution):

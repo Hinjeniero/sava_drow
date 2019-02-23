@@ -684,25 +684,30 @@ class Board(Screen):
             mouse_movement( boolean, default=False):    True if there was mouse movement since the last call.
             mouse_position (:tuple: int, int, default=(0,0)):   Current mouse position. In pixels.
         """
-        
+        #IF THERE IS A DIALOG ON TOP WE MUST NOT INTERACT WITH WHAT IS BELOW IT
         if self.dialog: #Using it here since we wont have ever a scrollbar in a board, and this saves cycles wuen a dialog is not active
             #Thats why we call the super method here instead of always
             super().mouse_handler(event, mouse_buttons, mouse_movement, mouse_position)
             return
-
+        
+        #CHECKING BUTTONS FIRST. CLICK DOWN
         if event.type == pygame.MOUSEBUTTONDOWN:  #On top of the char and clicking on it
             self.play_sound('key')
             if self.show_promotion:
-                for element in self.promotion_table.elements:
-                    if element.hover:   #If we activated hover in it earlier
-                        self.swapper.send(element)
-                        self.next_player_turn()
-                        break
-                return
+                try:
+                    element = next(element for element in self.promotion_table.elements if element.hover)
+                    self.swapper.send(element)
+                    self.next_player_turn()
+                except StopIteration:    #No hover found :(
+                    return
             elif self.active_char.sprite: 
                 self.pickup_character()
+        
+        #CLICK UP
         elif event.type == pygame.MOUSEBUTTONUP:  #If we are dragging it we will have a char in here
             if self.drag_char.sprite:   self.drop_character()
+        
+        #NOW CHECKING MOUSE MOVEMENT
         if mouse_movement:
             mouse_sprite = UtilityBox.get_mouse_sprite()
             if self.show_promotion:
@@ -710,11 +715,6 @@ class Board(Screen):
                     element.set_hover(False)
                 for collision in self.promotion_table.get_collisions(mouse_sprite):
                     collision.set_hover(True)
-                '''for element in self.promotion_table.elements:   #TODO THIS COULD BE A METHOD IN DIALOG, OR EVEN IN MULTISPRITE
-                    if element.rect.colliderect(mouse_sprite):
-                        element.set_hover(True)
-                    else:
-                        element.set_hover(False)'''
                 return
             if self.drag_char.sprite:   
                 self.drag_char.sprite.rect.center = mouse_position

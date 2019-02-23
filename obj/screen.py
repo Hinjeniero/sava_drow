@@ -273,9 +273,8 @@ class Screen(object):
         """
         if mouse_movement:
             colliding_sprite = self.get_colliding_sprite()
-            if self.dialog:
-                if self.dialog.elements.has(colliding_sprite):
-                    self.set_hit_sprite(colliding_sprite)
+            if self.dialog and self.dialog.elements.has(colliding_sprite):
+                self.set_hit_sprite(colliding_sprite)
             elif colliding_sprite and colliding_sprite.enabled:
                 self.set_hit_sprite(colliding_sprite)
 
@@ -325,7 +324,6 @@ class Screen(object):
 
     def show_dialog(self, id_):
         """Makes the Screen's Dialog visible. (If it exists)."""
-        print("ASKING FOR "+id_)
         for dialog in self.dialogs:
             try:
                 if id_ in dialog.id or dialog.id in id_\
@@ -442,15 +440,12 @@ class Screen(object):
 
     def get_colliding_sprite(self):
         """Collides with dialog, scroll, and sprites taking the scroll into account."""
-        colliding_sprite = None
         mouse_sprite = UtilityBox.get_mouse_sprite()
+        
         #Check if colliding with dialog
         if self.dialog:
-            for element in self.dialog.elements:
-                rect = pygame.Rect(self.dialog.get_sprite_abs_position(element), element.rect.size)
-                if rect.colliderect(mouse_sprite):
-                    return element
-            return None
+            return self.dialog.get_collisions(mouse_sprite, first_only=True)
+
         #Check if colliding with scroll
         if self.scroll_sprite and mouse_sprite.rect.colliderect(self.scroll_sprite.rect):
             return self.scroll_sprite
@@ -460,11 +455,9 @@ class Screen(object):
                     sprite_rect = sprite.rect.copy()
                     sprite_rect.topleft = tuple(off+pos for off, pos in zip(self.scroll_offset, sprite_rect.topleft))
                     if sprite_rect.colliderect(mouse_sprite.rect):
-                        colliding_sprite = sprite
-                        break
+                        return sprite
         else:
-            colliding_sprite = pygame.sprite.spritecollideany(mouse_sprite, self.sprites.sprites())
-        return colliding_sprite
+            return pygame.sprite.spritecollideany(mouse_sprite, self.sprites.sprites())
         
     def destroy(self):
         """Called when exiting the game, in case we have some subthreads we need dead.

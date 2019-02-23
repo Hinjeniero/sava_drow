@@ -77,7 +77,8 @@ class Menu (Screen):
             overload = max((sprite.rect.y+sprite.rect.height)-self.resolution[1] for sprite in self.sprites)
             self.scroll_length = int(self.resolution[1]*0.10+overload)
             self.scroll_sprite  = UIElement.factory('slider_scroll_menu', "menu_scroll", USEREVENTS.DIALOG_USEREVENT,\
-                                                    (0.95, 0), (0.05, 1), self.resolution, text="", default_values=0.0, loop=False)
+                                                    (0.95, 0), (0.05, 1), self.resolution, text="", default_values=0.0,\
+                                                    loop=False, shows_value=False)
 
     def center_sprites(self, alignment='center'):
         """Center the current sprites of Menu. The alignment itself depends on the argument.

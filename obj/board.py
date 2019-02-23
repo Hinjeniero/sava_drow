@@ -696,6 +696,7 @@ class Board(Screen):
                 for element in self.promotion_table.elements:   #TODO THIS COULD BE A METHOD IN DIALOG, OR EVEN IN MULTISPRITE (get_COLLISIONing sprite bro)
                     if element.hover:   #If we activated hover in it earlier
                         self.swapper.send(element)
+                        self.next_player_turn()
                         break
                 return
             elif self.active_char.sprite: 
@@ -737,12 +738,11 @@ class Board(Screen):
             self.characters.remove(original_char)
             self.characters.add(new_char)
             #yield(original_char, new_char)
+            LOG.log('info', 'Character ', original_char.id, ' upgraded to ', new_char.id)
             self.after_swap(original_char, new_char)
 
     def after_swap(self, orig_char, new_char):
         self.show_promotion = False
-        LOG.log('info', 'Character ', orig_char.id, ' upgraded to ', new_char.id)
-        self.next_player_turn()
 
     def pickup_character(self, get_dests=True):
         """Picks up a character. Adds it to the drag char Group, and check in the LUT table
@@ -800,15 +800,6 @@ class Board(Screen):
             self.show_promotion = True
             self.swapper.send(self.drag_char.sprite)
             return
-        else:
-            if active_cell.promotion:
-                print("PROMOTIONABLE CELL")
-            if None != active_cell.owner != character.master_uuid:
-                print("ENEMY PROMOTIONABLE CELL")
-            if any(char for char in self.current_player.fallen):
-                print("HAVE FALLEN CHARS")
-            if any(not char.upgradable for char in self.current_player.fallen):
-                print("HAVE FALLEN CHARS TO UPGRADE TO ")
         self.next_char_turn(self.drag_char.sprite)
         
     def next_char_turn(self, char):
@@ -839,7 +830,6 @@ class Board(Screen):
                     self.current_player.unpause_characters()
                 break
         self.update_scoreboard()
-        print(self.current_player.name)
 
     def kill_character(self, cell, killer):
         #Badass Animation
@@ -886,7 +876,7 @@ class Board(Screen):
             char = self.active_cell.sprite.has_char()
             if char and char.active:
                 self.active_char.add(char)
-            LOG.log('debug', 'New cell active: ', self.active_cell.sprite.pos)
+            #LOG.log('debug', 'New cell active: ', self.active_cell.sprite.pos)
 
     def set_active_path(self, path):
         if self.active_path.sprite: #If there is already an sprite in active_cell

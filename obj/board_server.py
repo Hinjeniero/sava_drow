@@ -185,7 +185,7 @@ class Server(MastermindServerTCP):
                 if connection_object is self.host:
                     self.add_data("params", data["params"])
                 else:
-                    reply = self.get_data("params")
+                    reply = self.get_data("params") #TODO DONT RAISE KEYERROR IF IT WASNT RECEIVED YET
             elif "start" in data or "ready" in data:
                 self.players_ready += 1
                 if self.players_ready >= self.total_players:

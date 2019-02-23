@@ -3,19 +3,18 @@ TO START THE GAME: 'python.exe main.py' in command line
 DEPENDENCIES: pygame, numpy, wrapt
 
 TODO CURRENT:
-    0.- Promotion in network boards (~95%) (Dont show on client)
+    0.- Show player name over mouse? (In network board)
 
-    0.01.- Put the bar of promotion on top, and also a gray overlay on top
+    1.- Proper hitboxes in the promotion table
 
-    0.1.- Proper hitboxes in the promotion table
+    2.- Put the bar of promotion on top, and also a gray overlay on top
 
-    0.5 .- Add some animations and shit to promotion of a char, like stars or particles or something
-
-    1.- Show player name over mouse? (In network board)
-
-    2.- Implement spider dice + sprite. Needs to randomize the game a little bit.
+    3 .- Add some animations and shit to promotion of a char, like stars or particles or something
 
 TODO WHENEVER:
+
+    -1.- Implement spider dice + sprite. Needs to randomize the game a little bit.
+
     0.- Effect when chars colliding with each other.
 
     1.- Make graphics for the sliders.

@@ -283,14 +283,15 @@ class NetworkBoard(Board):
                     char.rect.center = tuple(x*y for x,y in zip(self.resolution ,response['center']))
                     break 
         elif "drop_character" in response:
-            cell = self.get_cell_by_real_index(response['cell'])
-            for char in self.characters:
-                if char.uuid == response['drop_character']:
-                    if cell.has_char():
-                        self.kill_character(cell, char)     #Killing char if there is one 
-                    char.set_cell(cell)                     #Positioning the char
-                    cell.add_char(char)
-                    break
+            dest_cell = self.get_cell_by_real_index(response['cell'])
+            char = next(char for char in self.characters if char.uuid == response['drop_character'])
+            last_cell = self.get_cell_by_real_index(char.current_pos)
+            if dest_cell.has_char():
+                self.kill_character(dest_cell, char)    #Killing char if there is one 
+            char.set_cell(dest_cell)                    #Positioning the char
+            dest_cell.add_char(char)
+            last_cell.kill_char()                       #Not really killing, just want to empty the last cell
+            self.update_cells(last_cell, dest_cell)
             self.change_turn.set()
         elif "end_turn" in response:    #Next turn with the player that should play it
             self.change_turn.wait()

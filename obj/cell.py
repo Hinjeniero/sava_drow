@@ -60,8 +60,8 @@ class Cell(Circle):
         Args:
             surface (:obj: pygame.Surface): Surface in which to draw the Cell."""
         super().draw(surface)
-        if self.active:
-            pygame.draw.circle(surface, UtilityBox.random_rgb_color(), self.rect.center, self.rect.height//2)
+        #if self.active:
+            #pygame.draw.circle(surface, UtilityBox.random_rgb_color(), self.rect.center, self.rect.height//2)
 
     def add_border(self, image_path):
         border = Circle('border'+str(self.index), (0, 0), self.rect.size, self.resolution, texture = image_path)

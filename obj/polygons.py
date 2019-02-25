@@ -12,7 +12,7 @@ __author__ = 'David Flaity Pardo'
 
 import pygame
 from obj.utilities.utility_box import UtilityBox
-from obj.sprite import MultiSprite
+from obj.sprite import MultiSprite, Sprite
 from obj.utilities.colors import RED
 
 class Polygon(MultiSprite):
@@ -68,11 +68,12 @@ class Polygon(MultiSprite):
 
 class Circle(Polygon):
     '''TODO'''
-    def __init__(self, id_, position, size, canvas_size, **params):
+    def __init__(self, id_, position, size, canvas_size, active_color=RED, **params):
         params['shape'] = 'circle'
         super().__init__(id_, position, size, canvas_size, **params)
         self.radius = min(x for x in size)//2
         self.center = self.rect.center
+        self.overlay = Sprite.generate_overlay(self.image, active_color)
     
     def set_size(self, size, update_rects):
         super().set_size(size, update_rects)
@@ -119,15 +120,7 @@ class Circumference(Circle):
     def __init__(self, id_, position, size, canvas_size, active_color=RED, **params):
         params['transparent'] = True
         params['border'] = True
-        super().__init__(id_, position, size, canvas_size, **params)
-        self.active_color = active_color
-
-    def draw(self, surface):
-        if self.active:
-            pygame.draw.circle(surface, self.active_color, self.center, self.radius, self.params['border_width'])
-        else:
-            super().draw(surface)
-
+        super().__init__(id_, position, size, canvas_size, active_color=active_color, **params)
 
 class Rectangle(Polygon):
     def __init__(self, _id, position, size, canvas_size, **params):

@@ -187,7 +187,7 @@ def create_board_params():
     bg = AnimationGenerator.factory(STRINGS.INITIAL_ANIMATED_BG, INIT_PARAMS.INITIAL_RESOLUTION, PARAMS.ANIMATION_TIME, INIT_PARAMS.ALL_FPS, INIT_PARAMS.INITIAL_FPS)
     board_params['cell_texture'] = PATHS.CELL_BASIC
     board_params['cell_border'] = PATHS.CELL_GOLDEN_BORDER 
-    board_params['circumference_texture'] = PATHS.CIRCUMFERENCE_RUST
+    board_params['circumference_texture'] = PATHS.THIN_CIRCUMFERENCE
     board_params['songs_paths'] = BOARD_SONGS
     board_params['animated_background'] = bg
     board_params['platform_sprite'] = AnimationGenerator.animated_tree_platform(INIT_PARAMS.INITIAL_RESOLUTION)

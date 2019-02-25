@@ -148,3 +148,4 @@ class PATHS:
     CELL_BASIC = IMAGE_FOLDER+'cell_basic.png'
     CELL_GOLDEN_BORDER = IMAGE_FOLDER+'cell_gold_border.png'
     CIRCUMFERENCE_RUST = IMAGE_FOLDER+'circle.png'
+    THIN_CIRCUMFERENCE = IMAGE_FOLDER+'thin_circle.png'

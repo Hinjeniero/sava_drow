@@ -19,7 +19,7 @@ from os.path import isfile, join, dirname
 import external.gradients as gradients
 #Selfmade libraries
 from settings import MESSAGES
-from obj.utilities.colors import WHITE, RED, LIGHTGRAY, DARKGRAY
+from obj.utilities.colors import WHITE, BLACK, RED, LIGHTGRAY, DARKGRAY
 from obj.utilities.resizer import Resizer
 from obj.utilities.utility_box import UtilityBox
 from obj.utilities.exceptions import  ShapeNotFoundException, NotEnoughSpritesException,\
@@ -137,9 +137,9 @@ class Sprite(pygame.sprite.Sprite):
                     surface.blit(self.image, tuple(off+pos for off, pos in zip(offset, self.rect.topleft)))
                 else:
                     surface.blit(self.image, self.rect)
+                if (self.overlay and self.use_overlay and self.active) or not self.enabled:    
+                    self.draw_overlay(surface, offset=offset)               
                 if self.enabled:
-                    if self.overlay and self.use_overlay and self.active:    
-                        self.draw_overlay(surface, offset=offset)               
                     self.update()
             except pygame.error:
                 LOG.log(*MESSAGES.LOCKED_SURFACE_EXCEPTION)
@@ -157,7 +157,8 @@ class Sprite(pygame.sprite.Sprite):
             surface.blit(self.overlay, tuple(off+pos for off, pos in zip(offset, self.rect.topleft)))
         else:
             surface.blit(self.overlay, self.rect)
-        self.animation_frame()
+        if self.enabled:
+            self.animation_frame()
 
     def get_canvas_size(self):
         """Returns the current resolution size that this Sprite has. THIS IS NOT THE SIZE OF THE SPRITE.
@@ -244,15 +245,11 @@ class Sprite(pygame.sprite.Sprite):
             enabled (boolean): The value to set.
         """
         if not enabled and self.enabled:      #Deactivating button
-            self.overlay.fill(DARKGRAY)
-            self.overlay.set_alpha(180)
-            self.image.blit(self.overlay, (0, 0))
+            self.overlay = Sprite.generate_overlay(self.image, DARKGRAY)
+            self.overlay.set_alpha(200)
             self.enabled        = False
-            self.use_overlay    = False
         elif enabled and not self.enabled:    #Activating button
             self.enabled        = True
-            self.use_overlay    = True
-            self.regenerate_image()         #Restoring image and overlay too
 
     def set_visible(self, visible):
         """Sets the visible attribute. This attribute is used to draw or not the Sprite.
@@ -298,7 +295,7 @@ class Sprite(pygame.sprite.Sprite):
         self.update_mask() 
 
     @staticmethod   #TODO UPDATE DOCUMENTATION
-    def generate_surface(size, surface=None, texture=None, keep_aspect_ratio=True, resize_mode='fit', resize_smooth=True,\
+    def generate_surface(size, surface=None, texture=None, active_texture=None, keep_aspect_ratio=True, resize_mode='fit', resize_smooth=True,\
                         shape="Rectangle", transparent=False, only_text=False, text="default_text", text_color=WHITE, text_font=FONT,\
                         fill_color=RED, fill_gradient=True, gradient=(LIGHTGRAY, DARKGRAY), gradient_type="horizontal",\
                         overlay=True, overlay_color=WHITE, border=True, border_color=WHITE, border_width=2, **unexpected_kwargs):
@@ -363,8 +360,10 @@ class Sprite(pygame.sprite.Sprite):
                 raise ShapeNotFoundException("Available shapes: Rectangle, Circle. "+shape+" is not recognized")
         #End of the generation/specification of the pygame.Surface surf.
         if overlay:
-            overlay = pygame.Surface(size)
-            overlay.fill(overlay_color)
+            if active_texture:
+                overlay = ResizedSurface.get_surface(texture, size, resize_mode, resize_smooth, keep_aspect_ratio)
+            else:
+                overlay = Sprite.generate_overlay(surf, overlay_color)
             return surf, overlay
         else:
             return surf, None
@@ -375,6 +374,13 @@ class Sprite(pygame.sprite.Sprite):
         if return_luts_too:
             return result+'\nLut table of rects:\n '+str(self.rects)
         return result
+
+    @staticmethod
+    def generate_overlay(surf, color):
+        overlay = surf.copy()
+        overlay.fill(color, special_flags=pygame.BLEND_ADD)
+        colorkey = UtilityBox.get_alike_colorkey(color)
+        return UtilityBox.convert_to_colorkey_alpha(overlay, colorkey=colorkey)
 
 class TextSprite(Sprite):
     """Class TextSprite. Inherits from Sprite, and the main surface is a text, from pygame.font.render.

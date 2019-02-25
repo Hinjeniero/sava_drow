@@ -200,8 +200,7 @@ def pre_start():
     game = Game('sava_drow', INIT_PARAMS.INITIAL_RESOLUTION, INIT_PARAMS.INITIAL_FPS)
     menus = []
     threads = [create_main_menu(menus), create_sound_menu(menus), create_config_menu(menus), create_video_menu(menus)]
-    for menu_thread in threads:
-        menu_thread.join()
+    for menu_thread in threads: menu_thread.join()
     game.add_screens(*menus)
     game.update_board_params(**create_board_params())
     return game

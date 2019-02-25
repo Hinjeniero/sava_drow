@@ -331,3 +331,21 @@ class UtilityBox (object):
                 yield next(loop_generator)
             gradient = tuple(reversed(gradient))
 
+    @staticmethod
+    def convert_to_colorkey_alpha(surf, colorkey=pygame.color.Color("magenta")):
+        newsurf = pygame.Surface(surf.get_size())
+        newsurf.fill(colorkey)
+        newsurf.blit(surf, (0, 0))
+        newsurf.set_colorkey(colorkey)
+        return newsurf
+
+    @staticmethod
+    def get_alike_colorkey(color, difference=3):
+        """A difference of 1 is nto noticed by colorkey, and 2 is weird."""
+        colorkey = []
+        for channel in color:
+            if channel < difference:
+                colorkey.append(channel+difference)
+                continue
+            colorkey.append(channel-difference)
+        return tuple(colorkey)

@@ -285,7 +285,7 @@ class Screen(object):
                     self.send_to_active_sprite('mouse_button', value=adjusted_mouse_pos)
                 else:
                     self.send_to_active_sprite('do_action_or_add_value', -1)
-            elif self.hit_sprite == self.scroll_sprite != None:
+            elif self.scroll_sprite != None:
                 new_scroll_value = self.scroll_sprite.get_value()
                 if event.button == 4:
                     new_scroll_value -= 0.05
@@ -342,7 +342,7 @@ class Screen(object):
             self.dialog.set_visible(False)
             self.dialog = None
 
-    '''def draw(self, surface):
+    def draw(self, surface):
         """Draws the screen in the input surface. This method in the Screen
         superclass only draws the background, since the sprites group is empty.
         Args:
@@ -362,8 +362,9 @@ class Screen(object):
             if self.scroll_sprite:
                 self.scroll_sprite.draw(surface)       
             if self.animation:
-                self.animation.play(surface)'''
-    def draw(self, surface):
+                self.animation.play(surface)
+                
+    '''def draw(self, surface):
         """Draws the screen in the input surface. This method in the Screen
         superclass only draws the background, since the sprites group is empty.
         Args:
@@ -382,7 +383,7 @@ class Screen(object):
         if self.animation:
             self.animation.play(surface)
         if self.dialog:
-            self.dialog.draw(surface)
+            self.dialog.draw(surface)'''
 
     def set_resolution(self, resolution):
         """Changes the resolution of the screen to input argument.

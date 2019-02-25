@@ -6,7 +6,7 @@ Have the following classes.
 --------------------------------------------"""
 
 __all__ = ['Board']
-__version__ = '0.8'
+__version__ = '0.9'
 __author__ = 'David Flaity Pardo'
 
 #Python full fledged libraries
@@ -15,6 +15,7 @@ import math
 import numpy
 import os
 import random
+import threading
 from pygame.locals import *
 #Selfmade libraries
 from settings import MESSAGES, USEREVENTS
@@ -30,9 +31,9 @@ from obj.utilities.utility_box import UtilityBox
 from obj.utilities.colors import RED, WHITE, DARKGRAY, LIGHTGRAY, TRANSPARENT_GRAY
 from obj.utilities.exceptions import BadPlayersParameter, BadPlayerTypeException,\
                                     PlayerNameExistsException, TooManyCharactersException
-from obj.utilities.decorators import run_async
+from obj.utilities.decorators import run_async, time_it
 from obj.utilities.logger import Logger as LOG
-
+from obj.utilities.surface_loader import no_size_limit
 #numpy.set_printoptions(threshold=numpy.nan)
 
 class Board(Screen):
@@ -187,6 +188,7 @@ class Board(Screen):
         self.swapper = self.character_swapper()
         self.swapper.send(None) #Needed in the first execution of generator
 
+    @time_it
     def generate_dialogs(self):
         scoreboard = InfoBoard(self.id+'_scoreboard', USEREVENTS.DIALOG_USEREVENT, (0, 0), (self.resolution[0]//1.1, self.resolution[1]//1.5),\
                                 self.resolution, keep_aspect_ratio = False, rows=len(self.players)+1, cols=len(self.players[0].get_stats().keys()))
@@ -230,13 +232,11 @@ class Board(Screen):
         self.distances      = numpy.full(dimensions, -888, dtype=int)   #Says the distance between cells
         self.enabled_paths  = numpy.zeros(dimensions, dtype=bool)       #Shows if the path exist
 
-    #@run_async
+    @time_it
     def generate_environment(self):
-        self.generate_all_cells()
-        self.assign_quadrants()
-        self.generate_paths(offset=True)
+        threads = [self.generate_all_cells(), self.generate_paths(offset=True), self.generate_map_board()]
+        for generation_thread in threads:   generation_thread.join()
         self.generate_inter_paths()
-        self.generate_map_board()
         self.save_sprites()
         self.generated = True
 
@@ -288,6 +288,7 @@ class Board(Screen):
         if rest is 0 and result is not 0: return result, result-1
         return result,
 
+    @run_async
     def generate_map_board(self):
         """Fills the essential graphs of the current board.
         One graph of booleans for directly connected cells.
@@ -388,6 +389,7 @@ class Board(Screen):
         ratio = self.params['circles_per_lvl']//4
         return (index%self.params['circles_per_lvl'])//ratio if (index+1)%self.params['inter_path_frequency'] is 0 else None
 
+    @run_async
     def generate_all_cells(self, custom_cell_radius=None):
         """Generate all the cells of the board. Does this by calling generate_cells, and changing the radius.
         The first inside circumference is done changing too the number of cells in it.
@@ -405,6 +407,7 @@ class Board(Screen):
         if self.params['center_cell']:
             self.cells.add(self.__generate_center_cell(small_radius, self.params['circles_per_lvl'], self.params['max_levels']))
         LOG.log('DEBUG', "Generated cells of ", self.id)
+        self.assign_quadrants()
 
     def set_admin_mode(self, admin):
         self.admin_mode = admin
@@ -445,6 +448,8 @@ class Board(Screen):
             angle       += distance
         return cells
 
+    @run_async
+    @no_size_limit
     def generate_paths(self, offset=False):
         """Creates the circumferences themselves. Does this by getting the platform size,
         and dividing it by the number of levels/circumferences of self.params. 

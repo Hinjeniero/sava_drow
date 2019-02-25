@@ -31,6 +31,7 @@ from obj.utilities.resizer import Resizer
 from obj.utilities.logger import Logger as LOG
 from obj.utilities.decorators import run_async
 from obj.utilities.utility_box import UtilityBox
+from obj.utilities.surface_loader import no_size_limit
 
 class Player(object):
     """Player class. Each player has a name, some characters and his own turn.
@@ -92,8 +93,12 @@ class Player(object):
             self.characters = Character.factory(self.name, self.uuid, sprite_size, canvas_size, **character_params)
         else:
             self.characters = pygame.sprite.OrderedUpdates()
-        infoboard = InfoBoard(self.name+'_infoboard', 0, (0, 0), (0.15*canvas_size[0], canvas_size[1]),\
-                            canvas_size, texture=PATHS.INFOBOARD, keep_aspect_ratio = False, cols=6)
+        self.generate_infoboard(canvas_size)
+
+    @no_size_limit
+    def generate_infoboard(self, resolution):
+        infoboard = InfoBoard(self.name+'_infoboard', 0, (0, 0), (0.15*resolution[0], resolution[1]),\
+                            resolution, texture=PATHS.INFOBOARD, keep_aspect_ratio = False, cols=6)
         cols = infoboard.get_cols()
         infoboard.add_text_element('initial_padding', '', cols)
         infoboard.add_text_element('player_name', self.name, cols-2)   #Player name

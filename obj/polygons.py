@@ -121,6 +121,7 @@ class Circumference(Circle):
         params['transparent'] = True
         params['border'] = True
         super().__init__(id_, position, size, canvas_size, active_color=active_color, **params)
+        self.width = UtilityBox.get_circumference_width(self.image)
 
 class Rectangle(Polygon):
     def __init__(self, _id, position, size, canvas_size, **params):

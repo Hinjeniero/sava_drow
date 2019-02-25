@@ -33,7 +33,7 @@ from obj.utilities.exceptions import BadPlayersParameter, BadPlayerTypeException
                                     PlayerNameExistsException, TooManyCharactersException
 from obj.utilities.decorators import run_async, time_it
 from obj.utilities.logger import Logger as LOG
-from obj.utilities.surface_loader import no_size_limit
+from obj.utilities.surface_loader import ResizedSurface, no_size_limit
 #numpy.set_printoptions(threshold=numpy.nan)
 
 class Board(Screen):
@@ -96,12 +96,13 @@ class Board(Screen):
                         'max_levels'            : 4,
                         'center_cell'           : False,
                         'path_color'            : WHITE,
-                        'path_width'            : 5,
+                        'path_width'            : 8,
                         'platform_sprite'       : None,
                         'loading_screen_text'   : "Loading, hang tight",
                         'cell_texture'          : None,
                         'cell_border'           : None,
-                        'circumference_texture' : None
+                        'circumference_texture' : None,
+                        'interpath_texture'     : None
     }
     #CHANGE MAYBE THE THREADS OF CHARACTER TO JOIN INSTEAD OF NUM PLAYERS AND SHIT
     def __init__(self, id_, event_id, end_event_id, resolution, *players, empty=False, **params):
@@ -188,7 +189,6 @@ class Board(Screen):
         self.swapper = self.character_swapper()
         self.swapper.send(None) #Needed in the first execution of generator
 
-    @time_it
     def generate_dialogs(self):
         scoreboard = InfoBoard(self.id+'_scoreboard', USEREVENTS.DIALOG_USEREVENT, (0, 0), (self.resolution[0]//1.1, self.resolution[1]//1.5),\
                                 self.resolution, keep_aspect_ratio = False, rows=len(self.players)+1, cols=len(self.players[0].get_stats().keys()))
@@ -236,9 +236,17 @@ class Board(Screen):
     def generate_environment(self):
         threads = [self.generate_all_cells(), self.generate_paths(offset=True), self.generate_map_board()]
         for generation_thread in threads:   generation_thread.join()
+        self.adjust_cells()
         self.generate_inter_paths()
         self.save_sprites()
         self.generated = True
+
+    def adjust_cells(self):
+        for cell in self.cells:
+            circumf = next(path for path in self.paths if str(cell.get_level()) in path.id)
+            offset = circumf.width//2
+            cell.rect.x -= offset*math.cos(cell.angle)
+            cell.rect.y -= offset*math.sin(cell.angle)
 
     def save_sprites(self):
         """Copies all the references of the sprites to the sprites list declared on the superclass.
@@ -390,7 +398,7 @@ class Board(Screen):
         return (index%self.params['circles_per_lvl'])//ratio if (index+1)%self.params['inter_path_frequency'] is 0 else None
 
     @run_async
-    def generate_all_cells(self, custom_cell_radius=None):
+    def generate_all_cells(self, custom_cell_radius=None, growing_cells=True, growing_ratio=8/7):
         """Generate all the cells of the board. Does this by calling generate_cells, and changing the radius.
         The first inside circumference is done changing too the number of cells in it.
         Args:
@@ -401,9 +409,10 @@ class Board(Screen):
         radius      = 0
         small_radius= ratio//4 if not custom_cell_radius else int(custom_cell_radius)
         for i in range (0, self.params['max_levels']):
-            radius      += ratio
-            if i is 0:  self.cells.add(self.__generate_cells(radius-ratio//3, self.platform.rect.center, small_radius, 4, 0, initial_offset=-45, texture=self.params['cell_texture']))
-            else:       self.cells.add(self.__generate_cells(radius-ratio//3, self.platform.rect.center, small_radius, self.params['circles_per_lvl'], i, texture=self.params['cell_texture']))
+            radius              += ratio
+            if i is 0:          self.cells.add(self.__generate_cells(radius-ratio//3, self.platform.rect.center, small_radius, 4, 0, initial_offset=-45, texture=self.params['cell_texture']))
+            else:               self.cells.add(self.__generate_cells(radius-ratio//3, self.platform.rect.center, small_radius, self.params['circles_per_lvl'], i, texture=self.params['cell_texture']))
+            if growing_cells:   small_radius = int(small_radius*growing_ratio)
         if self.params['center_cell']:
             self.cells.add(self.__generate_center_cell(small_radius, self.params['circles_per_lvl'], self.params['max_levels']))
         LOG.log('DEBUG', "Generated cells of ", self.id)
@@ -443,7 +452,7 @@ class Board(Screen):
         index   = 0
         while angle < (two_pi+initial_offset):
             position    = (center[0]+(radius*math.cos(angle))-circle_radius, center[1]+(radius*math.sin(angle))-circle_radius)
-            cells.append(Cell((lvl, index), lvl*circle_number+index, position, (circle_radius*2, circle_radius*2), self.resolution, **cell_params))
+            cells.append(Cell((lvl, index), lvl*circle_number+index, position, (circle_radius*2, circle_radius*2), self.resolution, angle=angle, **cell_params))
             index       += 1
             angle       += distance
         return cells
@@ -459,14 +468,15 @@ class Board(Screen):
         self.active_path.empty()
         ratio = self.platform.rect.height//self.params['max_levels']
         radius = ratio//2-ratio//6 if offset else ratio//2
-        for _ in range (0, self.params['max_levels']): #Lvl circles
-            out_circle = Circumference('circular_path', tuple(x-radius for x in self.platform.rect.center),\
+        for i in range (0, self.params['max_levels']):
+            out_circle = Circumference('circular_path_'+str(i), tuple(x-radius for x in self.platform.rect.center),\
                         (radius*2, radius*2), self.resolution, fill_gradient=False, overlay=False, texture=self.params['circumference_texture'],\
                         border_color=self.params['path_color'], border_width=self.params['path_width'])
             self.paths.add(out_circle)
             radius+=ratio//2
         LOG.log('DEBUG', "Generated circular paths in ", self.id)
     
+    @no_size_limit
     def generate_inter_paths(self):
         """Create the paths that connect circumferences between themselves.
         Does this by drawing bezier curves under the designated cells of each level.
@@ -481,6 +491,10 @@ class Board(Screen):
                 self.draw_inter_path(surface, i)
         surface = surface.subsurface(self.platform.rect)
         interpaths_sprite = Sprite('inter_paths', self.platform.rect.topleft, surface.get_size(), self.resolution, surface=surface)
+        #interpaths_sprite.overlay = Sprite.generate_overlay(interpaths_sprite.image, RED)
+        if self.params['interpath_texture']:
+            interpaths_sprite.image = UtilityBox.overlap_trace_texture(interpaths_sprite.image, ResizedSurface.get_surface(self.params['interpath_texture'],\
+                                            interpaths_sprite.rect.size, 'fill', True))
         self.inter_paths.add(interpaths_sprite)
 
     def draw_inter_path(self, surface, index):
@@ -735,6 +749,12 @@ class Board(Screen):
             path = pygame.sprite.spritecollideany(mouse_sprite, self.paths, collided=pygame.sprite.collide_mask)
             self.set_active_path(path)
 
+            '''interpath = pygame.sprite.spritecollideany(mouse_sprite, self.inter_paths, collided=pygame.sprite.collide_mask)
+            if interpath:
+                self.inter_paths.sprite.set_active(True)
+                return
+            self.inter_paths.sprite.set_active(False)'''
+
     def character_swapper(self):
         """This is to try a generator in a kinda non-generator situation"""
         while True:
@@ -900,7 +920,8 @@ class Board(Screen):
         if path:    #If its not None
             path.set_active(True)
             path.set_hover(True)
-            self.active_path.add(path)   
+            self.active_path.add(path)
+        
     
     def destroy(self):
         pass

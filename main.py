@@ -61,7 +61,7 @@ def create_main_menu(result):   #TODO THIS COULD BE AN ONLY METHOD
     button_path     = PATHS.DARK_LONG_BUTTON
     buttonStart     = UIElement.factory('button_start', "start_game_go_main_board", USEREVENTS.MAINMENU_USEREVENT, next(positions), button_size,\
                                         INIT_PARAMS.INITIAL_RESOLUTION, text="Start new game", keep_aspect_ratio = False,\
-                                        gradient=next(gradients), gradient_type='vertical', texture=button_path)
+                                        gradient=next(gradients), gradient_type='vertical', texture=button_path, active_texture=PATHS.SHORT_BUTTON)
     buttonOnlineHost= UIElement.factory('button_online_host', "host_network_start_online_game_go_main_board", USEREVENTS.MAINMENU_USEREVENT, next(positions), button_size,\
                                         INIT_PARAMS.INITIAL_RESOLUTION, text="Host LAN game", keep_aspect_ratio = False,\
                                         gradient=next(gradients), gradient_type='vertical', texture=button_path)
@@ -191,6 +191,7 @@ def create_board_params():
     board_params['songs_paths'] = BOARD_SONGS
     board_params['animated_background'] = bg
     board_params['platform_sprite'] = AnimationGenerator.animated_tree_platform(INIT_PARAMS.INITIAL_RESOLUTION)
+    board_params['interpath_texture'] = PATHS.WOOD_TEXTURE
     return board_params
 
 @time_it

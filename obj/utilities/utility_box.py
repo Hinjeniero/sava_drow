@@ -349,3 +349,25 @@ class UtilityBox (object):
                 continue
             colorkey.append(channel-difference)
         return tuple(colorkey)
+
+    @staticmethod
+    def get_circumference_width(circumference_surf):
+        mask = pygame.mask.from_surface(circumference_surf)
+        x = circumference_surf.get_width()//2
+        counter = 0
+        while mask.get_at((x, counter)):
+            counter += 1
+        return counter
+
+    @staticmethod
+    @time_it
+    def overlap_trace_texture(base_surf, top_surf):
+        newsurf = pygame.Surface(base_surf.get_size())
+        newsurf.fill((0, 0, 0))
+        newsurf.set_colorkey((0, 0, 0))
+        mask = pygame.mask.from_surface(base_surf)
+        for x in range(0, newsurf.get_width()-1):
+            for y in range(0, newsurf.get_height()-1):
+                if mask.get_at((x, y)):
+                    newsurf.set_at((x, y), top_surf.get_at((x, y)))
+        return newsurf

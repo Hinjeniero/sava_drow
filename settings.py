@@ -149,3 +149,4 @@ class PATHS:
     CELL_GOLDEN_BORDER = IMAGE_FOLDER+'cell_gold_border.png'
     CIRCUMFERENCE_RUST = IMAGE_FOLDER+'circle.png'
     THIN_CIRCUMFERENCE = IMAGE_FOLDER+'thin_circle.png'
+    WOOD_TEXTURE = IMAGE_FOLDER + 'wood.jpg'

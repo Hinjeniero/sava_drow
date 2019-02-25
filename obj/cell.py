@@ -31,7 +31,7 @@ class Cell(Circle):
         chars (:obj: pygame.sprite.Group):  The characters that are currently residing on this Cell.
     
     """
-    def __init__(self, grid_position, real_index, position, size, canvas_size, **params):
+    def __init__(self, grid_position, real_index, position, size, canvas_size, angle=None, **params):
         """Cell constructor.
         Args:
             grid_position (:tuple: int, int):   Position of the Cell in the board. Follos a (level, index) schema.
@@ -48,20 +48,12 @@ class Cell(Circle):
         self.chars  = pygame.sprite.GroupSingle()
         self.promotion = False
         self.owner  = None
+        self.angle = angle
         Cell.generate(self)
 
     @staticmethod
     def generate(self):
         self.add_text_sprite(self.id+"_text", str(self.pos[0])+"-"+str(self.pos[1]), text_size=tuple(x*0.75 for x in self.rect.size))
-
-    def draw(self, surface):
-        """Draws the Cell on the surface, with the index blitted on top (already done in self.image).
-        If the cell is in the active state, an overlay of a random RGB color is also blitted.
-        Args:
-            surface (:obj: pygame.Surface): Surface in which to draw the Cell."""
-        super().draw(surface)
-        #if self.active:
-            #pygame.draw.circle(surface, UtilityBox.random_rgb_color(), self.rect.center, self.rect.height//2)
 
     def add_border(self, image_path):
         border = Circle('border'+str(self.index), (0, 0), self.rect.size, self.resolution, texture = image_path)

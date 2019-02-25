@@ -342,7 +342,7 @@ class Screen(object):
             self.dialog.set_visible(False)
             self.dialog = None
 
-    def draw(self, surface):
+    '''def draw(self, surface):
         """Draws the screen in the input surface. This method in the Screen
         superclass only draws the background, since the sprites group is empty.
         Args:
@@ -362,7 +362,27 @@ class Screen(object):
             if self.scroll_sprite:
                 self.scroll_sprite.draw(surface)       
             if self.animation:
-                self.animation.play(surface)
+                self.animation.play(surface)'''
+    def draw(self, surface):
+        """Draws the screen in the input surface. This method in the Screen
+        superclass only draws the background, since the sprites group is empty.
+        Args:
+            surface (:obj: pygame.Surface): Surface to blit to."""
+        if self.animated_background:
+            self.background.play(surface)
+        else:
+            self.background.draw(surface)
+        for sprite in self.sprites:
+            if self.scroll_offset != (0, 0):
+                sprite.draw(surface, offset=self.scroll_offset)
+            else:
+                sprite.draw(surface)
+        if self.scroll_sprite:
+            self.scroll_sprite.draw(surface)       
+        if self.animation:
+            self.animation.play(surface)
+        if self.dialog:
+            self.dialog.draw(surface)
 
     def set_resolution(self, resolution):
         """Changes the resolution of the screen to input argument.

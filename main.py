@@ -27,7 +27,7 @@ from obj.utilities.colors import RED, BLACK, WHITE, GREEN
 from obj.utilities.logger import Logger as LOG
 from obj.utilities.surface_loader import ResizedSurface, no_size_limit
 from obj.utilities.utility_box import UtilityBox
-from obj.utilities.decorators import time_it
+from obj.utilities.decorators import time_it, run_async
 
 #This because segmentation fault
 faulthandler.enable()
@@ -52,30 +52,31 @@ def start_pygame(resolution=INIT_PARAMS.INITIAL_RESOLUTION):
         INIT_PARAMS.RESOLUTIONS = INIT_PARAMS.RESOLUTIONS + (MY_SCREEN_RESOLUTION,)
     pygame.display.set_mode(resolution, SCREEN_FLAGS.WINDOWED)  
 
-@time_it
-def create_main_menu():
+@run_async
+def create_main_menu(result):   #TODO THIS COULD BE AN ONLY METHOD
     #Create elements, main menu buttons (POSITIONS AND SIZES ARE IN PERCENTAGES OF THE CANVAS_SIZE, can use absolute integers too)
     gradients       = UtilityBox.rainbow_gradient_generator(((255, 0, 0),(0, 0, 255)), 7)
     positions       = UtilityBox.size_position_generator(7, 0.40, 0.05, 0.20, 0)
     button_size     = next(positions)
+    button_path     = PATHS.DARK_LONG_BUTTON
     buttonStart     = UIElement.factory('button_start', "start_game_go_main_board", USEREVENTS.MAINMENU_USEREVENT, next(positions), button_size,\
                                         INIT_PARAMS.INITIAL_RESOLUTION, text="Start new game", keep_aspect_ratio = False,\
-                                        gradient=next(gradients), gradient_type='vertical', texture=PATHS.SHORT_BUTTON)
+                                        gradient=next(gradients), gradient_type='vertical', texture=button_path)
     buttonOnlineHost= UIElement.factory('button_online_host', "host_network_start_online_game_go_main_board", USEREVENTS.MAINMENU_USEREVENT, next(positions), button_size,\
                                         INIT_PARAMS.INITIAL_RESOLUTION, text="Host LAN game", keep_aspect_ratio = False,\
-                                        gradient=next(gradients), gradient_type='vertical', texture=PATHS.SHORT_BUTTON)
+                                        gradient=next(gradients), gradient_type='vertical', texture=button_path)
     buttonOnlineCli = UIElement.factory('button_online_client', "client_network_start_online_game_go_main_board", USEREVENTS.MAINMENU_USEREVENT, next(positions), button_size,\
                                         INIT_PARAMS.INITIAL_RESOLUTION, text="Connect to LAN game", keep_aspect_ratio = False,\
-                                        gradient=next(gradients), gradient_type='vertical', texture=PATHS.SHORT_BUTTON)
+                                        gradient=next(gradients), gradient_type='vertical', texture=button_path)
     buttonContinue  = UIElement.factory('button_continue', "continue_game_go_main_board", USEREVENTS.MAINMENU_USEREVENT, next(positions), button_size,\
                                         INIT_PARAMS.INITIAL_RESOLUTION, text="Continue last game", keep_aspect_ratio = False,\
-                                        gradient=next(gradients), gradient_type='vertical', texture=PATHS.SHORT_BUTTON)
+                                        gradient=next(gradients), gradient_type='vertical', texture=button_path)
     buttonConfig    = UIElement.factory('button_params_menu', "go_menu_params_config", USEREVENTS.MAINMENU_USEREVENT, next(positions), button_size,\
-                                        INIT_PARAMS.INITIAL_RESOLUTION, text="Parameters", gradient = next(gradients), gradient_type='vertical', texture=PATHS.SHORT_BUTTON, keep_aspect_ratio = False)
+                                        INIT_PARAMS.INITIAL_RESOLUTION, text="Parameters", gradient = next(gradients), gradient_type='vertical', texture=button_path, keep_aspect_ratio = False)
     buttonSound     = UIElement.factory('button_sound', "go_menu_sound_music", USEREVENTS.MAINMENU_USEREVENT, next(positions), button_size,\
-                                        INIT_PARAMS.INITIAL_RESOLUTION, text="Music menu", gradient = next(gradients), gradient_type='vertical', texture=PATHS.SHORT_BUTTON, keep_aspect_ratio = False)
+                                        INIT_PARAMS.INITIAL_RESOLUTION, text="Music menu", gradient = next(gradients), gradient_type='vertical', texture=button_path, keep_aspect_ratio = False)
     buttonGraphics  = UIElement.factory('button_graphics', "go_menu_graphics_display", USEREVENTS.MAINMENU_USEREVENT, next(positions), button_size,\
-                                        INIT_PARAMS.INITIAL_RESOLUTION, text="Graphics menu", gradient = next(gradients), gradient_type='vertical', texture=PATHS.SHORT_BUTTON, keep_aspect_ratio = False)
+                                        INIT_PARAMS.INITIAL_RESOLUTION, text="Graphics menu", gradient = next(gradients), gradient_type='vertical', texture=button_path, keep_aspect_ratio = False)
     buttonContinue.set_enabled(False)
     
     #Create Menu
@@ -83,12 +84,10 @@ def create_main_menu():
     main_menu   = Menu('main_menu', USEREVENTS.MAINMENU_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, buttonStart, buttonOnlineHost, buttonOnlineCli, buttonContinue, buttonConfig, buttonSound, buttonGraphics,
                         animated_background=bg, background_path=PATHS.DEFAULT_BG, songs_paths=MENU_SONGS, do_align=False)
     main_menu.add_dialogs(DialogGenerator.create_exit_dialog(tuple(x//2 for x in INIT_PARAMS.INITIAL_RESOLUTION), INIT_PARAMS.INITIAL_RESOLUTION))
-    #main_menu.add_dialogs(create_input_dialog(('ip', 'send_ip'), ('port', 'send_port')))
-    #main_menu.add_sprites(TextBox('2', 'kill', 0, (0, 0), (800, 80), INIT_PARAMS.INITIAL_RESOLUTION))
-    return main_menu 
+    result.append(main_menu) 
 
-@time_it
-def create_config_menu():
+@run_async
+def create_config_menu(result):
     #positions           = UtilityBox.size_position_generator(9, 0.60, 0.05)
     #button_size         = next(positions)
     button_size = (0.60, 0.15)
@@ -134,10 +133,10 @@ def create_config_menu():
     params_menu = Menu("menu_params_config", USEREVENTS.CONFIG_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, buttonLoadingScreen, buttonCountPlayers, buttonGameModes, buttonBoardSize,\
                         buttonRandomFilling, buttonCenterCell, buttonNumPawns, buttonNumWarriors, buttonNumWizards, buttonNumPriestesses, buttonNumMothers, buttonHolyChampions,\
                         background_path=PATHS.DEFAULT_BG, gradient = (RED, BLACK), do_align=False, songs_paths=None)
-    return params_menu
+    result.append(params_menu)
 
-@time_it
-def create_sound_menu():
+@run_async
+def create_sound_menu(result):
     #Sliders/buttons of the music and sound menu
     positions           = UtilityBox.size_position_generator(6, 0.80, 0.05)
     button_size         = next(positions)
@@ -162,10 +161,10 @@ def create_sound_menu():
     sound_menu          = Menu("menu_volume_music", USEREVENTS.SOUND_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, sliderMenuMusic, sliderMenuSounds, sliderBoardMusic, sliderBoardSounds,\
                                 buttonBoardSongs, buttonMenusSongs, background_path=PATHS.DEFAULT_BG, do_align=False, songs_paths=None)
     sound_menu.add_animation(AnimationGenerator.characters_crossing_screen(INIT_PARAMS.INITIAL_RESOLUTION, *INIT_PARAMS.ALL_FPS))
-    return sound_menu
+    result.append(sound_menu)
 
-@time_it
-def create_video_menu():
+@run_async
+def create_video_menu(result):
     positions           = UtilityBox.size_position_generator(5, 0.80, 0.10, 0.10, final_offset=0.15)
     button_size         = next(positions)
     buttonRes   = UIElement.factory('button_resolution', "change_resolution_screen_display", USEREVENTS.GRAPHIC_USEREVENT, next(positions), button_size,\
@@ -181,11 +180,14 @@ def create_video_menu():
     graphics_menu   = Menu("menu_graphics_display", USEREVENTS.GRAPHIC_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, buttonRes, buttonFps, buttonFullscreen,\
                             buttonBgsMenu, buttonBgsBoard, background_path=PATHS.DEFAULT_BG, do_align=False, songs_paths=None)
     graphics_menu.add_animation(AnimationGenerator.character_teleporting_screen(INIT_PARAMS.INITIAL_RESOLUTION, *INIT_PARAMS.ALL_FPS))
-    return graphics_menu
+    result.append(graphics_menu)
 
 def create_board_params():
     board_params = {}
     bg = AnimationGenerator.factory(STRINGS.INITIAL_ANIMATED_BG, INIT_PARAMS.INITIAL_RESOLUTION, PARAMS.ANIMATION_TIME, INIT_PARAMS.ALL_FPS, INIT_PARAMS.INITIAL_FPS)
+    board_params['cell_texture'] = PATHS.CELL_BASIC
+    board_params['cell_border'] = PATHS.CELL_GOLDEN_BORDER 
+    board_params['circumference_texture'] = PATHS.CIRCUMFERENCE_RUST
     board_params['songs_paths'] = BOARD_SONGS
     board_params['animated_background'] = bg
     board_params['platform_sprite'] = AnimationGenerator.animated_tree_platform(INIT_PARAMS.INITIAL_RESOLUTION)
@@ -196,7 +198,11 @@ def pre_start():
     start_pygame()
     draw_start_bg()
     game = Game('sava_drow', INIT_PARAMS.INITIAL_RESOLUTION, INIT_PARAMS.INITIAL_FPS)
-    game.add_screens(create_main_menu(), create_sound_menu(), create_config_menu(), create_video_menu())
+    menus = []
+    threads = [create_main_menu(menus), create_sound_menu(menus), create_config_menu(menus), create_video_menu(menus)]
+    for menu_thread in threads:
+        menu_thread.join()
+    game.add_screens(*menus)
     game.update_board_params(**create_board_params())
     return game
 

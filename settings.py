@@ -140,4 +140,11 @@ class PATHS:
     #---Menus, buttons and such
     LONG_POPUP = IMAGE_FOLDER+'pixel_panel_2.png'
     SHORT_BUTTON = IMAGE_FOLDER+'button.png'
+    SHORT_GOLD_BUTTON = IMAGE_FOLDER+'golden_button.png'
+    DARK_LONG_BUTTON = IMAGE_FOLDER+'dark_button.png'
     INFOBOARD = IMAGE_FOLDER+'infoboard.png'
+    DIALOG_SILVER = IMAGE_FOLDER+'dialog.png'
+    #---Board
+    CELL_BASIC = IMAGE_FOLDER+'cell_basic.png'
+    CELL_GOLDEN_BORDER = IMAGE_FOLDER+'cell_gold_border.png'
+    CIRCUMFERENCE_RUST = IMAGE_FOLDER+'circle.png'

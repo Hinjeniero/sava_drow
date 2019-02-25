@@ -14,8 +14,9 @@ import functools
 import pygame
 import random
 from obj.paths import Path
-from obj.utilities.utility_box import UtilityBox
 from obj.polygons import Circle
+from obj.utilities.surface_loader import ResizedSurface
+from obj.utilities.utility_box import UtilityBox
 from obj.utilities.logger import Logger as LOG
 
 @functools.total_ordering
@@ -61,6 +62,10 @@ class Cell(Circle):
         super().draw(surface)
         if self.active:
             pygame.draw.circle(surface, UtilityBox.random_rgb_color(), self.rect.center, self.rect.height//2)
+
+    def add_border(self, image_path):
+        border = Circle('border'+str(self.index), (0, 0), self.rect.size, self.resolution, texture = image_path)
+        self.add_sprite(border)
 
     def add_char(self, character):
         """Args:

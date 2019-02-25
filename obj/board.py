@@ -97,7 +97,10 @@ class Board(Screen):
                         'path_color'            : WHITE,
                         'path_width'            : 5,
                         'platform_sprite'       : None,
-                        'loading_screen_text'   : "Loading, hang tight"
+                        'loading_screen_text'   : "Loading, hang tight",
+                        'cell_texture'          : None,
+                        'cell_border'           : None,
+                        'circumference_texture' : None
     }
     #CHANGE MAYBE THE THREADS OF CHARACTER TO JOIN INSTEAD OF NUM PLAYERS AND SHIT
     def __init__(self, id_, event_id, end_event_id, resolution, *players, empty=False, **params):
@@ -397,8 +400,8 @@ class Board(Screen):
         small_radius= ratio//4 if not custom_cell_radius else int(custom_cell_radius)
         for i in range (0, self.params['max_levels']):
             radius      += ratio
-            if i is 0:  self.cells.add(self.__generate_cells(radius-ratio//3, self.platform.rect.center, small_radius, 4, 0, initial_offset=-45))
-            else:       self.cells.add(self.__generate_cells(radius-ratio//3, self.platform.rect.center, small_radius, self.params['circles_per_lvl'], i))
+            if i is 0:  self.cells.add(self.__generate_cells(radius-ratio//3, self.platform.rect.center, small_radius, 4, 0, initial_offset=-45, texture=self.params['cell_texture']))
+            else:       self.cells.add(self.__generate_cells(radius-ratio//3, self.platform.rect.center, small_radius, self.params['circles_per_lvl'], i, texture=self.params['cell_texture']))
         if self.params['center_cell']:
             self.cells.add(self.__generate_center_cell(small_radius, self.params['circles_per_lvl'], self.params['max_levels']))
         LOG.log('DEBUG', "Generated cells of ", self.id)
@@ -453,7 +456,7 @@ class Board(Screen):
         radius = ratio//2-ratio//6 if offset else ratio//2
         for _ in range (0, self.params['max_levels']): #Lvl circles
             out_circle = Circumference('circular_path', tuple(x-radius for x in self.platform.rect.center),\
-                        (radius*2, radius*2), self.resolution, fill_gradient=False, overlay=False,\
+                        (radius*2, radius*2), self.resolution, fill_gradient=False, overlay=False, texture=self.params['circumference_texture'],\
                         border_color=self.params['path_color'], border_width=self.params['path_width'])
             self.paths.add(out_circle)
             radius+=ratio//2
@@ -592,6 +595,8 @@ class Board(Screen):
                     self.characters.add(character)  
                     if cell.promotion:
                         cell.owner = player.uuid
+                        if self.params['cell_border']:
+                            cell.add_border(self.params['cell_border'])
                     #LOG.log('DEBUG', "Character ", character.id, " spawned with position ", cell.pos)
                 player.pause_characters()
             self.loaded_players += 1

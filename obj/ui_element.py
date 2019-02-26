@@ -737,12 +737,14 @@ class InfoBoard (UIElement):
     def set_rows(self, rows):
         rows = 1 if rows < 1 else rows
         self.params['rows'] = rows
-        self.spaces = self.params['rows']+self.params['cols']
+        self.spaces = self.params['rows']*self.params['cols']
+        self.element_size = (int(self.rect.width//self.params['cols']), int(self.rect.height//self.params['rows']))
 
     def set_cols(self, cols):
         cols = 1 if cols < 1 else cols
         self.params['cols'] = cols
-        self.spaces = self.params['rows']+self.params['cols']
+        self.spaces = self.params['rows']*self.params['cols']
+        self.element_size = (int(self.rect.width//self.params['cols']), int(self.rect.height//self.params['rows']))
 
     def clear(self):
         """Deletes all the sprites of the infoboard. Useful when deleting the texts."""
@@ -849,7 +851,7 @@ class Dialog (InfoBoard):
                                         Variety going from fill_color and use_gradient to text_only."""
         self.add_ui_element(spaces, text, command, scale=scale, constructor=TextBox, **textbox_params)
 
-    def add_ui_element(self, spaces, text, command, scale=1, constructor=None, *elements, **params):
+    def add_ui_element(self, spaces, text, command, scale=1, constructor=None, centering='center', *elements, **params):
         """Adds an ui_element to the dialog, that follows the input parameters.
         After creating it and adding it to self.buttons, it is blitted onto the dialog image.
         Args:
@@ -873,16 +875,23 @@ class Dialog (InfoBoard):
                     element = constructor(self.id+"_element", self.event_id, position, self.rect.size, text=text, **params)
         else:
             element = UIElement.factory(self.id+"_element", command, self.event_id, position, size, self.rect.size, *elements, default_values=None, **params) 
+        self.adjust_position(size, position, element, centering=centering)
         self.elements.add(element)
         self.taken_spaces += spaces
     
-    def add_sprite_to_elements(self, spaces, sprite, scale=1):
+    def adjust_position(self, size, position, element, centering='center'):
+        position_x = position[0]
+        position_x += (size[0]//2-element.rect.width//2) if 'center' in centering\
+        else (size[0] - element.rect.width) if 'right' in centering else 0
+        element.set_position((position_x, position[1]))
+
+    def add_sprite_to_elements(self, spaces, sprite, centering='center', scale=1):
         """Testing this to add animated chars"""
         spaces = self.parse_element_spaces(spaces)
         size = self.get_element_size(spaces, scale)
         position = self.get_element_position(spaces, size)
         sprite.set_size(size)
-        sprite.set_position(position)
+        self.adjust_position(size, position, sprite, centering=centering)
         self.elements.add(sprite)
         self.taken_spaces += spaces
 

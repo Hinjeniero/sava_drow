@@ -742,8 +742,8 @@ class Board(Screen):
         if mouse_movement:
             mouse_sprite = UtilityBox.get_mouse_sprite()
             if self.show_promotion:
-                all(element.set_hover(False) for element in self.promotion_table.elements)
-                all(colliding.set_hover(True) for colliding in self.promotion_table.get_collisions(mouse_sprite))
+                for element in self.promotion_table.elements:                           element.set_hover(False)
+                for colliding in self.promotion_table.get_collisions(mouse_sprite):     colliding.set_hover(True)
                 return
             if self.drag_char.sprite:   
                 self.drag_char.sprite.rect.center = mouse_position
@@ -933,7 +933,6 @@ class Board(Screen):
             path.set_hover(True)
             self.active_path.add(path)
         
-    
     def destroy(self):
         pass
         #TODO KILL THREADS IF STILL LOADING OR DECREASE PLAYER COUNT TO END FASTER, I DUNNO, WHATEVER

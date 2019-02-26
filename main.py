@@ -192,6 +192,8 @@ def create_board_params():
     board_params['animated_background'] = bg
     board_params['platform_sprite'] = AnimationGenerator.animated_tree_platform(INIT_PARAMS.INITIAL_RESOLUTION)
     board_params['interpath_texture'] = PATHS.WOOD_TEXTURE
+    board_params['scoreboard_texture'] = PATHS.SCOREBOARD_BASIC
+    board_params['promotion_texture'] = PATHS.LONG_RED_BAR
     return board_params
 
 @time_it

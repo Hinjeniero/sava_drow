@@ -30,7 +30,7 @@ from obj.polygons import Circle, Rectangle, Circumference
 from obj.utilities.utility_box import UtilityBox
 from obj.utilities.colors import RED, WHITE, DARKGRAY, LIGHTGRAY, TRANSPARENT_GRAY
 from obj.utilities.exceptions import BadPlayersParameter, BadPlayerTypeException,\
-                                    PlayerNameExistsException, TooManyCharactersException
+                                    PlayerNameExistsException, TooManyCharactersException, NotEnoughSpaceException
 from obj.utilities.decorators import run_async, time_it
 from obj.utilities.logger import Logger as LOG
 from obj.utilities.surface_loader import ResizedSurface, no_size_limit
@@ -102,7 +102,9 @@ class Board(Screen):
                         'cell_texture'          : None,
                         'cell_border'           : None,
                         'circumference_texture' : None,
-                        'interpath_texture'     : None
+                        'interpath_texture'     : None,
+                        'scoreboard_texture'    : None,
+                        'promotion_texture'     : None
     }
     #CHANGE MAYBE THE THREADS OF CHARACTER TO JOIN INSTEAD OF NUM PLAYERS AND SHIT
     def __init__(self, id_, event_id, end_event_id, resolution, *players, empty=False, **params):
@@ -189,37 +191,43 @@ class Board(Screen):
         self.swapper = self.character_swapper()
         self.swapper.send(None) #Needed in the first execution of generator
 
+    @no_size_limit
     def generate_dialogs(self):
         scoreboard = InfoBoard(self.id+'_scoreboard', USEREVENTS.DIALOG_USEREVENT, (0, 0), (self.resolution[0]//1.1, self.resolution[1]//1.5),\
-                                self.resolution, keep_aspect_ratio = False, rows=len(self.players)+1, cols=len(self.players[0].get_stats().keys()))
+                                self.resolution, keep_aspect_ratio = False, rows=len(self.players)+1, cols=len(self.players[0].get_stats().keys()),
+                                texture=self.params['scoreboard_texture'])
         scoreboard.set_position(tuple(x//2-y//2 for x, y in zip(self.resolution, scoreboard.rect.size)))
         self.scoreboard = scoreboard
-        promotion_table = Dialog(self.id+'_promotion', USEREVENTS.DIALOG_USEREVENT, (self.resolution[0]//1.1, self.resolution[1]//1.5),\
-                                self.resolution, keep_aspect_ratio = False)
+        promotion_table = Dialog(self.id+'_promotion', USEREVENTS.DIALOG_USEREVENT, (self.resolution[0]//1.05, self.resolution[1]//8),\
+                                self.resolution, keep_aspect_ratio = False, texture=self.params['promotion_texture'])
         self.promotion_table = promotion_table
 
     @run_async
     def update_scoreboard(self):
-        self.scoreboard.clear()
-        for player in self.players:
-            if player.order == 0:
-                for key in player.get_stats().keys():
-                    self.scoreboard.add_text_element('text', key, 1)
-            for value in player.get_stats().values():
-                if not player.dead:
-                    if player.order is self.current_player.order: #A bit redundant, since a dead player dissapears
-                        self.scoreboard.add_text_element('text', value, 1, color=WHITE)
-                        continue
-                    self.scoreboard.add_text_element('text', value, 1)
-                else:
-                    self.scoreboard.add_text_element('text', value, 1, color=DARKGRAY)
+        while True:
+            try:
+                self.scoreboard.clear()
+                for player in self.players:
+                    if player.order == 0:
+                        for key in player.get_stats().keys():
+                            self.scoreboard.add_text_element('text', key, 1)
+                    for value in player.get_stats().values():
+                        if not player.dead:
+                            if player.order is self.current_player.order: #A bit redundant, since a dead player dissapears
+                                self.scoreboard.add_text_element('text', value, 1, color=WHITE)
+                                continue
+                            self.scoreboard.add_text_element('text', value, 1)
+                        else:
+                            self.scoreboard.add_text_element('text', value, 1, color=DARKGRAY)
+                break
+            except NotEnoughSpaceException:
+                LOG.log('warning', 'Error while updating the scoreboard, trying again...')
 
     @run_async
     def update_promotion_table(self, *chars):
         self.promotion_table.full_clear()
-        rows = int(math.sqrt(len(chars)))
-        self.promotion_table.set_rows(rows)
-        self.promotion_table.set_cols(rows+1)
+        self.promotion_table.set_rows(1)
+        self.promotion_table.set_cols(len(chars))
         for char in chars:
             if not char.upgradable: #Upgradable ones cannot be upgraded to
                 self.promotion_table.add_sprite_to_elements(1, char)
@@ -572,6 +580,7 @@ class Board(Screen):
                 self.update_map()       #This goes according to current_player
             self.started = True
             self.generate_dialogs()
+            self.update_scoreboard()
 
     def create_player(self, name, number, chars_size, empty=False, **player_settings):
         """Queues the creation of a player on the async method.
@@ -655,8 +664,6 @@ class Board(Screen):
                 self.loading_screen.draw(surface)
                 return
             super().draw(surface)                   #Draws background
-            for dest in self.possible_dests:
-                pygame.draw.circle(surface, WHITE, dest.center, dest.radius)
             for char in self.characters:
                 char.draw(surface)
             if self.current_player:
@@ -788,6 +795,8 @@ class Board(Screen):
                                                             self.active_cell.sprite.index, self.params['circles_per_lvl'])
             for cell_index in destinations:
                 self.possible_dests.add(self.get_cell_by_real_index(cell_index[-1]))
+            for dest in self.possible_dests:
+                dest.set_active(True)
 
     def drop_character(self):
         """Drops a character. Deletes it from the drag char Group, and checks if the place in which
@@ -809,6 +818,8 @@ class Board(Screen):
             self.play_sound('warning')
             LOG.log('debug', 'Cant move the char there')
         self.drag_char.empty()
+        for dest in self.possible_dests:
+            dest.set_active(False)
         self.possible_dests.empty()
         return moved
 

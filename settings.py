@@ -105,6 +105,7 @@ class PATHS:
     ROOT_FOLDER = os.path.dirname(__file__)
     ASSETS_FOLDER = os.path.join(ROOT_FOLDER, 'local\\')
     IMAGE_FOLDER = os.path.join(ASSETS_FOLDER, 'img\\')
+    TEXTURES_FOLDER = os.path.join(IMAGE_FOLDER, 'textures\\')
     AUDIO_FOLDER = os.path.join(ASSETS_FOLDER, 'sounds\\')
     SOUNDS_FOLDER = AUDIO_FOLDER+'common\\'
     SECRET_FOLDER = AUDIO_FOLDER+'secret\\'
@@ -153,6 +154,11 @@ class PATHS:
     CELL_GOLDEN_BORDER = IMAGE_FOLDER+'cell_gold_border.png'
     CIRCUMFERENCE_RUST = IMAGE_FOLDER+'circle.png'
     THIN_CIRCUMFERENCE = IMAGE_FOLDER+'thin_circle.png'
-    WOOD_TEXTURE = IMAGE_FOLDER + 'wood.jpg'
     SCOREBOARD_BASIC = IMAGE_FOLDER+'scoreboard.png'
     LONG_RED_BAR = IMAGE_FOLDER+'long_red_bar.png'
+    #Textures
+    WOOD_TEXTURE_BASIC = TEXTURES_FOLDER+'wood.jpg'
+    WOOD_TEXTURE_DARK = TEXTURES_FOLDER+'dark_wood.png'
+    DARK_CAVE_TEXTURE = TEXTURES_FOLDER+'cave.png'
+    GRASSLAND_TEXTURE = TEXTURES_FOLDER+'grassland.png'
+    DESERT_TEXTURE = TEXTURES_FOLDER+'desert.png'

@@ -44,7 +44,9 @@ class Screen(object):
     """
     __default_config = {'background_path'   : None,
                         'animated_background': None,
-                        'songs_paths'       : UtilityBox.get_all_files(PATHS.COMMON_SONGS, *EXTENSIONS.MUSIC_FORMATS)
+                        'songs_paths'       : UtilityBox.get_all_files(PATHS.COMMON_SONGS, *EXTENSIONS.MUSIC_FORMATS),
+                        'scroll_image'      : None,
+                        'scroll_texture'    : None
     }
     SOUND_CHANNELS = []
     SOUNDS = Dictionary()

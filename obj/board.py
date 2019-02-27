@@ -25,7 +25,7 @@ from obj.players import Player
 from obj.paths import Path
 from obj.players import Character, Restriction
 from obj.sprite import Sprite
-from obj.ui_element import TextSprite, InfoBoard, Dialog
+from obj.ui_element import TextSprite, InfoBoard, Dialog, ScrollingText
 from obj.polygons import Circle, Rectangle, Circumference
 from obj.utilities.utility_box import UtilityBox
 from obj.utilities.colors import RED, WHITE, DARKGRAY, LIGHTGRAY, TRANSPARENT_GRAY
@@ -134,6 +134,7 @@ class Board(Screen):
         self.scoreboard     = None  #Created in Board.generate
         self.show_score     = False
         self.promotion_table= None  #Created in Board.generate
+        self.gray_overlay   = None  #Created in Board.generate
         self.show_promotion = False
 
         #Utilities to keep track
@@ -201,6 +202,7 @@ class Board(Screen):
         promotion_table = Dialog(self.id+'_promotion', USEREVENTS.DIALOG_USEREVENT, (self.resolution[0]//1.05, self.resolution[1]//8),\
                                 self.resolution, keep_aspect_ratio = False, texture=self.params['promotion_texture'])
         self.promotion_table = promotion_table
+        self.gray_overlay = ScrollingText('nuthing', self.event_id, self.resolution, transparency=128)
 
     @run_async
     def update_scoreboard(self):
@@ -669,10 +671,12 @@ class Board(Screen):
             if self.current_player:
                 self.current_player.draw(surface)   #This draws the player's infoboard
             if self.promotion_table and self.show_promotion:
+                self.gray_overlay.draw(surface)
                 self.promotion_table.draw(surface)
             if self.show_score and self.scoreboard:
                 self.scoreboard.draw(surface)
             if self.dialog and self.dialog.visible:
+                self.gray_overlay.draw(surface)
                 self.dialog.draw(surface)
         except pygame.error: 
             LOG.log(*MESSAGES.LOCKED_SURFACE_EXCEPTION)
@@ -745,6 +749,7 @@ class Board(Screen):
                 for element in self.promotion_table.elements:                           element.set_hover(False)
                 for colliding in self.promotion_table.get_collisions(mouse_sprite):     colliding.set_hover(True)
                 return
+
             if self.drag_char.sprite:   
                 self.drag_char.sprite.rect.center = mouse_position
             
@@ -914,11 +919,16 @@ class Board(Screen):
         if cell:    #If its not None
             cell.set_active(True)
             cell.set_hover(True)
+            if self.drag_char.sprite:
+                self.drag_char.sprite.set_hover(True)
             self.active_cell.add(cell)
             char = self.active_cell.sprite.has_char()
             if char and char.active:
                 self.active_char.add(char)
             #LOG.log('debug', 'New cell active: ', self.active_cell.sprite.pos)
+        else:
+            if self.drag_char.sprite:
+                self.drag_char.sprite.set_hover(False)
 
     def set_active_path(self, path):
         if self.active_path.sprite: #If there is already an sprite in active_cell

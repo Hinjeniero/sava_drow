@@ -14,7 +14,7 @@ import pygame
 import random
 #Selfmade libraries
 from obj.animation import ScriptedSprite, Animation, LoopedAnimation
-from obj.sprite import AnimatedSprite
+from obj.sprite import AnimatedSprite, TextSprite
 from obj.utilities.decorators import time_it, run_async
 from obj.utilities.surface_loader import SurfaceLoader, no_size_limit
 from settings import PATHS, STRINGS
@@ -23,7 +23,6 @@ PYGAME_EVENT = -1
 MOVE_KEYWORDS = ('run', )
 
 class AnimationGenerator(object):
-
     @staticmethod
     def factory(request_id, resolution, time, fps_modes, current_fps):
         animation = None
@@ -47,6 +46,7 @@ class AnimationGenerator(object):
         if animation:
             animation.set_fps(current_fps)
         return animation
+
 
     @staticmethod
     @time_it
@@ -218,6 +218,33 @@ class AnimationGenerator(object):
         animation = AnimationGenerator.sprite_teleporting_screen(resolution, random.randint(time_interval[0],\
                                                             time_interval[1]), random.choice(PATHS.CHARS), *fps,
                                                             start_pos=start_pos, end_pos=end_pos)
+        return animation
+
+    @staticmethod
+    def bounce_sprite(resolution, start_pos, end_pos, time, fps_modes, folder, *keywords):
+        pass
+
+    @staticmethod
+    def floating_logo(resolution, text, start_pos, end_pos, size, time, fps_modes, folder, keywords=None): #TODO DO THE ANIMATED_CHARACTER TEXT ON TOP DRAWING
+        animation = AnimationGenerator.floating_sprite(resolution, start_pos, end_pos, size, time, fps_modes, folder, keywords=keywords)
+        text = TextSprite('text', start_pos, size, resolution, text, resize_mode='fill')
+        sprite = ScriptedSprite('door', start_pos, size, resolution, fps_modes[0], fps_modes, sprite_folder=folder, keywords=keywords)
+        init_pos = tuple((x*pos)-y//2 for x, pos, y in zip(resolution, start_pos, sprite.rect.size))
+        end_pos = tuple((x*pos)-y//2 for x, pos, y in zip(resolution, end_pos, sprite.rect.size))
+        sprite.add_movement(init_pos, end_pos, time)
+        sprite.add_movement(end_pos, init_pos, time)
+        animation = LoopedAnimation('Floating sprite')
+        animation.add_sprite(sprite, 0, time, 0)
+
+    @staticmethod
+    def floating_sprite(resolution, start_pos, end_pos, size, time, fps_modes, folder, keywords=None):
+        sprite = ScriptedSprite('door', start_pos, size, resolution, fps_modes[0], fps_modes, sprite_folder=folder, keywords=keywords)
+        init_pos = tuple((x*pos)-y//2 for x, pos, y in zip(resolution, start_pos, sprite.rect.size))
+        end_pos = tuple((x*pos)-y//2 for x, pos, y in zip(resolution, end_pos, sprite.rect.size))
+        sprite.add_movement(init_pos, end_pos, time)
+        sprite.add_movement(end_pos, init_pos, time)
+        animation = LoopedAnimation('Floating sprite')
+        animation.add_sprite(sprite, 0, time, 0)
         return animation
 
     @staticmethod

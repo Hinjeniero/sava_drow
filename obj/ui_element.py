@@ -25,6 +25,7 @@ from obj.utilities.colors import WHITE, RED, DARKGRAY, LIGHTGRAY, GREEN, BLACK
 from obj.utilities.exceptions import    InvalidUIElementException, BadUIElementInitException, InvalidCommandValueException,\
                                         TooManyElementsException, InvalidSliderException, NotEnoughSpaceException
 from obj.utilities.utility_box import UtilityBox
+from obj.utilities.decorators import run_async
 from obj.utilities.logger import Logger as LOG
 
 class UIElement(MultiSprite):
@@ -164,6 +165,18 @@ class UIElement(MultiSprite):
                 pass
             return TextBox(id_, command, user_event_id, position, size, canvas_size, **params)
         raise BadUIElementInitException("Can't create an object with those input parameters")
+
+    @staticmethod
+    @run_async
+    def threaded_factory(result, id_, command, user_event_id, position, size, canvas_size, *elements, default_values=None, **params):
+        element = UIElement.factory(id_, command, user_event_id, position, size, canvas_size, *elements, default_values=default_values, **params)
+        try:
+            result.append(element)
+        except AttributeError:
+            try:
+                result.add(element)
+            except AttributeError:
+                result = element
 
 class ButtonAction(UIElement):
     """ButtonAction class. Inherits from UIElement.
@@ -355,7 +368,9 @@ class Slider (UIElement):
                                 Variety going from fill_color and use_gradient to text_only.
             """
         super().__init__(id_, command, user_event_id, position, size, canvas_size, **params)
-        self.value = default_value 
+        self.value = default_value
+        self.dial = None    #Generated in Slider.generate
+        self.value_sprite = None    #Generated in Slider.generate
         Slider.generate(self)
 
     @staticmethod
@@ -374,7 +389,7 @@ class Slider (UIElement):
         #Value sprite
         if _['shows_value']:
             self.add_text_sprite(self.id+"_text", _['text'], text_size=text_size, alignment='left')
-            self.add_text_sprite(self.id+"_value", str(self.get_value()), text_size=text_size, alignment='right')
+            self.value_sprite = self.add_text_sprite(self.id+"_value", str(self.get_value()), text_size=text_size, alignment='right', return_result=True)
         else:
             self.add_text_sprite(self.id+"_text", _['text'], text_size=text_size, alignment=_['text_alignment'])
         #Slider sprite
@@ -423,23 +438,23 @@ class Slider (UIElement):
         else:
             dial.rect.center = (int(self.get_value()*self.rect.width), self.rect.height//2)
         dial.set_position(dial.rect.topleft)
-        self.add_sprite(dial)
+        self.dial = dial
 
     def set_dial_position(self, position):
         """Changes the dial position to the input parameter. Changes the graphics and the value accordingly.
         Distinguises between values between 0 and 1 (position in value), and values over 1 (position in pixels).
         Args:
             position (float||int): Position of the dial to set."""
-        dial = self.get_sprite('dial')
+        dial = self.dial
         dial_position = int(self.rect.width*position) if (0 <= position <= 1) else int(position) #Converting the dial position to pixels.
         dial_position = 0 if dial_position < 0\
                         else self.rect.width if dial_position > self.rect.width \
                         else dial_position       #Checking if it's out of bounds 
         dial_x = dial_position-(dial.rect.width//2)
         dial.set_position((dial_x, dial.rect.y))
-        value_text = self.get_sprite('value')
-        value_text.set_text(str(round(self.get_value(), 2)))
-        self.regenerate_image()  #To compensate the graphical offset of managing center/top-left
+        if self.params['shows_value']:
+            self.value_sprite.set_text(str(round(self.get_value(), 2)))
+        #self.regenerate_image()  #To compensate the graphical offset of managing center/top-left
 
     def get_value(self):
         """Returns:
@@ -495,20 +510,27 @@ class Slider (UIElement):
         In slider does nothing. This way we don't do the useless work of super() update, useless in Slider."""
         pass 
 
+    def draw(self, surface, offset=None):
+        super().draw(surface, offset=offset)
+        if self.value_sprite:
+            self.draw_sub_sprite(surface, self.value_sprite, offset=offset)
+        self.draw_sub_sprite(surface, self.dial, offset=offset)
+
     def draw_overlay(self, surface, offset=None):
         """Draws an overlay of a random color each time over the dial. Simulates animation in this way.
         The overlay has the same shape as the dial.
         Args:
             surface (:obj: pygame.Surface): Surface in which to draw the dial overlay."""
-        color   = UtilityBox.random_rgb_color()
-        dial    = self.get_sprite('dial')
+        pass
+        '''color   = UtilityBox.random_rgb_color()
+        dial    = self.dial
         _       = self.params
         dial_rect = pygame.Rect(self.get_sprite_abs_position(dial), dial.rect.size)
         if offset:
             dial_rect.topleft = tuple(off+pos for off, pos in zip(offset, dial_rect.topleft))
         if 'circ' in _['dial_shape']:       pygame.draw.circle(surface, color, dial_rect.center, dial.rect.height//2)
         elif 'ellip' in _['dial_shape']:    pygame.draw.ellipse(surface, color, dial_rect)
-        else:                               pygame.draw.rect(surface, color, dial_rect)
+        else:                               pygame.draw.rect(surface, color, dial_rect)'''
 
 class VerticalSlider(Slider):
     def __init__(self, id_, command, user_event_id, position, size, canvas_size, default_value=0.0, **params):
@@ -531,7 +553,7 @@ class VerticalSlider(Slider):
         Distinguises between values between 0 and 1 (position in value), and values over 1 (position in pixels).
         Args:
             position (float||int): Position of the dial to set."""
-        dial = self.get_sprite('dial')
+        dial = self.dial
         dial_position = int(self.rect.height*position) if (0 <= position <= 1) else int(position) #Converting the dial position to pixels.
         dial_position = 0 if dial_position < 0\
                         else self.rect.height if dial_position > self.rect.height \
@@ -541,7 +563,7 @@ class VerticalSlider(Slider):
         if self.params['shows_value']:
             value_text = self.get_sprite('value')
             value_text.set_text(str(round(self.get_value(), 2)))
-        self.regenerate_image()  #To compensate the graphical offset of managing center/top-left
+            self.regenerate_image()
 
     def hitbox_action(self, command, value):
         """Decrement or increment the value if a keyboard key is pressed, or set a value

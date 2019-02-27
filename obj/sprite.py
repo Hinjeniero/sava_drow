@@ -119,6 +119,7 @@ class Sprite(pygame.sprite.Sprite):
     def generate(self):
         self.image, self.overlay = Sprite.generate_surface(self.rect, **self.params)
         self.mask = pygame.mask.from_surface(self.image)
+        self.rect.size = self.image.get_size()  #In the case that the image has changed sizes when resizing
         self.real_rect = (tuple([x/y for x,y in zip(self.rect.topleft, self.resolution)]),\
                         tuple([x/y for x,y in zip(self.rect.size, self.resolution)]))
         self.rects[self.resolution] = self.rect.copy() 
@@ -295,7 +296,7 @@ class Sprite(pygame.sprite.Sprite):
         self.update_mask() 
 
     @staticmethod   #TODO UPDATE DOCUMENTATION
-    def generate_surface(size, surface=None, texture=None, active_texture=None, keep_aspect_ratio=True, resize_mode='fit', resize_smooth=True,\
+    def generate_surface(size, surface=None, texture=None, overlap_texture=None, active_texture=None, keep_aspect_ratio=True, resize_mode='fit', resize_smooth=True,\
                         shape="Rectangle", transparent=False, only_text=False, text="default_text", text_color=WHITE, text_font=FONT,\
                         fill_color=RED, fill_gradient=True, gradient=(LIGHTGRAY, DARKGRAY), gradient_type="horizontal",\
                         overlay=True, overlay_color=WHITE, border=True, border_color=WHITE, border_width=2, **unexpected_kwargs):
@@ -358,6 +359,8 @@ class Sprite(pygame.sprite.Sprite):
                     pygame.draw.rect(surf, border_color, pygame.rect.Rect((0,0), size), border_width)
             else:
                 raise ShapeNotFoundException("Available shapes: Rectangle, Circle. "+shape+" is not recognized")
+        if overlap_texture:
+            surf = UtilityBox.overlap_trace_texture(surf, overlap_texture)
         #End of the generation/specification of the pygame.Surface surf.
         if overlay:
             if active_texture:
@@ -717,7 +720,7 @@ class MultiSprite(Sprite):
             if all(kw in sprite.id for kw in keywords): 
                 return sprite
 
-    def add_text_sprite(self, id_, text, alignment="center", text_size=None, **params): 
+    def add_text_sprite(self, id_, text, alignment="center", text_size=None, return_result=False, **params): 
         '''Generates and adds sprite-based text object following the input parameters.
         Args:
             id_ (str):  Identifier of the TextSprite
@@ -737,4 +740,13 @@ class MultiSprite(Sprite):
         #With the actual center according to the alignment, we now associate it
         text.rect.center = center
         text.set_position(text.rect.topleft) #To reset the real_rect argument
-        self.add_sprite(text)
+        if return_result:
+            return text
+        else:
+            self.add_sprite(text)
+            
+    def draw_sub_sprite(self, surface, subsprite, offset=None):
+        old_pos = subsprite.rect.topleft
+        subsprite.rect.topleft = self.get_sprite_abs_position(subsprite)
+        subsprite.draw(surface, offset=offset)
+        subsprite.rect.topleft = old_pos

@@ -361,7 +361,12 @@ class UtilityBox (object):
 
     @staticmethod
     @time_it
-    def overlap_trace_texture(base_surf, top_surf):
+    def overlap_trace_texture(base_surf, top_surf, resize_mode='fill', resize_smooth=True, keep_aspect_ratio=True):
+        """The params are used if the top_surf is a path that needs to be loaded.
+        Topsurf can be a surface or a string"""
+        if isinstance(top_surf, str):
+            surf = pygame.image.load(top_surf)
+            top_surf = Resizer.resize(surf, base_surf.get_size(), mode=resize_mode, smooth=resize_smooth, keep_aspect_ratio=keep_aspect_ratio)
         newsurf = pygame.Surface(base_surf.get_size())
         newsurf.fill((0, 0, 0))
         newsurf.set_colorkey((0, 0, 0))

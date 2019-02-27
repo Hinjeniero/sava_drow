@@ -487,12 +487,12 @@ class Game(object):
         self.get_screen('main', 'menu').enable_all_sprites(True)
         self.started = True
 
-    def start(self):
+    def start(self, *first_screen_keywords):
         try:
             self.set_popups()
             self.check_state()
             self.init_log()
-            self.current_screen = self.screens[0]
+            self.current_screen = self.get_screen(*first_screen_keywords)
             self.current_screen.play_music()
             end = False
             while not end:

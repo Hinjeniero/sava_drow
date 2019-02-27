@@ -18,6 +18,7 @@ from pygame.locals import *
 from obj.utilities.utility_box import UtilityBox
 from obj.screen import Screen
 from obj.utilities.exceptions import NotEnoughSpritesException
+from obj.utilities.surface_loader import ResizedSurface
 from obj.ui_element import UIElement
 from settings import USEREVENTS
 
@@ -78,7 +79,8 @@ class Menu (Screen):
             self.scroll_length = int(self.resolution[1]*0.10+overload)
             self.scroll_sprite  = UIElement.factory('slider_scroll_menu', "menu_scroll", USEREVENTS.DIALOG_USEREVENT,\
                                                     (0.95, 0), (0.05, 1), self.resolution, text="", default_values=0.0,\
-                                                    loop=False, shows_value=False)
+                                                    loop=False, shows_value=False, texture=self.params['scroll_image'],\
+                                                    overlap_texture=self.params['scroll_texture'])
 
     def center_sprites(self, alignment='center'):
         """Center the current sprites of Menu. The alignment itself depends on the argument.

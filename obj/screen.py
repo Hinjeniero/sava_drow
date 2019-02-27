@@ -433,9 +433,11 @@ class Screen(object):
             *sprites (:obj: Sprites):   Sprites to add.
         Raises:
             BadSpriteException: If any of the input sprites it not of type Sprite or related."""
+        if not all(isinstance(sprite, Sprite) for sprite in sprites):   #error control
+            bad_sprite = next(not isinstance(sprite, Sprite) for sprite in sprites)
+            raise BadSpriteException('An object of type '+str(type(bad_sprite))+' can`t be added to a screen.')
+        sprites = sorted(list(sprites), key=lambda sprite: (sprite.rect.y, sprite.rect.x))  #Ordering them following position
         for sprite in sprites:
-            if not isinstance(sprite, Sprite):
-                raise BadSpriteException('An object of type '+str(type(sprite))+' can"t be added to a screen.')
             self.sprites.add(sprite)
 
     def enable_sprite(self, *keywords, state=True):

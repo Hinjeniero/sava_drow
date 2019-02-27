@@ -4,7 +4,7 @@ Have the following classes:
     BoardGenerator
 --------------------------------------------"""
 __all__ = ['BoardGenerator']
-__version__ = '0.3'
+__version__ = '0.6'
 __author__ = 'David Flaity Pardo'
 
 import random

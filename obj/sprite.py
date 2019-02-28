@@ -252,7 +252,6 @@ class Sprite(pygame.sprite.Sprite):
             enabled (boolean): The value to set.
         """
         if not enabled and self.enabled:      #Deactivating button
-            self.overlay = Sprite.generate_overlay(self.image, DARKGRAY)
             self.overlay.set_alpha(200)
             self.enabled        = False
         elif enabled and not self.enabled:    #Activating button
@@ -299,7 +298,9 @@ class Sprite(pygame.sprite.Sprite):
         Also updates the mask. Intended to be used after changing an important attribute in rect or image.
         Called after an important change in resolution or the sprite params."""
         self.image, self.overlay = Sprite.generate_surface(self.rect, **self.params)
-        self.update_mask() 
+        self.update_mask()
+        if not self.enabled and self.use_overlay:
+            self.overlay.set_alpha(200)
 
     @staticmethod   #TODO UPDATE DOCUMENTATION
     def generate_surface(size, surface=None, texture=None, overlap_texture=None, active_texture=None, keep_aspect_ratio=True, resize_mode='fit', resize_smooth=True,\

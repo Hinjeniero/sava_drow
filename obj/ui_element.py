@@ -952,7 +952,7 @@ class TextBox(UIElement):
                 cursor_position = len(self.text)
             else:
                 cursor_position = int(((x_mouse-text_sprite.rect.x)/text_sprite.rect.width)*len(self.text))
-                if cursor_position < self.cursor_pos:                       #The +1 is due to the cursor in the middle of everything
+                if cursor_position < self.cursor_pos:                       #The +1 is due to the cursor char in the middle of everything
                     cursor_position += 1
             self.change_cursor_position(cursor_position)
         elif 'dec' in command or 'left' in command:       

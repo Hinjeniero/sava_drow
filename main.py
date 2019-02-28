@@ -184,6 +184,7 @@ def create_board_params():
     return board_params
 
 @time_it
+@no_size_limit
 def pre_start():
     start_pygame()
     draw_start_bg()
@@ -194,8 +195,7 @@ def pre_start():
     game.add_screens(*menus)
     game.update_board_params(**create_board_params())
     return game
-
-@no_size_limit
+    
 def draw_start_bg():
     start_bg = ResizedSurface.get_surface(PATHS.START_BG, INIT_PARAMS.INITIAL_RESOLUTION, 'fill', False)
     pygame.display.get_surface().blit(start_bg, (0, 0))

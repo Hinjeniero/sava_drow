@@ -244,7 +244,6 @@ class Board(Screen):
 
     @time_it
     def generate_environment(self):
-        print("GENERTE ENVIRONMENT"+str(self.resolution))
         threads = [self.generate_all_cells(), self.generate_paths(offset=True), self.generate_map_board()]
         for generation_thread in threads:   generation_thread.join()
         self.adjust_cells()
@@ -511,7 +510,6 @@ class Board(Screen):
                 self.draw_inter_path(surface, i)
         surface = surface.subsurface(self.platform.rect)
         interpaths_sprite = Sprite('inter_paths', self.platform.rect.topleft, surface.get_size(), self.resolution, surface=surface)
-        #interpaths_sprite.overlay = Sprite.generate_overlay(interpaths_sprite.image, RED)
         if self.params['interpath_texture']:
             interpaths_sprite.image = UtilityBox.overlap_trace_texture(interpaths_sprite.image, ResizedSurface.get_surface(self.params['interpath_texture'],\
                                             interpaths_sprite.rect.size, 'fill', True))
@@ -575,10 +573,13 @@ class Board(Screen):
             player.set_resolution(resolution)
         #Othewise the bezier curves just get fucked up when resizing back and forth.
         self.generate_inter_paths()
-        for sprite in self.sprites: #Updateing the bezier curves.
+        self.sprites.empty()
+        self.save_sprites()
+        '''for sprite in self.sprites: #Swapping the bezier curves.
             if 'inter' in sprite.id and 'path' in sprite.id:
+                print("SWAPIINNG")
                 sprite = self.inter_paths.sprite
-                break
+                break'''
 
     def ALL_PLAYERS_LOADED(self):
         """Returns:

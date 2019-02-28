@@ -419,6 +419,11 @@ class Screen(object):
         for sprite in sprites:
             self.sprites.add(sprite)
 
+    def delete_sprites(self, *keywords):
+        for sprite in self.sprites:
+            if all(kw in sprite.id for kw in keywords):
+                self.sprites.remove(sprite)
+
     def enable_sprite(self, *keywords, state=True):
         sprite = None
         count = 0

@@ -100,6 +100,7 @@ class Sprite(pygame.sprite.Sprite):
         self.overlay        = None  #Created in Sprite.generate
         self.mask           = None  #Created in Sprite.generate
         #Additions to interesting funcionality-------
+        self.abs_position   = None  #Absolute position, in case that we want to draw it from a multisprite
         self.real_rect      = None  #Created in Sprite.generate
         self.rects          = {}  #Created to blit onto another surfaces when needed.
         self.resolution     = canvas_size      
@@ -134,10 +135,11 @@ class Sprite(pygame.sprite.Sprite):
         """
         if self.visible:
             try:
+                position = self.abs_position if self.abs_position else self.rect.topleft
                 if offset:
-                    surface.blit(self.image, tuple(off+pos for off, pos in zip(offset, self.rect.topleft)))
+                    surface.blit(self.image, tuple(off+pos for off, pos in zip(offset, position)))
                 else:
-                    surface.blit(self.image, self.rect)
+                    surface.blit(self.image, position)
                 if (self.overlay and self.use_overlay and self.active) or not self.enabled:    
                     self.draw_overlay(surface, offset=offset)               
                 if self.enabled:
@@ -154,8 +156,9 @@ class Sprite(pygame.sprite.Sprite):
         Args:
             surface (:obj: pygame.Surface): Surface to draw the Sprite. It's usually the display
         """
+        position = self.rect.topleft if not self.abs_position else self.abs_position
         if offset:
-            surface.blit(self.overlay, tuple(off+pos for off, pos in zip(offset, self.rect.topleft)))
+            surface.blit(self.overlay, tuple(off+pos for off, pos in zip(offset, position)))
         else:
             surface.blit(self.overlay, self.rect)
         if self.enabled:
@@ -205,6 +208,9 @@ class Sprite(pygame.sprite.Sprite):
         Args:
             position (:obj: pygame.Rect||:tuple: int,int): New position of the Sprite. In pixels.
         """
+        if self.abs_position:
+            difference = tuple(x-y for x, y in zip(position, self.rect.topleft))
+            self.abs_position = tuple(x+y for x, y in zip(self.abs_position, difference))
         self.rect.topleft = position
         if update_rects:
             self.real_rect  = (tuple(x/y for x,y in zip(position, self.resolution)), self.real_rect[1])
@@ -222,7 +228,7 @@ class Sprite(pygame.sprite.Sprite):
     def set_center(self, center):
         if self.rect.topleft != center:
             new_pos = tuple(x-y//2 for x,y in zip(center, self.rect.size))
-            self.set_position(new_pos, True)    #To update the real rect
+            self.set_position(new_pos)    #To update the real rect
 
     def set_active(self, active):
         """Sets the visible attribute. Can be used for differen purposes.
@@ -429,7 +435,112 @@ class TextSprite(Sprite):
             self.params['text'] = text
             self.regenerate_image()
 
-class AnimatedSprite(Sprite):
+class MultiSprite(Sprite):
+    """MultiSprite class. It inherits from Sprite. It is a Sprite formed by a lot of Sprites.
+    This allows for more complex shapes and Sprites, like buttons and the such.
+    The base surface (background+border) is the image generated in the call to the super() constructor.
+    After that, more Sprites are added to build the wanted shape and image.
+    Attributes:
+        sprites (:list: Sprite):    List of the added sprites, that form the MultiSprite
+    """
+    def __init__(self, id_, position, size, canvas_size, **image_params):
+        """Constructor of MultiSprite. 
+        Args:
+            id_ (str):  Identifier of the Sprite.
+            position (:tuple: int,int): Position of the Sprite in the screen. In pixels.
+            size (:tuple: int,int):     Size of the Sprite in the screen. In pixels.
+            canvas_size (:tuple: int,int):  Size of the display. In pixels.
+            image_params (:dict:):  Dict of keywords and values as parameters to create the self.image attribute.
+                                    Variety going from fill_color and use_gradient to text_only.
+        """
+        super().__init__(id_, position, size, canvas_size, **image_params)
+        self.sprites        = pygame.sprite.OrderedUpdates()
+
+    def add_sprite(self, sprite):
+        """Add sprite to the Sprite list, and blit it to the image of the MultiSprite
+        Args:
+            sprite (Sprite):    sprite to add."""
+        sprite.use_overlay = False #Not interested in overlays from a lot of sprites at the same time
+        sprite.abs_position = self.get_sprite_abs_position(sprite)
+        self.sprites.add(sprite)
+
+    def set_size(self, size, update_rects=True):
+        """Changes the size of the MultiSprite. All the internal Sprites are resized too as result.
+        Args;
+            size (:tuple: int, int):    New size in pixels."""
+        super().set_size(size, update_rects=update_rects)    #Changing the sprite size and position to the proper place
+        for sprite in self.sprites:
+            sprite.set_canvas_size(self.rect.size)
+
+    def set_position(self, position, update_rects=True):
+        super().set_position(position, update_rects=update_rects)    #Changing the sprite size and position to the proper place
+        for sprite in self.sprites:
+            sprite.abs_position = self.get_sprite_abs_position(sprite)
+
+    def get_sprite_abs_position(self, sprite):
+        """Gets the absolute position of a sprite (in pixels) in the screen, instead of a relative in the 
+        bigger MultiSprite image.
+        Returns:
+            (:tuple: int, int): Absolute position of the sprite in the screen"""
+        position = self.abs_position if self.abs_position else self.rect.topleft
+        return tuple(relative+absolute for relative, absolute in zip(sprite.rect.topleft, position))
+
+    def get_sprite_abs_center(self, sprite):
+        """Gets the absolute center position of a sprite (in pixels) in the screen, instead of a relative in the 
+        bigger MultiSprite image.
+        Returns:
+            (:tuple: int, int): Absolute center position of the sprite in the screen"""
+        print("THIS THING IS ALIVE")
+        return tuple(relative+absolute for relative, absolute in zip(sprite.rect.topleft, self.rect.topleft))
+
+    def get_sprite(self, *keywords):
+        """Returns a sprite that matches the keywords.
+        Args:
+            *keywords (str): keywords that the sprite must contain, separated by commas.
+        Returns:
+            (Sprite | None):    The Sprite if its found, else None."""
+        for sprite in self.sprites:
+            if all(kw in sprite.id for kw in keywords): 
+                return sprite
+
+    def add_text_sprite(self, id_, text, alignment="center", text_size=None, return_result=False, **params): 
+        '''Generates and adds sprite-based text object following the input parameters.
+        Args:
+            id_ (str):  Identifier of the TextSprite
+            text (str): Text to add
+            alignment (str):   To set type of centering for the text. Center, Left, Right.
+            text_size (:tuple: int, int):    Size of the text in pixels.
+            params (:dict:):    Dict of keywords and values as parameters to create the TextSprite
+                                text_color, e.g.
+        '''
+        size = self.rect.size if not text_size else text_size
+        #The (0, 0) relative positoin is a decoy so the constructor of textsprite doesn't get cocky
+        text = TextSprite(id_, (0, 0), size, self.rect.size, text, **params)
+        #We calculate the center AFTER because the text size may vary due to the badly proportionated sizes.W
+        center = tuple(x//2 for x in self.rect.size) if 'center' in alignment.lower() else\
+        (text.rect.width//2, self.rect.height//2) if 'left' in alignment.lower() else\
+        (self.rect.width-text.rect.width//2, self.rect.height//2)
+        #With the actual center according to the alignment, we now associate it
+        text.set_center(center)
+        #text.rect.center = center
+        #text.set_position(text.rect.topleft) #To reset the real_rect argument
+        if return_result:
+            return text
+        else:
+            self.add_sprite(text)
+
+    def set_canvas_size(self, canvas_size):
+        super().set_canvas_size(canvas_size)
+        for sprite in self.sprites:
+            sprite.set_canvas_size(self.rect.size)
+            sprite.abs_position = self.get_sprite_abs_position(sprite)
+
+    def draw(self, surface, offset=None):
+        super().draw(surface, offset=offset)
+        for sprite in self.sprites:
+            sprite.draw(surface, offset=offset)
+
+class AnimatedSprite(MultiSprite):
     """Class AnimatedSprite. Inherits from Sprite. Adds all the attributes and methods needed to support
     the funcionality of a classic animated sprite, like a list of surfaces and a setted delay to change between them.
     General class surfaces:
@@ -475,7 +586,7 @@ class AnimatedSprite(Sprite):
         self.masks              = []
         #Animation
         self.counter            = 0
-        self.animated          = True
+        self.animated           = True
         self.animation_step     = 1
         self.next_frame_time    = None  #In generate
         self.animation_index    = 0
@@ -523,7 +634,6 @@ class AnimatedSprite(Sprite):
                 self.add_surface(surfaces[path], hover_surfaces[path])
             else:
                 self.add_surface(surfaces[path], None)
-            
 
     def add_surfaces(self): #TODO update documentation
         """Check if a surface is loaded already, and adds it to the attribute lists.
@@ -551,7 +661,6 @@ class AnimatedSprite(Sprite):
                                                     _['resize_smooth'], _['keep_aspect_ratio'])
                 self.add_surface(surface, hover_surface)
                 
-
     def add_surface(self, surface, hover_surface):
         """Resizes a surface to a size, and adds it to the non-original surfaces lists.
         Args:
@@ -638,115 +747,3 @@ class AnimatedSprite(Sprite):
             self.counter = 0 
             self.animation_frame()
             self.image = self.current_sprite() if not self.hover else self.current_hover_sprite()
-
-class MultiSprite(Sprite):
-    """MultiSprite class. It inherits from Sprite. It is a Sprite formed by a lot of Sprites.
-    This allows for more complex shapes and Sprites, like buttons and the such.
-    The base surface (background+border) is the image generated in the call to the super() constructor.
-    After that, more Sprites are added to build the wanted shape and image.
-    Attributes:
-        sprites (:list: Sprite):    List of the added sprites, that form the MultiSprite
-    """
-    def __init__(self, id_, position, size, canvas_size, **image_params):
-        """Constructor of MultiSprite. 
-        Args:
-            id_ (str):  Identifier of the Sprite.
-            position (:tuple: int,int): Position of the Sprite in the screen. In pixels.
-            size (:tuple: int,int):     Size of the Sprite in the screen. In pixels.
-            canvas_size (:tuple: int,int):  Size of the display. In pixels.
-            image_params (:dict:):  Dict of keywords and values as parameters to create the self.image attribute.
-                                    Variety going from fill_color and use_gradient to text_only.
-        """
-        super().__init__(id_, position, size, canvas_size, **image_params)
-        self.sprites        = pygame.sprite.OrderedUpdates()
-        self.copy_read_only_texture()
-
-    def copy_read_only_texture(self):
-        try:    #Checking if we have a texture (Textures are shared, since we get it from a lut)
-            self.params['texture']
-            self.image = self.image.copy()  #If we do, we make a copy to not overlap texts of different sprites.
-        except KeyError:
-            pass
-
-    def add_sprite(self, sprite):
-        """Add sprite to the Sprite list, and blit it to the image of the MultiSprite
-        Args:
-            sprite (Sprite):    sprite to add."""
-        sprite.use_overlay   = False #Not interested in overlays from a lot of sprites at the same time
-        self.sprites.add(sprite)
-        while self.image.get_locked():
-            pass
-        sprite.draw(self.image)
-
-    def regenerate_image(self):
-        """Generates the image again, blitting the Sprites in the sprite list.
-        Intended to be used after changing an important attribute in rect or image.
-        Those changes propagate through all the sprites."""
-        super().regenerate_image()
-        self.copy_read_only_texture()
-        for sprite in self.sprites:   
-            sprite.draw(self.image)
-
-    def set_size(self, size, update_rects=True):
-        """Changes the size of the MultiSprite. All the internal Sprites are resized too as result.
-        Args;
-            size (:tuple: int, int):    New size in pixels."""
-        super().set_size(size, update_rects=update_rects, regenerate_image=False)    #Changing the sprite size and position to the proper place
-        for sprite in self.sprites:
-            sprite.set_canvas_size(self.rect.size)
-        self.regenerate_image()
-
-    def get_sprite_abs_position(self, sprite):
-        """Gets the absolute position of a sprite (in pixels) in the screen, instead of a relative in the 
-        bigger MultiSprite image.
-        Returns:
-            (:tuple: int, int): Absolute position of the sprite in the screen"""
-        return tuple(relative+absolute for relative, absolute in zip(sprite.rect.topleft, self.rect.topleft))
-
-    def get_sprite_abs_center(self, sprite):
-        """Gets the absolute center position of a sprite (in pixels) in the screen, instead of a relative in the 
-        bigger MultiSprite image.
-        Returns:
-            (:tuple: int, int): Absolute center position of the sprite in the screen"""
-        return tuple(relative+absolute for relative, absolute in zip(sprite.rect.topleft, self.rect.topleft))
-
-    def get_sprite(self, *keywords):
-        """Returns a sprite that matches the keywords.
-        Args:
-            *keywords (str): keywords that the sprite must contain, separated by commas.
-        Returns:
-            (Sprite | None):    The Sprite if its found, else None."""
-        for sprite in self.sprites:
-            if all(kw in sprite.id for kw in keywords): 
-                return sprite
-
-    def add_text_sprite(self, id_, text, alignment="center", text_size=None, return_result=False, **params): 
-        '''Generates and adds sprite-based text object following the input parameters.
-        Args:
-            id_ (str):  Identifier of the TextSprite
-            text (str): Text to add
-            alignment (str):   To set type of centering for the text. Center, Left, Right.
-            text_size (:tuple: int, int):    Size of the text in pixels.
-            params (:dict:):    Dict of keywords and values as parameters to create the TextSprite
-                                text_color, e.g.
-        '''
-        size = self.rect.size if not text_size else text_size
-        #The (0, 0) relative positoin is a decoy so the constructor of textsprite doesn't get cocky
-        text = TextSprite(id_, (0, 0), size, self.rect.size, text, **params)
-        #We calculate the center AFTER because the text size may vary due to the badly proportionated sizes.W
-        center = tuple(x//2 for x in self.rect.size) if 'center' in alignment.lower() else\
-        (text.rect.width//2, self.rect.height//2) if 'left' in alignment.lower() else\
-        (self.rect.width-text.rect.width//2, self.rect.height//2)
-        #With the actual center according to the alignment, we now associate it
-        text.rect.center = center
-        text.set_position(text.rect.topleft) #To reset the real_rect argument
-        if return_result:
-            return text
-        else:
-            self.add_sprite(text)
-            
-    def draw_sub_sprite(self, surface, subsprite, offset=None):
-        old_pos = subsprite.rect.topleft
-        subsprite.rect.topleft = self.get_sprite_abs_position(subsprite)
-        subsprite.draw(surface, offset=offset)
-        subsprite.rect.topleft = old_pos

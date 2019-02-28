@@ -244,6 +244,7 @@ class Board(Screen):
 
     @time_it
     def generate_environment(self):
+        print("GENERTE ENVIRONMENT"+str(self.resolution))
         threads = [self.generate_all_cells(), self.generate_paths(offset=True), self.generate_map_board()]
         for generation_thread in threads:   generation_thread.join()
         self.adjust_cells()
@@ -259,6 +260,7 @@ class Board(Screen):
             offset = circumf.width//2
             cell.rect.x -= offset*math.cos(cell.angle)
             cell.rect.y -= offset*math.sin(cell.angle)
+            cell.set_position(cell.rect.topleft)
 
     def save_sprites(self):
         """Copies all the references of the sprites to the sprites list declared on the superclass.

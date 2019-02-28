@@ -65,11 +65,20 @@ class BoardGenerator(object):
             board.create_player(random.choice(STRINGS.PLAYER_NAMES), i, (200, 200), **char_settings)
         if self.online:
             board.server.set_chars(sum(x['ammount'] for x in char_settings.values()))
-            
+
     @time_it
     def generate_board(self, resolution):
         LOG.log('info', 'Selected gamemode is ', self.game_mode)
         LOG.log('info', 'Selected size is ', self.prefab_size)
+        try:
+            if resolution != self.board_params['platform_sprite'].resolution:
+                self.board_params['platform_sprite'].set_canvas_size(resolution)
+        except KeyError:
+            pass
+        try:
+            self.board_params['animated_background'].set_resolution(resolution)
+        except KeyError:
+            pass
         if 'classic' in self.game_mode:
             return self.generate_classic(resolution)
         elif 'great' in self.game_mode:

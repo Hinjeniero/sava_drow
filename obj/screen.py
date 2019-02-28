@@ -494,6 +494,8 @@ class LoadingScreen(Screen):
                                 background_path, music_path, sound_path, loading_sprite_path,
                                 text, text_proportion.
         """
+        params["songs_paths"] = None
+        super().__init__(id_, event_id, resolution, **params)
         if 'background_path' not in params:   
             params['background_path'] = LoadingScreen.__default_config['background_path']
         super().__init__(id_, event_id, resolution, **params)
@@ -509,7 +511,7 @@ class LoadingScreen(Screen):
         text_sprite = TextSprite(self.id+'_text', (0, 0), text_size, self.resolution, self.params['text'])
         text_sprite.set_position(tuple(x//2-y//2 for x, y in zip(self.resolution, text_sprite.rect.size)))
         self.sprites.add(text_sprite)
-        self.add_animation(AnimationGenerator.explosions_bottom(INIT_PARAMS.INITIAL_RESOLUTION, *INIT_PARAMS.ALL_FPS))
+        self.add_animation(AnimationGenerator.explosions_bottom(self.resolution, *INIT_PARAMS.ALL_FPS))
 
     def generate_static_rotating_load_sprite(self):
         load_surfaces = self.generate_load_sprite(self.params['loading_sprite_path'])

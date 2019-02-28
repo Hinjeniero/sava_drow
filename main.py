@@ -137,9 +137,9 @@ def create_sound_menu(result):
     element_generator = generate_ui_elements(elements, threads, element_size, USEREVENTS.SOUND_USEREVENT, default_values=SOUND_PARAMS.INIT_VOLUME)
     element_generator.send(None)    #Starting generator
     #Starts generating
-    element_generator.send(('slider_music_volume', "set_menu_music_volume", next(positions), {'text': 'Menus music volume', 'slider_type': 'circular'}))
-    element_generator.send(('slider_sound_volume', "set_menu_sound_volume", next(positions), {'text': 'Menus sound volume', 'slider_type': 'elliptical'}))
-    element_generator.send(('slider_board_music_volume', "set_board_music_volume", next(positions), {'text': 'Board music volume', 'slider_type': 'rectangular'}))
+    element_generator.send(('slider_music_volume', "set_menu_music_volume", next(positions), {'text': 'Menus music volume', 'dial_shape': 'circular'}))
+    element_generator.send(('slider_sound_volume', "set_menu_sound_volume", next(positions), {'text': 'Menus sound volume', 'dial_shape': 'elliptical'}))
+    element_generator.send(('slider_board_music_volume', "set_board_music_volume", next(positions), {'text': 'Board music volume', 'dial_shape': 'rectangular'}))
     element_generator.send(('slider_board_sound_volume', "set_board_sound_volume", next(positions), {'text': 'Board sound volume'}))
     element_generator.send(('button_board_song', "change_board_song", next(positions), {'text': 'Selected board song', 'default_values': BOARD_CROPPED_SONGS,'text_proportion': 0.50}))
     element_generator.send(('button_menu_song', "change_menu_song", next(positions), {'text': 'Selected menus song', 'default_values':MENU_CROPPED_SONGS}))
@@ -173,7 +173,6 @@ def create_video_menu(result):
 def create_board_params():
     board_params = {}
     bg = AnimationGenerator.factory(STRINGS.INITIAL_ANIMATED_BG, INIT_PARAMS.INITIAL_RESOLUTION, PARAMS.ANIMATION_TIME, INIT_PARAMS.ALL_FPS, INIT_PARAMS.INITIAL_FPS)
-    #board_params['cell_texture'] = PATHS.CELL_BASIC
     board_params['cell_border'] = PATHS.CELL_GOLDEN_BORDER 
     board_params['circumference_texture'] = PATHS.THIN_CIRCUMFERENCE
     board_params['songs_paths'] = BOARD_SONGS

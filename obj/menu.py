@@ -125,7 +125,7 @@ class Menu (Screen):
             if self.hit_sprite == self.scroll_sprite != None:
                 self.set_hit_sprite(self.sprites.sprites()[0])
             else:
-                self.set_hit_sprite('left_arrow', -1)
+                self.send_to_active_sprite('left_arrow', -1)
         if keys_pressed[pygame.K_RIGHT]:
             if self.hit_sprite == self.scroll_sprite != None:
                 self.set_hit_sprite(self.sprites.sprites()[0])

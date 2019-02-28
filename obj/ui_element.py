@@ -369,8 +369,6 @@ class Slider (UIElement):
             """
         super().__init__(id_, command, user_event_id, position, size, canvas_size, **params)
         self.value = default_value
-        self.dial = None    #Generated in Slider.generate
-        self.value_sprite = None    #Generated in Slider.generate
         Slider.generate(self)
 
     @staticmethod
@@ -389,7 +387,7 @@ class Slider (UIElement):
         #Value sprite
         if _['shows_value']:
             self.add_text_sprite(self.id+"_text", _['text'], text_size=text_size, alignment='left')
-            self.value_sprite = self.add_text_sprite(self.id+"_value", str(self.get_value()), text_size=text_size, alignment='right', return_result=True)
+            self.add_text_sprite(self.id+"_value", str(self.get_value()), text_size=text_size, alignment='right')
         else:
             self.add_text_sprite(self.id+"_text", _['text'], text_size=text_size, alignment=_['text_alignment'])
         #Slider sprite
@@ -438,14 +436,14 @@ class Slider (UIElement):
         else:
             dial.rect.center = (int(self.get_value()*self.rect.width), self.rect.height//2)
         dial.set_position(dial.rect.topleft)
-        self.dial = dial
+        self.add_sprite(dial)
 
     def set_dial_position(self, position):
         """Changes the dial position to the input parameter. Changes the graphics and the value accordingly.
         Distinguises between values between 0 and 1 (position in value), and values over 1 (position in pixels).
         Args:
             position (float||int): Position of the dial to set."""
-        dial = self.dial
+        dial = self.get_sprite('dial')
         dial_position = int(self.rect.width*position) if (0 <= position <= 1) else int(position) #Converting the dial position to pixels.
         dial_position = 0 if dial_position < 0\
                         else self.rect.width if dial_position > self.rect.width \
@@ -453,7 +451,7 @@ class Slider (UIElement):
         dial_x = dial_position-(dial.rect.width//2)
         dial.set_position((dial_x, dial.rect.y))
         if self.params['shows_value']:
-            self.value_sprite.set_text(str(round(self.get_value(), 2)))
+            self.get_sprite('value').set_text(str(round(self.get_value(), 2)))
         #self.regenerate_image()  #To compensate the graphical offset of managing center/top-left
 
     def get_value(self):
@@ -510,12 +508,6 @@ class Slider (UIElement):
         In slider does nothing. This way we don't do the useless work of super() update, useless in Slider."""
         pass 
 
-    def draw(self, surface, offset=None):
-        super().draw(surface, offset=offset)
-        if self.value_sprite:
-            self.draw_sub_sprite(surface, self.value_sprite, offset=offset)
-        self.draw_sub_sprite(surface, self.dial, offset=offset)
-
     def draw_overlay(self, surface, offset=None):
         """Draws an overlay of a random color each time over the dial. Simulates animation in this way.
         The overlay has the same shape as the dial.
@@ -553,7 +545,7 @@ class VerticalSlider(Slider):
         Distinguises between values between 0 and 1 (position in value), and values over 1 (position in pixels).
         Args:
             position (float||int): Position of the dial to set."""
-        dial = self.dial
+        dial = self.get_sprite('dial')
         dial_position = int(self.rect.height*position) if (0 <= position <= 1) else int(position) #Converting the dial position to pixels.
         dial_position = 0 if dial_position < 0\
                         else self.rect.height if dial_position > self.rect.height \
@@ -590,7 +582,6 @@ class VerticalSlider(Slider):
             value = pixels/self.rect.height      #Converting to float value between 0-1
             self.set_value(value)
         self.send_event()
-
 
 class InfoBoard (UIElement):
     """InfoBoard class. Inherits from UIElement.
@@ -772,7 +763,7 @@ class InfoBoard (UIElement):
         """Deletes all the sprites of the infoboard. Useful when deleting the texts."""
         self.sprites.empty()
         self.taken_spaces = 0
-        self.regenerate_image()
+        #self.regenerate_image()
         
 class Dialog (InfoBoard):
     """Dialog class. Inherits from InfoBoard.
@@ -848,6 +839,11 @@ class Dialog (InfoBoard):
                 element.draw(surface, offset=self.rect.topleft)
                 if element.active and element.overlay:
                     element.draw_overlay(surface, offset=self.rect.topleft)
+    
+    def set_canvas_size(self, resolution):
+        super().set_canvas_size(resolution)
+        for element in self.elements:
+            element.set_canvas_size(self.rect.size)
 
     def add_button(self, spaces, text, command, scale=1, **button_params):
         """Adds a button to the dialog, that follows the input parameters.
@@ -923,11 +919,6 @@ class Dialog (InfoBoard):
         if first_only and collisions:
             return collisions[0]
         return collisions
-
-    def set_canvas_size(self, resolution):
-        super().set_canvas_size(resolution)
-        for element in self.elements:
-            element.set_canvas_size(resolution)
     
     def full_clear(self):
         """Deletes all the sprites of the infoboard. Useful when deleting the texts."""

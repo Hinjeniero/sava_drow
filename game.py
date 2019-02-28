@@ -244,6 +244,7 @@ class Game(object):
                 self.set_background(self.get_screen('board'), value)
 
     def set_resolution(self, resolution):
+        self.resolution = resolution
         if self.fullscreen:
             self.display = pygame.display.set_mode(self.resolution, SCREEN_FLAGS.FULLSCREEN)
         else:

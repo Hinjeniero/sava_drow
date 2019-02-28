@@ -446,7 +446,7 @@ class Screen(object):
         for sprite in self.sprites:
             if all(kw in sprite.get_id() for kw in keywords):
                 sprite.set_enabled(state)
-
+    
     def get_colliding_sprite(self):
         """Collides with dialog, scroll, and sprites taking the scroll into account."""
         mouse_sprite = UtilityBox.get_mouse_sprite()

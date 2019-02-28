@@ -156,11 +156,11 @@ class Sprite(pygame.sprite.Sprite):
         Args:
             surface (:obj: pygame.Surface): Surface to draw the Sprite. It's usually the display
         """
-        position = self.rect.topleft if not self.abs_position else self.abs_position
+        position = self.abs_position if self.abs_position else self.rect.topleft
         if offset:
             surface.blit(self.overlay, tuple(off+pos for off, pos in zip(offset, position)))
         else:
-            surface.blit(self.overlay, self.rect)
+            surface.blit(self.overlay, position)
         if self.enabled:
             self.animation_frame()
 

@@ -148,6 +148,9 @@ def create_sound_menu(result):
     sound_menu          = Menu("menu_volume_music", USEREVENTS.SOUND_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, *elements, background_path=PATHS.DEFAULT_BG, do_align=False, songs_paths=None)
     sound_menu.add_animation(AnimationGenerator.characters_crossing_screen(INIT_PARAMS.INITIAL_RESOLUTION, *INIT_PARAMS.ALL_FPS))
     sound_menu.enable_sprite('board', 'sound', state=False), sound_menu.enable_sprite('board', 'music', state=False), sound_menu.enable_sprite('board', 'song', state=False)
+    
+    sound_menu.sprites.sprites()[0].add_bar(PATHS.SHORT_GOLD_BUTTON)
+    
     result.append(sound_menu)
 
 @run_async

@@ -14,17 +14,26 @@ from obj.network_board import NetworkBoard
 from obj.board_server import Server
 from obj.utilities.logger import Logger as LOG
 from obj.utilities.decorators import time_it
-from settings import USEREVENTS, STRINGS, PARAMS, CHARACTERS
+from settings import USEREVENTS, STRINGS, PARAMS, CHARACTERS, PATHS
 
 class BoardGenerator(object):
     def __init__(self):
         self.online = False
         self.server = False
         self.players = 2
-        self.game_mode = 'classic'
+        self.game_mode = 'custom'
         self.prefab_size = 'default'
         self.characters_params = CHARACTERS.CHARACTER_SETTINGS.copy()
-        self.board_params = {'quadrants_overlap': True}
+        self.board_params = {'quadrants_overlap': True, 'cell_texture': PATHS.CELL_BASIC}
+
+    def set_cell_texture(self, cell_texture):
+        cell_texture = cell_texture.lower()
+        if 'dark' in cell_texture:
+            self.board_params['cell_texture'] = PATHS.DARK_CELL
+        elif 'double' in cell_texture or 'border' in cell_texture:
+            self.board_params['cell_texture'] = PATHS.BORDERED_CELL
+        else:
+             self.board_params['cell_texture'] = PATHS.CELL_BASIC
 
     def set_players(self, players):
         self.players = players

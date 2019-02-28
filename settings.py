@@ -79,6 +79,7 @@ class STRINGS:
     INITIAL_ANIMATED_BG = 'Animated waterfall'
     ANIMATED_BGS = (INITIAL_ANIMATED_BG, 'Animated rain tree',
                     'Animated rain china', 'Animated waterfall cave', 'Layered industrial')
+    CELLS = ('Basic', 'Dark', 'Bordered')
 #STATE MACHINES
 class STATES:
     SCREEN = ('idle', 'stopped', 'cutscene')
@@ -151,6 +152,8 @@ class PATHS:
     DIALOG_SILVER = IMAGE_FOLDER+'dialog.png'
     #---Board
     CELL_BASIC = IMAGE_FOLDER+'cell_basic.png'
+    DARK_CELL = IMAGE_FOLDER+'cell_dark.png'
+    BORDERED_CELL = IMAGE_FOLDER+'cell_double.png'
     CELL_GOLDEN_BORDER = IMAGE_FOLDER+'cell_gold_border.png'
     CIRCUMFERENCE_RUST = IMAGE_FOLDER+'circle.png'
     THIN_CIRCUMFERENCE = IMAGE_FOLDER+'thin_circle.png'

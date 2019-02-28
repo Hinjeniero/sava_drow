@@ -7,8 +7,6 @@ TODO CURRENT:
 
     0.1 .- Add center cell as promotionable cell
 
-    1.- Put the bar of promotion on top, and also a gray overlay on top
-
     2 .- Add some animations and shit to promotion of a char, like stars or particles or something
 
 TODO WHENEVER:

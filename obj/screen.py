@@ -365,27 +365,6 @@ class Screen(object):
                 self.scroll_sprite.draw(surface)       
             if self.animation:
                 self.animation.play(surface)
-                
-    '''def draw(self, surface):
-        """Draws the screen in the input surface. This method in the Screen
-        superclass only draws the background, since the sprites group is empty.
-        Args:
-            surface (:obj: pygame.Surface): Surface to blit to."""
-        if self.animated_background:
-            self.background.play(surface)
-        else:
-            self.background.draw(surface)
-        for sprite in self.sprites:
-            if self.scroll_offset != (0, 0):
-                sprite.draw(surface, offset=self.scroll_offset)
-            else:
-                sprite.draw(surface)
-        if self.scroll_sprite:
-            self.scroll_sprite.draw(surface)       
-        if self.animation:
-            self.animation.play(surface)
-        if self.dialog:
-            self.dialog.draw(surface)'''
 
     def set_resolution(self, resolution):
         """Changes the resolution of the screen to input argument.
@@ -398,8 +377,8 @@ class Screen(object):
                 self.background.set_resolution(resolution)
             else:
                 self.background.set_canvas_size(resolution)
-            if self.dialog:
-                self.dialog.set_canvas_size(resolution)
+            for dialog in self.dialogs:
+                dialog.set_canvas_size(resolution)
             for sprite in self.sprites.sprites():
                 sprite.set_canvas_size(resolution)
             if self.scroll_sprite:
@@ -518,7 +497,6 @@ class LoadingScreen(Screen):
         if 'background_path' not in params:   
             params['background_path'] = LoadingScreen.__default_config['background_path']
         super().__init__(id_, event_id, resolution, **params)
-        self.msg_queue = None   #To add messages on screen about what it's happening
         LoadingScreen.generate(self)
 
     @staticmethod

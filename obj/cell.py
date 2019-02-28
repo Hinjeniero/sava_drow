@@ -31,7 +31,7 @@ class Cell(Circle):
         chars (:obj: pygame.sprite.Group):  The characters that are currently residing on this Cell.
     
     """
-    def __init__(self, grid_position, real_index, position, size, canvas_size, angle=None, **params):
+    def __init__(self, grid_position, real_index, position, size, canvas_size, angle=0, **params):
         """Cell constructor.
         Args:
             grid_position (:tuple: int, int):   Position of the Cell in the board. Follos a (level, index) schema.
@@ -219,7 +219,6 @@ class Quadrant(object):
             except KeyError:
                 self.centers[cell.center_level] = [cell]
             if cell.center_level > 0:
-                #print(str(cell.cell.grid_position)+" IS CENTER LEVE > 0")
                 cell.cell.promotion = True
         #self.print_state()
 
@@ -321,6 +320,8 @@ class Quadrant(object):
             (tuple: tuple, tuple):  Both intervals in a (minimum, maximum) schema."""
         offset = level_size//8
         indexes, levels = tuple([(cell.cell.get_index()+offset)%level_size for cell in cells]), tuple([cell.cell.get_level() for cell in cells])
+        if any(index is level_size-1 for index in indexes):    #We are in the last quadrant, the one which connects to the start again
+            indexes = tuple(level_size if index is 0 else index for index in indexes)
         return (min(indexes), max(indexes)), (min(levels), max(levels))
 
 

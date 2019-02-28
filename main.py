@@ -108,6 +108,7 @@ def create_config_menu(result):
     element_generator = generate_ui_elements(elements, threads, button_size, USEREVENTS.CONFIG_USEREVENT, text_alignment='left')
     element_generator.send(None)    #Starting generator
     #Starts generating
+    element_generator.send(('button_cell_texture', "change_cell_texture", next(positions), {'default_values': STRINGS.CELLS, 'text': 'Cell type', 'gradient': next(gradients)}))
     element_generator.send(('button_loading', "change_loading_board", next(positions), {'default_values': STRINGS.YES_NO_OPTIONS, 'text': 'Show screen while board loads', 'gradient': next(gradients)}))
     element_generator.send(('button_players', "add_players_board", next(positions), {'default_values': PARAMS.PLAYERS_AMMOUNT, 'text': 'Number of players', 'gradient': next(gradients)}))
     element_generator.send(('button_game_mode', "change_game_mode", next(positions), {'default_values': STRINGS.GAMEMODES, 'text': 'Game Mode', 'gradient': next(gradients)}))
@@ -172,7 +173,7 @@ def create_video_menu(result):
 def create_board_params():
     board_params = {}
     bg = AnimationGenerator.factory(STRINGS.INITIAL_ANIMATED_BG, INIT_PARAMS.INITIAL_RESOLUTION, PARAMS.ANIMATION_TIME, INIT_PARAMS.ALL_FPS, INIT_PARAMS.INITIAL_FPS)
-    board_params['cell_texture'] = PATHS.CELL_BASIC
+    #board_params['cell_texture'] = PATHS.CELL_BASIC
     board_params['cell_border'] = PATHS.CELL_GOLDEN_BORDER 
     board_params['circumference_texture'] = PATHS.THIN_CIRCUMFERENCE
     board_params['songs_paths'] = BOARD_SONGS

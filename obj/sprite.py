@@ -222,7 +222,7 @@ class Sprite(pygame.sprite.Sprite):
     def set_center(self, center):
         if self.rect.topleft != center:
             new_pos = tuple(x-y//2 for x,y in zip(center, self.rect.size))
-            self.set_position(new_pos)    #To update the real rect
+            self.set_position(new_pos, True)    #To update the real rect
 
     def set_active(self, active):
         """Sets the visible attribute. Can be used for differen purposes.

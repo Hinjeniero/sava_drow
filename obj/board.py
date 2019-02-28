@@ -253,6 +253,8 @@ class Board(Screen):
 
     def adjust_cells(self):
         for cell in self.cells:
+            if cell.get_index()>=self.params['circles_per_lvl']:
+                continue
             circumf = next(path for path in self.paths if str(cell.get_level()) in path.id)
             offset = circumf.width//2
             cell.rect.x -= offset*math.cos(cell.angle)
@@ -424,7 +426,7 @@ class Board(Screen):
             else:               self.cells.add(self.__generate_cells(radius-ratio//3, self.platform.rect.center, small_radius, self.params['circles_per_lvl'], i, texture=self.params['cell_texture']))
             if growing_cells:   small_radius = int(small_radius*growing_ratio)
         if self.params['center_cell']:
-            self.cells.add(self.__generate_center_cell(small_radius, self.params['circles_per_lvl'], self.params['max_levels']))
+            self.cells.add(self.__generate_center_cell(small_radius, self.params['circles_per_lvl'], self.params['max_levels'], texture=self.params['cell_texture']))
         LOG.log('DEBUG', "Generated cells of ", self.id)
         self.assign_quadrants()
 
@@ -436,7 +438,13 @@ class Board(Screen):
         for i in range(0, 4):
             self.enabled_paths[i][index], self.enabled_paths[index][i] = True, True
             self.distances[i][index], self.distances[index][i] = 1, 1
-        return Cell((lvl_number-1, circle_number), index, tuple(center-radius for center in self.platform.rect.center), (radius*2, radius*2), self.resolution, **cell_params)
+        cell = Cell((lvl_number-1, circle_number), index, tuple(center-radius for center in self.platform.rect.center), (radius*2, radius*2), self.resolution, **cell_params)
+        cell.promotion = True
+        cell.owner = 11110000
+        if self.params['cell_border']:
+            cell.add_border(self.params['cell_border'])
+        cell.set_center(self.platform.rect.center)
+        return cell
 
     def __generate_cells(self, radius, center, circle_radius, circle_number, lvl, initial_offset=-90, **cell_params):
         """Generate the cells of one circumference/level of the board. 

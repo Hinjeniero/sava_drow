@@ -158,6 +158,7 @@ class Game(object):
         elif 'port' in command:
             self.current_screen.set_ip_port(port=int(value))
         elif 'cancel' in command or 'no' in command or 'false' in command:
+            print("CANCEL BUTTON WAS PRESSED")
             self.current_screen.hide_dialog()
             self.last_command = None
         else:
@@ -182,6 +183,8 @@ class Game(object):
                 self.get_screen('params', 'menu', 'config').enable_sprites(False, 'set', 'board')
             else:
                 self.get_screen('params', 'menu', 'config').enable_all_sprites()
+        elif 'cell' in command and ('texture' in command or 'image' in command or 'type' in command):
+            self.board_generator.set_cell_texture(value)
         elif 'size' in command:
             self.board_generator.set_board_size(value)
         elif 'player' in command:
@@ -194,7 +197,9 @@ class Game(object):
             else:
                 self.board_generator.set_board_params(loading_screen=False)
         elif 'center' in command:
+            print("CENTER CELL")
             if 'on' in value.lower() or value == 1 or 'yes' in value.lower():
+                print("TRUE")
                 self.board_generator.set_board_params(center_cell=True)
             else:
                 self.board_generator.set_board_params(center_cell=False)

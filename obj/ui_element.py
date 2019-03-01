@@ -344,6 +344,8 @@ class Slider (UIElement):
                         'text_proportion': 0.66,
                         'text_alignment': 'left',
                         'shows_value': True,
+                        'bar_border': 6,
+                        'bar_texture': None,
                         'dial_texture': None,
                         'dial_fill_color': GREEN,
                         'dial_use_gradient': True,
@@ -386,6 +388,8 @@ class Slider (UIElement):
         #Text sprite
         self.add_text_sprite(self.id+"_text", _['text'], text_size=text_size, alignment=_['text_alignment'])
         #Value sprite
+        if _['bar_texture']:
+            self.add_bar(_['bar_texture'], _['bar_border'])
         if _['shows_value']:
             self.add_text_sprite(self.id+"_text", _['text'], text_size=text_size, alignment='left')
             self.add_text_sprite(self.id+"_value", str(self.get_value()), text_size=text_size, alignment='right')
@@ -395,7 +399,7 @@ class Slider (UIElement):
         self.generate_dial(_['dial_texture'], _['dial_fill_color'], _['dial_use_gradient'], _['dial_gradient'], _['dial_border'],\
                             _['dial_border_color'], _['dial_border_width'], _['dial_shape'])
 
-    def add_bar(self, texture, border=6, resize_mode='fit', resize_smooth=True, keep_aspect_ratio=False):
+    def add_bar(self, texture, border, resize_mode='fit', resize_smooth=True, keep_aspect_ratio=False):
         size = tuple(x-border for x in self.rect.size)
         bar = Sprite('bar', (border//2, border//2), size, self.rect.size, texture=texture, resize_mode=resize_mode,\
                     resize_smooth=resize_smooth, keep_aspect_ratio=keep_aspect_ratio)
@@ -420,7 +424,7 @@ class Slider (UIElement):
         dial_size = [min(self.rect.size), min(self.rect.size)]
         dial_id   = self.id+'_dial'
         if texture:
-            Sprite(dial_id, (border//2, border//2), dial_size, self.rect.size, texture=texture)
+            dial = Sprite(dial_id, (border//2, border//2), dial_size, self.rect.size, texture=texture)
         elif 'circ' in shape or 'ellip' in shape: 
             dial = Circle(dial_id, (0, 0), tuple(dial_size), self.rect.size,\
                             fill_color=fill_color, fill_gradient=use_gradient, gradient=gradient,\
@@ -448,10 +452,11 @@ class Slider (UIElement):
         dial.set_position(dial.rect.topleft)
         self.add_sprite(dial)
         self.overlay = self.generate_overlay(dial.image, WHITE)
-
+    
     def draw(self, surface, offset=None):
         super().draw(surface, offset=offset)
-        self.draw_overlay(surface, offset=offset)
+        if (self.use_overlay and self.active) or not self.enabled:
+            self.draw_overlay(surface, offset=offset)   #To draw it on top, otherwise is drawn below the dial and all
 
     def draw_overlay(self, surface, offset=None):
         """Draws the overlay over a surface.
@@ -466,7 +471,8 @@ class Slider (UIElement):
             surface.blit(self.overlay, position)
         if self.enabled:
             self.animation_frame()
-            
+
+    @run_async
     def set_dial_position(self, position):
         """Changes the dial position to the input parameter. Changes the graphics and the value accordingly.
         Distinguises between values between 0 and 1 (position in value), and values over 1 (position in pixels).
@@ -485,7 +491,6 @@ class Slider (UIElement):
         dial.set_position((dial_x, dial.rect.y))
         if self.params['shows_value']:
             self.get_sprite('value').set_text(str(round(self.get_value(), 2)))
-        #self.regenerate_image()  #To compensate the graphical offset of managing center/top-left
 
     def get_value(self):
         """Returns:

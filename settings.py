@@ -150,6 +150,12 @@ class PATHS:
     DARK_LONG_BUTTON = IMAGE_FOLDER+'dark_button.png'
     INFOBOARD = IMAGE_FOLDER+'infoboard.png'
     DIALOG_SILVER = IMAGE_FOLDER+'dialog.png'
+    #---sliders
+    BROWN_SLIDER = IMAGE_FOLDER+'brown_slider.png'
+    GOLD_SLIDER = IMAGE_FOLDER+'gold_slider.png'
+    BROWN_BAR = IMAGE_FOLDER+'brown_bar.png'
+    RED_BAR = IMAGE_FOLDER+'basic_red_bar.png'
+    BLUE_BAR = IMAGE_FOLDER+'blue_bar.png'
     #---Board
     CELL_BASIC = IMAGE_FOLDER+'cell_basic.png'
     DARK_CELL = IMAGE_FOLDER+'cell_dark.png'
@@ -159,9 +165,13 @@ class PATHS:
     THIN_CIRCUMFERENCE = IMAGE_FOLDER+'thin_circle.png'
     SCOREBOARD_BASIC = IMAGE_FOLDER+'scoreboard.png'
     LONG_RED_BAR = IMAGE_FOLDER+'long_red_bar.png'
-    #Textures
+    #---Textures
     WOOD_TEXTURE_BASIC = TEXTURES_FOLDER+'wood.jpg'
     WOOD_TEXTURE_DARK = TEXTURES_FOLDER+'dark_wood.png'
     DARK_CAVE_TEXTURE = TEXTURES_FOLDER+'cave.png'
     GRASSLAND_TEXTURE = TEXTURES_FOLDER+'grassland.png'
     DESERT_TEXTURE = TEXTURES_FOLDER+'desert.png'
+    #---objects
+    CHEST = IMAGE_FOLDER+'chest.png'
+    SHIELD = IMAGE_FOLDER+'shield.png'
+    DIAMOND_SPEAR = IMAGE_FOLDER+'diamond_spear.png'

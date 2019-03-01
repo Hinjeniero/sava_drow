@@ -305,7 +305,7 @@ class Sprite(pygame.sprite.Sprite):
     @staticmethod   #TODO UPDATE DOCUMENTATION
     def generate_surface(size, surface=None, texture=None, overlap_texture=None, active_texture=None, keep_aspect_ratio=True, resize_mode='fit', resize_smooth=True,\
                         shape="Rectangle", transparent=False, only_text=False, text="default_text", text_color=WHITE, text_font=FONT,\
-                        fill_color=RED, fill_gradient=True, gradient=(LIGHTGRAY, DARKGRAY), gradient_type="horizontal",\
+                        fill_color=RED, fill_gradient=True, gradient=(LIGHTGRAY, DARKGRAY), gradient_type="horizontal", angle=None,\
                         overlay=True, overlay_color=WHITE, border=True, border_color=WHITE, border_width=2, **unexpected_kwargs):
         """Generates a pygame surface according to input arguments.
         Args:
@@ -369,6 +369,8 @@ class Sprite(pygame.sprite.Sprite):
         if overlap_texture:
             surf = UtilityBox.overlap_trace_texture(surf, overlap_texture)
         #End of the generation/specification of the pygame.Surface surf.
+        if angle:   #Only use this with multiples of 90!!
+            surf = pygame.transform.rotate(surf, angle)
         if overlay:
             if active_texture:
                 overlay = ResizedSurface.get_surface(texture, size, resize_mode, resize_smooth, keep_aspect_ratio)

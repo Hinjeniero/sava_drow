@@ -137,10 +137,10 @@ def create_sound_menu(result):
     element_generator = generate_ui_elements(elements, threads, element_size, USEREVENTS.SOUND_USEREVENT, default_values=SOUND_PARAMS.INIT_VOLUME)
     element_generator.send(None)    #Starting generator
     #Starts generating
-    element_generator.send(('slider_music_volume', "set_menu_music_volume", next(positions), {'text': 'Menus music volume', 'dial_shape': 'circular'}))
-    element_generator.send(('slider_sound_volume', "set_menu_sound_volume", next(positions), {'text': 'Menus sound volume', 'dial_shape': 'elliptical'}))
-    element_generator.send(('slider_board_music_volume', "set_board_music_volume", next(positions), {'text': 'Board music volume', 'dial_shape': 'rectangular'}))
-    element_generator.send(('slider_board_sound_volume', "set_board_sound_volume", next(positions), {'text': 'Board sound volume'}))
+    element_generator.send(('slider_music_volume', "set_menu_music_volume", next(positions), {'text': 'Menus music volume', 'texture':PATHS.GOLD_SLIDER,'dial_texture':PATHS.SHIELD, 'bar_border': 30,'bar_texture': PATHS.BLUE_BAR, 'keep_aspect_ratio':False}))
+    element_generator.send(('slider_sound_volume', "set_menu_sound_volume", next(positions), {'text': 'Menus sound volume', 'dial_texture':None, 'dial_shape': 'elliptical','bar_border': 35, 'bar_texture': PATHS.RED_BAR}))
+    element_generator.send(('slider_board_music_volume', "set_board_music_volume", next(positions), {'text': 'Board music volume', 'texture':PATHS.BROWN_SLIDER, 'dial_shape': 'rectangular', 'bar_border': 6, 'bar_texture': PATHS.BROWN_BAR}))
+    element_generator.send(('slider_board_sound_volume', "set_board_sound_volume", next(positions), {'text': 'Board sound volume', 'dial_texture':PATHS.CHEST}))
     element_generator.send(('button_board_song', "change_board_song", next(positions), {'text': 'Selected board song', 'default_values': BOARD_CROPPED_SONGS,'text_proportion': 0.50}))
     element_generator.send(('button_menu_song', "change_menu_song", next(positions), {'text': 'Selected menus song', 'default_values':MENU_CROPPED_SONGS}))
     for t in threads:   t.join()    #Waiting for all the buttons to be created
@@ -148,25 +148,22 @@ def create_sound_menu(result):
     sound_menu          = Menu("menu_volume_music", USEREVENTS.SOUND_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, *elements, background_path=PATHS.DEFAULT_BG, do_align=False, songs_paths=None)
     sound_menu.add_animation(AnimationGenerator.characters_crossing_screen(INIT_PARAMS.INITIAL_RESOLUTION, *INIT_PARAMS.ALL_FPS))
     sound_menu.enable_sprite('board', 'sound', state=False), sound_menu.enable_sprite('board', 'music', state=False), sound_menu.enable_sprite('board', 'song', state=False)
-    
-    sound_menu.sprites.sprites()[0].add_bar(PATHS.SHORT_GOLD_BUTTON)
-    
     result.append(sound_menu)
 
 @run_async
 def create_video_menu(result):
-    positions           = UtilityBox.size_position_generator(5, 0.80, 0.10, 0.10, final_offset=0.15)
+    positions           = UtilityBox.size_position_generator(5, 0.60, 0.10, 0.10, final_offset=0.15)
     button_size         = next(positions)
     #Creation of elements
     elements, threads = [], []
-    element_generator = generate_ui_elements(elements, threads, button_size, USEREVENTS.GRAPHIC_USEREVENT, text_alignment='left')
+    element_generator = generate_ui_elements(elements, threads, button_size, USEREVENTS.GRAPHIC_USEREVENT, text_alignment='left', resize_mode='fill', text_proportion=0.45, texture=PATHS.DIAMOND_SPEAR)
     element_generator.send(None)    #Starting generator
     #Starts generating
     element_generator.send(('button_resolution', "change_resolution_screen_display", next(positions), {'text': 'Resolution', 'default_values': INIT_PARAMS.RESOLUTIONS}))
-    element_generator.send(('button_fps', "change_fps_frames_per_second", next(positions), {'text': 'Frames per second', 'default_values': INIT_PARAMS.ALL_FPS}))
-    element_generator.send(('button_fullscreen', "set_display_mode_fullscreen", next(positions), {'text': 'Fullscreen', 'default_values': STRINGS.YES_NO_REVERSED}))
-    element_generator.send(('button_menu_bgs', "set_animated_background_menu", next(positions), {'text': 'Set menu background', 'default_values': STRINGS.ANIMATED_BGS}))
-    element_generator.send(('button_board_bgs', "set_animated_background_board", next(positions), {'text': 'Set board background'}))
+    element_generator.send(('button_fps', "change_fps_frames_per_second", next(positions), {'text': 'Frames per second', 'default_values': INIT_PARAMS.ALL_FPS, 'angle':180}))
+    element_generator.send(('button_fullscreen', "set_display_mode_fullscreen", next(positions), {'text': 'Fullscreen', 'default_values': STRINGS.YES_NO_REVERSED, 'angle':None}))
+    element_generator.send(('button_menu_bgs', "set_animated_background_menu", next(positions), {'text': 'Set menu background', 'default_values': STRINGS.ANIMATED_BGS, 'angle':180, 'text_proportion': 0.33}))
+    element_generator.send(('button_board_bgs', "set_animated_background_board", next(positions), {'text': 'Set board background', 'angle':0}))
     for t in threads:   t.join()    #Waiting for all the buttons to be created
     #Menu creation
     graphics_menu   = Menu("menu_graphics_display", USEREVENTS.GRAPHIC_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, *elements, background_path=PATHS.DEFAULT_BG, do_align=False, songs_paths=None)

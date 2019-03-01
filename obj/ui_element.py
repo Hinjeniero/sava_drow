@@ -385,26 +385,44 @@ class Slider (UIElement):
         UtilityBox.join_dicts(self.params, Slider.__default_config) 
         _ = self.params  #For the sake of short code, params has keys with already understandable names anyway
         text_size = [int(x*_['text_proportion']) for x in self.rect.size]
-        #Text sprite
-        self.add_text_sprite(self.id+"_text", _['text'], text_size=text_size, alignment=_['text_alignment'])
-        #Value sprite
+        #Bar sprite
         if _['bar_texture']:
-            self.add_bar(_['bar_texture'], _['bar_border'])
+            self.add_sprite(self.generate_bar(_['bar_texture'], _['bar_border']))
+        #Text and Value sprite
         if _['shows_value']:
             self.add_text_sprite(self.id+"_text", _['text'], text_size=text_size, alignment='left')
             self.add_text_sprite(self.id+"_value", str(self.get_value()), text_size=text_size, alignment='right')
         else:
             self.add_text_sprite(self.id+"_text", _['text'], text_size=text_size, alignment=_['text_alignment'])
         #Slider sprite
-        self.generate_dial(_['dial_texture'], _['dial_fill_color'], _['dial_use_gradient'], _['dial_gradient'], _['dial_border'],\
-                            _['dial_border_color'], _['dial_border_width'], _['dial_shape'])
+        dial = self.generate_dial(_['dial_texture'], _['dial_fill_color'], _['dial_use_gradient'], _['dial_gradient'], _['dial_border'],\
+                                _['dial_border_color'], _['dial_border_width'], _['dial_shape'])
+        self.add_sprite(dial)
+        self.overlay = self.generate_overlay(dial.image, WHITE)
 
-    def add_bar(self, texture, border, resize_mode='fit', resize_smooth=True, keep_aspect_ratio=False):
+    def regenerate_image(self):
+        self.sprites.remove(self.get_sprite('dial'))    #Have to do this in this way because ellipses.
+        #Regenerating from here
+        super().regenerate_image()
+        #Adding again what is needed for a slider
+        _ = self.params
+        if _['bar_texture']:
+            bar = self.get_sprite('bar')
+            bar = self.generate_bar(_['bar_texture'], _['bar_border'])    #Swapping the bar
+        dial = self.generate_dial(_['dial_texture'], _['dial_fill_color'], _['dial_use_gradient'], _['dial_gradient'], _['dial_border'],\
+                        _['dial_border_color'], _['dial_border_width'], _['dial_shape'])
+        self.add_sprite(dial)
+        self.overlay = self.generate_overlay(dial.image, WHITE)
+        if not self.enabled:
+            self.overlay.set_alpha(200)
+        #self.set_dial_position(self.value)
+        
+    def generate_bar(self, texture, border, resize_mode='fit', resize_smooth=True, keep_aspect_ratio=False):
         size = tuple(x-border for x in self.rect.size)
         bar = Sprite('bar', (border//2, border//2), size, self.rect.size, texture=texture, resize_mode=resize_mode,\
                     resize_smooth=resize_smooth, keep_aspect_ratio=keep_aspect_ratio)
         bar.image = bar.image.subsurface(pygame.Rect((0, 0), (int(bar.rect.width*self.value), bar.rect.height)))
-        self.add_sprite(bar)
+        return bar
 
     def generate_dial (self, texture, fill_color, use_gradient, gradient, border, border_color, border_width, shape):
         """Generates a dial (following the input arguments), that will be added and blitted to the element.
@@ -450,8 +468,7 @@ class Slider (UIElement):
         else:
             dial.rect.center = (int(self.get_value()*self.rect.width), self.rect.height//2)
         dial.set_position(dial.rect.topleft)
-        self.add_sprite(dial)
-        self.overlay = self.generate_overlay(dial.image, WHITE)
+        return dial
     
     def draw(self, surface, offset=None):
         super().draw(surface, offset=offset)
@@ -480,8 +497,10 @@ class Slider (UIElement):
             position (float||int): Position of the dial to set."""
         bar = self.get_sprite('bar')
         if bar:
-            parent_bar = bar.image.get_parent()
-            bar.image = parent_bar.subsurface(pygame.Rect((0, 0), (int(bar.rect.width*self.value), bar.rect.height)))
+            try:
+                bar.image = bar.image.get_parent().subsurface(pygame.Rect((0, 0), (int(bar.rect.width*self.value), bar.rect.height)))
+            except AttributeError:
+                bar.image = bar.image.subsurface(pygame.Rect((0, 0), (int(bar.rect.width*self.value), bar.rect.height)))
         dial = self.get_sprite('dial')
         dial_position = int(self.rect.width*position) if (0 <= position <= 1) else int(position) #Converting the dial position to pixels.
         dial_position = 0 if dial_position < 0\

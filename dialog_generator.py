@@ -4,19 +4,19 @@ from obj.utilities.colors import WHITE
 
 class DialogGenerator(object):
     @staticmethod
-    def create_exit_dialog(size, resolution, text='Are you sure that you want to exit?'):
-        dialog = Dialog('exit_dialog', USEREVENTS.DIALOG_USEREVENT, size, resolution, text=text, rows=3, cols=2, texture=PATHS.DIALOG_SILVER, keep_aspect_ratio = False)
+    def create_exit_dialog(id_, size, resolution, text='Are you sure that you want to exit?'):
+        dialog = Dialog(id_+'_exit_dialog', USEREVENTS.DIALOG_USEREVENT, size, resolution, text=text, rows=3, cols=2, texture=PATHS.DIALOG_SILVER, keep_aspect_ratio = False)
         dialog.add_text_element('exit_dialog_text', 'you will lose all your unsaved changes.', dialog.get_cols())
         dialog.add_button(dialog.get_cols()//2, 'Ok', 'ok_yes_exit_already', texture=PATHS.SHORT_GOLD_BUTTON)
         dialog.add_button(dialog.get_cols()//2, 'Cancel', 'no_cancel_false', texture=PATHS.SHORT_GOLD_BUTTON)
         return dialog
 
     @staticmethod
-    def create_input_dialog(size, resolution, *inputs):
+    def create_input_dialog(id_, size, resolution, *inputs):
         """Tkes double space cuz text and then inputbox of the same size.
         tuple(text input box, command inpout box)"""
         #Dialog
-        dialog = Dialog('input_dialog', USEREVENTS.DIALOG_USEREVENT, size, resolution, rows=(len(inputs)*2)+1, cols=2, texture=PATHS.DIALOG_SILVER, keep_aspect_ratio = False)
+        dialog = Dialog(id_+'_input_dialog', USEREVENTS.DIALOG_USEREVENT, size, resolution, rows=(len(inputs)*2)+1, cols=2, texture=PATHS.DIALOG_SILVER, keep_aspect_ratio = False)
         for input_ in inputs:
             dialog.add_text_element('text', input_[0], dialog.get_cols())
             if len(input_) == 2:

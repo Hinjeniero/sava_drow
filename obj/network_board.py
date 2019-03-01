@@ -100,7 +100,7 @@ class NetworkBoard(Board):
                 self.server.start(NETWORK.SERVER_IP, NETWORK.SERVER_PORT)
                 self.set_ip_port(NETWORK.CLIENT_LOCAL_IP, NETWORK.SERVER_PORT)
             else:
-                self.dialogs.add(DialogGenerator.create_input_dialog(tuple(x//3 for x in self.resolution), self.resolution, ('ip', 'send_ip', str(NETWORK.CLIENT_IP)), ('port', 'send_port', str(NETWORK.SERVER_PORT))))
+                self.dialogs.add(DialogGenerator.create_input_dialog('ip_port', tuple(x//3 for x in self.resolution), self.resolution, ('ip', 'send_ip', str(NETWORK.CLIENT_IP)), ('port', 'send_port', str(NETWORK.SERVER_PORT))))
                 self.flags["ip_port_done"] = threading.Event()
                 self.flags["board_done"] = threading.Event()
                 self.flags["players_ammount_done"] = threading.Event()

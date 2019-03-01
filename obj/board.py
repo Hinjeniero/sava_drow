@@ -91,13 +91,15 @@ class Board(Screen):
                         'loading_screen'        : True,
                         'platform_proportion'   : 0.95,
                         'platform_alignment'    : "center",
+                        'platform_texture'      : None,
+                        'platform_sprite'       : None,
+                        'platform_transparency' : 128,
                         'inter_path_frequency'  : 2,
                         'circles_per_lvl'       : 16,
                         'max_levels'            : 4,
                         'center_cell'           : False,
                         'path_color'            : WHITE,
                         'path_width'            : 8,
-                        'platform_sprite'       : None,
                         'loading_screen_text'   : "Loading, hang tight",
                         'cell_texture'          : None,
                         'cell_border'           : None,
@@ -174,23 +176,28 @@ class Board(Screen):
         if self.params['loading_screen']:
             self.loading_screen = LoadingScreen(self.id+"_loading", self.event_id, self.resolution, text=self.params['loading_screen_text'])
         #REST
-        platform_size   = tuple(min(self.resolution)*self.params['platform_proportion'] for _ in self.resolution)
-        centered_pos    = tuple(x//2-y//2 for x, y in zip(self.resolution, platform_size))
-        
-        platform_pos    = (0, centered_pos[1]) if 'left' in self.params['platform_alignment']\
-        else centered_pos if 'center' in self.params['platform_alignment']\
-        else (self.resolution[0]-platform_size[0], centered_pos[1])
 
-        if not self.params['platform_sprite']:
-            self.platform = Rectangle(self.id+"_platform", platform_pos, platform_size, self.resolution)
-        else:
-            self.platform = self.params['platform_sprite']
+        self.platform = self.generate_platform()
         if not empty:
             self.generate_mapping()
             self.generate_environment()
         self.add_players(*players)
         self.swapper = self.character_swapper()
         self.swapper.send(None) #Needed in the first execution of generator
+
+    @no_size_limit
+    def generate_platform(self):
+        platform_size   = tuple(min(self.resolution)*self.params['platform_proportion'] for _ in self.resolution)
+        centered_pos    = tuple(x//2-y//2 for x, y in zip(self.resolution, platform_size))
+        
+        platform_pos    = (0, centered_pos[1]) if 'left' in self.params['platform_alignment']\
+        else centered_pos if 'center' in self.params['platform_alignment']\
+        else (self.resolution[0]-platform_size[0], centered_pos[1])
+        if not self.params['platform_sprite']:
+           platform = Rectangle(self.id+"_platform", platform_pos, platform_size, self.resolution, texture=self.params['platform_texture'])
+           platform.image.set_alpha(self.params['platform_transparency'])
+           return platform
+        return self.params['platform_sprite']
 
     @no_size_limit
     def generate_dialogs(self):

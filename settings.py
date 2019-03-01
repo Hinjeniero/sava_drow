@@ -166,6 +166,7 @@ class PATHS:
     SCOREBOARD_BASIC = IMAGE_FOLDER+'scoreboard.png'
     LONG_RED_BAR = IMAGE_FOLDER+'long_red_bar.png'
     #---Textures
+    BASIC_TEXTURIZED_BG = IMAGE_FOLDER+'background_02.png'
     WOOD_TEXTURE_BASIC = TEXTURES_FOLDER+'wood.jpg'
     WOOD_TEXTURE_DARK = TEXTURES_FOLDER+'dark_wood.png'
     DARK_CAVE_TEXTURE = TEXTURES_FOLDER+'cave.png'

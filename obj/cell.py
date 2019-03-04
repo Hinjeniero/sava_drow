@@ -55,6 +55,9 @@ class Cell(Circle):
     def generate(self):
         self.add_text_sprite(self.id+"_text", str(self.pos[0])+"-"+str(self.pos[1]), text_size=tuple(x*0.75 for x in self.rect.size))
 
+    def parse_text(self, text): #TODO CONVERT NUYMEBRS TO LETTERS AND ALL THAT SHIT
+        pass
+
     def add_border(self, image_path):
         border = Circle('border'+str(self.index), (0, 0), self.rect.size, self.rect.size, texture=image_path)
         self.add_sprite(border)

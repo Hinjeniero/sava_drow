@@ -446,6 +446,10 @@ class MultiSprite(Sprite):
     Attributes:
         sprites (:list: Sprite):    List of the added sprites, that form the MultiSprite
     """
+    __default_config = {'fade_animation': False,
+                        'animation_frames': 30,
+                        'animation_direction': 'up'
+    }
     def __init__(self, id_, position, size, canvas_size, **image_params):
         """Constructor of MultiSprite. 
         Args:
@@ -458,6 +462,7 @@ class MultiSprite(Sprite):
         """
         super().__init__(id_, position, size, canvas_size, **image_params)
         self.sprites        = pygame.sprite.OrderedUpdates()
+        self.in_animation   = False
 
     def add_sprite(self, sprite):
         """Add sprite to the Sprite list, and blit it to the image of the MultiSprite
@@ -525,8 +530,6 @@ class MultiSprite(Sprite):
         (self.rect.width-text.rect.width//2, self.rect.height//2)
         #With the actual center according to the alignment, we now associate it
         text.set_center(center)
-        #text.rect.center = center
-        #text.set_position(text.rect.topleft) #To reset the real_rect argument
         if return_result:
             return text
         else:
@@ -542,6 +545,9 @@ class MultiSprite(Sprite):
         super().draw(surface, offset=offset)
         for sprite in self.sprites:
             sprite.draw(surface, offset=offset)
+
+    def appearing_animation(self):
+        pass
 
 class AnimatedSprite(MultiSprite):
     """Class AnimatedSprite. Inherits from Sprite. Adds all the attributes and methods needed to support
@@ -750,3 +756,18 @@ class AnimatedSprite(MultiSprite):
             self.counter = 0 
             self.animation_frame()
             self.image = self.current_sprite() if not self.hover else self.current_hover_sprite()
+
+class OnceAnimatedSprite(AnimatedSprite):
+    def __init__(self, id_, position, size, canvas_size, **params):
+        super().__init__(id_, position, size, canvas_size, **params)
+    
+    def animation_frame(self):
+        """Changes the current showing surface (changing the index) to the next one."""
+        if self.animated:   #If more than 1 sprites in the list
+            self.animation_index += self.animation_step
+            if self.animation_index >= len(self.surfaces):
+                self.animation_index = len(self.surfaces)-2
+    
+    def set_enable(self, state):
+        super().set_enable(state)
+        self.animation_index = 0

@@ -37,6 +37,9 @@ class UIElement(MultiSprite):
         action (str):   Action/Command/Id of this action. It is used in join with event_id to do an action.
         event_id (int): Id of the event that is linked to this element and van be triggered. Sent with a payload when needed.
     """
+    __default_config = {'hover_texture' : None
+                        'hover_text' : None
+    }
     def __init__(self, id_, command, user_event_id, position, size, canvas_size, **params):
         """Constructor of the UiElement class.
         Args:
@@ -54,7 +57,8 @@ class UIElement(MultiSprite):
         #Basic parameters on top of those inherited from Sprite
         self.action     = command
         self.event_id   = user_event_id
-        self.has_input  = False    
+        self.has_input  = False
+        self.hover_dialog = None
 
     def get_id(self):
         """Returns:

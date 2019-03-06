@@ -93,7 +93,8 @@ def create_main_menu(result):
     bg = AnimationGenerator.factory(STRINGS.INITIAL_ANIMATED_BG, INIT_PARAMS.INITIAL_RESOLUTION, PARAMS.ANIMATION_TIME, INIT_PARAMS.ALL_FPS, INIT_PARAMS.INITIAL_FPS)
     main_menu   = Menu('main_menu', USEREVENTS.MAINMENU_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, *elements, animated_background=bg, background_path=PATHS.DEFAULT_BG, songs_paths=MENU_SONGS, do_align=False)
     main_menu.add_dialogs(DialogGenerator.create_exit_dialog('game', tuple(x//2 for x in INIT_PARAMS.INITIAL_RESOLUTION), INIT_PARAMS.INITIAL_RESOLUTION))
-    main_menu.add_animation(AnimationGenerator.floating_sprite(INIT_PARAMS.INITIAL_RESOLUTION, (0.5, 0), (0.5, 0.1), (100, 100), 4, INIT_PARAMS.ALL_FPS, PATHS.IMAGE_FOLDER, keywords=('spider',)))
+    main_menu.add_animation(AnimationGenerator.floating_sprite(INIT_PARAMS.INITIAL_RESOLUTION, (0.5, 0.075), (0.5, 0.125), tuple(0.15*x for x in INIT_PARAMS.INITIAL_RESOLUTION),\
+                                                                4, INIT_PARAMS.ALL_FPS, PATHS.IMAGE_FOLDER, keywords=('spider',), text="SAVA DROW"))
     main_menu.enable_sprite('continue', state=False)
     result.append(main_menu) 
 

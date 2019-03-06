@@ -498,7 +498,6 @@ class MultiSprite(Sprite):
         bigger MultiSprite image.
         Returns:
             (:tuple: int, int): Absolute center position of the sprite in the screen"""
-        print("THIS THING IS ALIVE")
         return tuple(relative+absolute for relative, absolute in zip(sprite.rect.topleft, self.rect.topleft))
 
     def get_sprite(self, *keywords):
@@ -534,6 +533,7 @@ class MultiSprite(Sprite):
             return text
         else:
             self.add_sprite(text)
+            #print("NEW TEXT ADDED "+text.id+", NEW ABSOLUTE SIZE WILL BE "+str(text.abs_position)+" WHILE RELATIVE POSITION IS "+str(text.rect.topleft))
 
     def set_canvas_size(self, canvas_size):
         super().set_canvas_size(canvas_size)

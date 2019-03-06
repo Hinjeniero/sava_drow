@@ -49,7 +49,7 @@ class Player(object):
         corpses (list->Character):  The captured characters. Saved to use the information on captures and such.
         dead (boolean): True if this player has lost the essential characters, and cannot continue playing. False otherwise.
     """
-    def __init__(self, name, order, sprite_size, canvas_size, infoboard=None, uuid=None, empty=False, **character_params):
+    def __init__(self, name, order, sprite_size, canvas_size, infoboard=None, uuid=None, empty=False, avatar=None, **character_params):
         """Player constructor.
         Args:
             name (str): Name of the player.
@@ -63,6 +63,7 @@ class Player(object):
             **character_params (:dict:):    Contains the more specific parameters to create the characters.
                                             Ammount of each type of char, name of their actions, and their folder paths."""
         self.uuid       = uuid
+        self.avatar     = None
         self.name       = name
         self.order      = order
         self.characters = None
@@ -87,6 +88,8 @@ class Player(object):
             **character_params (:dict:):Contains the more specific parameters to create the characters.
                                         Ammount of each type of char, name of their actions, and their folder paths.
             """
+        if self.avatar:
+            pass    #TODO THIS SHIT
         if not self.uuid:
             self.uuid = uuid.uuid1().int
         if not empty:
@@ -100,7 +103,10 @@ class Player(object):
         infoboard = InfoBoard(self.name+'_infoboard', 0, (0, 0), (0.15*resolution[0], resolution[1]),\
                             resolution, texture=PATHS.INFOBOARD, keep_aspect_ratio = False, cols=6)
         cols = infoboard.get_cols()
-        infoboard.add_text_element('initial_padding', '', cols)
+        if self.avatar:
+            pass
+        else:
+            infoboard.add_text_element('initial_padding', '', cols)
         infoboard.add_text_element('player_name', self.name, cols-2)   #Player name
         infoboard.add_text_element('player_number', 'id: '+str(self.order+1), cols-2)   #Player order
         infoboard.add_text_element('player_chars', 'Total characters: '+str(len(self.characters)), cols)   #Player total ammount of chars

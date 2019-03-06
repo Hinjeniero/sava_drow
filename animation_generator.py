@@ -225,24 +225,14 @@ class AnimationGenerator(object):
         pass
 
     @staticmethod
-    def floating_logo(resolution, text, start_pos, end_pos, size, time, fps_modes, folder, keywords=None): #TODO DO THE ANIMATED_CHARACTER TEXT ON TOP DRAWING
-        animation = AnimationGenerator.floating_sprite(resolution, start_pos, end_pos, size, time, fps_modes, folder, keywords=keywords)
-        text = TextSprite('text', start_pos, size, resolution, text, resize_mode='fill')
-        sprite = ScriptedSprite('door', start_pos, size, resolution, fps_modes[0], fps_modes, sprite_folder=folder, keywords=keywords)
+    def floating_sprite(resolution, start_pos, end_pos, size, time, fps_modes, folder, keywords=None, text=None):
+        sprite = ScriptedSprite('floating', start_pos, size, resolution, fps_modes[0], fps_modes, sprite_folder=folder, keywords=keywords)
         init_pos = tuple((x*pos)-y//2 for x, pos, y in zip(resolution, start_pos, sprite.rect.size))
         end_pos = tuple((x*pos)-y//2 for x, pos, y in zip(resolution, end_pos, sprite.rect.size))
         sprite.add_movement(init_pos, end_pos, time)
         sprite.add_movement(end_pos, init_pos, time)
-        animation = LoopedAnimation('Floating sprite')
-        animation.add_sprite(sprite, 0, time, 0)
-
-    @staticmethod
-    def floating_sprite(resolution, start_pos, end_pos, size, time, fps_modes, folder, keywords=None):
-        sprite = ScriptedSprite('door', start_pos, size, resolution, fps_modes[0], fps_modes, sprite_folder=folder, keywords=keywords)
-        init_pos = tuple((x*pos)-y//2 for x, pos, y in zip(resolution, start_pos, sprite.rect.size))
-        end_pos = tuple((x*pos)-y//2 for x, pos, y in zip(resolution, end_pos, sprite.rect.size))
-        sprite.add_movement(init_pos, end_pos, time)
-        sprite.add_movement(end_pos, init_pos, time)
+        if text:
+            sprite.add_text_sprite('whatever', text, resize_mode='fill')
         animation = LoopedAnimation('Floating sprite')
         animation.add_sprite(sprite, 0, time, 0)
         return animation

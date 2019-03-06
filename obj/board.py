@@ -18,7 +18,7 @@ import random
 import threading
 from pygame.locals import *
 #Selfmade libraries
-from settings import MESSAGES, USEREVENTS
+from settings import MESSAGES, USEREVENTS, PATHS
 from obj.screen import Screen, LoadingScreen
 from obj.cell import Cell, Quadrant
 from obj.players import Player
@@ -106,7 +106,9 @@ class Board(Screen):
                         'circumference_texture' : None,
                         'interpath_texture'     : None,
                         'scoreboard_texture'    : None,
-                        'promotion_texture'     : None
+                        'promotion_texture'     : None,
+                        'infoboard_texture'     : None,
+                        'dice_texture'          : None
     }
     #CHANGE MAYBE THE THREADS OF CHARACTER TO JOIN INSTEAD OF NUM PLAYERS AND SHIT
     def __init__(self, id_, event_id, end_event_id, resolution, *players, empty=False, **params):
@@ -130,6 +132,7 @@ class Board(Screen):
         self.quadrants      = {}
         self.possible_dests = pygame.sprite.Group()
         self.inter_paths    = pygame.sprite.GroupSingle()
+        self.dice           = pygame.sprite.GroupSingle()
         self.paths          = pygame.sprite.Group()
         self.characters     = pygame.sprite.OrderedUpdates()
         self.current_player = None  #Created in add_player
@@ -200,6 +203,13 @@ class Board(Screen):
         return self.params['platform_sprite']
 
     @no_size_limit
+    def generate_infoboard(self):
+        infoboard = InfoBoard(self.id+'_infoboard', 0, (0, 0), (0.15*self.resolution[0], self.resolution[1]),\
+                            self.resolution, texture=self.params['infoboard_texture'], keep_aspect_ratio = False, cols=6)
+        infoboard.set_position((self.resolution[0]-infoboard.rect.width, 0))
+        self.infoboard = infoboard
+
+    @no_size_limit
     def generate_dialogs(self):
         scoreboard = InfoBoard(self.id+'_scoreboard', USEREVENTS.DIALOG_USEREVENT, (0, 0), (self.resolution[0]//1.1, self.resolution[1]//1.5),\
                                 self.resolution, keep_aspect_ratio = False, rows=len(self.players)+1, cols=len(self.players[0].get_stats().keys()),
@@ -255,6 +265,7 @@ class Board(Screen):
         for generation_thread in threads:   generation_thread.join()
         self.adjust_cells()
         self.generate_inter_paths()
+        self.generate_infoboard()
         self.save_sprites()
         self.generated = True
 
@@ -273,7 +284,7 @@ class Board(Screen):
         Do this to modify all the graphical elements at once when needed in a more seamless manner.
         Also because the super().draw method only draws the self.sprites.
         Only adds the graphics regarding the board, the characters and player addons will be drawn later."""
-        self.sprites.add(self.platform, self.inter_paths.sprite, *self.paths.sprites(), *self.cells.sprites())
+        self.sprites.add(self.platform, self.inter_paths.sprite, *self.paths.sprites(), *self.cells.sprites(), self.infoboard)
 
     def __adjust_number_of_paths(self):
         """Checks the inter path frequency. If the circles are not divisible by that frequency,

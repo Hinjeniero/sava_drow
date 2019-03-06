@@ -121,11 +121,17 @@ class ScriptedSprite(AnimatedSprite):
             (boolean):  True if the movement has ended. False otherwise."""
         super().update()    #This changes the image to the next frame.
         self.rect.topleft = self.frames[self.fps][self.index]
+        self.update_sprites()
         self.index += self.frame_jump
         if self.index >= len(self.frames[self.fps]):
             self.restart()
             return True
         return False   
+    
+    def update_sprites(self):
+        """If this animated sprite has overlapping sprites, their absolute positions must be updated"""
+        for sprite in self.sprites:
+            sprite.abs_position = self.get_sprite_abs_position(sprite)
 
     def restart(self):
         """Restarts the movement's attributes and the position to the initial ones."""

@@ -3,7 +3,7 @@ TO START THE GAME: 'python.exe main.py' in command line
 DEPENDENCIES: pygame, numpy, wrapt
 
 TODO CURRENT:
-    1.- Implement spider dice + sprite. Needs to randomize the game a little bit. WIP ~60%
+    1.- Implement spider dice + sprite. Needs to randomize the game a little bit. WIP ~90%
     
     2.- Game infoboard in the right side. WIP ~20%
 

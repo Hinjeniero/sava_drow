@@ -20,6 +20,7 @@ from pygame.locals import *
 #Selfmade libraries
 from settings import MESSAGES, USEREVENTS, PATHS
 from obj.screen import Screen, LoadingScreen
+from obj.dice import Dice
 from obj.cell import Cell, Quadrant
 from obj.players import Player
 from obj.paths import Path
@@ -108,7 +109,7 @@ class Board(Screen):
                         'scoreboard_texture'    : None,
                         'promotion_texture'     : None,
                         'infoboard_texture'     : None,
-                        'dice_texture'          : None
+                        'dice_textures_folder'  : None
     }
     #CHANGE MAYBE THE THREADS OF CHARACTER TO JOIN INSTEAD OF NUM PLAYERS AND SHIT
     def __init__(self, id_, event_id, end_event_id, resolution, *players, empty=False, **params):
@@ -222,6 +223,12 @@ class Board(Screen):
         self.gray_overlay = ScrollingText('nuthing', self.event_id, self.resolution, transparency=128)
 
     @run_async
+    def generate_dice(self):
+        dice = Dice('dice', (0, 0), tuple(0.1*x for x in self.resolution), self.resolution, shuffle_time=1500, sprite_folder=self.params['dice_textures_folder'], animation_delay=2)
+        dice.set_position(tuple(x-y for x, y in zip(self.resolution, dice.rect.size)))
+        self.dice.add(dice)
+
+    @run_async
     def update_scoreboard(self):
         while True:
             try:
@@ -261,7 +268,7 @@ class Board(Screen):
 
     @time_it
     def generate_environment(self):
-        threads = [self.generate_all_cells(), self.generate_paths(offset=True), self.generate_map_board()]
+        threads = [self.generate_all_cells(), self.generate_paths(offset=True), self.generate_map_board(), self.generate_dice()]
         for generation_thread in threads:   generation_thread.join()
         self.adjust_cells()
         self.generate_inter_paths()
@@ -284,7 +291,7 @@ class Board(Screen):
         Do this to modify all the graphical elements at once when needed in a more seamless manner.
         Also because the super().draw method only draws the self.sprites.
         Only adds the graphics regarding the board, the characters and player addons will be drawn later."""
-        self.sprites.add(self.platform, self.inter_paths.sprite, *self.paths.sprites(), *self.cells.sprites(), self.infoboard)
+        self.sprites.add(self.platform, self.inter_paths.sprite, *self.paths.sprites(), *self.cells.sprites(), self.infoboard, self.dice)
 
     def __adjust_number_of_paths(self):
         """Checks the inter path frequency. If the circles are not divisible by that frequency,
@@ -593,11 +600,6 @@ class Board(Screen):
         self.generate_inter_paths()
         self.sprites.empty()
         self.save_sprites()
-        '''for sprite in self.sprites: #Swapping the bezier curves.
-            if 'inter' in sprite.id and 'path' in sprite.id:
-                print("SWAPIINNG")
-                sprite = self.inter_paths.sprite
-                break'''
 
     def ALL_PLAYERS_LOADED(self):
         """Returns:
@@ -766,6 +768,8 @@ class Board(Screen):
                     return
             elif self.active_char.sprite: 
                 self.pickup_character()
+            elif self.dice.sprite.hover:
+                self.dice.sprite.shuffle()
         
         #CLICK UP
         elif event.type == pygame.MOUSEBUTTONUP:  #If we are dragging it we will have a char in here
@@ -790,11 +794,10 @@ class Board(Screen):
             path = pygame.sprite.spritecollideany(mouse_sprite, self.paths, collided=pygame.sprite.collide_mask)
             self.set_active_path(path)
 
-            '''interpath = pygame.sprite.spritecollideany(mouse_sprite, self.inter_paths, collided=pygame.sprite.collide_mask)
-            if interpath:
-                self.inter_paths.sprite.set_active(True)
-                return
-            self.inter_paths.sprite.set_active(False)'''
+            if pygame.sprite.spritecollideany(mouse_sprite, self.dice, collided=pygame.sprite.collide_mask):
+                self.dice.sprite.set_hover(True)
+            else:
+                self.dice.sprite.set_hover(False)
 
     def character_swapper(self):
         """This is to try a generator in a kinda non-generator situation"""

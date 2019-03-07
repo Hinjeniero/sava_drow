@@ -183,6 +183,7 @@ def create_board_params():
     board_params['interpath_texture'] = PATHS.WOOD_TEXTURE_DARK
     board_params['scoreboard_texture'] = PATHS.SCOREBOARD_BASIC
     board_params['promotion_texture'] = PATHS.LONG_RED_BAR
+    board_params['dice_textures_folder'] = PATHS.DICE_FOLDER
     return board_params
 
 @time_it

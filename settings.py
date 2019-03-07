@@ -176,3 +176,4 @@ class PATHS:
     CHEST = IMAGE_FOLDER+'chest.png'
     SHIELD = IMAGE_FOLDER+'shield.png'
     DIAMOND_SPEAR = IMAGE_FOLDER+'diamond_spear.png'
+    DICE_FOLDER = IMAGE_FOLDER+'dice\\'

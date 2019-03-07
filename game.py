@@ -114,7 +114,10 @@ class Game(object):
                 try:
                     self.board_handler(event.command.lower(), value=event.value)
                 except AttributeError:
-                    self.board_handler(event.command.lower())
+                    try:
+                        self.board_handler(event.command.lower())
+                    except AttributeError:
+                        self.get_screen('main', 'board').dice.sprite.increase_animation_delay()
             elif event.type is USEREVENTS.DIALOG_USEREVENT:
                 if 'scroll' in event.command:
                     self.current_screen.set_scroll(event.value)

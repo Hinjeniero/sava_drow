@@ -2074,3 +2074,18 @@ class LoopedAnimation(Animation):
                 position = tuple([int(x*y) if x<1 else y for x,y in zip(ratios, sprite.rect.topleft)])
                 size =     tuple([int(x*y) if x<1 else y for x,y in zip(ratios, sprite.rect.size)])
                 sprite.set_rect(pygame.Rect(position, size))    #Adjusting size
+
+#INTERPATHS IN BOARD
+
+            
+            '''interpath = pygame.sprite.spritecollideany(mouse_sprite, self.inter_paths, collided=pygame.sprite.collide_mask)
+            if interpath:
+                self.inter_paths.sprite.set_active(True)
+                return
+            self.inter_paths.sprite.set_active(False)'''
+
+            '''for sprite in self.sprites: #Swapping the bezier curves.
+            if 'inter' in sprite.id and 'path' in sprite.id:
+                print("SWAPIINNG")
+                sprite = self.inter_paths.sprite
+                break'''

@@ -13,6 +13,7 @@ __author__ = 'David Flaity Pardo'
 
 import os
 import functools
+import math
 from obj.utilities.logger import Logger as LOG
 from obj.utilities.synch_dict import Dictionary
 from obj.utilities.decorators import time_it
@@ -298,3 +299,71 @@ class Path(object):
                 and graph[path[-1]][dest]: to_check.append((dest, len(path)))
         #LOG.log('DEBUG', "Number of iterations searching paths of distance ",restrictions.dist," -> ",iterations)
         return solutions
+
+class PathAppraiser(object):
+    @staticmethod
+    @time_it
+    def rate_path(start_pos, possible_destinies, current_map, character):
+        pass
+
+    @staticmethod
+    @time_it
+    def rate_movement(start_pos, possible_destinies, all_cells):
+        """Returns a tuple with indexes of the destinies, and a fitness going from 0 to 1."""
+        character = next(cell.get_char() for cell in all_cells if cell.get_real_index() == start_pos)
+        player = character.my_master
+        #TODO Create the algorithm itself, since the helpiung values have been written already
+        danger_multiplier = PathAppraiser.get_danger_multiplier
+        start_danger = PathAppraiser.get_danger_in_position
+        bait_ratio = {}
+        destinies_danger = {}
+        kill_values = {}
+
+        return 1    #TODO Work out the final formula (0.2-0.6 for danger, 0.2-0.6 for kill_value, 0-0.2 for bait_value)
+
+    @staticmethod
+    def get_kill_value(destination, my_char):
+        if destination.has_char() and (destination.has_char().my_master != my_char.my_master):
+            return 1*math.sqrt(destination.has_char().value/my_char.value)
+        return 0 
+
+    @staticmethod
+    def get_danger_multiplier(my_char, all_cells):
+        ratio = 1
+        my_type_of_char = 0
+        essential_pieces = 0 
+        all_value = 0
+        for cell in all_cells:
+            if cell.has_char() and cell.has_char().my_master == my_char.my_master:
+                my_type_of_char += 1 if my_char.get_type() == cell.has_char().get_type() else 0
+                essential_pieces += 1 if cell.has_char().essential else 0
+                all_value += cell.has_char().value
+        ratio *= (my_char.value/my_type_of_char) * (my_char.value/all_value) * (1 if not my_char.essential else my_char.value/essential_pieces if len(essential_pieces)>1 else 999)
+        return ratio
+
+    @staticmethod
+    def get_danger_in_position(cell_index, all_cells):
+        """From 0 to 1. 0 worst case, 1 no danger whatsoever"""
+        danger_value = 1
+        enemies_ready = 0
+        for cell in all_cells:
+            if cell.get_char() and cell.get_char().my_master != player\
+            and cell_index in cell.get_char().get_paths(graph, distances, current_map, index, level_size):  #If there is another char of another player that can move here
+                enemies_ready += 1
+        return danger_value/(enemies_ready+1)
+
+    @staticmethod
+    def get_bait_value(my_char, destination, all_cells):
+        bait_value = 1
+        vengeful_allies = 0
+        baited_enemy_values = []
+        for cell in all_cells:
+            if cell.get_char() and destination in cell.get_char().get_paths(graph, distances, current_map, index, level_size):  #If there is another char of another player that can move here
+                if cell.get_char().my_master == my_char.my_master:
+                    vengeful_allies += 1
+                else:
+                    baited_enemy_values.append(cell.get_char().value)
+        if vengeful_allies == 0 or baited_enemies == 0 or my_char.essential:
+            return 0
+        bait_init_value *= (min(baited_enemy_values)/my_char.value)*math.sqrt(vengeful_allies)
+        return bait_init_value

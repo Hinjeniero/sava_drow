@@ -7,6 +7,8 @@ TODO CURRENT:
     
     2.- Game infoboard in the right side. WIP ~20%
 
+    3.- Change my_master in class Character to be the uuid instead of a lousy name. This could bring trouble if the name of both players its the same.
+
 TODO WHENEVER:
 
     1.- Effect when chars colliding with each other.

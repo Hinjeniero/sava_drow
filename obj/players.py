@@ -363,6 +363,7 @@ class Character(AnimatedSprite):
         self.order      = 0
         self.upgradable = False
         self.current_pos= 0
+        self.value      = 1
         Character.generate(self)
 
     @staticmethod
@@ -635,6 +636,7 @@ class Warrior(Character):
         self.turns  = 2
         self.rank   = 1
         self.order  = 1
+        self.value  = 3
         
     def get_paths(self, graph, distances, current_map, index, level_size):
         """Gets all the possible paths for each cell for a Warrior type with his Restriction in movement.
@@ -684,6 +686,7 @@ class Wizard(Character):
         super().__init__(my_player, player_uuid, id_, position, size, canvas_size, sprites_path, aliases=aliases, uuid=uuid, **params)
         self.rank   = 1
         self.order  = 2
+        self.value  = 6
 
     def get_paths(self, graph, distances, current_map, index, level_size):
         """Gets all the possible paths for each cell for a Wizard type with his Restriction in movement.
@@ -737,6 +740,7 @@ class Priestess(Character):
         super().__init__(my_player, player_uuid, id_, position, size, canvas_size, sprites_path, aliases=aliases, uuid=uuid, **params)
         self.rank   = 1
         self.order  = 3
+        self.value  = 5
 
     def get_paths(self, graph, distances, current_map, index, level_size):
         """Gets all the possible paths for each cell for a Priestess type with her Restriction in movement.
@@ -882,6 +886,7 @@ class MatronMother(Character):
         self.essential  = True
         self.rank       = 2
         self.order      = 5
+        self.value      = 10
 
     def get_paths(self, graph, distances, current_map, index, level_size):
         """Gets all the possible paths for each cell for a MatronMother type with her Restriction in movement.
@@ -938,6 +943,7 @@ class HolyChampion(Character):
         self.order      = 4
         self.can_kill   = False
         self.can_die    = False
+        self.value      = 2
 
     def get_paths(self, graph, distances, current_map, index, level_size):
         """Gets all the possible paths for each cell for a MatronMother type with her Restriction in movement.

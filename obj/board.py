@@ -23,7 +23,7 @@ from obj.screen import Screen, LoadingScreen
 from obj.dice import Dice
 from obj.cell import Cell, Quadrant
 from obj.players import Player
-from obj.paths import Path
+from obj.paths import Path, PathAppraiser
 from obj.players import Character, Restriction
 from obj.sprite import Sprite
 from obj.ui_element import TextSprite, InfoBoard, Dialog, ScrollingText
@@ -132,6 +132,7 @@ class Board(Screen):
         self.cells          = pygame.sprite.Group()
         self.quadrants      = {}
         self.possible_dests = pygame.sprite.Group()
+        self.fitnesses      = {}
         self.inter_paths    = pygame.sprite.GroupSingle()
         self.dice           = pygame.sprite.GroupSingle()
         self.paths          = pygame.sprite.Group()
@@ -828,8 +829,11 @@ class Board(Screen):
         self.drag_char.sprite.set_selected(True)
         self.last_cell.add(self.active_cell.sprite)
         if get_dests:
-            destinations = self.drag_char.sprite.get_paths( self.enabled_paths, self.distances, self.current_map,\
+            destinations = self.drag_char.sprite.get_paths(self.enabled_paths, self.distances, self.current_map,\
                                                             self.active_cell.sprite.index, self.params['circles_per_lvl'])
+            self.fitnesses = PathAppraiser.rate_movement(self.active_cell.sprite.get_real_index(), tuple(x[-1] for x in destinations), self.enabled_paths,\
+                                                        self.distances, self.current_map, self.cells.sprites(), self.params['circles_per_lvl'])
+            print(self.fitnesses)
             for cell_index in destinations:
                 self.possible_dests.add(self.get_cell_by_real_index(cell_index[-1]))
             for dest in self.possible_dests:

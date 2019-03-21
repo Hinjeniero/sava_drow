@@ -308,18 +308,27 @@ class PathAppraiser(object):
 
     @staticmethod
     @time_it
-    def rate_movement(start_pos, possible_destinies, all_cells):
+    def rate_movement(start_pos, possible_destinies, paths_graph, distances, current_map, all_cells, level_size):
         """Returns a tuple with indexes of the destinies, and a fitness going from 0 to 1."""
+        fitnesses = {}
         character = next(cell.get_char() for cell in all_cells if cell.get_real_index() == start_pos)
-        player = character.my_master
         #TODO Create the algorithm itself, since the helpiung values have been written already
-        danger_multiplier = PathAppraiser.get_danger_multiplier
-        start_danger = PathAppraiser.get_danger_in_position
-        bait_ratio = {}
+        danger_multiplier = PathAppraiser.get_danger_multiplier(character, all_cells)
+        start_danger = PathAppraiser.get_danger_in_position(start_pos, character.my_master, paths_graph, distances, current_map, all_cells, level_size)*danger_multiplier
+        bait_ratios = {}
         destinies_danger = {}
         kill_values = {}
-
-        return 1    #TODO Work out the final formula (0.2-0.6 for danger, 0.2-0.6 for kill_value, 0-0.2 for bait_value)
+        for index in possible_destinies:
+            bait_ratios[index] = PathAppraiser.get_bait_value(character, index, paths_graph, distances, current_map, all_cells, level_size)
+            destinies_danger[index] = PathAppraiser.get_danger_in_position(index, character.my_master, paths_graph, distances, current_map, all_cells, level_size)
+            destinies_danger[index] *= danger_multiplier
+            destiny_cell = next(cell for cell in all_cells if index == cell.get_real_index())
+            kill_values[index] = PathAppraiser.get_kill_value(destiny_cell, character)
+            LOG.log('info', "VALUES FOR DESTINY ", destiny_cell, ", baitValue: ", bait_ratios[index], ", dangerValue: ", destinies_danger[index], ", kill_value: ", kill_values[index])
+            LOG.log('info', "TANHS FOR DESTINY ", destiny_cell, ", baitTanh: ", math.tanh(bait_ratios[index]), ", dangerdiffTanh: ", math.tanh(start_danger/destinies_danger[index]), ", killTanh: ", math.tanh(kill_values[index]))
+            fitness = 0.6*(math.tanh(kill_values[index]))+0.6*(math.tanh(start_danger/destinies_danger[index]))+0.2*(math.tanh(bait_ratios[index]))
+            fitnesses[index] = fitness #TODO Work out the final formula (0-0.6 for danger, 0-0.6 for kill_value, 0-0.2 for bait_value)
+        return fitnesses
 
     @staticmethod
     def get_kill_value(destination, my_char):
@@ -338,32 +347,32 @@ class PathAppraiser(object):
                 my_type_of_char += 1 if my_char.get_type() == cell.has_char().get_type() else 0
                 essential_pieces += 1 if cell.has_char().essential else 0
                 all_value += cell.has_char().value
-        ratio *= (my_char.value/my_type_of_char) * (my_char.value/all_value) * (1 if not my_char.essential else my_char.value/essential_pieces if len(essential_pieces)>1 else 999)
+        ratio *= (my_char.value/my_type_of_char) * (my_char.value/all_value) * (1 if not my_char.essential else my_char.value/essential_pieces if essential_pieces>1 else 999)
         return ratio
 
     @staticmethod
-    def get_danger_in_position(cell_index, all_cells):
+    def get_danger_in_position(cell_index, player, graph, distances, current_map, all_cells, level_size):
         """From 0 to 1. 0 worst case, 1 no danger whatsoever"""
         danger_value = 1
         enemies_ready = 0
         for cell in all_cells:
             if cell.get_char() and cell.get_char().my_master != player\
-            and cell_index in cell.get_char().get_paths(graph, distances, current_map, index, level_size):  #If there is another char of another player that can move here
+            and cell_index in cell.get_char().get_paths(graph, distances, current_map, cell.get_real_index(), level_size):  #If there is another char of another player that can move here
                 enemies_ready += 1
         return danger_value/(enemies_ready+1)
 
     @staticmethod
-    def get_bait_value(my_char, destination, all_cells):
+    def get_bait_value(my_char, destination, graph, distances, current_map, all_cells, level_size):
         bait_value = 1
         vengeful_allies = 0
         baited_enemy_values = []
         for cell in all_cells:
-            if cell.get_char() and destination in cell.get_char().get_paths(graph, distances, current_map, index, level_size):  #If there is another char of another player that can move here
+            if cell.get_char() and destination in cell.get_char().get_paths(graph, distances, current_map, cell.get_real_index(), level_size):  #If there is another char of another player that can move here
                 if cell.get_char().my_master == my_char.my_master:
                     vengeful_allies += 1
                 else:
                     baited_enemy_values.append(cell.get_char().value)
-        if vengeful_allies == 0 or baited_enemies == 0 or my_char.essential:
+        if vengeful_allies == 0 or len(baited_enemy_values) == 0 or my_char.essential:
             return 0
-        bait_init_value *= (min(baited_enemy_values)/my_char.value)*math.sqrt(vengeful_allies)
-        return bait_init_value
+        bait_value *= (min(baited_enemy_values)/my_char.value)*math.sqrt(vengeful_allies)
+        return bait_value

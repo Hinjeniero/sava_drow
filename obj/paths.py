@@ -327,7 +327,7 @@ class PathAppraiser(object):
             LOG.log('info', "VALUES FOR DESTINY ", destiny_cell, ", baitValue: ", bait_ratios[index], ", dangerValue: ", destinies_danger[index], ", kill_value: ", kill_values[index])
             LOG.log('info', "TANHS FOR DESTINY ", destiny_cell, ", baitTanh: ", math.tanh(bait_ratios[index]), ", dangerdiffTanh: ", math.tanh(start_danger/destinies_danger[index]), ", killTanh: ", math.tanh(kill_values[index]))
             fitness = 0.6*(math.tanh(kill_values[index]))+0.6*(math.tanh(start_danger/destinies_danger[index]))+0.2*(math.tanh(bait_ratios[index]))
-            fitnesses[index] = fitness #TODO Work out the final formula (0-0.6 for danger, 0-0.6 for kill_value, 0-0.2 for bait_value)
+            fitnesses[index] = fitness
         return fitnesses
 
     @staticmethod

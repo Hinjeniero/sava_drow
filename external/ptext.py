@@ -569,7 +569,12 @@ def draw(text, pos=None, **kwargs):
 	tsurf = getsurf(text, **options.togetsurfoptions())
 	pos = _blitpos(options.angle, options.pos, options.anchor, tsurf, text)
 	if options.surf is not None:
-		options.surf.blit(tsurf, pos)
+		while True:
+			try:
+				options.surf.blit(tsurf, pos)
+				break
+			except pygame.error:	#Blitting shitty error
+				pass
 	if AUTO_CLEAN:
 		clean()
 	return tsurf, pos

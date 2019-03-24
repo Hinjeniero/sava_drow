@@ -357,11 +357,23 @@ class Screen(object):
                 self.background.play(surface)
             else:
                 self.background.draw(surface)
+            
+            help_dialog = None
             for sprite in self.sprites:
+                try:
+                    if sprite.hover_dialog and sprite.dialog_active:
+                        help_dialog=sprite.hover_dialog
+                except AttributeError:  #If the elements doesnt have those attributes
+                    pass
                 if self.scroll_offset != (0, 0):
                     sprite.draw(surface, offset=self.scroll_offset)
                 else:
                     sprite.draw(surface)
+            if help_dialog:
+                if self.scroll_offset != (0, 0):
+                    help_dialog.draw(surface, offset=self.scroll_offset)
+                else:
+                    help_dialog.draw(surface)
             if self.scroll_sprite:
                 self.scroll_sprite.draw(surface)       
             if self.animation:

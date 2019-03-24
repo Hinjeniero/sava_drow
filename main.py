@@ -90,6 +90,9 @@ def create_main_menu(result):
     element_generator.send(('button_graphics', "go_menu_graphics_display", next(positions), {'text': "Graphics settings"}))
     for t in threads:   t.join()    #Waiting for all the buttons to be created
     #Create Menu
+    for el in elements:
+        el.add_hover_dialog("Ou shit shelock, this shit is lit bro bro bro bro bro bro", dialog_lines=3, dialog_size=(200, 400))
+
     bg = AnimationGenerator.factory(STRINGS.INITIAL_ANIMATED_BG, INIT_PARAMS.INITIAL_RESOLUTION, PARAMS.ANIMATION_TIME, INIT_PARAMS.ALL_FPS, INIT_PARAMS.INITIAL_FPS)
     main_menu   = Menu('main_menu', USEREVENTS.MAINMENU_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, *elements, animated_background=bg, background_path=PATHS.DEFAULT_BG, songs_paths=MENU_SONGS, do_align=False)
     main_menu.add_dialogs(DialogGenerator.create_exit_dialog('game', tuple(x//2 for x in INIT_PARAMS.INITIAL_RESOLUTION), INIT_PARAMS.INITIAL_RESOLUTION))

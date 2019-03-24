@@ -83,7 +83,14 @@ class UIElement(MultiSprite):
     
     def hitbox_action(self, command, value):
         """Executes the associated action of the element. To be called when a click or key-press happens."""
-        if self.active and self.enabled: self.send_event()
+        if self.active and self.enabled:
+            if self.hover_dialog and 'second' in command and 'mouse' in command:
+                self.show_help_dialog()
+                return
+            elif self.dialog_active:
+                self.hide_help_dialog()
+                return
+            self.send_event()
 
     def send_event(self):
         """Post (send) the event associated with this element, along with the command.

@@ -305,7 +305,7 @@ class Sprite(pygame.sprite.Sprite):
 
     @staticmethod   #TODO UPDATE DOCUMENTATION
     def generate_surface(size, surface=None, texture=None, overlap_texture=None, active_texture=None, keep_aspect_ratio=True, resize_mode='fit', resize_smooth=True,\
-                        only_text=False, text="default_text", text_color=WHITE, text_font=FONT, text_outline=1, text_outline_color=BLACK, text_shadow_dir=(1.0,1.0), text_lines=1,\
+                        only_text=False, text="default_text", text_color=WHITE, text_font=FONT, text_outline=1, text_outline_color=BLACK, text_shadow_dir=(0.0, 0.0), text_lines=1,\
                         shape="Rectangle", transparent=False, fill_color=RED, fill_gradient=True, gradient=(LIGHTGRAY, DARKGRAY), gradient_type="horizontal", angle=None,\
                         overlay=True, overlay_color=WHITE, border=True, border_color=WHITE, border_width=2, **unexpected_kwargs):
         """Generates a pygame surface according to input arguments.
@@ -339,7 +339,7 @@ class Sprite(pygame.sprite.Sprite):
             surf    = ResizedSurface.get_surface(texture, size, resize_mode, resize_smooth, keep_aspect_ratio)
         elif only_text: #If the surface is only a text with transparent background
             if text_lines > 1:
-                surf = ptext.draw(text, (0, 0), fontsize=Resizer.max_font_size(text, size, text_font), fontname=text_font,\
+                surf = ptext.draw(text, (0, 0), fontsize=Resizer.max_font_size(text, (size[0]*text_lines, size[1]//text_lines), text_font), fontname=text_font,\
                                 owidth=text_outline, ocolor=text_outline_color, shadow=text_shadow_dir, width=size[0], surf=None)[0]
             else:
                 surf = ptext.draw(text, (0, 0), fontsize=Resizer.max_font_size(text, size, text_font), fontname=text_font,\
@@ -475,15 +475,20 @@ class MultiSprite(Sprite):
         self.sprites        = pygame.sprite.OrderedUpdates()
         self.in_animation   = False
         self.hover_dialog   = None
-        self.dialog_active  = False #This has the function of adding information to an otherwise element wity a not-so-clear purpose
+        self.dialog_animated= False
+        self.dialog_active  = False #This has the function of adding information to an otherwise element with a not-so-clear purpose
 
-    def add_hover_dialog(self, dialog_texture=None, dialog_size=None, dialog_text=None, text_color=WHITE, dialog_lines=1, text_outline=1,\
-                        text_outline_color=BLACK, text_shadow_dir=None, text_font=FONT, **dialog_kwargs):
+    def add_hover_dialog(self, dialog_text, animated=False, dialog_texture=None, dialog_size=None, text_color=WHITE, dialog_lines=1, text_outline=1,\
+                        text_outline_color=BLACK, text_shadow_dir=(0.0, 0.0), text_font=FONT, **dialog_kwargs):
         if dialog_text:
             size = dialog_size if dialog_size else self.rect.size
+            self.dialog_animated = False
             self.hover_dialog = MultiSprite(self.id+'_hover_dialog', (0, 0), size, self.rect.size, texture=dialog_texture, **dialog_kwargs)
+            self.add_sprite(self.hover_dialog)  #Way more comfortable in this way.
             self.hover_dialog.add_text_sprite(self.id+'_hover_dialog_text', dialog_text, text_size=size, text_font=text_font, text_lines=dialog_lines,\
                                                 text_outline=text_outline, text_color=text_color, text_outline_color=text_outline_color, text_shadow_dir=text_shadow_dir)
+            self.hover_dialog.set_alpha(0)
+            self.hover_dialog.visible = False
 
     def set_alpha(self, alpha):
         self.image.set_alpha(alpha)
@@ -567,30 +572,37 @@ class MultiSprite(Sprite):
             sprite.abs_position = self.get_sprite_abs_position(sprite)
 
     def draw(self, surface, offset=None):
-        super().draw(surface, offset=offset)
-        for sprite in self.sprites:
-            sprite.draw(surface, offset=offset)
-        if self.hover_dialog:
-            self.hover_dialog.draw(surface, offset=offset)  #If its not visible, it wont be drawn
-            #From here on could be done in update or animation method. Way cleaner in this fasthion
+        if self.visible:
+            super().draw(surface, offset=offset)
+            for sprite in self.sprites:
+                sprite.draw(surface, offset=offset)
+            '''if self.dialog_active:   #This is done by the screens, since thats needed to draw it on top of everything.
+                self.hover_dialog.draw(surface, offset=offset)  #If its not visible, it wont be drawn'''
 
     def update(self):
         if self.hover_dialog:
             dialog_alpha = self.hover_dialog.image.get_alpha()
             if self.dialog_active:
                 if dialog_alpha < 255:
-                    dialog_alpha += 3
+                    dialog_alpha = dialog_alpha+3 if self.dialog_animated else 255
                     if dialog_alpha > 255: dialog_alpha = 255
                     self.hover_dialog.image.set_alpha(dialog_alpha)
             elif self.hover_dialog.visible:
                 if dialog_alpha > 0:
+                    dialog_alpha = dialog_alpha-3 if self.dialog_animated else 0
                     if dialog_alpha <= 0: 
                         dialog_alpha = 0
                         self.hover_dialog.visible = False
                     self.hover_dialog.image.set_alpha(dialog_alpha)
 
     def show_help_dialog(self):
-        pass
+        if self.hover_dialog:
+            self.dialog_active = True
+            self.hover_dialog.visible = True
+            
+    def hide_help_dialog(self):
+        if self.hover_dialog:
+            self.dialog_active = False
 
     def appearing_animation(self):
         pass

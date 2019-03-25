@@ -26,7 +26,7 @@ from obj.utilities.colors import WHITE, RED, BLACK
 from obj.utilities.decorators import time_it
 from obj.utilities.resizer import Resizer
 from obj.utilities.logger import Logger as LOG
-from settings import PATHS
+from settings import PATHS, STRINGS
 
 @time_it
 def euclidean_generator(size=300): #100 will be plenty in our case
@@ -376,3 +376,8 @@ class UtilityBox (object):
                 if mask.get_at((x, y)):
                     newsurf.set_at((x, y), top_surf.get_at((x, y)))
         return newsurf
+
+    @staticmethod
+    def line_number(text):
+        """Returns the number of lines that a text must have based on it length"""
+        return math.ceil(len(text)/STRINGS.CHARS_PER_LINE)

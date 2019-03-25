@@ -68,6 +68,7 @@ class EXTENSIONS:
 
 class STRINGS:
     #Strings, but not related to texts, more like names and shit
+    CHARS_PER_LINE = 36
     GAMEMODES = ('Custom', 'Classic', 'Great Wheel')
     BOARD_SIZES = ('Normal', 'Lite', 'Small', 'Extra', 'Huge', 'Insane', 'MemoryError')
     PLAYER_NAMES = ['Mitches', 'Hayesshine', 'Rolbo Gordonggins', 'Spencerpop', 'Palka', 'Rainrobinson', 'Kingolas', 'Zippotudo',
@@ -177,3 +178,5 @@ class PATHS:
     SHIELD = IMAGE_FOLDER+'shield.png'
     DIAMOND_SPEAR = IMAGE_FOLDER+'diamond_spear.png'
     DICE_FOLDER = IMAGE_FOLDER+'dice\\'
+    #Rectangles
+    DARK_BRICK = IMAGE_FOLDER+'cave_dark_brick.png'

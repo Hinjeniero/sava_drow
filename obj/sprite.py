@@ -488,6 +488,7 @@ class MultiSprite(Sprite):
             self.add_sprite(self.hover_dialog)  #Way more comfortable in this way.
             self.hover_dialog.add_text_sprite(self.id+'_hover_dialog_text', dialog_text, text_size=size, text_font=text_font, text_lines=dialog_lines,\
                                                 text_outline=text_outline, text_color=text_color, text_outline_color=text_outline_color, text_shadow_dir=text_shadow_dir)
+            self.hover_dialog.set_position(tuple(x//2 - y//2 for x,y in zip(self.rect.size, self.hover_dialog.rect.size)))
             self.hover_dialog.set_alpha(0)
             self.hover_dialog.visible = False
 

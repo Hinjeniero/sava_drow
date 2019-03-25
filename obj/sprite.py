@@ -134,6 +134,7 @@ class Sprite(pygame.sprite.Sprite):
         Args:
             surface (:obj: pygame.Surface): Surface to draw the Sprite. It's usually the display.
         """
+        if offset and offset == (0, 0): offset=None
         if self.visible:
             try:
                 position = self.abs_position if self.abs_position else self.rect.topleft
@@ -576,9 +577,7 @@ class MultiSprite(Sprite):
             super().draw(surface, offset=offset)
             for sprite in self.sprites:
                 sprite.draw(surface, offset=offset)
-            '''if self.dialog_active:   #This is done by the screens, since thats needed to draw it on top of everything.
-                self.hover_dialog.draw(surface, offset=offset)  #If its not visible, it wont be drawn'''
-
+                
     def update(self):
         if self.hover_dialog:
             dialog_alpha = self.hover_dialog.image.get_alpha()

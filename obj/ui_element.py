@@ -84,11 +84,9 @@ class UIElement(MultiSprite):
     def hitbox_action(self, command, value):
         """Executes the associated action of the element. To be called when a click or key-press happens."""
         if self.active and self.enabled:
-            if self.hover_dialog and 'center' in command and 'mouse' in command:
-                self.show_help_dialog()
-                return
-            elif self.dialog_active:
-                self.hide_help_dialog()
+            if self.hover_dialog and 'center' in command and 'mouse' in command:    #MouseWheel click
+                if self.dialog_active:          self.hide_help_dialog()
+                elif not self.dialog_active:    self.show_help_dialog()
                 return
             self.send_event()
 
@@ -296,7 +294,7 @@ class ButtonValue (UIElement):
         if self.active and self.enabled:
             if 'dec' in command or 'min' in command or 'left' in command or ("mouse" in command and "sec" in command):      self.dec_index()
             elif 'inc' in command or 'add' in command or 'right' in command or ("mouse" in command and "first" in command): self.inc_index()
-            else:                                                                                                           super().hitbox_action(command, value)
+            super().hitbox_action(command, value)
 
     def update_value(self):
         """After a change in value, change the TextSprite and regenerates the image

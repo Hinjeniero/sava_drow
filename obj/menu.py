@@ -154,8 +154,11 @@ class Menu (Screen):
             if self.get_colliding_sprite(): #Dont want to have the last active sprite triggering if we are not hovering it
                 if mouse_buttons[0]:
                     self.send_to_active_sprite('first_mouse_button', value=mouse_position)
-                elif mouse_buttons[1]:  
+                elif mouse_buttons[1]:
                     self.send_to_active_sprite('center_wheel_mouse_button', value=mouse_position)
+                    sprite_w_active_dialog = next((sprite for sprite in self.sprites if (sprite != self.hit_sprite and sprite.dialog_active)), None)
+                    if sprite_w_active_dialog:
+                        sprite_w_active_dialog.hide_help_dialog()
                 elif mouse_buttons[2]:  
                     self.send_to_active_sprite('secondary_mouse_button', value=mouse_position)
         if mouse_movement:

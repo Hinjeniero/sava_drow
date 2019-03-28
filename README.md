@@ -1,12 +1,17 @@
 # sava_drow - David Flaity Pardo
 
-##TO START THE GAME: 'python.exe main.py' in command line
-
-##PYTHON DEPENDENCIES
+## TO START THE GAME
+Write in the command line (Take into account that ~ must be whatever the folder you cloned this to is)
+```
+cd ~
+cd sava_drow
+python.exe main.py
+```
+### PYTHON DEPENDENCIES
 pygame, numpy, wrapt
 Install with > pip install library
 
-##NODE SCRIPT
+### NODE SCRIPT
 Should be executing in amazon aws vps
 The node modules and dependencies are not included in a git pull here! THey should be installed executing the command > npm install
 

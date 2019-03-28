@@ -879,6 +879,7 @@ class Board(Screen):
         if active_cell.promotion and self.drag_char.sprite.upgradable\
         and (None != active_cell.owner != character.master_uuid)\
         and any(not char.upgradable for char in self.current_player.fallen):
+            #TODO MAKE SHIT HERE WITH HOLY CHAMPION
             self.update_promotion_table(*tuple(char for char in self.current_player.fallen if not char.upgradable))
             self.show_promotion = True
             self.swapper.send(self.drag_char.sprite)

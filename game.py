@@ -13,6 +13,8 @@ import pygame
 import os
 import threading
 import sys
+import pickle
+import uuid
 from pygame.locals import *
 from pygame.key import *
 from obj.screen import Screen
@@ -35,6 +37,7 @@ from animation_generator import AnimationGenerator
 class Game(object):
     def __init__(self, id_, resolution, fps, **board_params):
         self.id             = id_
+        self.uuid           = None  #Created in Game.start()
         self.display        = None  #Created in Game.generate()
         self.clock          = pygame.time.Clock()
         self.screens        = []
@@ -61,6 +64,17 @@ class Game(object):
         self.display = pygame.display.get_surface()
         self.board_generator = BoardGenerator()
         self.set_timers()
+
+    def generate_uuid(self):
+        try:
+            uuid_file = open(PATHS.UUID_FILE, "rb")
+            self.uuid = pickle.load(uuid_file)
+        except FileNotFoundError:
+            self.uuid = uuid.uuid1().int
+            uuid_file = open(PATHS.UUID_FILE, "wb")
+            pickle.dump(self.uuid, uuid_file)
+            uuid_file.close()
+            LOG.log('info', "UUID was not found, generated a new one.") 
 
     def set_timers(self):
         pygame.time.set_timer(USEREVENTS.TIMER_ONE_SEC, 1000) #Each second
@@ -501,6 +515,7 @@ class Game(object):
 
     def start(self, *first_screen_keywords):
         try:
+            self.generate_uuid()
             self.set_popups()
             self.check_state()
             self.init_log()

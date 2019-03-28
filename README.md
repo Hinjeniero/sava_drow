@@ -9,9 +9,15 @@ python.exe main.py
 ```
 ### PYTHON DEPENDENCIES
 pygame, numpy, wrapt
-Install with > pip install library
+
+Install with
+
+```
+pip install library
+```
 
 ### NODE SCRIPT
 Should be executing in amazon aws vps
+
 The node modules and dependencies are not included in a git pull here! THey should be installed executing the command > npm install
 

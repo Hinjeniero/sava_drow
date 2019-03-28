@@ -1,8 +1,11 @@
 #### TODO CURRENT:
 - [ ] Implement spider dice + sprite. Needs to randomize the game a little bit. WIP ~90% 
 - [ ] Game infoboard in the right side. WIP ~20%
-- [ ] MAKE SELECTABLE INFOBOARD
+- [X] MAKE SELECTABLE Table
+- [ ] Test Selectable Table
+- [ ] Connect the fitness result with cells in a graphical fashion 
 - [ ] Change my_master in class Character to be the uuid instead of a lousy name. This could bring trouble if the name of both players its the same.
+- [ ] Set tutorial 
 
 #### TODO WHENEVER:
 - [ ] Effect when chars colliding with each other.

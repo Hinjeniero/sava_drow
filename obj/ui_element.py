@@ -988,6 +988,64 @@ class Dialog (InfoBoard):
         super().clear()
         self.elements.empty()
 
+class SelectableTable(Dialog):
+    def __init__(self, id_, user_event_id, row_size, canvas_size, keys, *data, **params):
+        """Dialog constructor.
+        Args:
+            id_ (str):  Identifier of the Sprite.
+            user_event_id (int): Identifier of the event that will be sent.
+            position (:tuple: int,int): Position of the Sprite in the screen. In pixels.
+            element_size (:tuple: int,int):     Size of the Sprite in the screen. In pixels.
+            canvas_size (:tuple: int,int):  Size of the display. In pixels.
+            *elements (:tuple: UI_Element, int):    Subelements to be added, separated by commas. Usually TextSprites.
+                                                    The tuple follows the schema (UIElement, infoboard spaces taken).
+            **params (:dict:):  Dict of keywords and values as parameters to create the self.image attribute.
+                                Variety going from fill_color and use_gradient to text_only.
+            """
+        params['cols'] = 1
+        super().__init__(id_, user_event_id, (0, 0), (row_size[0], row_size[1]*(len(data)+1)), canvas_size, **params)
+        SelectableTable.generate(self, row_size, command, *data)
+    
+    @staticmethod
+    def generate(self, row_size, command, keys, *rows):
+        new_keys, new_rows = self.parse_data(keys, *rows)
+        self.set_rows = len(rows)+1
+        self.add_button(1, self.build_row(new_keys), command, scale=1, only_text=True)
+        for row in new_rows:
+            self.add_button(1, self.build_row(row), command, scale=1, only_text=True)
+
+    def build_row(self, row):
+        """Returns the entire row sring"""
+        row_string = '| '
+        for string in row:
+            row_string+=string+' | '
+        return row_string
+
+    def parse_data(self, keys, *rows):
+        """Parse all the elements of all rows to match the longest string in each column"""
+        new_keys, new_rows = [], []
+        for i in range(0, len(keys)):
+            #Get the longest text in the column i
+            longest = len(keys[i])
+            for row in rows:
+                if len(row[i]) > longest:
+                    longest = len(row[i])
+            #Parse the rest of texts:
+            new_keys.append(self.parse_text(keys[i], longest))
+            for row in rows:
+                try:
+                    new_rows[i].append(self.parse_text(row[i], longest))
+                except IndexError:
+                    new_rows.append([self.parse_text(row[i], longest)])
+        return new_keys, new_rows
+
+    def parse_text(self, text, new_length):
+        """Parse a text to match a new length, padding it with spaces"""
+        start = (new_length-len(text))//2
+        end = (new_length-len(text))//2 if (new_length-len(text))%2 == 0 else math.ceil((new_length-len(text))/2)
+        return (start*' ')+text+(end*' ')
+
+
 class TextBox(UIElement):
     CURSOR_CHAR = 'I'
     def __init__(self, id_, command, user_event_id, position, element_size, canvas_size, initial_text='', placeholder='', char_limit=0, **params):

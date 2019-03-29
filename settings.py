@@ -97,7 +97,9 @@ class NETWORK:
     CLIENT_IP = '192.168.1.254'      #USED TO CONNECT TO AN EXTERNAL COMPUTER AS A SERVER
     CLIENT_TIMEOUT_CONNECT = 30
     CLIENT_TIMEOUT_RECEIVE = 30
-
+    TABLE_SERVERS_URL = 'savadrow.servegame.com'
+    TABLE_SERVERS_PORT = 9001
+    
 class MESSAGES:
     LOCKED_SURFACE_EXCEPTION = ('Warning', 'A surface was locked during the blit, skipping until next frame.')
 
@@ -178,7 +180,10 @@ class PATHS:
     #---objects
     CHEST = IMAGE_FOLDER+'chest.png'
     SHIELD = IMAGE_FOLDER+'shield.png'
+    SHIELD_ICON = IMAGE_FOLDER+'shield_icon.png'
     DIAMOND_SPEAR = IMAGE_FOLDER+'diamond_spear.png'
     DICE_FOLDER = IMAGE_FOLDER+'dice\\'
+    #Icons
+    HELP_ICON = IMAGE_FOLDER+'help_icon.png'
     #Rectangles
     DARK_BRICK = IMAGE_FOLDER+'cave_dark_brick.png'

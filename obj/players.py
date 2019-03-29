@@ -333,7 +333,7 @@ class Character(AnimatedSprite):
                             "die" : "die",
                             "stop": "stop" 
     }
-    def __init__(self, my_player, player_uuid, id_, position, size, canvas_size, sprites_path, aliases={}, uuid=None, **params):
+    def __init__(self, player_uuid, id_, position, size, canvas_size, sprites_path, aliases={}, uuid=None, **params):
         """Character constructor.
         Args:
             my_player (str):    Owning/Master player of this Character.
@@ -347,8 +347,7 @@ class Character(AnimatedSprite):
         self.uuid       = uuid
         self.aliases    = Character.__default_aliases.copy()
         self.aliases.update(aliases)
-        self.my_master  = my_player
-        self.master_uuid= player_uuid
+        self.owner_uuid = player_uuid
         self.state      = self.aliases['idle']
         self.index      = 0
         self.kills      = 0
@@ -401,7 +400,7 @@ class Character(AnimatedSprite):
         """This to share in the online variant and drop in the same positions."""
         response = {'uuid': self.uuid,
                     'id': self.id,
-                    'player': self.master_uuid,
+                    'player': self.owner_uuid,
                     'type': self.get_type()}
         if cell_index:
             response['cell'] = cell_index    
@@ -458,7 +457,7 @@ class Character(AnimatedSprite):
     def get_master(self):
         """Returns:
             (str): Player that owns this character."""
-        return self.my_master
+        return self.owner_uuid
 
     def set_state(self, state):
         """Changes the current state of the character (The action that the char is performing).

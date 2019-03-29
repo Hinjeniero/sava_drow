@@ -807,7 +807,7 @@ class Board(Screen):
             new_char = yield
             cell = self.get_cell_by_real_index(original_char.current_pos)
             cell.add_char(new_char)
-            player = next(player for player in self.players if player.uuid == original_char.master_uuid)
+            player = next(player for player in self.players if player.uuid == original_char.owner_uuid)
             player.revive_char(new_char, original_char)
             new_char.set_size(cell.rect.size)
             new_char.set_cell(cell)
@@ -877,7 +877,7 @@ class Board(Screen):
         self.last_cell.empty()  #Not last cell anymore, char was dropped succesfully
         #THIS CONDITION TO SHOW THE UPGRADE TABLE STARTS HERE
         if active_cell.promotion and self.drag_char.sprite.upgradable\
-        and (None != active_cell.owner != character.master_uuid)\
+        and (None != active_cell.owner != character.owner_uuid)\
         and any(not char.upgradable for char in self.current_player.fallen):
             #TODO MAKE SHIT HERE WITH HOLY CHAMPION
             self.update_promotion_table(*tuple(char for char in self.current_player.fallen if not char.upgradable))

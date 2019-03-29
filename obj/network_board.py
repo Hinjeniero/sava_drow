@@ -270,7 +270,7 @@ class NetworkBoard(Board):
                     char.set_cell(cell)
                     self.characters.add(char)
                     if cell.promotion:
-                        cell.owner = char.master_uuid
+                        cell.owner = char.owner_uuid
             for player in self.players:
                 player.update()
             self.send_ready()
@@ -293,7 +293,7 @@ class NetworkBoard(Board):
             char = next(char for char in self.characters if char.uuid == response['move_character'])
             center = tuple(x*y for x,y in zip(self.resolution, response['center']))
             char.set_center(center)
-            self.players_names[char.master_uuid].set_center(center)
+            self.players_names[char.owner_uuid].set_center(center)
         elif "drop_character" in response:
             dest_cell = self.get_cell_by_real_index(response['cell'])
             char = next(char for char in self.characters if char.uuid == response['drop_character'])
@@ -311,7 +311,7 @@ class NetworkBoard(Board):
             self.change_turn.clear()
         elif "swap" in response:
             original_char = next(char for char in self.characters if char.uuid == response['original'])
-            player = next(player for player in self.players if player.uuid == original_char.master_uuid)
+            player = next(player for player in self.players if player.uuid == original_char.owner_uuid)
             self.swapper.send(original_char)
             self.swapper.send(next(char for char in player.fallen if char.uuid == response['new']))
         elif "admin" in response:
@@ -327,7 +327,7 @@ class NetworkBoard(Board):
         if self.my_player:
             for char in self.characters:
                 char.set_state('idle')
-                if char.master_uuid == self.my_player:
+                if char.owner_uuid == self.my_player:
                     char.set_active(True)
                 else:
                     char.set_active(False)
@@ -459,7 +459,7 @@ class NetworkBoard(Board):
 
     def after_swap(self, orig_char, new_char):
         super().after_swap(orig_char, new_char)
-        if orig_char.master_uuid == self.my_player and new_char.master_uuid == self.my_player:    #If this was a local swap and not a received one in response_handler from another player
+        if orig_char.owner_uuid == self.my_player and new_char.owner_uuid == self.my_player:    #If this was a local swap and not a received one in response_handler from another player
             self.send_data_async({"swap": True, "original": orig_char.uuid, "new": new_char.uuid})
 
     def drop_character(self):

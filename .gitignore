@@ -1,4 +1,5 @@
 **/__pycache__/
+**/*.pem
 **/node_modules/
 **/myid.*
 /old/

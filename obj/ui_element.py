@@ -989,7 +989,7 @@ class Dialog (InfoBoard):
         self.elements.empty()
 
 class SelectableTable(Dialog):
-    def __init__(self, id_, user_event_id, row_size, canvas_size, keys, *data, **params):
+    def __init__(self, id_, user_event_id, command, row_size, canvas_size, keys, *data, **params):
         """Dialog constructor.
         Args:
             id_ (str):  Identifier of the Sprite.
@@ -1003,13 +1003,13 @@ class SelectableTable(Dialog):
                                 Variety going from fill_color and use_gradient to text_only.
             """
         params['cols'] = 1
-        super().__init__(id_, user_event_id, (0, 0), (row_size[0], row_size[1]*(len(data)+1)), canvas_size, **params)
-        SelectableTable.generate(self, row_size, command, *data)
+        params['rows'] = len(data)+1
+        super().__init__(id_, user_event_id, (row_size[0], row_size[1]*(len(data)+1)), canvas_size, **params)
+        SelectableTable.generate(self, row_size, command, keys, *data)
     
     @staticmethod
     def generate(self, row_size, command, keys, *rows):
         new_keys, new_rows = self.parse_data(keys, *rows)
-        self.set_rows = len(rows)+1
         self.add_button(1, self.build_row(new_keys), command, scale=1, only_text=True)
         for row in new_rows:
             self.add_button(1, self.build_row(row), command, scale=1, only_text=True)

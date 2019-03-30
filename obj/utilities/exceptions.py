@@ -69,3 +69,6 @@ class GameEndException(Exception):
 
 class SwapFailedException(Exception):
     pass
+
+class ServiceNotAvailableException(Exception):
+    pass

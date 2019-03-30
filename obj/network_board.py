@@ -11,11 +11,13 @@ import time
 import uuid
 import random
 import pygame
+import requests #Only used to get the servers when getting all of them from the table of servers
 #External libraries
 #from external.Mastermind import MastermindServerTCP, MastermindClientTCP
 #from external.Mastermind._mm_errors import *   #This one doesnt catch the exception for some fuckin reasoni
 from external.Mastermind import *   #I dont like this one a bit, since it has to import everything
 #Selfmade libraries
+from strings import CONFIG_BOARD_DIALOGS
 from settings import NETWORK, MESSAGES
 from dialog_generator import DialogGenerator
 from obj.sprite import TextSprite
@@ -25,6 +27,7 @@ from obj.board import Board
 from obj.players import Character
 from obj.utilities.decorators import run_async
 from obj.utilities.logger import Logger as LOG
+from obj.utilities.exceptions import ServiceNotAvailableException
 
 class NetworkBoard(Board):
     """NetworkBoard class. Inherits from Board.
@@ -47,7 +50,7 @@ class NetworkBoard(Board):
         reconnect (boolean):    True if to reconnect after losing connection, False otherwise.
     """
 
-    def __init__(self, id_, event_id, end_event_id, resolution, host=False, server=None, **params):
+    def __init__(self, id_, event_id, end_event_id, resolution, direct_connection=False, host=False, server=None, **params):
         """NetworkBoard constructor. Autogenerates the UUID.
         Args:
             id_ (str):  Identifier of the Screen.
@@ -82,10 +85,10 @@ class NetworkBoard(Board):
         self.players_names = {}
         self.flags = {}     #Used if client and not host.
         self.reconnect = True
-        NetworkBoard.generate(self, host)
+        NetworkBoard.generate(self, host, direct_connection)
 
     @staticmethod
-    def generate(self, host):
+    def generate(self, host, direct_connection):
         """This method sets the adequate ip, checking if this object is the host or not.
         Initiates the client, and makes it connect to the server.
         Also makes that distinction to start the server, or to set the flags needed to receive information from the host.
@@ -100,16 +103,38 @@ class NetworkBoard(Board):
                 self.server.start(NETWORK.SERVER_IP, NETWORK.SERVER_PORT)
                 self.set_ip_port(NETWORK.CLIENT_LOCAL_IP, NETWORK.SERVER_PORT)
             else:
-                self.dialogs.add(DialogGenerator.create_input_dialog('ip_port', tuple(x//3 for x in self.resolution), self.resolution, ('ip', 'send_ip', str(NETWORK.CLIENT_IP)), ('port', 'send_port', str(NETWORK.SERVER_PORT))))
+                self.generate_connect_dialog(direct_connection)
                 self.flags["ip_port_done"] = threading.Event()
                 self.flags["board_done"] = threading.Event()
                 self.flags["players_ammount_done"] = threading.Event()
                 self.flags["players_data_done"] = threading.Event()
-                self.show_dialog('input')   #To input IP and PORT
             self.start(host)
         except Exception as exc:
             self.exception_handler(exc)
-    
+
+    @run_async
+    def generate_connect_dialog(self, direct_connection):
+        #TODO To update this just destroy it and rebuild it or whatever. Take into edxample the update_scoreboard in Board.
+        if direct_connection:
+            dialog = DialogGenerator.create_input_dialog('ip_port', tuple(x//3 for x in self.resolution), self.resolution, ('ip', 'send_ip', str(NETWORK.CLIENT_IP)), ('port', 'send_port', str(NETWORK.SERVER_PORT)))
+        else:
+            rows = self.get_all_servers()
+            dialog = DialogGenerator.create_table_dialog('server_explorer', 'ip_port', (self.resolution[0]//1.3, self.resolution[1]//10), self.resolution, CONFIG_BOARD_DIALOGS.SERVER_TABLE_KEYS, *rows)
+        self.dialogs.add(dialog)
+        if direct_connection:   self.show_dialog('input')
+        else:                   self.show_dialog('table')
+
+    def get_all_servers(self):
+        try:
+            while True:
+                result = requests.get(NETWORK.TABLE_SERVERS_GET_ALL_ENDPOINT).json()
+                if result['success']:
+                    print(result['data'])
+                    break
+            return (('yes', 'yes', 'yes', 'yes', 'yes'),)
+        except requests.exceptions.ConnectionError as exc:
+            self.exception_handler(exc)
+
     @run_async
     def generate_players_names(self):
         for player in self.players:
@@ -123,6 +148,10 @@ class NetworkBoard(Board):
         except (MastermindErrorSocket, MastermindError):   #If there was an error connecting
             LOG.error_traceback()
             pygame.event.post(self.connection_error_event)
+        except requests.exceptions.ConnectionError:
+            LOG.error_traceback()
+            pygame.event.post(self.connection_error_event)
+            raise ServiceNotAvailableException("The server that holds the table of open games is down right now.")
         except Exception:
             LOG.error_traceback()
             pygame.event.post(self.connection_error_event)

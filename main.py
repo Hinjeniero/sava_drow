@@ -75,7 +75,7 @@ def generate_ui_elements_different_sizes(results, thread_list, user_event_id, **
 @run_async
 def create_main_menu(result):
     #Create elements, main menu buttons (POSITIONS AND SIZES ARE IN PERCENTAGES OF THE CANVAS_SIZE, can use absolute integers too)
-    positions       = UtilityBox.size_position_generator(7, 0.40, 0.05, 0.20, 0)
+    positions       = UtilityBox.size_position_generator(8, 0.40, 0.05, 0.20, 0)
     button_size     = next(positions)
     #Creation of elements
     elements, threads = [], []
@@ -84,7 +84,8 @@ def create_main_menu(result):
     #Starts generating
     element_generator.send(('button_start', "start_game_go_main_board", next(positions), {'text': "Start new game"}))
     element_generator.send(('button_online_host', "host_network_start_online_game_go_main_board", next(positions), {'text': "Host LAN game"}))
-    element_generator.send(('button_online_client', "client_network_start_online_game_go_main_board", next(positions), {'text': "Connect to LAN game"}))
+    element_generator.send(('button_explorer_client', "client_start_online_game_get_servers_go_main_board", next(positions), {'text': "Connect to community server"}))
+    element_generator.send(('button_online_client', "client_start_online_game_go_main_board", next(positions), {'text': "Connect to LAN game"}))
     element_generator.send(('button_continue', "continue_game_go_main_board", next(positions), {'text': "Continue last game"}))
     element_generator.send(('button_params_menu', "go_menu_params_config", next(positions), {'text': "Game settings"}))
     element_generator.send(('button_sound', "go_menu_sound_music", next(positions), {'text': "Sound settings"}))

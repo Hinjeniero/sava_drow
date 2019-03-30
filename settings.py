@@ -97,8 +97,12 @@ class NETWORK:
     CLIENT_IP = '192.168.1.254'      #USED TO CONNECT TO AN EXTERNAL COMPUTER AS A SERVER
     CLIENT_TIMEOUT_CONNECT = 30
     CLIENT_TIMEOUT_RECEIVE = 30
-    TABLE_SERVERS_URL = 'savadrow.servegame.com'
+    TABLE_SERVERS_URL = 'http://savadrow.servegame.com'
     TABLE_SERVERS_PORT = 9001
+    TABLE_SERVERS_ADD_ENDPOINT = TABLE_SERVERS_URL+':'+str(TABLE_SERVERS_PORT)+'/host/add'
+    TABLE_SERVERS_UPDATE_ENDPOINT = TABLE_SERVERS_URL+':'+str(TABLE_SERVERS_PORT)+'/host/update'
+    TABLE_SERVERS_DELETE_ENDPOINT = TABLE_SERVERS_URL+':'+str(TABLE_SERVERS_PORT)+'/host/delete'
+    TABLE_SERVERS_GET_ALL_ENDPOINT = TABLE_SERVERS_URL+':'+str(TABLE_SERVERS_PORT)+'/host/get/all'
     
 class MESSAGES:
     LOCKED_SURFACE_EXCEPTION = ('Warning', 'A surface was locked during the blit, skipping until next frame.')

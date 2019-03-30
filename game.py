@@ -110,10 +110,14 @@ class Game(object):
                 if 'start' in event.command.lower():
                     if 'online' in event.command.lower() or 'network' in event.command.lower():
                         self.board_generator.online = True
-                        if 'host' in event.command.lower() or 'server' in event.command.lower():
+                        if 'host' in event.command.lower():
                             self.board_generator.server = True
+                        elif 'server' in event.command.lower() and ('get' in event.command.lower() or 'explore' in event.command.lower()):
+                            self.board_generator.server = False
+                            self.board_generator.direct_connect = False
                         else:
                             self.board_generator.server = False
+                            self.board_generator.direct_connect = True
                     else:
                         self.board_generator.online = False
                     self.initiate()

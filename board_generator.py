@@ -20,6 +20,7 @@ class BoardGenerator(object):
     def __init__(self):
         self.online = False
         self.server = False
+        self.direct_connect = True
         self.players = 2
         self.game_mode = 'custom'
         self.prefab_size = 'default'
@@ -106,8 +107,8 @@ class BoardGenerator(object):
         if self.online:
             if self.server:
                 server = Server(self.players)
-                return NetworkBoard(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, host=True, server=server, **board_params)
-            return NetworkBoard(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **board_params)
+                return NetworkBoard(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, direct_connection=self.direct_connect, host=True, server=server, **board_params)
+            return NetworkBoard(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, direct_connection=self.direct_connect, **board_params)
         return Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **board_params)
             
     def generate_classic(self, resolution):

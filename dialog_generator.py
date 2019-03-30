@@ -1,5 +1,5 @@
 from settings import USEREVENTS, PATHS
-from obj.ui_element import Dialog, UIElement
+from obj.ui_element import Dialog, UIElement, SelectableTable
 from obj.utilities.colors import WHITE
 
 class DialogGenerator(object):
@@ -28,6 +28,14 @@ class DialogGenerator(object):
         dialog.add_button(dialog.get_cols()//2, 'Send', 'ok_yes_input_already', texture=PATHS.SHORT_GOLD_SHADOW_BUTTON, resize_mode='fill')
         dialog.add_button(dialog.get_cols()//2, 'Cancel', 'no_cancel_false', texture=PATHS.SHORT_GOLD_SHADOW_BUTTON, resize_mode='fill')
         return dialog
+
+    @staticmethod
+    def create_table_dialog(id_, command, row_size, resolution, keys, *rows):
+        """Tkes double space cuz text and then inputbox of the same size.
+        tuple(text input box, command inpout box)"""
+        #Dialog
+        table = SelectableTable(id_+'_table_dialog', USEREVENTS.DIALOG_USEREVENT, command, row_size, resolution, keys, *rows)#, texture=PATHS.DIALOG_SILVER, keep_aspect_ratio=False)
+        return table
 
     @staticmethod
     def generate_popups(resolution, *ids_texts, text_size=0.95, text_color=WHITE):

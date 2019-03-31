@@ -150,7 +150,7 @@ def create_sound_menu(result):
     for t in threads:   t.join()    #Waiting for all the buttons to be created
     #Menu creation
     sound_menu          = Menu("menu_volume_music", USEREVENTS.SOUND_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, *elements, background_path=PATHS.DEFAULT_BG, do_align=False, songs_paths=None)
-    sound_menu.add_animation(AnimationGenerator.characters_crossing_screen(INIT_PARAMS.INITIAL_RESOLUTION, *INIT_PARAMS.ALL_FPS))
+    #sound_menu.add_animation(AnimationGenerator.characters_crossing_screen(INIT_PARAMS.INITIAL_RESOLUTION, *INIT_PARAMS.ALL_FPS))
     sound_menu.enable_sprite('board', 'sound', state=False), sound_menu.enable_sprite('board', 'music', state=False), sound_menu.enable_sprite('board', 'song', state=False)
     result.append(sound_menu)
 
@@ -171,7 +171,7 @@ def create_video_menu(result):
     for t in threads:   t.join()    #Waiting for all the buttons to be created
     #Menu creation
     graphics_menu   = Menu("menu_graphics_display", USEREVENTS.GRAPHIC_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, *elements, background_path=PATHS.DEFAULT_BG, do_align=False, songs_paths=None)
-    graphics_menu.add_animation(AnimationGenerator.character_teleporting_screen(INIT_PARAMS.INITIAL_RESOLUTION, *INIT_PARAMS.ALL_FPS))
+    #graphics_menu.add_animation(AnimationGenerator.character_teleporting_screen(INIT_PARAMS.INITIAL_RESOLUTION, *INIT_PARAMS.ALL_FPS))
     result.append(graphics_menu)
 
 def create_board_params():

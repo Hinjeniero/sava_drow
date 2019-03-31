@@ -219,6 +219,10 @@ class ButtonAction(UIElement):
         adds the text with the params that we used in the init call.
         In short, build the MultiSprite adding the Sprites of ButtonAction."""
         UtilityBox.join_dicts(self.params, ButtonAction.__default_config)
+        try:
+            if self.params['only_text']: return
+        except KeyError:
+            pass
         text_size = [int(x*self.params['text_proportion']) for x in self.rect.size]
         self.add_text_sprite(self.id+"_text", self.params['text'], text_size=text_size, alignment=self.params['text_alignment'])
 
@@ -1009,10 +1013,19 @@ class SelectableTable(Dialog):
     
     @staticmethod
     def generate(self, row_size, command, keys, *rows):
+        font = None
+        try:
+            font = self.params['text_font']
+        except KeyError:
+            pass
         new_keys, new_rows = self.parse_data(keys, *rows)
-        self.add_button(1, self.build_row(new_keys), command, scale=1, only_text=True)
+        self.add_button(1, self.build_row(new_keys), command, scale=1, only_text=True, text_font=font)
+        #print(self.build_row(new_keys))
+        #print("LEN "+str(len(self.build_row(new_keys))))
         for row in new_rows:
-            self.add_button(1, self.build_row(row), command, scale=1, only_text=True)
+            #print(self.build_row(row))
+            #print("LEN "+str(len(self.build_row(row))))
+            self.add_button(1, self.build_row(row), command, scale=1, only_text=True, text_font=font)
 
     def build_row(self, row):
         """Returns the entire row sring"""
@@ -1032,11 +1045,11 @@ class SelectableTable(Dialog):
                     longest = len(row[i])
             #Parse the rest of texts:
             new_keys.append(self.parse_text(keys[i], longest))
-            for row in rows:
+            for j in range (0, len(rows)):
                 try:
-                    new_rows[i].append(self.parse_text(row[i], longest))
+                    new_rows[j].append(self.parse_text(rows[j][i], longest))
                 except IndexError:
-                    new_rows.append([self.parse_text(row[i], longest)])
+                    new_rows.append([self.parse_text(rows[j][i], longest)])
         return new_keys, new_rows
 
     def parse_text(self, text, new_length):
@@ -1044,7 +1057,6 @@ class SelectableTable(Dialog):
         start = (new_length-len(text))//2
         end = (new_length-len(text))//2 if (new_length-len(text))%2 == 0 else math.ceil((new_length-len(text))/2)
         return (start*' ')+text+(end*' ')
-
 
 class TextBox(UIElement):
     CURSOR_CHAR = 'I'

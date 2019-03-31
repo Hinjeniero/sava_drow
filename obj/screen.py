@@ -325,7 +325,6 @@ class Screen(object):
         return True if self.dialog else False
 
     def show_dialog(self, id_):
-        print("SHOW DIALOG")
         """Makes the Screen's Dialog visible. (If it exists)."""
         for dialog in self.dialogs:
             try:

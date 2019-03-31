@@ -61,8 +61,9 @@ class Game(object):
     @staticmethod
     def generate(self):
         pygame.display.set_mode(self.resolution)
+        self.generate_uuid()
         self.display = pygame.display.get_surface()
-        self.board_generator = BoardGenerator()
+        self.board_generator = BoardGenerator(self.uuid)
         self.set_timers()
 
     def generate_uuid(self):
@@ -519,7 +520,6 @@ class Game(object):
 
     def start(self, *first_screen_keywords):
         try:
-            self.generate_uuid()
             self.set_popups()
             self.check_state()
             self.init_log()

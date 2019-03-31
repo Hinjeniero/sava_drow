@@ -17,7 +17,8 @@ from obj.utilities.decorators import time_it
 from settings import USEREVENTS, STRINGS, PARAMS, CHARACTERS, PATHS
 
 class BoardGenerator(object):
-    def __init__(self):
+    def __init__(self, uuid):
+        self.uuid = uuid
         self.online = False
         self.server = False
         self.direct_connect = True

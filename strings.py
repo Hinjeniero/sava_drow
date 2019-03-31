@@ -1,4 +1,7 @@
 FONT = './local/zelda_font.ttf'
+#MONOSPACED_FONT = './local/HyliaSerifBeta.ttf'
+MONOSPACED_FONT = './local/ShareTechMono.ttf'
+
 #ENGLISH
 
 #SPANISH

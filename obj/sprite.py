@@ -333,6 +333,7 @@ class Sprite(pygame.sprite.Sprite):
             unexpected_kwargs (anything):   Just there to not raise an error if unexpecte keywords are received.
         Returns:
             (:obj: pygame.Surface): Surface generated following the keywords"""
+        text_font = FONT if not text_font else text_font
         size    = size.size if isinstance(size, pygame.rect.Rect) else size
         if surface:     #If we creating the sprite from an already created surface
             surf    = Resizer.resize(surface, size, mode=resize_mode, smooth=resize_smooth)  

@@ -49,7 +49,7 @@ class Player(object):
         corpses (list->Character):  The captured characters. Saved to use the information on captures and such.
         dead (boolean): True if this player has lost the essential characters, and cannot continue playing. False otherwise.
     """
-    def __init__(self, name, order, sprite_size, canvas_size, infoboard=None, uuid=None, empty=False, avatar=None, **character_params):
+    def __init__(self, name, order, sprite_size, canvas_size, infoboard=None, obj_uuid=None, empty=False, avatar=None, **character_params):
         """Player constructor.
         Args:
             name (str): Name of the player.
@@ -62,7 +62,7 @@ class Player(object):
                                             In this case the character_params will not be used, and are not necessary.
             **character_params (:dict:):    Contains the more specific parameters to create the characters.
                                             Ammount of each type of char, name of their actions, and their folder paths."""
-        self.uuid       = uuid
+        self.uuid       = obj_uuid if obj_uuid else uuid.uuid1().int
         self.avatar     = None
         self.name       = name
         self.order      = order
@@ -90,8 +90,6 @@ class Player(object):
             """
         if self.avatar:
             pass    #TODO THIS SHIT
-        if not self.uuid:
-            self.uuid = uuid.uuid1().int
         if not empty:
             self.characters = Character.factory(self.name, self.uuid, sprite_size, canvas_size, **character_params)
         else:
@@ -333,7 +331,7 @@ class Character(AnimatedSprite):
                             "die" : "die",
                             "stop": "stop" 
     }
-    def __init__(self, player_uuid, id_, position, size, canvas_size, sprites_path, aliases={}, uuid=None, **params):
+    def __init__(self, player_uuid, id_, position, size, canvas_size, sprites_path, aliases={}, obj_uuid=None, **params):
         """Character constructor.
         Args:
             my_player (str):    Owning/Master player of this Character.
@@ -344,7 +342,7 @@ class Character(AnimatedSprite):
         """
         params['hover_surfaces'] = True
         super().__init__(id_, position, size, canvas_size, sprite_folder=sprites_path, **params)
-        self.uuid       = uuid
+        self.uuid       = obj_uuid if obj_uuid else uuid.uuid1().int
         self.aliases    = Character.__default_aliases.copy()
         self.aliases.update(aliases)
         self.owner_uuid = player_uuid
@@ -367,8 +365,6 @@ class Character(AnimatedSprite):
 
     @staticmethod
     def generate(self):
-        if not self.uuid:
-            self.uuid = uuid.uuid1().int
         self.update_info_sprites()
 
     def set_size(self, size, update_rects=True):

@@ -11,6 +11,7 @@ import time
 import uuid
 import random
 import pygame
+import uuid
 import requests #Only used to get the servers when getting all of them from the table of servers
 #External libraries
 #from external.Mastermind import MastermindServerTCP, MastermindClientTCP
@@ -50,7 +51,7 @@ class NetworkBoard(Board):
         reconnect (boolean):    True if to reconnect after losing connection, False otherwise.
     """
 
-    def __init__(self, id_, event_id, end_event_id, resolution, direct_connection=False, host=False, server=None, **params):
+    def __init__(self, id_, event_id, end_event_id, resolution, obj_uuid=None, direct_connection=False, host=False, server=None, **params):
         """NetworkBoard constructor. Autogenerates the UUID.
         Args:
             id_ (str):  Identifier of the Screen.
@@ -68,7 +69,7 @@ class NetworkBoard(Board):
             super().__init__(id_, event_id, end_event_id, resolution, **params)
         else:
             super().__init__(id_, event_id, end_event_id, resolution, empty=True, **params) #To generate the environment later
-        self.uuid = uuid.uuid1().int    #Using this if crashing would led to more conns than players
+        self.uuid = obj_uuid if obj_uuid else uuid.uuid1().int    #Using this if crashing would led to more conns than players
         self.ip = None
         self.port = None
         self.overlay_text = None
@@ -102,6 +103,7 @@ class NetworkBoard(Board):
             if host:
                 self.server.start(NETWORK.SERVER_IP, NETWORK.SERVER_PORT)
                 self.set_ip_port(NETWORK.CLIENT_LOCAL_IP, NETWORK.SERVER_PORT)
+                self.register_server()
             else:
                 self.generate_connect_dialog(direct_connection)
                 self.flags["ip_port_done"] = threading.Event()
@@ -124,6 +126,12 @@ class NetworkBoard(Board):
         if direct_connection:   self.show_dialog('input')
         else:                   self.show_dialog('table')
 
+    def register_server(self):
+        json_petition = {'uuid': 0, 'ip': 9, 'port': NETWORK.SERVER_PORT, 'players': 1, 'timestamp': 0}
+    
+    def update_server_(self, **params):
+        pass
+
     def get_all_servers(self):
         try:
             while True:
@@ -134,6 +142,8 @@ class NetworkBoard(Board):
             return (('yes', 'yes', 'yes', 'yes', 'yes'),)
         except requests.exceptions.ConnectionError as exc:
             self.exception_handler(exc)
+
+
 
     @run_async
     def generate_players_names(self):

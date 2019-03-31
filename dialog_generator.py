@@ -1,6 +1,7 @@
 from settings import USEREVENTS, PATHS
 from obj.ui_element import Dialog, UIElement, SelectableTable
 from obj.utilities.colors import WHITE
+from strings import MONOSPACED_FONT
 
 class DialogGenerator(object):
     @staticmethod
@@ -34,7 +35,7 @@ class DialogGenerator(object):
         """Tkes double space cuz text and then inputbox of the same size.
         tuple(text input box, command inpout box)"""
         #Dialog
-        table = SelectableTable(id_+'_table_dialog', USEREVENTS.DIALOG_USEREVENT, command, row_size, resolution, keys, *rows)#, texture=PATHS.DIALOG_SILVER, keep_aspect_ratio=False)
+        table = SelectableTable(id_+'_table_dialog', USEREVENTS.DIALOG_USEREVENT, command, row_size, resolution, keys, *rows, text_font=MONOSPACED_FONT)
         return table
 
     @staticmethod

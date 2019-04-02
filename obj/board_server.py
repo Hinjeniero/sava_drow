@@ -85,7 +85,14 @@ class Server(MastermindServerTCP):
         Args:
             id_ (:obj: any):Identificator of the client. It's his uuid.
             conn_client(:obj: any): Connection object that will be used to communicate with the client. This is kept alive by him, too."""
-        self.clients.add_item(id_, conn_client)
+        if id_ in self.clients.values():
+            self.clients.update_item(id_, conn_client)
+            return {"success": True, "msg": "The client "+str(_id)" connection object was updated successfully."}
+        elif len(self.clients.values() < self.total_players):
+            self.clients.add_item(id_, conn_client)
+            return {"success": True, "msg": "The client "+str(_id)" was added successfully."}
+        else:
+            return {"success": False, "error": "The server is full."}
 
     def add_player(self, player):
         """Adds the players data to the server's players dict.
@@ -124,7 +131,7 @@ class Server(MastermindServerTCP):
             raise Exception("no success when adding the server to the table of servers.")
 
     def update_server_(self, **params):
-        json_petition = {'uuid': self.uuid}
+        json_petition = {'uuid': self.uuid, 'players': len(self.clients.values())}
         json_petition.update(params)
         response = UtilityBox.do_request(NETWORK.TABLE_SERVERS_UPDATE_ENDPOINT, method='POST', data=json_petition, return_success_only=True)
         if not response or not response['success']:
@@ -208,7 +215,7 @@ class Server(MastermindServerTCP):
                         self.host = connection_object
                     else:
                         reply = {"success": False, "error": "There is already an host."}
-                self.add_client(data["id"], connection_object)
+                reply = self.add_client(data["id"], connection_object)
             elif "params" in data:
                 if connection_object is self.host:
                     self.add_data("params", data["params"])

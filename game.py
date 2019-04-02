@@ -70,12 +70,13 @@ class Game(object):
         try:
             uuid_file = open(PATHS.UUID_FILE, "rb")
             self.uuid = pickle.load(uuid_file)
+            LOG.log('info', 'UUID FOUND! Your UUID is ', self.uuid)
         except FileNotFoundError:
             self.uuid = uuid.uuid1().int
             uuid_file = open(PATHS.UUID_FILE, "wb")
             pickle.dump(self.uuid, uuid_file)
             uuid_file.close()
-            LOG.log('info', "UUID was not found, generated a new one.") 
+            LOG.log('info', "UUID was not found, generated a new one. Your new UUID is ", self.uuid) 
 
     def set_timers(self):
         pygame.time.set_timer(USEREVENTS.TIMER_ONE_SEC, 1000) #Each second

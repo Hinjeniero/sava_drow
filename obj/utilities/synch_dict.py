@@ -50,6 +50,14 @@ class Dictionary:
         self.is_empty = False
 
     @synchronized
+    def update_item(self, key, item):
+        """Updates the item associated with a key to the dictionary.
+        Args:
+            key (any):  Key to set in the dictionary.
+            item (any): Item to associate to key set in the dictionary."""
+        self.dict[key]= item
+
+    @synchronized
     def delete_item(self, key):
         """Deletes and returns the associated item from the dict if the key is found in it.
         Args:

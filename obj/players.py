@@ -318,7 +318,7 @@ class Character(AnimatedSprite):
         state (str):    Current state of the character (what it is doing).
         index (int):    Index of the current cell that the character is residing in. Unused rn.
     """
-    def __init__(self, player_uuid, id_, position, size, canvas_size, sprites_path, aliases={}, obj_uuid=None, **params):
+    def __init__(self, player_uuid, id_, position, size, canvas_size, sprites_path, obj_uuid=None, aliases={}, **params):
         """Character constructor.
         Args:
             my_player (str):    Owning/Master player of this Character.
@@ -546,7 +546,8 @@ class Character(AnimatedSprite):
             char_init = Character.get_constructor_by_key(key)
             #Actual loading
             threads.append(Character.__char_loader(char_init, characters, character_settings[key]['ammount'],\
-                            player_name, player_uuid, player_name+'_'+key, (0, 0), sprite_size, canvas_size, character_settings[key]['path']))
+                            player_uuid, player_name+'_'+key, (0, 0), sprite_size, canvas_size, character_settings[key]['path']))
+                            #player_uuid,      id_,         position,    size,      canvas_size, sprites_path
         for t in threads:   
             t.join()        #Threading.join
         LOG.log('INFO', "----Factory, done making ", player_name, " characters----")
@@ -604,7 +605,7 @@ class Warrior(Character):
     DEFAULT_PATH    = PATHS.WARRIOR
     DEFAULT_AMMOUNT = 4
 
-    def __init__(self, my_player, player_uuid, id_, position, size, canvas_size, sprites_path, uuid=None, **params):
+    def __init__(self, player_uuid, id_, position, size, canvas_size, sprites_path, uuid=None, **params):
         """Warrior constructor. 
         Args:       
             my_player (str):    Owning/Master player of this Character.
@@ -614,7 +615,7 @@ class Warrior(Character):
             canvas_size (:tuple: int, int): Resolution of the screen. In pixels.
             **aliases (:dict:): How each standarized action will be named in the loaded images.
         """
-        super().__init__(my_player, player_uuid, id_, position, size, canvas_size, sprites_path, aliases=CHARACTERS.WARRIOR_ALIASES, uuid=uuid, **params)
+        super().__init__(player_uuid, id_, position, size, canvas_size, sprites_path, aliases=CHARACTERS.WARRIOR_ALIASES, uuid=uuid, **params)
         self.turns  = 2
         self.rank   = 1
         self.order  = 1
@@ -655,7 +656,7 @@ class Wizard(Character):
     DEFAULT_PATH    = PATHS.WIZARD
     DEFAULT_AMMOUNT = 2
 
-    def __init__(self, my_player, player_uuid, id_, position, size, canvas_size, sprites_path, uuid=None, **params):
+    def __init__(self, player_uuid, id_, position, size, canvas_size, sprites_path, uuid=None, **params):
         """Wizard constructor. 
         Args:       
             my_player (str):    Owning/Master player of this Character.
@@ -665,7 +666,7 @@ class Wizard(Character):
             canvas_size (:tuple: int, int): Resolution of the screen. In pixels.
             **aliases (:dict:): How each standarized action will be named in the loaded images.
         """
-        super().__init__(my_player, player_uuid, id_, position, size, canvas_size, sprites_path, aliases=CHARACTERS.WIZARD_ALIASES, uuid=uuid, **params)
+        super().__init__(player_uuid, id_, position, size, canvas_size, sprites_path, aliases=CHARACTERS.WIZARD_ALIASES, uuid=uuid, **params)
         self.rank   = 1
         self.order  = 2
         self.value  = 6
@@ -709,7 +710,7 @@ class Priestess(Character):
     DEFAULT_PATH    = PATHS.PRIESTESS
     DEFAULT_AMMOUNT = 2
 
-    def __init__(self, my_player, player_uuid, id_, position, size, canvas_size, sprites_path, uuid=None, **params):
+    def __init__(self, player_uuid, id_, position, size, canvas_size, sprites_path, uuid=None, **params):
         """Priestess constructor. 
         Args:       
             my_player (str):    Owning/Master player of this Character.
@@ -719,7 +720,7 @@ class Priestess(Character):
             canvas_size (:tuple: int, int): Resolution of the screen. In pixels.
             **aliases (:dict:): How each standarized action will be named in the loaded images.
         """
-        super().__init__(my_player, player_uuid, id_, position, size, canvas_size, sprites_path, aliases=CHARACTERS.PRIESTESS_ALIASES, uuid=uuid, **params)
+        super().__init__(player_uuid, id_, position, size, canvas_size, sprites_path, aliases=CHARACTERS.PRIESTESS_ALIASES, uuid=uuid, **params)
         self.rank   = 1
         self.order  = 3
         self.value  = 5
@@ -773,7 +774,7 @@ class Pawn(Character):
     DEFAULT_PATH    = PATHS.PAWN
     DEFAULT_AMMOUNT = 8
 
-    def __init__(self, my_player, player_uuid, id_, position, size, canvas_size, sprites_path, uuid=None, **params):
+    def __init__(self, player_uuid, id_, position, size, canvas_size, sprites_path, uuid=None, **params):
         """Pawn constructor. 
         Args:       
             my_player (str):    Owning/Master player of this Character.
@@ -783,7 +784,7 @@ class Pawn(Character):
             canvas_size (:tuple: int, int): Resolution of the screen. In pixels.
             **aliases (:dict:): How each standarized action will be named in the loaded images.
         """
-        super().__init__(my_player, player_uuid, id_, position, size, canvas_size, sprites_path, aliases=CHARACTERS.PAWN_ALIASES, uuid=uuid, **params)
+        super().__init__(player_uuid, id_, position, size, canvas_size, sprites_path, aliases=CHARACTERS.PAWN_ALIASES, uuid=uuid, **params)
         self.upgradable = True
 
     def get_paths(self, graph, distances, current_map, index, level_size):
@@ -854,7 +855,7 @@ class MatronMother(Character):
     DEFAULT_PATH    = PATHS.MATRONMOTHER
     DEFAULT_AMMOUNT = 1
 
-    def __init__(self, my_player, player_uuid, id_, position, size, canvas_size, sprites_path, uuid=None, **params):
+    def __init__(self, player_uuid, id_, position, size, canvas_size, sprites_path, uuid=None, **params):
         """MatronMother constructor. 
         Args:       
             my_player (str):    Owning/Master player of this Character.
@@ -864,7 +865,7 @@ class MatronMother(Character):
             canvas_size (:tuple: int, int): Resolution of the screen. In pixels.
             **aliases (:dict:): How each standarized action will be named in the loaded images.
         """
-        super().__init__(my_player, player_uuid, id_, position, size, canvas_size, sprites_path, aliases=CHARACTERS.MATRONMOTHER_ALIASES, uuid=uuid, **params)
+        super().__init__(player_uuid, id_, position, size, canvas_size, sprites_path, aliases=CHARACTERS.MATRONMOTHER_ALIASES, uuid=uuid, **params)
         self.essential  = True
         self.rank       = 2
         self.order      = 5
@@ -909,7 +910,7 @@ class HolyChampion(Character):
     DEFAULT_PATH    = PATHS.HOLYCHAMPION
     DEFAULT_AMMOUNT = 1
 
-    def __init__(self, my_player, player_uuid, id_, position, size, canvas_size, sprites_path, uuid=None, **params):
+    def __init__(self, player_uuid, id_, position, size, canvas_size, sprites_path, uuid=None, **params):
         """HolyChampion constructor. 
         Args:       
             my_player (str):    Owning/Master player of this Character.
@@ -919,7 +920,7 @@ class HolyChampion(Character):
             canvas_size (:tuple: int, int): Resolution of the screen. In pixels.
             **aliases (:dict:): How each standarized action will be named in the loaded images.
         """
-        super().__init__(my_player, player_uuid, id_, position, size, canvas_size, sprites_path, aliases=CHARACTERS.HOLYCHAMPION_ALIASES, uuid=uuid, **params)
+        super().__init__(player_uuid, id_, position, size, canvas_size, sprites_path, aliases=CHARACTERS.HOLYCHAMPION_ALIASES, uuid=uuid, **params)
         self.essential  = True
         self.rank       = 2
         self.order      = 4

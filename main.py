@@ -75,7 +75,7 @@ def generate_ui_elements_different_sizes(results, thread_list, user_event_id, **
 @run_async
 def create_main_menu(result):
     #Create elements, main menu buttons (POSITIONS AND SIZES ARE IN PERCENTAGES OF THE CANVAS_SIZE, can use absolute integers too)
-    positions       = UtilityBox.size_position_generator(8, 0.40, 0.05, 0.20, 0)
+    positions       = UtilityBox.size_position_generator(9, 0.40, 0.05, 0.20, 0)
     button_size     = next(positions)
     #Creation of elements
     elements, threads = [], []
@@ -83,9 +83,10 @@ def create_main_menu(result):
     element_generator.send(None)    #Starting generator
     #Starts generating
     element_generator.send(('button_start', "start_game_go_main_board", next(positions), {'text': "Start new game"}))
-    element_generator.send(('button_online_host', "host_network_start_online_game_go_main_board", next(positions), {'text': "Host LAN game"}))
+    element_generator.send(('button_online_host', "host_network_start_online_game_go_main_board", next(positions), {'text': "Host public game"}))
+    element_generator.send(('button_online_host', "host_private_network_start_online_game_go_main_board", next(positions), {'text': "Host private game"}))
     element_generator.send(('button_explorer_client', "client_start_online_game_get_servers_go_main_board", next(positions), {'text': "Connect to community server"}))
-    element_generator.send(('button_online_client', "client_start_online_game_go_main_board", next(positions), {'text': "Connect to LAN game"}))
+    element_generator.send(('button_online_client', "client_start_online_game_go_main_board", next(positions), {'text': "Connect to private server"}))
     element_generator.send(('button_continue', "continue_game_go_main_board", next(positions), {'text': "Continue last game"}))
     element_generator.send(('button_params_menu', "go_menu_params_config", next(positions), {'text': "Game settings"}))
     element_generator.send(('button_sound', "go_menu_sound_music", next(positions), {'text': "Sound settings"}))
@@ -150,7 +151,7 @@ def create_sound_menu(result):
     for t in threads:   t.join()    #Waiting for all the buttons to be created
     #Menu creation
     sound_menu          = Menu("menu_volume_music", USEREVENTS.SOUND_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, *elements, background_path=PATHS.DEFAULT_BG, do_align=False, songs_paths=None)
-    #sound_menu.add_animation(AnimationGenerator.characters_crossing_screen(INIT_PARAMS.INITIAL_RESOLUTION, *INIT_PARAMS.ALL_FPS))
+    sound_menu.add_animation(AnimationGenerator.characters_crossing_screen(INIT_PARAMS.INITIAL_RESOLUTION, *INIT_PARAMS.ALL_FPS))
     sound_menu.enable_sprite('board', 'sound', state=False), sound_menu.enable_sprite('board', 'music', state=False), sound_menu.enable_sprite('board', 'song', state=False)
     result.append(sound_menu)
 
@@ -171,7 +172,7 @@ def create_video_menu(result):
     for t in threads:   t.join()    #Waiting for all the buttons to be created
     #Menu creation
     graphics_menu   = Menu("menu_graphics_display", USEREVENTS.GRAPHIC_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, *elements, background_path=PATHS.DEFAULT_BG, do_align=False, songs_paths=None)
-    #graphics_menu.add_animation(AnimationGenerator.character_teleporting_screen(INIT_PARAMS.INITIAL_RESOLUTION, *INIT_PARAMS.ALL_FPS))
+    graphics_menu.add_animation(AnimationGenerator.character_teleporting_screen(INIT_PARAMS.INITIAL_RESOLUTION, *INIT_PARAMS.ALL_FPS))
     result.append(graphics_menu)
 
 def create_board_params():

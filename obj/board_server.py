@@ -7,10 +7,13 @@ Have the following classes.
 
 #Python full fledged libraries
 import threading
+import uuid
+import time
 #External libraries
 from external.Mastermind import *
 #Selfmade libraries
 from settings import NETWORK
+from obj.utilities.utility_box import UtilityBox
 from obj.utilities.decorators import run_async
 from obj.utilities.synch_dict import Dictionary
 from obj.utilities.logger import Logger as LOG
@@ -40,11 +43,14 @@ class Server(MastermindServerTCP):
                                         in each turn to follow the game.
     """
     
-    def __init__(self, number_of_players):
+    def __init__(self, number_of_players, private=False, obj_uuid=None):
         """Constructor of the server.
         Args:
             number_of_players(int): Number of players/clients that this server will hold."""
         MastermindServerTCP.__init__(self, NETWORK.SERVER_REFRESH_TIME, NETWORK.SERVER_CONNECTION_REFRESH, NETWORK.SERVER_CONNECTION_TIMEOUT)
+        self.uuid = obj_uuid if obj_uuid else uuid.uuid1().int    #Using this if crashing would led to more conns than players
+        self.public_ip = None
+        self.private_server = private
         self.host = None    #Connection object. This is another client, but its the host. I dunno if this will be useful yet.
         self.total_players = number_of_players
         self.total_chars = None
@@ -108,6 +114,28 @@ class Server(MastermindServerTCP):
         except KeyError:    #This will never raise, since data is
             response = {"success": False, "error": "The data with the key "+key+" was not found in the server"}
         return response
+
+    def register_server(self):
+        json_petition = {'uuid': self.uuid, 'ip': self.public_ip, 'port': str(NETWORK.SERVER_PORT), 'players': 1,\
+                        'total_players': self.total_players, 'alias': NETWORK.SERVER_ALIAS, 'timestamp': time.time()}
+        response = UtilityBox.do_request(NETWORK.TABLE_SERVERS_ADD_ENDPOINT, method='POST', data=json_petition, return_success_only=True)
+        if not response or not response['success']:
+            LOG.log('warning', 'no success when adding the server to the table of servers.')
+            raise Exception("no success when adding the server to the table of servers.")
+
+    def update_server_(self, **params):
+        json_petition = {'uuid': self.uuid}
+        json_petition.update(params)
+        response = UtilityBox.do_request(NETWORK.TABLE_SERVERS_UPDATE_ENDPOINT, method='POST', data=json_petition, return_success_only=True)
+        if not response or not response['success']:
+            LOG.log('warning', 'no success when updating the server.')
+            raise Exception("no success when updating the server.")
+
+    def delete_server(self):
+        response = UtilityBox.do_request(NETWORK.TABLE_SERVERS_DELETE_ENDPOINT, method='POST', data={'uuid': self.uuid}, return_success_only=True)
+        if not response or not response['success']:
+            LOG.log('warning', 'no success when deleting the server.')
+            raise Exception("no success when deleting the server.")
 
     def broadcast_data(self, list_of_conns, data, *excluded_conns):
         for conn in list_of_conns:
@@ -231,8 +259,12 @@ class Server(MastermindServerTCP):
         Args:
             ip(str):    IP address of the server. Uses 0.0.0.0 usually.
             port(int):  Port that the server will bind to. It will listen on this one."""
+        self.public_ip = UtilityBox.do_request(NETWORK.GET_IP)['ip']
         self.connect(ip, port) #This connect is way more like a bind to the socket.
+        LOG.log('INFO', 'Deploying server in the public ip ', self.public_ip, ':', NETWORK.SERVER_PORT)
         try:
+            if not self.private_server:
+                self.register_server()
             self.petition_worker()
             self.accepting_allow_wait_forever()
         except:                 #Only way to break is with an exception

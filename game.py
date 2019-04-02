@@ -113,6 +113,8 @@ class Game(object):
                         self.board_generator.online = True
                         if 'host' in event.command.lower():
                             self.board_generator.server = True
+                            if 'private' in event.command.lower():
+                                self.board_generator.private = True
                         elif 'server' in event.command.lower() and ('get' in event.command.lower() or 'explore' in event.command.lower()):
                             self.board_generator.server = False
                             self.board_generator.direct_connect = False

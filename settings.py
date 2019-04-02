@@ -35,12 +35,12 @@ class CHARACTERS:
     PRIESTESS_AMMOUNT = 2
     MATRONMOTHER_AMMOUNT = 1
     HOLYCHAMPION_AMMOUNT = 0
-    CHARACTER_SETTINGS = {'pawn':{'ammount': PAWN_AMMOUNT, 'aliases':{'pickup': 'running'}},
-                    'warrior':{'ammount': WARRIOR_AMMOUNT, 'aliases':{'pickup': 'run'}},
-                    'wizard':{'ammount': WIZARD_AMMOUNT, 'aliases':{'pickup': 'pick'}},
-                    'priestess':{'ammount': PRIESTESS_AMMOUNT, 'aliases':{'pickup': 'run'}},
-                    'matron_mother':{'ammount': MATRONMOTHER_AMMOUNT, 'aliases':{'pickup': 'pick'}},
-                    'holy_champion':{'ammount': HOLYCHAMPION_AMMOUNT, 'aliases':{'pickup': 'pick'}}
+    CHARACTER_SETTINGS = {'pawn':{'ammount': PAWN_AMMOUNT},
+                    'warrior':{'ammount': WARRIOR_AMMOUNT},
+                    'wizard':{'ammount': WIZARD_AMMOUNT},
+                    'priestess':{'ammount': PRIESTESS_AMMOUNT},
+                    'matron_mother':{'ammount': MATRONMOTHER_AMMOUNT},
+                    'holy_champion':{'ammount': HOLYCHAMPION_AMMOUNT}
     }
     PAWN_OPTIONS = (PAWN_AMMOUNT, 16, 24, 32, 0, 4)
     WARRIOR_OPTIONS = (WARRIOR_AMMOUNT, 4, 6, 8, 0, 1)
@@ -48,6 +48,18 @@ class CHARACTERS:
     PRIESTESS_OPTIONS = (PRIESTESS_AMMOUNT, 4, 6, 8, 0, 1)
     MATRONMOTHER_OPTIONS = (MATRONMOTHER_AMMOUNT, 2, 4)
     HOLYCHAMPION_OPTIONS = (HOLYCHAMPION_AMMOUNT, 1, 2, 4)
+    '''__default_config (:dict:): Contains parameters about the actions aliases. Those aliases are highly dependent
+        on how your images are named. It's kind like a parser of those names, since series of sprites are not always
+        named the same. Another workaround is name those series of images with the same as the default alias.
+        In that way you will link each action in the folder (divided in sprites), with each action here in the character.'''
+    DEFAULT_ALIASES = {"idle" : "idle", "fight" : "fight", "attack" : "attack", "pickup" : "pickup",\
+                        "drop" : "drop", "action" : "action", "die" : "die", "stop": "stop"}
+    PAWN_ALIASES = {'pickup': 'running'}
+    WARRIOR_ALIASES = {'pickup': 'run'}
+    WIZARD_ALIASES = {'pickup': 'pick'}
+    PRIESTESS_ALIASES = {'pickup': 'run'}
+    MATRONMOTHER_ALIASES = {'pickup': 'pick'}
+    HOLYCHAMPION_ALIASES = {'pickup': 'pick'}
 
 class SOUND_PARAMS:
     SOUND_CHANNELS_AMMOUNT = 8
@@ -87,6 +99,7 @@ class STATES:
 
 class NETWORK:
     #Settings if yo are the server
+    SERVER_ALIAS = 'TEST_SERVER'
     SERVER_REFRESH_TIME = 1
     SERVER_CONNECTION_REFRESH = 1
     SERVER_CONNECTION_TIMEOUT = 30
@@ -97,6 +110,8 @@ class NETWORK:
     CLIENT_IP = '192.168.1.254'      #USED TO CONNECT TO AN EXTERNAL COMPUTER AS A SERVER
     CLIENT_TIMEOUT_CONNECT = 30
     CLIENT_TIMEOUT_RECEIVE = 30
+    #URLS
+    GET_IP = 'http://jsonip.com'
     #TABLE_SERVERS_URL = 'http://savadrow.servegame.com'
     TABLE_SERVERS_URL = 'http://127.0.0.1'
     TABLE_SERVERS_PORT = 9001

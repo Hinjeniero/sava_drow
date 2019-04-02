@@ -15,7 +15,10 @@ import math
 import time
 import pygame
 import external.gradients
-import random 
+import random
+import requests
+from requests.exceptions import ConnectionError
+from requests.exceptions import ReadTimeout
 from os import listdir
 from os.path import isfile, join, dirname
 from wrapt import synchronized
@@ -381,3 +384,22 @@ class UtilityBox (object):
     def line_number(text):
         """Returns the number of lines that a text must have based on it length"""
         return math.ceil(len(text)/STRINGS.CHARS_PER_LINE)
+
+    @staticmethod
+    def do_request(url, method='GET', params={}, data={}, headers={}, timeout=10.0, sleep_between_petitions=0, return_success_only=False, json_response=True):
+        url = 'http:\\'+url if url[0] != 'h' else url
+        start = time.time()
+        try:
+            while True:
+                response = requests.request(method, url, params=params, data=data, headers=headers, timeout=timeout)
+                if time.time()-start > timeout:
+                    return False
+                if return_success_only and response.status_code != 200:
+                    continue
+                if json_response:
+                    return response.json()
+                return response
+        except ReadTimeout:
+            return False
+        except ConnectionError:
+            raise ConnectionError

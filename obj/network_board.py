@@ -8,10 +8,10 @@ Have the following classes.
 #Python full fledged libraries
 import threading
 import time
-import uuid
 import random
 import pygame
 import uuid
+import datetime
 import requests #Only used to get the servers when getting all of them from the table of servers
 #External libraries
 #from external.Mastermind import MastermindServerTCP, MastermindClientTCP
@@ -26,6 +26,7 @@ from obj.board_server import Server
 from obj.ui_element import ScrollingText
 from obj.board import Board
 from obj.players import Character
+from obj.utilities.utility_box import UtilityBox
 from obj.utilities.decorators import run_async
 from obj.utilities.logger import Logger as LOG
 from obj.utilities.exceptions import ServiceNotAvailableException
@@ -103,7 +104,6 @@ class NetworkBoard(Board):
             if host:
                 self.server.start(NETWORK.SERVER_IP, NETWORK.SERVER_PORT)
                 self.set_ip_port(NETWORK.CLIENT_LOCAL_IP, NETWORK.SERVER_PORT)
-                self.register_server()
             else:
                 self.generate_connect_dialog(direct_connection)
                 self.flags["ip_port_done"] = threading.Event()
@@ -126,24 +126,15 @@ class NetworkBoard(Board):
         if direct_connection:   self.show_dialog('input')
         else:                   self.show_dialog('table')
 
-    def register_server(self):
-        json_petition = {'uuid': 0, 'ip': 9, 'port': NETWORK.SERVER_PORT, 'players': 1, 'timestamp': 0}
-    
-    def update_server_(self, **params):
-        pass
-
     def get_all_servers(self):
-        try:
-            while True:
-                result = requests.get(NETWORK.TABLE_SERVERS_GET_ALL_ENDPOINT).json()
-                if result['success']:
-                    print(result['data'])
-                    break
-            return (('yes', 'yes', 'yes', 'yes', 'yes'),)
-        except requests.exceptions.ConnectionError as exc:
-            self.exception_handler(exc)
-
-
+        result = UtilityBox.do_request(NETWORK.TABLE_SERVERS_GET_ALL_ENDPOINT)
+        servers = []
+        for server in result['data']:
+            date = datetime.datetime.fromtimestamp(float(server['timestamp'])).strftime('%Y-%m-%d %H:%M:S')
+            data = (server['alias'], server['ip'], server['port'], server['players']+'/'+server['total_players'], date)
+            servers.append(data)
+        print(servers)
+        return servers
 
     @run_async
     def generate_players_names(self):

@@ -16,7 +16,7 @@ INFOBOARD = ()
 #HELP_DIALOGS_TEXT
 #CONFIG_MENU
 class CONFIG_BOARD_DIALOGS:
-    SERVER_TABLE_KEYS = ('UUID', 'IP', 'PORT', 'PLAYERS', 'START')
+    SERVER_TABLE_KEYS = ('NAME', 'IP', 'PORT', 'PLAYERS', 'DEPLOYMENT')
 
 class CONFIG_MENU_DIALOGS:
     CELL_TEXTURE_DIALOG= "This setting changes the appearance of the cells. The Basic option is just plain wood, the dark one is some kind of obsidian stone,"+\

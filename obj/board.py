@@ -32,7 +32,7 @@ from obj.utilities.utility_box import UtilityBox
 from obj.utilities.colors import RED, WHITE, DARKGRAY, LIGHTGRAY, TRANSPARENT_GRAY
 from obj.utilities.exceptions import BadPlayersParameter, BadPlayerTypeException,\
                                     PlayerNameExistsException, TooManyCharactersException, NotEnoughSpaceException
-from obj.utilities.decorators import run_async, time_it
+from obj.utilities.decorators import run_async, run_async_not_pooled, time_it
 from obj.utilities.logger import Logger as LOG
 from obj.utilities.surface_loader import ResizedSurface, no_size_limit
 #numpy.set_printoptions(threshold=numpy.nan)
@@ -229,7 +229,7 @@ class Board(Screen):
         dice.set_position(tuple(x-y for x, y in zip(self.resolution, dice.rect.size)))
         self.dice.add(dice)
 
-    @run_async
+    @run_async_not_pooled
     def update_scoreboard(self):
         while True:
             try:
@@ -250,7 +250,7 @@ class Board(Screen):
             except NotEnoughSpaceException:
                 LOG.log('warning', 'Error while updating the scoreboard, trying again...')
 
-    @run_async
+    @run_async_not_pooled
     def update_promotion_table(self, *chars):
         self.promotion_table.full_clear()
         self.promotion_table.set_rows(1)
@@ -270,7 +270,7 @@ class Board(Screen):
     @time_it
     def generate_environment(self):
         threads = [self.generate_all_cells(), self.generate_paths(offset=True), self.generate_map_board(), self.generate_dice()]
-        for generation_thread in threads:   generation_thread.join()
+        for end_event in threads:   end_event.wait()
         self.adjust_cells()
         self.generate_inter_paths()
         self.generate_infoboard()

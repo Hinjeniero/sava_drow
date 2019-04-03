@@ -314,13 +314,13 @@ class PathAppraiser(object):
         character = next(cell.get_char() for cell in all_cells if cell.get_real_index() == start_pos)
         #TODO Create the algorithm itself, since the helpiung values have been written already
         danger_multiplier = PathAppraiser.get_danger_multiplier(character, all_cells)
-        start_danger = PathAppraiser.get_danger_in_position(start_pos, character.my_master, paths_graph, distances, current_map, all_cells, level_size)*danger_multiplier
+        start_danger = PathAppraiser.get_danger_in_position(start_pos, character.owner_uuid, paths_graph, distances, current_map, all_cells, level_size)*danger_multiplier
         bait_ratios = {}
         destinies_danger = {}
         kill_values = {}
         for index in possible_destinies:
             bait_ratios[index] = PathAppraiser.get_bait_value(character, index, paths_graph, distances, current_map, all_cells, level_size)
-            destinies_danger[index] = PathAppraiser.get_danger_in_position(index, character.my_master, paths_graph, distances, current_map, all_cells, level_size)
+            destinies_danger[index] = PathAppraiser.get_danger_in_position(index, character.owner_uuid, paths_graph, distances, current_map, all_cells, level_size)
             destinies_danger[index] *= danger_multiplier
             destiny_cell = next(cell for cell in all_cells if index == cell.get_real_index())
             kill_values[index] = PathAppraiser.get_kill_value(destiny_cell, character)
@@ -332,7 +332,7 @@ class PathAppraiser(object):
 
     @staticmethod
     def get_kill_value(destination, my_char):
-        if destination.has_char() and (destination.has_char().my_master != my_char.my_master):
+        if destination.has_char() and (destination.has_char().owner_uuid != my_char.owner_uuid):
             return 1*math.sqrt(destination.has_char().value/my_char.value)
         return 0 
 
@@ -343,7 +343,7 @@ class PathAppraiser(object):
         essential_pieces = 0 
         all_value = 0
         for cell in all_cells:
-            if cell.has_char() and cell.has_char().my_master == my_char.my_master:
+            if cell.has_char() and cell.has_char().owner_uuid == my_char.owner_uuid:
                 my_type_of_char += 1 if my_char.get_type() == cell.has_char().get_type() else 0
                 essential_pieces += 1 if cell.has_char().essential else 0
                 all_value += cell.has_char().value
@@ -356,7 +356,7 @@ class PathAppraiser(object):
         danger_value = 1
         enemies_ready = 0
         for cell in all_cells:
-            if cell.get_char() and cell.get_char().my_master != player\
+            if cell.get_char() and cell.get_char().owner_uuid != player\
             and cell_index in cell.get_char().get_paths(graph, distances, current_map, cell.get_real_index(), level_size):  #If there is another char of another player that can move here
                 enemies_ready += 1
         return danger_value/(enemies_ready+1)
@@ -368,7 +368,7 @@ class PathAppraiser(object):
         baited_enemy_values = []
         for cell in all_cells:
             if cell.get_char() and destination in cell.get_char().get_paths(graph, distances, current_map, cell.get_real_index(), level_size):  #If there is another char of another player that can move here
-                if cell.get_char().my_master == my_char.my_master:
+                if cell.get_char().owner_uuid == my_char.owner_uuid:
                     vengeful_allies += 1
                 else:
                     baited_enemy_values.append(cell.get_char().value)

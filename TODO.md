@@ -3,7 +3,6 @@
 - [ ] Game infoboard in the right side. WIP ~20%
 - [ ] Keep and drop servers based in a keep/alive fashion
 - [ ] Connect the fitness result with cells in a graphical fashion 
-- [ ] Connect board server to the delete_method
 - [ ] Set tutorial 
 
 #### TODO WHENEVER:
@@ -24,3 +23,4 @@
 - [X] Fix bug of the fucken aliases.
 - [X] UUID seems to be created in each start of the game. Fixed
 - [X] Connect board server to the update_method.
+- [X] Connect board server to the delete_method

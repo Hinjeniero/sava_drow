@@ -27,7 +27,7 @@ from obj.ui_element import ScrollingText
 from obj.board import Board
 from obj.players import Character
 from obj.utilities.utility_box import UtilityBox
-from obj.utilities.decorators import run_async
+from obj.utilities.decorators import run_async_not_pooled
 from obj.utilities.logger import Logger as LOG
 from obj.utilities.exceptions import ServiceNotAvailableException
 
@@ -114,7 +114,7 @@ class NetworkBoard(Board):
         except Exception as exc:
             self.exception_handler(exc)
 
-    @run_async
+    @run_async_not_pooled
     def generate_connect_dialog(self, direct_connection):
         #TODO To update this just destroy it and rebuild it or whatever. Take into edxample the update_scoreboard in Board.
         if direct_connection:
@@ -136,7 +136,7 @@ class NetworkBoard(Board):
         print(servers)
         return servers
 
-    @run_async
+    @run_async_not_pooled
     def generate_players_names(self):
         for player in self.players:
             if player.uuid != self.my_player:   #We dont want our player name over our cursor.
@@ -157,7 +157,7 @@ class NetworkBoard(Board):
             LOG.error_traceback()
             pygame.event.post(self.connection_error_event)
 
-    @run_async
+    @run_async_not_pooled
     def start(self, host):
         try:
             if not host:
@@ -215,7 +215,7 @@ class NetworkBoard(Board):
             LOG.log('info', 'Client ', self.uuid, ' connected to the server in the address ',\
                     self.ip, ':', self.port)
 
-    @run_async
+    @run_async_not_pooled
     def keep_alive(self):
         """SubThread that sends 'keep-alive' requests to the server in an infinite loop, to keep the connection, well, alive.
         Sends a request per second. It's a busy loop, using sleep. Not the best approach, but it works"""
@@ -229,7 +229,7 @@ class NetworkBoard(Board):
                 else:
                     break
 
-    @run_async
+    @run_async_not_pooled
     def receive_worker(self):
         """Subthread that is listening to the server in an infinite loop. Uses a blocking receiving call to avoid a busy loop.
         If it receives a response, it redirects it to the response_handler method. Also calls connect if the connections is lost."""
@@ -246,7 +246,7 @@ class NetworkBoard(Board):
                 LOG.log('warning', 'RECEIVE_WORKER: There was a problem receiving the packet in the sockets, retrying...')
                 LOG.log('warning', 'Mockingly: iNvAliD litERaL for iNt() with BASe 10: b\"{\"')
     
-    @run_async
+    @run_async_not_pooled
     def response_handler(self, response):
         """Handler of the received responses from the server. Accepts responses in the JSON schema.
         It decides what to do judging by the existance of different keys in the JSON form received.

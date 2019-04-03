@@ -91,7 +91,7 @@ def create_main_menu(result):
     element_generator.send(('button_params_menu', "go_menu_params_config", next(positions), {'text': "Game settings"}))
     element_generator.send(('button_sound', "go_menu_sound_music", next(positions), {'text': "Sound settings"}))
     element_generator.send(('button_graphics', "go_menu_graphics_display", next(positions), {'text': "Graphics settings"}))
-    for t in threads:   t.join()    #Waiting for all the buttons to be created
+    for end_event in threads:   end_event.wait()    #Waiting for all the buttons to be created
     #Create Menu
     bg = AnimationGenerator.factory(STRINGS.INITIAL_ANIMATED_BG, INIT_PARAMS.INITIAL_RESOLUTION, PARAMS.ANIMATION_TIME, INIT_PARAMS.ALL_FPS, INIT_PARAMS.INITIAL_FPS)
     main_menu   = Menu('main_menu', USEREVENTS.MAINMENU_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, *elements, animated_background=bg, background_path=PATHS.DEFAULT_BG, songs_paths=MENU_SONGS, do_align=False)
@@ -125,7 +125,7 @@ def create_config_menu(result):
     element_generator.send(('button_priestesses', "set_priestess_board", next(positions), {'default_values': CHARACTERS.PRIESTESS_OPTIONS, 'text': 'Number of priestess', 'gradient': next(gradients)}))
     element_generator.send(('button_matrons', "set_matronmothers_board", next(positions), {'default_values': CHARACTERS.MATRONMOTHER_OPTIONS, 'text': 'Number of Matron Mothers', 'gradient': next(gradients)}))
     element_generator.send(('button_champions', "set_champions_board", next(positions), {'default_values': CHARACTERS.HOLYCHAMPION_OPTIONS, 'text': 'Number of Holy Champions', 'gradient': next(gradients)}))
-    for t in threads:   t.join()    #Waiting for all the buttons to be created
+    for end_event in threads:   end_event.wait()    #Waiting for all the buttons to be created
     HelpDialogs.add_help_dialogs("menu_params_config", elements, INIT_PARAMS.INITIAL_RESOLUTION)
     #Create Menu
     params_menu = Menu("menu_params_config", USEREVENTS.CONFIG_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, *elements,\
@@ -148,7 +148,7 @@ def create_sound_menu(result):
     element_generator.send(('slider_board_sound_volume', "set_board_sound_volume", next(positions), {'text': 'Board sound volume', 'dial_texture':PATHS.CHEST}))
     element_generator.send(('button_board_song', "change_board_song", next(positions), {'text': 'Selected board song', 'default_values': BOARD_CROPPED_SONGS,'text_proportion': 0.50}))
     element_generator.send(('button_menu_song', "change_menu_song", next(positions), {'text': 'Selected menus song', 'default_values':MENU_CROPPED_SONGS}))
-    for t in threads:   t.join()    #Waiting for all the buttons to be created
+    for end_event in threads:   end_event.wait()    #Waiting for all the buttons to be created
     #Menu creation
     sound_menu          = Menu("menu_volume_music", USEREVENTS.SOUND_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, *elements, background_path=PATHS.DEFAULT_BG, do_align=False, songs_paths=None)
     sound_menu.add_animation(AnimationGenerator.characters_crossing_screen(INIT_PARAMS.INITIAL_RESOLUTION, *INIT_PARAMS.ALL_FPS))
@@ -169,7 +169,7 @@ def create_video_menu(result):
     element_generator.send(('button_fullscreen', "set_display_mode_fullscreen", next(positions), {'text': 'Fullscreen', 'default_values': STRINGS.YES_NO_REVERSED, 'angle':None}))
     element_generator.send(('button_menu_bgs', "set_animated_background_menu", next(positions), {'text': 'Set menu background', 'default_values': STRINGS.ANIMATED_BGS, 'angle':180, 'text_proportion': 0.33}))
     element_generator.send(('button_board_bgs', "set_animated_background_board", next(positions), {'text': 'Set board background', 'angle':0}))
-    for t in threads:   t.join()    #Waiting for all the buttons to be created
+    for end_event in threads:   end_event.wait()    #Waiting for all the buttons to be created
     #Menu creation
     graphics_menu   = Menu("menu_graphics_display", USEREVENTS.GRAPHIC_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, *elements, background_path=PATHS.DEFAULT_BG, do_align=False, songs_paths=None)
     graphics_menu.add_animation(AnimationGenerator.character_teleporting_screen(INIT_PARAMS.INITIAL_RESOLUTION, *INIT_PARAMS.ALL_FPS))
@@ -198,7 +198,7 @@ def pre_start():
     game = Game('sava_drow', INIT_PARAMS.INITIAL_RESOLUTION, INIT_PARAMS.INITIAL_FPS)
     menus = []
     threads = [create_main_menu(menus), create_sound_menu(menus), create_config_menu(menus), create_video_menu(menus)]
-    for menu_thread in threads: menu_thread.join()
+    for menu_end_event in threads: menu_end_event.wait()
     game.add_screens(*menus)
     game.update_board_params(**create_board_params())
     return game

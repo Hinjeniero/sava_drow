@@ -14,7 +14,7 @@ from external.Mastermind import *
 #Selfmade libraries
 from settings import NETWORK
 from obj.utilities.utility_box import UtilityBox
-from obj.utilities.decorators import run_async
+from obj.utilities.decorators import run_async_not_pooled
 from obj.utilities.synch_dict import Dictionary
 from obj.utilities.logger import Logger as LOG
 
@@ -150,7 +150,7 @@ class Server(MastermindServerTCP):
             if not any(conn == excluded for excluded in excluded_conns): 
                 self.callback_client_send(conn, data)
 
-    @run_async
+    @run_async_not_pooled
     def add_to_barrier(self, conn_object, data):
         self.barrier_lock.acquire()
         if len(self.barrier) == 0\
@@ -178,7 +178,7 @@ class Server(MastermindServerTCP):
         self.on_hold_empty.set()
         self.hold_lock.release()
 
-    @run_async
+    @run_async_not_pooled
     def petition_worker(self):
         """SubThread witn an infinite loop that checks the list of the server unanswered petitions,
         and issues them again to the client_handle to try again. If they are still not ready, the request/petition
@@ -261,7 +261,7 @@ class Server(MastermindServerTCP):
             reply = {"success": True}
         self.callback_client_send(connection_object, reply)
 
-    @run_async
+    @run_async_not_pooled
     def start(self, ip, port):
         """SubThread that starts the server and listens for clients in the parameters specified.
         The server will listen on the tandem ip_address:port.

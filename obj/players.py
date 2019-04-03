@@ -548,8 +548,8 @@ class Character(AnimatedSprite):
             threads.append(Character.__char_loader(char_init, characters, character_settings[key]['ammount'],\
                             player_uuid, player_name+'_'+key, (0, 0), sprite_size, canvas_size, character_settings[key]['path']))
                             #player_uuid,      id_,         position,    size,      canvas_size, sprites_path
-        for t in threads:   
-            t.join()        #Threading.join
+        for end_event in threads:   
+            t.wait()        #Threading.join
         LOG.log('INFO', "----Factory, done making ", player_name, " characters----")
         characters.sort(key=lambda char: (char.rank, char.order), reverse=True)  #To drop first the most important characters
         return pygame.sprite.OrderedUpdates(*characters)

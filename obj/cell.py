@@ -140,7 +140,7 @@ class Cell(Circle):
         return self.chars.sprite if self.chars.sprite else False
 
     def open_access(self, who_asking):
-        return False if self.has_ally(who_asking) or (self.has_enemy(who_asking) and not self.chars.sprite.can_die)\
+        return False if (self.has_ally(who_asking) or (self.has_enemy(who_asking) and not self.chars.sprite.can_die))\
         else True
 
     def has_enemy(self, who_asking):

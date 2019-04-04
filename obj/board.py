@@ -582,12 +582,12 @@ class Board(Screen):
             to_who (str): Player who is asking.
         """ 
         for cell in self.cells:
-            self.current_map[cell.get_real_index()]=cell.to_path(self.current_player.name)
+            self.current_map[cell.get_real_index()]=cell.to_path(self.current_player.uuid)
         LOG.log('DEBUG', "Generated the map of paths for ", self.current_player.name)
     
     def update_cells(self, *cells):
         for cell in cells:
-            self.current_map[cell.get_real_index()]=cell.to_path(self.current_player.name)
+            self.current_map[cell.get_real_index()]=cell.to_path(self.current_player.uuid)
 
     def set_resolution(self, resolution):
         """Changes the resolution of the Screen. It also resizes all the Screen elements.

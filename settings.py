@@ -27,7 +27,7 @@ class PARAMS:
     BOARD_ID    = 'main_board'
     PLAYERS_AMMOUNT = (2, 4, 1) #1 is for testing
     ANIMATION_TIME = 25
-    NUM_THREADS = 8
+    NUM_THREADS = 32
 
 class CHARACTERS:
     PAWN_AMMOUNT = 8

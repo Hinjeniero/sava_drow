@@ -403,3 +403,14 @@ class UtilityBox (object):
             return False
         except ConnectionError:
             raise ConnectionError
+
+    @staticmethod
+    def normalize_values(*values, start=0, end=255):
+        results = []
+        for value in values:
+            results.append((value-min(start, end))/(max(start, end)-min(start, end)))
+            if end < start:
+                results[-1] = 1-results[-1]
+        if len(values) == 1:
+            return results[0]
+        return tuple(results) 

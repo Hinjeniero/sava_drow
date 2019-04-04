@@ -27,6 +27,7 @@ from obj.ui_element import UIElement, TextSprite, InfoBoard, Dialog
 from obj.utilities.colors import RED, BLACK, WHITE
 from obj.utilities.logger import Logger as LOG
 from obj.utilities.utility_box import UtilityBox
+from obj.utilities.decorators import END_ALL_THREADS
 from board_generator import BoardGenerator
 from obj.utilities.exceptions import  NoScreensException, InvalidGameElementException, GameEndException,\
                         EmptyCommandException, ScreenNotFoundException, TooManyCharactersException
@@ -548,5 +549,6 @@ class Game(object):
             LOG.error_traceback()
         for screen in self.screens:
             screen.destroy()
+        END_ALL_THREADS()
         sys.exit()
 

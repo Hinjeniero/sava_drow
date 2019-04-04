@@ -431,7 +431,7 @@ class TextSprite(Sprite):
                                 Includes attributes about the TextSprite, like the text color and the font used.            
         """
         params['only_text'] = True
-        params['text'] = text
+        params['text'] = str(text)
         super().__init__(id_, position, size, canvas_size, **params)
         self.text = text
         TextSprite.generate(self)

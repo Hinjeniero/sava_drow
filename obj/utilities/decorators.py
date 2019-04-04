@@ -1,9 +1,10 @@
 """--------------------------------------------
 decorators module. Contains all the decorators used in this workspace.
+Also added a pool-manager of threads
 --------------------------------------------"""
 
 __all__ = ['time_it', 'run_async']
-__version__ = '0.1'
+__version__ = '0.3'
 __author__ = 'David Flaity Pardo'
 import threading
 from settings import PARAMS
@@ -13,15 +14,24 @@ THREAD_POOL = []
 THREAD_BUSY = {}
 TASK_POOL = []
 TASK_POOL_EMPTY = threading.Condition()
+END = False
+
+def END_ALL_THREADS():
+    for _ in range(0, PARAMS.NUM_THREADS):
+        TASK_POOL.append('END')
+    TASK_POOL_EMPTY.acquire()
+    TASK_POOL_EMPTY.notifyAll()
+    TASK_POOL_EMPTY.release()
 
 def active_thread():
     while True:
         TASK_POOL_EMPTY.acquire()
         while len(TASK_POOL)==0:
             TASK_POOL_EMPTY.wait()
-        #print("THREAD IS FREE")
         data = TASK_POOL.pop(0)
         TASK_POOL_EMPTY.release()
+        if data == 'END':
+            return
         method_with_event(data[0], data[1], data[2], data[3])
 
 for i in range(0, PARAMS.NUM_THREADS):
@@ -38,7 +48,7 @@ def method_with_event(end_event, function, args, kwargs):
     end_event.set()
     if threading.current_thread() is not threading.main_thread():
         THREAD_BUSY[threading.currentThread().getName()] = False
-    print("END OF "+function.__name__)
+    #print("END OF "+function.__name__)
 
 def run_async(function):
     """Executes the function in a separate thread to avoid locking the main thread.
@@ -56,7 +66,7 @@ def run_async(function):
         #print("ADDED FUNCTION "+function.__name__)
         #print(THREAD_BUSY.values())
         if all(busy for busy in THREAD_BUSY.values()):
-            print("ALL THREADS BUSY!, executing "+function.__name__)
+            #print("ALL THREADS BUSY!, executing "+function.__name__)
             method_with_event(end_event, function, args, kwargs)
         else:
             TASK_POOL_EMPTY.acquire()

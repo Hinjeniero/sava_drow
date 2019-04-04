@@ -1,9 +1,9 @@
 #### TODO CURRENT:
-- [ ] Center the values on the cell and add a button maybe? Or some sort of texture below it.
 - [ ] Bug when moving char besides enemy pawn, since in the destinies is not this cell cuz of closer to enemies restriction.
 - [ ] Connect the dice to some random choice
 - [ ] Game infoboard in the right side. WIP ~20%
 - [ ] Keep and drop servers based in a keep/alive fashion
+- [ ] Check set_canvas_size with the fitness sprites.
 - [ ] Set tutorial 
 
 #### TODO WHENEVER:
@@ -28,3 +28,6 @@
 - [X] Manage threads to avoid overpopulation of them. Create them ahead of time to save the creating time.
 - [X] Connect the fitness result with cells in a graphical fashion
 - [X] Check the creation of overlays and value texts in board to think a way to do it only once per turn.
+- [X] Center the values on the cell and add a button maybe? Or some sort of texture below it.
+- [X] Add dict of cells to not being processing fitnesses again when useless.
+- [X] Make fitness value texture work. 

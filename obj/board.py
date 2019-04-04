@@ -831,22 +831,25 @@ class Board(Screen):
         if get_dests:
             destinations = self.drag_char.sprite.get_paths(self.enabled_paths, self.distances, self.current_map,\
                                                             self.active_cell.sprite.index, self.params['circles_per_lvl'])
-            self.generate_fitnesses(destinations)
+            self.generate_fitnesses(self.active_cell.sprite.get_real_index(), destinations)
             for cell_index in destinations:
                 self.possible_dests.add(self.get_cell_by_real_index(cell_index[-1]))
             for dest in self.possible_dests:
                 dest.set_active(True)
 
     @run_async_not_pooled
-    def generate_fitnesses(self, destinations):
-        self.fitnesses = PathAppraiser.rate_movement(self.active_cell.sprite.get_real_index(), tuple(x[-1] for x in destinations), self.enabled_paths,\
-                                            self.distances, self.current_map, self.cells.sprites(), self.params['circles_per_lvl'])
-        for fitness_key, fitness_value in self.fitnesses.items():
+    def generate_fitnesses(self, source_cell, destinations):
+        try: 
+            self.fitnesses[source_cell]
+        except KeyError:
+            self.fitnesses[source_cell] = PathAppraiser.rate_movement(self.active_cell.sprite.get_real_index(), tuple(x[-1] for x in destinations), self.enabled_paths,\
+                                                                    self.distances, self.current_map, self.cells.sprites(), self.params['circles_per_lvl'])
+        for fitness_key, fitness_value in self.fitnesses[source_cell].items():
             dest_cell = self.get_cell_by_real_index(fitness_key)
             dest_cell.show_fitness_value(fitness_value)
 
-    def hide_fitnesses(self):
-        for fitness_key, fitness_value in self.fitnesses.items():
+    def hide_fitnesses(self, source_cell):
+        for fitness_key in self.fitnesses[source_cell].keys():
             dest_cell = self.get_cell_by_real_index(fitness_key)
             dest_cell.hide_fitness_value()
 
@@ -855,7 +858,7 @@ class Board(Screen):
         has been dropped is a possible destination. If it is, it drops the character in that cell.
         Otherwise, the character will be returned to the last Cell it was in."""
         LOG.log('INFO', 'Dropped ', self.drag_char.sprite.id)
-        self.hide_fitnesses()
+        self.hide_fitnesses(self.last_cell.sprite.get_real_index())
         moved = False
         self.drag_char.sprite.set_selected(False)
         self.drag_char.sprite.set_hover(False)
@@ -899,6 +902,7 @@ class Board(Screen):
         self.next_char_turn(self.drag_char.sprite)
         
     def next_char_turn(self, char):
+        self.fitnesses = {} #Cleaning the history of fitnesses
         self.char_turns += 1
         if self.char_turns >= char.turns:
             self.char_turns = 0

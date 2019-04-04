@@ -13,8 +13,9 @@ __author__ = 'David Flaity Pardo'
 import functools
 import pygame
 import random
+from settings import PATHS
 from obj.paths import Path
-from obj.sprite import Sprite, TextSprite
+from obj.sprite import Sprite, MultiSprite
 from obj.polygons import Circle
 from obj.utilities.decorators import run_async_not_pooled
 from obj.utilities.surface_loader import ResizedSurface
@@ -89,14 +90,15 @@ class Cell(Circle):
             self.fitnesses_sprites[fitness_value]
         except KeyError:
             color_value = 255*fitness_value
-            overlay_color = (2*(255-color_value), 2*color_value, 0, 0)    #This because otherwise the gradient of colors is ugly
+            overlay_color = (2*(255-color_value), 2*color_value, 0.3*color_value, 0)    #This because otherwise the gradient of colors is ugly
             overlay_color = tuple(min(x, 255) for x in overlay_color) #Clipping vlaues back to 1
             overlay = Sprite.generate_overlay(self.image, overlay_color)
-            value_sprite = TextSprite('value', (0, 0), self.rect.size, self.rect.size, round(fitness_value, 4))
+            value_sprite = MultiSprite('value', (0, 0), (int(self.rect.width*1.2), self.rect.height//2), self.rect.size, texture=PATHS.BROWN_SLIDER, keep_aspect_ratio=False)
+            self.add_sprite(value_sprite, add_to_sprite_list=False)   #We only do this to add the absolute position and that shit
+            value_sprite.add_text_sprite('fuckinvalue', round(fitness_value, 4))
             #value_sprite.set_center(self.center)
             self.fitnesses_sprites[fitness_value] = (overlay, value_sprite)
         self.overlay = self.fitnesses_sprites[fitness_value][0]
-        self.add_sprite(self.fitnesses_sprites[fitness_value][1], add_to_sprite_list=False)   #We only do this to add the absolute position and that shit
 
     def parse_text(self, text): #TODO CONVERT NUYMEBRS TO LETTERS AND ALL THAT SHIT
         pass

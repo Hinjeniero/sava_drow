@@ -409,13 +409,13 @@ class Character(AnimatedSprite):
             self.set_paths(graph, distances, movement_restriction, level_size)
             result = Movements.get_movements(hash(movement_restriction))
         paths = []
-        #print("RSEULTS INDEX ")
-        #print(result[index])
+        print("RSEULTS INDEX ")
+        print(result[index])
         for path in result[index]:
             if current_map[path[-1]].accessible():
                 paths.append(path)
-        #print("AFTER CHECKING FOR ALLIES ")
-        #print(paths)
+        print("AFTER CHECKING FOR ALLIES ")
+        print(paths)
         return paths
     
     def set_cell(self, cell):

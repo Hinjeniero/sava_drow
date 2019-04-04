@@ -132,7 +132,6 @@ class Board(Screen):
         self.cells          = pygame.sprite.Group()
         self.quadrants      = {}
         self.possible_dests = pygame.sprite.Group()
-        self.values         = pygame.sprite.Group()
         self.fitnesses      = {}
         self.inter_paths    = pygame.sprite.GroupSingle()
         self.dice           = pygame.sprite.GroupSingle()
@@ -701,9 +700,6 @@ class Board(Screen):
             super().draw(surface)                   #Draws background
             for char in self.characters:
                 char.draw(surface)
-            if self.drag_char.sprite:
-                for value in self.values:
-                    value.draw(surface)
             if self.current_player:
                 self.current_player.draw(surface)   #This draws the player's infoboard
             if self.promotion_table and self.show_promotion:
@@ -829,33 +825,37 @@ class Board(Screen):
         the movements that are possible taking into account the character restrictions.
         Then it draws an overlay on the possible destinations."""
         LOG.log('INFO', 'Selected ', self.active_char.sprite.id)
-        self.values.empty()
         self.drag_char.add(self.active_char.sprite)
         self.drag_char.sprite.set_selected(True)
         self.last_cell.add(self.active_cell.sprite)
         if get_dests:
             destinations = self.drag_char.sprite.get_paths(self.enabled_paths, self.distances, self.current_map,\
                                                             self.active_cell.sprite.index, self.params['circles_per_lvl'])
-            self.fitnesses = PathAppraiser.rate_movement(self.active_cell.sprite.get_real_index(), tuple(x[-1] for x in destinations), self.enabled_paths,\
-                                                        self.distances, self.current_map, self.cells.sprites(), self.params['circles_per_lvl'])
-            for fitness_key, fitness_value in self.fitnesses.items():
-                dest_cell = self.get_cell_by_real_index(fitness_key)
-                #This is all to get the fading
-                color_value = 255*fitness_value
-                overlay_color = (2*(255-color_value), 2*color_value, 0, 0)    #This because otherwise the gradient of colors is ugly
-                overlay_color = tuple(min(x, 255) for x in overlay_color) #Clipping vlaues back to 1
-                dest_cell.overlay = Sprite.generate_overlay(dest_cell.image, overlay_color)
-                self.values.add(TextSprite('value', dest_cell.rect.topleft, dest_cell.rect.size, self.resolution, round(fitness_value, 4)))
+            self.generate_fitnesses(destinations)
             for cell_index in destinations:
                 self.possible_dests.add(self.get_cell_by_real_index(cell_index[-1]))
             for dest in self.possible_dests:
                 dest.set_active(True)
+
+    @run_async_not_pooled
+    def generate_fitnesses(self, destinations):
+        self.fitnesses = PathAppraiser.rate_movement(self.active_cell.sprite.get_real_index(), tuple(x[-1] for x in destinations), self.enabled_paths,\
+                                            self.distances, self.current_map, self.cells.sprites(), self.params['circles_per_lvl'])
+        for fitness_key, fitness_value in self.fitnesses.items():
+            dest_cell = self.get_cell_by_real_index(fitness_key)
+            dest_cell.show_fitness_value(fitness_value)
+
+    def hide_fitnesses(self):
+        for fitness_key, fitness_value in self.fitnesses.items():
+            dest_cell = self.get_cell_by_real_index(fitness_key)
+            dest_cell.hide_fitness_value()
 
     def drop_character(self):
         """Drops a character. Deletes it from the drag char Group, and checks if the place in which
         has been dropped is a possible destination. If it is, it drops the character in that cell.
         Otherwise, the character will be returned to the last Cell it was in."""
         LOG.log('INFO', 'Dropped ', self.drag_char.sprite.id)
+        self.hide_fitnesses()
         moved = False
         self.drag_char.sprite.set_selected(False)
         self.drag_char.sprite.set_hover(False)

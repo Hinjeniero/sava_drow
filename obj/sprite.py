@@ -500,13 +500,14 @@ class MultiSprite(Sprite):
         for sprite in self.sprites:
             sprite.image.set_alpha(alpha)
 
-    def add_sprite(self, sprite):
+    def add_sprite(self, sprite, add_to_sprite_list=True):
         """Add sprite to the Sprite list, and blit it to the image of the MultiSprite
         Args:
             sprite (Sprite):    sprite to add."""
         sprite.use_overlay = False #Not interested in overlays from a lot of sprites at the same time
         sprite.abs_position = self.get_sprite_abs_position(sprite)
-        self.sprites.add(sprite)
+        if add_to_sprite_list:
+            self.sprites.add(sprite)
 
     def set_size(self, size, update_rects=True):
         """Changes the size of the MultiSprite. All the internal Sprites are resized too as result.

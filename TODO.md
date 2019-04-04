@@ -1,5 +1,4 @@
 #### TODO CURRENT:
-- [ ] Check the creation of overlays and value texts in board to think a way to do it only once per turn.
 - [ ] Center the values on the cell and add a button maybe? Or some sort of texture below it.
 - [ ] Bug when moving char besides enemy pawn, since in the destinies is not this cell cuz of closer to enemies restriction.
 - [ ] Connect the dice to some random choice
@@ -27,4 +26,5 @@
 - [X] Connect board server to the update_method.
 - [X] Connect board server to the delete_method
 - [X] Manage threads to avoid overpopulation of them. Create them ahead of time to save the creating time.
-- [X] Connect the fitness result with cells in a graphical fashion 
+- [X] Connect the fitness result with cells in a graphical fashion
+- [X] Check the creation of overlays and value texts in board to think a way to do it only once per turn.

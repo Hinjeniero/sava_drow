@@ -14,7 +14,9 @@ import functools
 import pygame
 import random
 from obj.paths import Path
+from obj.sprite import Sprite, TextSprite
 from obj.polygons import Circle
+from obj.utilities.decorators import run_async_not_pooled
 from obj.utilities.surface_loader import ResizedSurface
 from obj.utilities.utility_box import UtilityBox
 from obj.utilities.logger import Logger as LOG
@@ -44,6 +46,10 @@ class Cell(Circle):
         params['overlay'] = False
         super().__init__("cell_"+str(real_index), position, size, canvas_size, **params)
         self.pos    = grid_position
+        self.fitness_active = False
+        self.current_fitness = -1
+        self.def_overlay = self.overlay
+        self.fitnesses_sprites = {} #In a (overlay, text) schema
         self.index  = real_index
         self.chars  = pygame.sprite.GroupSingle()
         self.promotion = False
@@ -54,6 +60,43 @@ class Cell(Circle):
     @staticmethod
     def generate(self):
         self.add_text_sprite(self.id+"_text", str(self.pos[0])+"-"+str(self.pos[1]), text_size=tuple(x*0.75 for x in self.rect.size))
+
+    @run_async_not_pooled
+    def show_fitness_value(self, fitness_value):
+        try:
+            self.set_fitness_value(fitness_value)
+            self.fitness_active = True
+        except pygame.error:
+            LOG.log('warning', 'Couldnt modify the cell ', self.index)
+
+    @run_async_not_pooled
+    def hide_fitness_value(self):
+        try:
+            self.fitness_active = False
+            self.overlay = self.def_overlay   #Value -1 holds the default overlay
+            self.current_fitness = -1
+        except pygame.error:
+            LOG.log('warning', 'Couldnt modify the cell ', self.index)
+
+    def draw(self, surface, offset=None):
+        super().draw(surface, offset=offset)
+        if self.fitness_active:
+            self.fitnesses_sprites[self.current_fitness][1].draw(surface, offset=offset)
+
+    def set_fitness_value(self, fitness_value):
+        self.current_fitness = fitness_value
+        try:
+            self.fitnesses_sprites[fitness_value]
+        except KeyError:
+            color_value = 255*fitness_value
+            overlay_color = (2*(255-color_value), 2*color_value, 0, 0)    #This because otherwise the gradient of colors is ugly
+            overlay_color = tuple(min(x, 255) for x in overlay_color) #Clipping vlaues back to 1
+            overlay = Sprite.generate_overlay(self.image, overlay_color)
+            value_sprite = TextSprite('value', (0, 0), self.rect.size, self.rect.size, round(fitness_value, 4))
+            #value_sprite.set_center(self.center)
+            self.fitnesses_sprites[fitness_value] = (overlay, value_sprite)
+        self.overlay = self.fitnesses_sprites[fitness_value][0]
+        self.add_sprite(self.fitnesses_sprites[fitness_value][1], add_to_sprite_list=False)   #We only do this to add the absolute position and that shit
 
     def parse_text(self, text): #TODO CONVERT NUYMEBRS TO LETTERS AND ALL THAT SHIT
         pass

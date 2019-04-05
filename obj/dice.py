@@ -19,7 +19,7 @@ class Dice(AnimatedSprite):
         self.result_kw = result_kw
         self.current_result = -1
         self.overlay = None
-        Dice.generate(self)
+        #Dice.generate(self)
 
     @staticmethod
     def generate(self):
@@ -71,6 +71,8 @@ class Dice(AnimatedSprite):
         for i in range(0, len(self.names)):
             if self.result_kw in self.names[i] and str(self.event.value) in self.names[i]:
                 self.animation_index = i
+                self.image = self.surfaces[i]
                 self.currently_shuffling = False
+                self.overlay = Sprite.generate_overlay(self.surfaces[i], LIGHTGRAY)
                 self.deactivating_dice()
                 return

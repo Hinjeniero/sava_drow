@@ -177,11 +177,9 @@ class Board(Screen):
     def generate(self, empty, *players):
         UtilityBox.join_dicts(self.params, Board.__default_config)
         #INIT
-
         if self.params['loading_screen']:
             self.loading_screen = LoadingScreen(self.id+"_loading", self.event_id, self.resolution, text=self.params['loading_screen_text'])
         #REST
-
         self.platform = self.generate_platform()
         if not empty:
             self.generate_mapping()
@@ -204,6 +202,7 @@ class Board(Screen):
            return platform
         return self.params['platform_sprite']
 
+    @run_async
     @no_size_limit
     def generate_infoboard(self):
         infoboard = InfoBoard(self.id+'_infoboard', 0, (0, 0), (0.15*self.resolution[0], self.resolution[1]),\
@@ -226,7 +225,7 @@ class Board(Screen):
     @run_async
     def generate_dice(self):
         dice = Dice('dice', (0, 0), tuple(0.1*x for x in self.resolution), self.resolution, shuffle_time=1500, sprite_folder=self.params['dice_textures_folder'], animation_delay=2)
-        dice.set_position(tuple(x-y for x, y in zip(self.resolution, dice.rect.size)))
+        dice.set_position((self.infoboard.rect.centerx-dice.rect.width//2, self.resolution[1]-(dice.rect.height*2)))
         self.dice.add(dice)
 
     @run_async_not_pooled
@@ -269,11 +268,11 @@ class Board(Screen):
 
     @time_it
     def generate_environment(self):
-        threads = [self.generate_all_cells(), self.generate_paths(offset=True), self.generate_map_board(), self.generate_dice()]
+        threads = [self.generate_all_cells(), self.generate_paths(offset=True), self.generate_map_board(), self.generate_infoboard()]
         for end_event in threads:   end_event.wait()
         self.adjust_cells()
-        self.generate_inter_paths()
-        self.generate_infoboard()
+        threads = [self.generate_inter_paths(), self.generate_dice()]
+        for end_event in threads:   end_event.wait()
         self.save_sprites()
         self.generated = True
 
@@ -521,6 +520,7 @@ class Board(Screen):
             radius+=ratio//2
         LOG.log('DEBUG', "Generated circular paths in ", self.id)
     
+    @run_async
     @no_size_limit
     def generate_inter_paths(self):
         """Create the paths that connect circumferences between themselves.

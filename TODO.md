@@ -1,15 +1,16 @@
 #### TODO CURRENT:
-- [ ] Bug when moving char besides enemy pawn, since in the destinies is not this cell cuz of closer to enemies restriction.
 - [ ] Connect the dice to some random choice
+- [ ] Position the dice.
+- [ ] Add HolyChampion behavior in promotion cells.
 - [ ] Game infoboard in the right side. WIP ~20%
 - [ ] Keep and drop servers based in a keep/alive fashion
 - [ ] Check set_canvas_size with the fitness sprites.
-- [ ] Set tutorial 
+- [ ] Set tutorial
+- [ ] Bug when moving char besides enemy pawn, since in the destinies is not this cell cuz of closer to enemies restriction. 
 
 #### TODO WHENEVER:
 - [ ] Effect when chars colliding with each other.
 - [ ] Bar of taunts below, the cursor turns into whatever and sends the position to the rest of the clients.
-- [ ] Add HolyChampion behavior in promotion cells.
 - [ ] Add some animations and shit to promotion of a char, like stars or particles or something
 
 #### DONE:
@@ -30,4 +31,5 @@
 - [X] Check the creation of overlays and value texts in board to think a way to do it only once per turn.
 - [X] Center the values on the cell and add a button maybe? Or some sort of texture below it.
 - [X] Add dict of cells to not being processing fitnesses again when useless.
-- [X] Make fitness value texture work. 
+- [X] Make fitness value texture work.
+- [X] The dice crashes teh game when hovering it after shuffling once

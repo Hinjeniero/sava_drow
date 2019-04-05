@@ -186,6 +186,7 @@ def create_board_params():
     board_params['platform_texture'] = PATHS.BASIC_TEXTURIZED_BG 
     board_params['interpath_texture'] = PATHS.WOOD_TEXTURE_DARK
     board_params['scoreboard_texture'] = PATHS.SCOREBOARD_BASIC
+    board_params['infoboard_texture'] = PATHS.INFOBOARD_GRADIENT
     board_params['promotion_texture'] = PATHS.LONG_RED_BAR
     board_params['dice_textures_folder'] = PATHS.DICE_FOLDER
     return board_params

@@ -175,6 +175,7 @@ class PATHS:
     SHORT_SILVER_SHADOW_BUTTON = IMAGE_FOLDER+'silver_button_shadow.png'
     DARK_LONG_BUTTON = IMAGE_FOLDER+'dark_button.png'
     INFOBOARD = IMAGE_FOLDER+'infoboard.png'
+    INFOBOARD_GRADIENT = IMAGE_FOLDER+'infoboard_02.png'
     DIALOG_SILVER = IMAGE_FOLDER+'dialog.png'
     #---sliders
     BROWN_SLIDER = IMAGE_FOLDER+'brown_slider.png'

@@ -657,6 +657,7 @@ class AnimatedSprite(MultiSprite):
         self.hover_surfaces     = []
         self.masks              = []
         #Animation
+        self.locked             = False
         self.counter            = 0
         self.animated           = True
         self.animation_step     = 1
@@ -767,7 +768,7 @@ class AnimatedSprite(MultiSprite):
 
     def animation_frame(self):
         """Changes the current showing surface (changing the index) to the next one."""
-        if self.animated:   #If more than 1 sprites in the list
+        if self.animated and not self.locked:   #If more than 1 sprites in the list
             self.animation_index += self.animation_step
             if self.animation_index >= len(self.surfaces):
                 if not self.params['boomerang_loop']:

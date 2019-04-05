@@ -319,13 +319,18 @@ class PathAppraiser(object):
         destinies_danger = {}
         kill_values = {}
         for index in possible_destinies:
-            bait_ratios[index] = PathAppraiser.get_bait_value(character, index, paths_graph, distances, current_map, all_cells, level_size)
-            destinies_danger[index] = PathAppraiser.get_danger_in_position(index, character.owner_uuid, paths_graph, distances, current_map, all_cells, level_size)
+            #Creating mock current map, since some enemy chars change paths based on enemies nearby TODO still noir working
+            mock_map = current_map.copy()
+            mock_map[start_pos].ally = False
+            mock_map[index].ally = True
+            #End of mock map
+            bait_ratios[index] = PathAppraiser.get_bait_value(character, index, paths_graph, distances, mock_map, all_cells, level_size)
+            destinies_danger[index] = PathAppraiser.get_danger_in_position(index, character.owner_uuid, paths_graph, distances, mock_map, all_cells, level_size)
             destinies_danger[index] *= danger_multiplier
             destiny_cell = next(cell for cell in all_cells if index == cell.get_real_index())
             kill_values[index] = PathAppraiser.get_kill_value(destiny_cell, character)
-            LOG.log('info', "VALUES FOR DESTINY ", destiny_cell, ", baitValue: ", bait_ratios[index], ", dangerValue: ", destinies_danger[index], ", kill_value: ", kill_values[index])
-            LOG.log('info', "TANHS FOR DESTINY ", destiny_cell, ", baitTanh: ", math.tanh(bait_ratios[index]), ", dangerdiffTanh: ", math.tanh(start_danger/destinies_danger[index]), ", killTanh: ", math.tanh(kill_values[index]))
+            #LOG.log('info', "VALUES FOR DESTINY ", destiny_cell, ", baitValue: ", bait_ratios[index], ", dangerValue: ", destinies_danger[index], ", kill_value: ", kill_values[index])
+            LOG.log('info', "TANHS FOR DESTINY ", destiny_cell, ", baitTanh: ", math.tanh(bait_ratios[index]), ", dangerdifferenceTanh: ", math.tanh(start_danger/destinies_danger[index]), ", killTanh: ", math.tanh(kill_values[index]))
             fitness = 0.6*(math.tanh(kill_values[index]))+0.6*(math.tanh(start_danger/destinies_danger[index]))+0.2*(math.tanh(bait_ratios[index]))
             fitnesses[index] = min(fitness, 1)
         return fitnesses
@@ -353,9 +358,10 @@ class PathAppraiser(object):
     @staticmethod
     def get_danger_in_position(cell_index, player, graph, distances, current_map, all_cells, level_size):
         """From 0 to 1. 0 worst case, 1 no danger whatsoever"""
+        #TODO COPY DICTIONARY AND CHANGE IN CURRENT_MAP THE POSITION OF THE LITTLE SHIT
         danger_value = 1
         enemies_ready = 0
-        for cell in all_cells:
+        for cell in all_cells:  #TODO CHANGE HERE IN FIRST LINE, THATS WHY ALGORITH  NOT WORKING THAT WELL YET, MAYBE?
             if cell.get_char() and cell.get_char().owner_uuid != player\
             and cell_index in cell.get_char().get_paths(graph, distances, current_map, cell.get_real_index(), level_size):  #If there is another char of another player that can move here
                 enemies_ready += 1

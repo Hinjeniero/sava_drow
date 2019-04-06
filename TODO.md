@@ -1,7 +1,5 @@
 #### TODO CURRENT:
-- [ ] When player gets a 6, can move enemy piece that can capture aything, except the matron mother (Orcs both sides as hostile). Else loses a turn.
-- [ ] Probabaility in dicr due to turnd ans nuber of throws 
-- [ ] ADd a blocked postiions array, due to shit from turncoats
+- [ ] Probability in dice modified to turns and number of throws 
 - [ ] Check set_canvas_size with the fitness sprites.
 
 - [ ] Set tutorial
@@ -36,3 +34,5 @@
 - [X] Position the dice.
 - [X] Game infoboard in the right side.
 - [X] Add HolyChampion behavior in promotion cells.
+- [X] When player gets a 6, can move enemy piece that can capture anything, except the matron mother (Orcs both sides as hostile). Else loses a turn.
+- [X] Add a blocked postiions array, due to shit from turncoats

@@ -19,13 +19,6 @@ class Dice(AnimatedSprite):
         self.result_kw = result_kw
         self.current_result = -1
         self.overlay = None
-        #Dice.generate(self)
-
-    @staticmethod
-    def generate(self):
-        for i in range(0, len(self.names)):
-            if self.result_kw in self.names[i]:
-                self.overlay = Sprite.generate_overlay(self.surfaces[i], LIGHTGRAY)
 
     @run_async_not_pooled
     def shuffle(self):

@@ -131,6 +131,7 @@ class Board(Screen):
         self.loading_screen = None  #Created in Board.generate
         self.cells          = pygame.sprite.Group()
         self.quadrants      = {}
+        self.locked_cells   = []
         self.possible_dests = pygame.sprite.Group()
         self.fitnesses      = {}
         self.inter_paths    = pygame.sprite.GroupSingle()
@@ -833,7 +834,8 @@ class Board(Screen):
                                                             self.active_cell.sprite.index, self.params['circles_per_lvl'])
             self.generate_fitnesses(self.active_cell.sprite.get_real_index(), destinations)
             for cell_index in destinations:
-                self.possible_dests.add(self.get_cell_by_real_index(cell_index[-1]))
+                if cell_index not in self.locked_cells:
+                    self.possible_dests.add(self.get_cell_by_real_index(cell_index[-1]))
             for dest in self.possible_dests:
                 dest.set_active(True)
 
@@ -879,6 +881,27 @@ class Board(Screen):
         self.possible_dests.empty()
         return moved
 
+    def dice_value_result(self, value):
+        if value == 6:
+            self.activate_turncoat_mode()
+            return
+        #TODO SHOW NOTIFICATION MAYBE? IN NETWOK BOARD AND HERE TOO
+        self.next_player_turn()
+
+    def activate_turncoat_mode(self):
+        #block the cells with matrons and... the last one of the turncoat. The last one ppersists for the next turn. dunno how to do the later
+        for cell in self.cells:
+            if cell.has_char() and 'mother' in cell.get_char().get_type():
+                self.locked_cells.append(cell.get_real_index())
+        for char in self.characters:
+            char.set_active(True)
+            char.set_state('idle')
+        for path in self.current_map:
+            if path.ally:   #Not to worry, those changes will be cleared in the next player turn
+                path.ally = False
+                path.enemy = True
+                path.access = True
+
     def move_character(self, character):
         LOG.log('debug', 'The chosen cell is possible, moving')
         active_cell = self.active_cell.sprite
@@ -903,7 +926,7 @@ class Board(Screen):
                 self.swapper.send(self.drag_char.sprite)
                 #return
         self.next_char_turn(self.drag_char.sprite)
-        
+
     def update_character(self):
         self.drag_char.sprite.can_kill = True
         self.drag_char.sprite.can_die = True
@@ -923,6 +946,7 @@ class Board(Screen):
 
     def next_player_turn(self, use_stop_state=True):
         self.current_player.turn += 1
+        del self.locked_cells[:]    #Clearing it just in case
         old_index = self.player_index
         while True:
             self.player_index += 1

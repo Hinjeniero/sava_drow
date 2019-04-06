@@ -1,7 +1,6 @@
 #### TODO CURRENT:
 - [ ] Probability in dice modified to turns and number of throws 
-- [ ] Check set_canvas_size with the fitness sprites.
-
+- [ ] Parse text to have decents numbers and letters insteaad of shitty indexes
 - [ ] Set tutorial
 - [ ] Keep and drop servers based in a keep/alive fashion
 - [ ] Bug when moving char besides enemy pawn, since in the destinies is not this cell cuz of closer to enemies restriction. 
@@ -36,3 +35,4 @@
 - [X] Add HolyChampion behavior in promotion cells.
 - [X] When player gets a 6, can move enemy piece that can capture anything, except the matron mother (Orcs both sides as hostile). Else loses a turn.
 - [X] Add a blocked postiions array, due to shit from turncoats
+- [X] Check set_canvas_size with the fitness sprites.

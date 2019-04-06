@@ -84,6 +84,10 @@ class Cell(Circle):
         if self.fitness_active:
             self.fitnesses_sprites[self.current_fitness][1].draw(surface, offset=offset)
 
+    def set_canvas_size(self, canvas_size):
+        super().set_canvas_size(canvas_size)
+        self.fitnesses_sprites = {} #Garbage collector, do your job!
+
     def set_fitness_value(self, fitness_value):
         self.current_fitness = fitness_value
         try:

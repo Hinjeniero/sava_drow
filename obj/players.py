@@ -926,7 +926,7 @@ class HolyChampion(Character):
         self.order      = 4
         self.can_kill   = False
         self.can_die    = False
-        self.value      = 2
+        self.value      = 4
 
     def get_paths(self, graph, distances, current_map, index, level_size):
         """Gets all the possible paths for each cell for a MatronMother type with her Restriction in movement.

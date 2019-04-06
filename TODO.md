@@ -1,11 +1,11 @@
 #### TODO CURRENT:
-- [ ] Connect the dice to some random choice
-- [ ] Position the dice.
-- [ ] Add HolyChampion behavior in promotion cells.
-- [ ] Game infoboard in the right side. WIP ~20%
-- [ ] Keep and drop servers based in a keep/alive fashion
+- [ ] When player gets a 6, can move enemy piece that can capture aything, except the matron mother (Orcs both sides as hostile). Else loses a turn.
+- [ ] Probabaility in dicr due to turnd ans nuber of throws 
+- [ ] ADd a blocked postiions array, due to shit from turncoats
 - [ ] Check set_canvas_size with the fitness sprites.
+
 - [ ] Set tutorial
+- [ ] Keep and drop servers based in a keep/alive fashion
 - [ ] Bug when moving char besides enemy pawn, since in the destinies is not this cell cuz of closer to enemies restriction. 
 
 #### TODO WHENEVER:
@@ -33,3 +33,6 @@
 - [X] Add dict of cells to not being processing fitnesses again when useless.
 - [X] Make fitness value texture work.
 - [X] The dice crashes teh game when hovering it after shuffling once
+- [X] Position the dice.
+- [X] Game infoboard in the right side.
+- [X] Add HolyChampion behavior in promotion cells.

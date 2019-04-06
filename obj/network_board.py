@@ -492,6 +492,11 @@ class NetworkBoard(Board):
         if orig_char.owner_uuid == self.my_player and new_char.owner_uuid == self.my_player:    #If this was a local swap and not a received one in response_handler from another player
             self.send_data_async({"swap": True, "original": orig_char.uuid, "new": new_char.uuid})
 
+    def update_character(self):
+        super().update_character
+        assert False
+        #TODO senf that info to the other players
+
     def drop_character(self):
         """Makes the action of the superclass if my_turn is True. Otherwise, just moves the character to the last cell
         where it was. After this, it broadcast the result to the rest of the clients (sending it to the server)."""

@@ -891,16 +891,24 @@ class Board(Screen):
         self.update_cells(self.last_cell.sprite, active_cell)
         self.last_cell.empty()  #Not last cell anymore, char was dropped succesfully
         #THIS CONDITION TO SHOW THE UPGRADE TABLE STARTS HERE
-        if active_cell.promotion and self.drag_char.sprite.upgradable\
-        and (None != active_cell.owner != character.owner_uuid)\
-        and any(not char.upgradable for char in self.current_player.fallen):
+        if active_cell.promotion and (None != active_cell.owner != character.owner_uuid):
             #TODO MAKE SHIT HERE WITH HOLY CHAMPION
-            self.update_promotion_table(*tuple(char for char in self.current_player.fallen if not char.upgradable))
-            self.show_promotion = True
-            self.swapper.send(self.drag_char.sprite)
-            return
+            if 'champion' in self.drag_char.sprite.get_type().lower():
+                self.update_character()
+                #return #TODO CHECk THIS
+            elif self.drag_char.sprite.upgradable\
+            and any(not char.upgradable for char in self.current_player.fallen):
+                self.update_promotion_table(*tuple(char for char in self.current_player.fallen if not char.upgradable))
+                self.show_promotion = True
+                self.swapper.send(self.drag_char.sprite)
+                #return
         self.next_char_turn(self.drag_char.sprite)
         
+    def update_character(self):
+        self.drag_char.sprite.can_kill = True
+        self.drag_char.sprite.can_die = True
+        self.drag_char.sprite.value = 8
+
     def next_char_turn(self, char):
         self.fitnesses = {} #Cleaning the history of fitnesses
         self.char_turns += 1

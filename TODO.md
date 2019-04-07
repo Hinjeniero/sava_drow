@@ -1,9 +1,11 @@
 #### TODO CURRENT:
-- [ ] Probability in dice modified to turns and number of throws 
-- [ ] Parse text to have decents numbers and letters insteaad of shitty indexes
+- [ ] Complete the update character in the network_board
+- [ ] Parse text to have decents numbers and letters instead of shitty indexes
 - [ ] Set tutorial
+- [ ] Make simple IA based on the alpha-beta proning.
 - [ ] Keep and drop servers based in a keep/alive fashion
-- [ ] Bug when moving char besides enemy pawn, since in the destinies is not this cell cuz of closer to enemies restriction. 
+- [ ] Bug when moving char besides enemy pawn, since in the destinies is not this cell cuz of closer to enemies restriction.
+- [ ] Test recent changes
 
 #### TODO WHENEVER:
 - [ ] Effect when chars colliding with each other.
@@ -36,3 +38,4 @@
 - [X] When player gets a 6, can move enemy piece that can capture anything, except the matron mother (Orcs both sides as hostile). Else loses a turn.
 - [X] Add a blocked postiions array, due to shit from turncoats
 - [X] Check set_canvas_size with the fitness sprites.
+- [X] Probability in dice modified to turns and number of throws. Do this in the arch dice, or make dice for each player?

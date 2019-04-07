@@ -71,6 +71,7 @@ class Player(object):
         self.turn       = 0
         self.kills      = 0
         self.movements  = 0
+        self.throws     = 0
         self.corpses    = []    #Contains dead chars of the other players.
         self.fallen     = []    #Contains my captured/killed pieces
         self.dead       = False #If the player has already lost

@@ -241,6 +241,8 @@ class Game(object):
     def board_handler(self, command, value=None):
         if 'turn' in command:
             self.show_popup('turn')
+        elif 'dice' in command: #The current player shuffled the dice
+            self.get_screen('main', 'board').dice_value_result(int(value))
         elif 'conn' in command and 'error' in command:
             self.show_popup('connection_error')
             self.__add_timed_execution(3, self.restart_main_menu)

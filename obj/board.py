@@ -227,7 +227,7 @@ class Board(Screen):
     def generate_dice(self):
         dice = Dice('dice', (0, 0), tuple(0.1*x for x in self.resolution), self.resolution, shuffle_time=1500, sprite_folder=self.params['dice_textures_folder'], animation_delay=2)
         dice.set_position((self.infoboard.rect.centerx-dice.rect.width//2, self.resolution[1]-(dice.rect.height*2)))
-        self.dice.add(dice)
+        return dice
 
     @run_async_not_pooled
     def update_scoreboard(self):
@@ -778,7 +778,7 @@ class Board(Screen):
             if self.drag_char.sprite:   self.drop_character()
         
         #NOW CHECKING MOUSE MOVEMENT
-        if mouse_movement:
+        if mouse_movement and not self.dice.current_shuffling:
             mouse_sprite = UtilityBox.get_mouse_sprite()
             if self.show_promotion:
                 for element in self.promotion_table.elements:                           element.set_hover(False)
@@ -961,6 +961,7 @@ class Board(Screen):
                     self.players[old_index].pause_characters()
                     self.current_player.unpause_characters()
                 break
+        self.dice.add_turn(self.current_player.uuid)
         self.update_scoreboard()
 
     def kill_character(self, cell, killer):

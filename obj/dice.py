@@ -41,6 +41,10 @@ class Dice(AnimatedSprite):
     def add_turn(self, next_player):
         self.turns += 1
         self.current_player = next_player
+        try:                self.throws[self.current_player]
+        except KeyError:    
+            print("Added "+str(next_player))
+            self.throws[self.current_player] = 1
         self.deactivating_dice()
 
     def reactivating_dice(self):
@@ -48,7 +52,7 @@ class Dice(AnimatedSprite):
         self.set_enabled(True)
 
     def deactivating_dice(self):
-        self.overlay = Sprite.generate_overlay(self.surfaces[i], LIGHTGRAY)
+        self.overlay = Sprite.generate_overlay(self.surfaces[self.animation_index], LIGHTGRAY)
         self.locked = True
         self.set_enabled(False)
 
@@ -69,16 +73,14 @@ class Dice(AnimatedSprite):
 
     def get_random_value(self):
         weights = Dice.WEIGHTS.copy()
-        x = math.log10(self.turns//(self.throws*3))
+        x = math.log10(self.turns/(self.throws[self.current_player]*3))
         weights[-1] += math.tanh(x)
-        weights[-1] = min(0.1, weights[-1])
-        return random.choices(Dice.VALUES, weights)
+        weights[-1] = max(0.3, weights[-1])
+        print("Pos of getting a 6 is "+str(weights[-1]))
+        return random.choices(Dice.VALUES, weights)[0]
 
     def throw(self):
-        try:
-            self.throws[self.current_player] += 1
-        except KeyError:
-            self.throws = [1]
+        self.throws[self.current_player] += 1
         self.current_result = self.get_random_value()
         self.event.value = self.current_result
         pygame.event.post(self.event)

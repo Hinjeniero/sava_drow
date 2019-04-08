@@ -321,8 +321,8 @@ class PathAppraiser(object):
         for index in possible_destinies:
             #Creating mock current map, since some enemy chars change paths based on enemies nearby TODO still noir working
             mock_map = current_map.copy()
-            mock_map[start_pos].ally = False
-            mock_map[index].ally = True
+            #mock_map[start_pos].ally = False
+            #mock_map[index].ally = True
             #End of mock map
             bait_ratios[index] = PathAppraiser.get_bait_value(character, index, paths_graph, distances, mock_map, all_cells, level_size)
             destinies_danger[index] = PathAppraiser.get_danger_in_position(index, character.owner_uuid, paths_graph, distances, mock_map, all_cells, level_size)

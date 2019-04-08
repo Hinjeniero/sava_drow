@@ -1,11 +1,12 @@
 #### TODO CURRENT:
+- [ ] Set tutorial
 - [ ] Complete the update character in the network_board
 - [ ] Parse text to have decents numbers and letters instead of shitty indexes
-- [ ] Set tutorial
 - [ ] Make simple IA based on the alpha-beta proning.
 - [ ] Keep and drop servers based in a keep/alive fashion
 - [ ] Bug when moving char besides enemy pawn, since in the destinies is not this cell cuz of closer to enemies restriction.
 - [ ] Test recent changes
+- [ ] Add percentage to the loading screen
 
 #### TODO WHENEVER:
 - [ ] Effect when chars colliding with each other.

@@ -16,6 +16,7 @@ import numpy
 import os
 import random
 import threading
+import time
 from pygame.locals import *
 #Selfmade libraries
 from settings import MESSAGES, USEREVENTS, PATHS
@@ -129,6 +130,8 @@ class Board(Screen):
         self.char_turns     = 0
         #Graphic elements
         self.loading_screen = None  #Created in Board.generate
+        self.overlay_console= None
+        self.console_active = True
         self.cells          = pygame.sprite.Group()
         self.quadrants      = {}
         self.locked_cells   = []
@@ -178,6 +181,7 @@ class Board(Screen):
     def generate(self, empty, *players):
         UtilityBox.join_dicts(self.params, Board.__default_config)
         #INIT
+        self.generate_onscreen_console()
         if self.params['loading_screen']:
             self.loading_screen = LoadingScreen(self.id+"_loading", self.event_id, self.resolution, text=self.params['loading_screen_text'])
         #REST
@@ -188,6 +192,15 @@ class Board(Screen):
         self.add_players(*players)
         self.swapper = self.character_swapper()
         self.swapper.send(None) #Needed in the first execution of generator
+
+    @run_async
+    def generate_onscreen_console(self):
+        start = time.time()
+        self.overlay_text = ScrollingText('updates', self.event_id, self.resolution, transparency=180)
+        LOG.log('info', 'The console have been generated in ', (time.time()-start)*1000, 'ms')
+
+    def LOG_ON_SCREEN(self, msg):
+        self.overlay_console.add_msg(msg)
 
     @no_size_limit
     def generate_platform(self):
@@ -206,10 +219,13 @@ class Board(Screen):
     @run_async
     @no_size_limit
     def generate_infoboard(self):
+        self.infoboard = self.generate_infoboard_sync()
+
+    def generate_infoboard_sync(self):
         infoboard = InfoBoard(self.id+'_infoboard', 0, (0, 0), (0.15*self.resolution[0], self.resolution[1]),\
                             self.resolution, texture=self.params['infoboard_texture'], keep_aspect_ratio = False, cols=6)
         infoboard.set_position((self.resolution[0]-infoboard.rect.width, 0))
-        self.infoboard = infoboard
+        return infoboard
 
     @no_size_limit
     def generate_dialogs(self):
@@ -227,28 +243,27 @@ class Board(Screen):
     def generate_dice(self):
         dice = Dice('dice', (0, 0), tuple(0.1*x for x in self.resolution), self.resolution, shuffle_time=1500, sprite_folder=self.params['dice_textures_folder'], animation_delay=2)
         dice.set_position((self.infoboard.rect.centerx-dice.rect.width//2, self.resolution[1]-(dice.rect.height*2)))
-        return dice
+        self.dice.add(dice)
 
     @run_async_not_pooled
     def update_scoreboard(self):
-        while True:
-            try:
-                self.scoreboard.clear()
-                for player in self.players:
-                    if player.order == 0:
-                        for key in player.get_stats().keys():
-                            self.scoreboard.add_text_element('text', key, 1)
-                    for value in player.get_stats().values():
-                        if not player.dead:
-                            if player.order is self.current_player.order: #A bit redundant, since a dead player dissapears
-                                self.scoreboard.add_text_element('text', value, 1, color=WHITE)
-                                continue
-                            self.scoreboard.add_text_element('text', value, 1)
-                        else:
-                            self.scoreboard.add_text_element('text', value, 1, color=DARKGRAY)
-                break
-            except NotEnoughSpaceException:
-                LOG.log('warning', 'Error while updating the scoreboard, trying again...')
+        try:
+            infoboard = self.generate_infoboard_sync() #self.scoreboard.clear()
+            for player in self.players:
+                if player.order == 0:
+                    for key in player.get_stats().keys():
+                        infoboard.add_text_element('text', key, 1)
+                for value in player.get_stats().values():
+                    if not player.dead:
+                        if player.order is self.current_player.order: #A bit redundant, since a dead player dissapears
+                            infoboard.add_text_element('text', value, 1, color=WHITE)
+                            continue
+                        infoboard.add_text_element('text', value, 1)
+                    else:
+                        infoboard.add_text_element('text', value, 1, color=DARKGRAY)
+            self.infoboard = infoboard
+        except NotEnoughSpaceException:
+            LOG.log('warning', 'Error while updating the scoreboard, trying again...')
 
     @run_async_not_pooled
     def update_promotion_table(self, *chars):
@@ -613,9 +628,11 @@ class Board(Screen):
                 self.current_player = self.players[0]
                 self.current_player.unpause_characters()
                 self.update_map()       #This goes according to current_player
+            self.dice.sprite.add_turn(self.current_player.uuid)
             self.started = True
             self.generate_dialogs()
             self.update_scoreboard()
+            self.console_active = False
 
     def create_player(self, name, number, chars_size, empty=False, **player_settings):
         """Queues the creation of a player on the async method.
@@ -697,20 +714,22 @@ class Board(Screen):
         try:
             if not self.started and self.params['loading_screen']:
                 self.loading_screen.draw(surface)
-                return
-            super().draw(surface)                   #Draws background
-            for char in self.characters:
-                char.draw(surface)
-            if self.current_player:
-                self.current_player.draw(surface)   #This draws the player's infoboard
-            if self.promotion_table and self.show_promotion:
-                self.gray_overlay.draw(surface)
-                self.promotion_table.draw(surface)
-            if self.show_score and self.scoreboard:
-                self.scoreboard.draw(surface)
-            if self.dialog and self.dialog.visible:
-                self.gray_overlay.draw(surface)
-                self.dialog.draw(surface)
+            else:
+                super().draw(surface)                   #Draws background
+                for char in self.characters:
+                    char.draw(surface)
+                if self.current_player:
+                    self.current_player.draw(surface)   #This draws the player's infoboard
+                if self.promotion_table and self.show_promotion:
+                    self.gray_overlay.draw(surface)
+                    self.promotion_table.draw(surface)
+                if self.show_score and self.scoreboard:
+                    self.scoreboard.draw(surface)
+                if self.dialog and self.dialog.visible:
+                    self.gray_overlay.draw(surface)
+                    self.dialog.draw(surface)
+            #if self.console_active and not (self.dialog and self.dialog.visible):
+                #self.overlay_text.draw(surface)
         except pygame.error: 
             LOG.log(*MESSAGES.LOCKED_SURFACE_EXCEPTION)
         
@@ -778,7 +797,7 @@ class Board(Screen):
             if self.drag_char.sprite:   self.drop_character()
         
         #NOW CHECKING MOUSE MOVEMENT
-        if mouse_movement and not self.dice.current_shuffling:
+        if mouse_movement and not self.dice.sprite.currently_shuffling:
             mouse_sprite = UtilityBox.get_mouse_sprite()
             if self.show_promotion:
                 for element in self.promotion_table.elements:                           element.set_hover(False)
@@ -847,14 +866,21 @@ class Board(Screen):
             self.fitnesses[source_cell] = PathAppraiser.rate_movement(self.active_cell.sprite.get_real_index(), tuple(x[-1] for x in destinations), self.enabled_paths,\
                                                                     self.distances, self.current_map, self.cells.sprites(), self.params['circles_per_lvl'])
         for fitness_key, fitness_value in self.fitnesses[source_cell].items():
-            dest_cell = self.get_cell_by_real_index(fitness_key)
-            dest_cell.show_fitness_value(fitness_value)
+            if self.drag_char.sprite:   #If we didnt drop the char before the fitnesses were assigned
+                dest_cell = self.get_cell_by_real_index(fitness_key)
+                dest_cell.show_fitness_value(fitness_value)
+            else:
+                break
 
     def hide_fitnesses(self, source_cell):
-        for fitness_key in self.fitnesses[source_cell].keys():
-            dest_cell = self.get_cell_by_real_index(fitness_key)
-            dest_cell.hide_fitness_value()
-
+        try:
+            cells_to_hide = list(self.fitnesses[source_cell].keys())
+            for fitness_key in cells_to_hide:
+                dest_cell = self.get_cell_by_real_index(fitness_key)
+                dest_cell.hide_fitness_value()
+        except KeyError:
+            pass #This is due to pick and drop the char too fast, so we still haven't assigned the fitnesses for that cell
+            
     def drop_character(self):
         """Drops a character. Deletes it from the drag char Group, and checks if the place in which
         has been dropped is a possible destination. If it is, it drops the character in that cell.
@@ -866,7 +892,7 @@ class Board(Screen):
         self.drag_char.sprite.set_hover(False)
         if self.last_cell.sprite is self.active_cell.sprite:
             self.drag_char.sprite.set_center(self.last_cell.sprite.center)
-            LOG.log('debug', 'Moves towards the same cell you were in dont count')
+            LOG.log('debug', 'Moving towards the same cell you were in doesnt count')
         elif self.possible_dests.has(self.active_cell.sprite)\
         or self.admin_mode and self.active_cell.sprite:
             self.move_character(self.drag_char.sprite)
@@ -961,7 +987,7 @@ class Board(Screen):
                     self.players[old_index].pause_characters()
                     self.current_player.unpause_characters()
                 break
-        self.dice.add_turn(self.current_player.uuid)
+        self.dice.sprite.add_turn(self.current_player.uuid)
         self.update_scoreboard()
 
     def kill_character(self, cell, killer):

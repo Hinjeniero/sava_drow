@@ -81,8 +81,11 @@ class Cell(Circle):
 
     def draw(self, surface, offset=None):
         super().draw(surface, offset=offset)
-        if self.fitness_active:
-            self.fitnesses_sprites[self.current_fitness][1].draw(surface, offset=offset)
+        try:
+            if self.fitness_active:
+                self.fitnesses_sprites[self.current_fitness][1].draw(surface, offset=offset)
+        except KeyError:
+            pass
 
     def set_canvas_size(self, canvas_size):
         super().set_canvas_size(canvas_size)

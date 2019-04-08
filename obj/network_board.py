@@ -73,8 +73,8 @@ class NetworkBoard(Board):
         self.uuid = obj_uuid if obj_uuid else uuid.uuid1().int    #Using this if crashing would led to more conns than players
         self.ip = None
         self.port = None
-        self.overlay_text = None
         self.ready = False
+        self.overlay_text = None
         self.connected = threading.Event()
         self.change_turn = threading.Event()
         self.next_turn_event = pygame.event.Event(event_id, command='next_turn_network_board')
@@ -181,9 +181,6 @@ class NetworkBoard(Board):
             except KeyError:
                 pass
 
-    def log_on_screen(self, msg):
-        self.overlay_text.add_msg(msg)
-
     def send_handshake(self, host):
         """"Sends the first request to the server, with our ID and a host boolean.
         If this is the host, will send the parameters for the board creation.
@@ -193,7 +190,7 @@ class NetworkBoard(Board):
         self.send_data({"host": host, "id": self.uuid})
         if host:
             self.send_data_async({"params": self.get_board_params()})
-            self.log_on_screen("sent board creation settings to server")
+            self.LOG_ON_SCREEN("sent board creation settings to server")
         else:
             self.request_data_async("params")
             self.request_data_async("players")          #To get the number of players
@@ -201,13 +198,13 @@ class NetworkBoard(Board):
             self.request_data_async("characters_data")  #To get the data of the characters
         dice = random.randint(1, 6)
         self.send_data_async({"dice": dice, "id":self.uuid})    #Sending dice result for the player assignments
-        self.log_on_screen("rolled a "+str(dice))
+        self.LOG_ON_SCREEN("rolled a "+str(dice))
 
     def connect(self):   #TODO SEND ID IN CONNECT?
         """Connects the client to the server if the ip and port are available."""
         if self.ip and self.port:
             self.client_lock.acquire()
-            self.log_on_screen('Connecting to '+str(self.ip)+' in port '+str(self.port))
+            self.LOG_ON_SCREEN('Connecting to '+str(self.ip)+' in port '+str(self.port))
             self.client.disconnect()
             self.client.connect(self.ip, self.port)
             self.connected.set()
@@ -255,20 +252,20 @@ class NetworkBoard(Board):
         Args:
             response (dict):JSON schema. Contains the various replies of the server."""
         if "params" in response and not self.server:    #REQUESTING THE BOARD GENERATION PARAMETERS
-            self.log_on_screen('received the board params, creating board...')
+            self.LOG_ON_SCREEN('received the board params, creating board...')
             self.params.update(response["params"])
             self.generate_mapping()
-            self.log_on_screen('created map...')
+            self.LOG_ON_SCREEN('created map...')
             self.generate_environment()
-            self.log_on_screen('created the board...')
+            self.LOG_ON_SCREEN('created the board...')
             self.flags["board_done"].set()
         elif "players" in response and not self.server:
-            self.log_on_screen('received the players number, creating mock players...')
+            self.LOG_ON_SCREEN('received the players number, creating mock players...')
             self.flags["board_done"].wait()
             for i in range (0, 4, 4//response["players"]):
                 self.create_player("null", i, None, empty=True)  #The name will be overwritten later on
         elif "players_data" in response and not self.server:
-            self.log_on_screen('received the players data, updating players...')
+            self.LOG_ON_SCREEN('received the players data, updating players...')
             self.flags["board_done"].wait()
             self.flags["players_ammount_done"].wait()
             for received_player in response["players_data"]:
@@ -306,6 +303,7 @@ class NetworkBoard(Board):
             self.send_ready()
         elif "start" in response:
             self.ready = True
+            self.console_active = False
             self.activate_my_characters()
             if self.current_player.uuid == self.my_player:
                 self.update_map()
@@ -429,6 +427,7 @@ class NetworkBoard(Board):
         In the non-host clients, when the mock-empty-players are created, we unblock the threads waiting to assign
             attributes to the players and characters to the board."""
         super().ALL_PLAYERS_LOADED()
+        self.console_active = True
         if self.started:
             if self.server:
                 self.send_player_and_chars_data()
@@ -450,13 +449,13 @@ class NetworkBoard(Board):
             if char:
                 chars.append(char.json(cell.get_real_index()))
         self.send_data_async({"characters_data": chars})
-        self.log_on_screen("sent the characters and players data to the server")
+        self.LOG_ON_SCREEN("sent the characters and players data to the server")
         self.send_ready()
 
     def send_ready(self):
         """Sends the command 'ready' to the server, signalizing that this client is ready to start the game."""
         self.send_data_async({'ready': True})
-        self.log_on_screen("ready, waiting for the other players...")
+        self.LOG_ON_SCREEN("ready, waiting for the other players...")
         self.generate_players_names()
     
     def mouse_handler(self, event, mouse_buttons, mouse_movement, mouse_position):
@@ -529,9 +528,7 @@ class NetworkBoard(Board):
             super().draw(surface)
             all(name.draw(surface) for name in self.players_names.values())
             #Special cases from now on
-            if not self.ready and not (self.dialog and self.dialog.visible):
-                self.overlay_text.draw(surface)
-            elif self.dialog and self.dialog.visible:
+            if self.dialog and self.dialog.visible:
                 self.dialog.draw(surface)
         except pygame.error:
             LOG.log(*MESSAGES.LOCKED_SURFACE_EXCEPTION)

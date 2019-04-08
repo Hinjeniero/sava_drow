@@ -1153,8 +1153,15 @@ class ScrollingText(UIElement):
         self.transparency = transparency
         self.image = self.image.convert()
         self.image.set_alpha(transparency)
+        self.changed = True
+
+    def has_changed(self):
+        changed = self.changed
+        self.changed = False
+        return changed
 
     def add_msg(self, text, msg_size=(0.85, 0.10)):
+        self.changed = True
         self.add_text_sprite('screen_msg_'+str(len(self.sprites.sprites())), text,\
                             text_size=tuple(x*y for x,y in zip(self.rect.size, msg_size)))
         text_sprite = self.sprites.sprites()[-1]

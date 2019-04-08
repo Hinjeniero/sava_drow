@@ -193,10 +193,9 @@ class Board(Screen):
         self.swapper = self.character_swapper()
         self.swapper.send(None) #Needed in the first execution of generator
 
-    @run_async
     def generate_onscreen_console(self):
         start = time.time()
-        self.overlay_text = ScrollingText('updates', self.event_id, self.resolution, transparency=180)
+        self.overlay_console = ScrollingText('updates', self.event_id, self.resolution, transparency=180)
         LOG.log('info', 'The console have been generated in ', (time.time()-start)*1000, 'ms')
 
     def LOG_ON_SCREEN(self, msg):
@@ -206,7 +205,6 @@ class Board(Screen):
     def generate_platform(self):
         platform_size   = tuple(min(self.resolution)*self.params['platform_proportion'] for _ in self.resolution)
         centered_pos    = tuple(x//2-y//2 for x, y in zip(self.resolution, platform_size))
-        
         platform_pos    = (0, centered_pos[1]) if 'left' in self.params['platform_alignment']\
         else centered_pos if 'center' in self.params['platform_alignment']\
         else (self.resolution[0]-platform_size[0], centered_pos[1])
@@ -713,23 +711,24 @@ class Board(Screen):
         """
         try:
             if not self.started and self.params['loading_screen']:
-                self.loading_screen.draw(surface)
-            else:
-                super().draw(surface)                   #Draws background
-                for char in self.characters:
-                    char.draw(surface)
-                if self.current_player:
-                    self.current_player.draw(surface)   #This draws the player's infoboard
-                if self.promotion_table and self.show_promotion:
-                    self.gray_overlay.draw(surface)
-                    self.promotion_table.draw(surface)
-                if self.show_score and self.scoreboard:
-                    self.scoreboard.draw(surface)
-                if self.dialog and self.dialog.visible:
-                    self.gray_overlay.draw(surface)
-                    self.dialog.draw(surface)
-            #if self.console_active and not (self.dialog and self.dialog.visible):
-                #self.overlay_text.draw(surface)
+                if self.overlay_console.has_changed():
+                    self.loading_screen.draw(surface)
+                    if self.console_active and not (self.dialog and self.dialog.visible):
+                        self.overlay_console.draw(surface)
+                return
+            super().draw(surface)                   #Draws background
+            for char in self.characters:
+                char.draw(surface)
+            if self.current_player:
+                self.current_player.draw(surface)   #This draws the player's infoboard
+            if self.promotion_table and self.show_promotion:
+                self.gray_overlay.draw(surface)
+                self.promotion_table.draw(surface)
+            if self.show_score and self.scoreboard:
+                self.scoreboard.draw(surface)
+            if self.dialog and self.dialog.visible:
+                self.gray_overlay.draw(surface)
+                self.dialog.draw(surface)
         except pygame.error: 
             LOG.log(*MESSAGES.LOCKED_SURFACE_EXCEPTION)
         

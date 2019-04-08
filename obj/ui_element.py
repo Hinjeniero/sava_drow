@@ -17,6 +17,7 @@ __author__ = 'David Flaity Pardo'
 #Python libraries
 import pygame
 import math
+from wrapt import synchronized
 #Selfmade libraries
 from obj.polygons import Circle, Rectangle
 from obj.sprite import Sprite, MultiSprite, TextSprite
@@ -1160,6 +1161,7 @@ class ScrollingText(UIElement):
         self.changed = False
         return changed
 
+    @synchronized
     def add_msg(self, text, msg_size=(0.85, 0.10)):
         self.changed = True
         self.add_text_sprite('screen_msg_'+str(len(self.sprites.sprites())), text,\

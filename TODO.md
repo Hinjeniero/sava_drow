@@ -6,7 +6,6 @@
 - [ ] Keep and drop servers based in a keep/alive fashion
 - [ ] Bug when moving char besides enemy pawn, since in the destinies is not this cell cuz of closer to enemies restriction.
 - [ ] Test recent changes
-- [ ] Add percentage to the loading screen
 
 #### TODO WHENEVER:
 - [ ] Effect when chars colliding with each other.
@@ -40,3 +39,4 @@
 - [X] Add a blocked postiions array, due to shit from turncoats
 - [X] Check set_canvas_size with the fitness sprites.
 - [X] Probability in dice modified to turns and number of throws. Do this in the arch dice, or make dice for each player?
+- [X] Add percentage to the loading screen (Added msgs instead)

@@ -35,6 +35,7 @@ from obj.utilities.exceptions import BadPlayersParameter, BadPlayerTypeException
                                     PlayerNameExistsException, TooManyCharactersException, NotEnoughSpaceException
 from obj.utilities.decorators import run_async, run_async_not_pooled, time_it
 from obj.utilities.logger import Logger as LOG
+from obj.utilities.logger import Parser
 from obj.utilities.surface_loader import ResizedSurface, no_size_limit
 #numpy.set_printoptions(threshold=numpy.nan)
 
@@ -189,6 +190,8 @@ class Board(Screen):
         if not empty:
             self.generate_mapping()
             self.generate_environment()
+        else:
+            self.LOG_ON_SCREEN("WARNING: Generating board in empty mode, needs server attributes to work")
         self.add_players(*players)
         self.swapper = self.character_swapper()
         self.swapper.send(None) #Needed in the first execution of generator
@@ -198,8 +201,10 @@ class Board(Screen):
         self.overlay_console = ScrollingText('updates', self.event_id, self.resolution, transparency=180)
         LOG.log('info', 'The console have been generated in ', (time.time()-start)*1000, 'ms')
 
-    def LOG_ON_SCREEN(self, msg):
-        self.overlay_console.add_msg(msg)
+    def LOG_ON_SCREEN(self, *msgs):
+        text = Parser.parse_texts(*msgs)
+        LOG.log('info', text)
+        self.overlay_console.add_msg(text)
 
     @no_size_limit
     def generate_platform(self):
@@ -218,6 +223,7 @@ class Board(Screen):
     @no_size_limit
     def generate_infoboard(self):
         self.infoboard = self.generate_infoboard_sync()
+        self.LOG_ON_SCREEN("The game infoboard has been generated")
 
     def generate_infoboard_sync(self):
         infoboard = InfoBoard(self.id+'_infoboard', 0, (0, 0), (0.15*self.resolution[0], self.resolution[1]),\
@@ -236,12 +242,14 @@ class Board(Screen):
                                 self.resolution, keep_aspect_ratio = False, texture=self.params['promotion_texture'])
         self.promotion_table = promotion_table
         self.gray_overlay = ScrollingText('nuthing', self.event_id, self.resolution, transparency=128)
+        self.LOG_ON_SCREEN("The board scoreboard and promotion table have been generated.")
 
     @run_async
     def generate_dice(self):
         dice = Dice('dice', (0, 0), tuple(0.1*x for x in self.resolution), self.resolution, shuffle_time=1500, sprite_folder=self.params['dice_textures_folder'], animation_delay=2)
         dice.set_position((self.infoboard.rect.centerx-dice.rect.width//2, self.resolution[1]-(dice.rect.height*2)))
         self.dice.add(dice)
+        self.LOG_ON_SCREEN("Dice has been generated")
 
     @run_async_not_pooled
     def update_scoreboard(self):
@@ -260,6 +268,7 @@ class Board(Screen):
                     else:
                         infoboard.add_text_element('text', value, 1, color=DARKGRAY)
             self.infoboard = infoboard
+            LOG.log('info', 'The scoreboard has been successfully updated.')
         except NotEnoughSpaceException:
             LOG.log('warning', 'Error while updating the scoreboard, trying again...')
 
@@ -271,6 +280,7 @@ class Board(Screen):
         for char in chars:
             if not char.upgradable: #Upgradable ones cannot be upgraded to
                 self.promotion_table.add_sprite_to_elements(1, char)
+        LOG.log('info', 'The promotion table has been successfully updated.')
 
     def generate_mapping(self):
         axis_size = self.params['circles_per_lvl']*self.params['max_levels']
@@ -468,6 +478,7 @@ class Board(Screen):
         if self.params['center_cell']:
             self.cells.add(self.__generate_center_cell(small_radius, self.params['circles_per_lvl'], self.params['max_levels'], texture=self.params['cell_texture']))
         LOG.log('DEBUG', "Generated cells of ", self.id)
+        self.LOG_ON_SCREEN("All the cells have been generated")
         self.assign_quadrants()
 
     def set_admin_mode(self, admin):
@@ -532,6 +543,7 @@ class Board(Screen):
                         border_color=self.params['path_color'], border_width=self.params['path_width'])
             self.paths.add(out_circle)
             radius+=ratio//2
+        self.LOG_ON_SCREEN("All the circumferences have been generated")
         LOG.log('DEBUG', "Generated circular paths in ", self.id)
     
     @run_async
@@ -554,6 +566,7 @@ class Board(Screen):
             interpaths_sprite.image = UtilityBox.overlap_trace_texture(interpaths_sprite.image, ResizedSurface.get_surface(self.params['interpath_texture'],\
                                             interpaths_sprite.rect.size, 'fill', True))
         self.inter_paths.add(interpaths_sprite)
+        self.LOG_ON_SCREEN("The interpath has been generated")
 
     def draw_inter_path(self, surface, index):
         """Draw a bezier curve on a surface. It uses the indexes in (level, index) scheme.
@@ -675,8 +688,10 @@ class Board(Screen):
                         cell.owner = player.uuid
                         if self.params['cell_border']:
                             cell.add_border(self.params['cell_border'])
+                    #self.LOG_ON_SCREEN("Character ", character.id, " spawned with position ", cell.pos)
                     #LOG.log('DEBUG', "Character ", character.id, " spawned with position ", cell.pos)
                 player.pause_characters()
+                self.LOG_ON_SCREEN("Created the ", player.name, " successfully")
             self.loaded_players += 1
             self.ALL_PLAYERS_LOADED()
             return True

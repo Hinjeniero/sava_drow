@@ -54,6 +54,18 @@ class Parser:
         else:
             return Parser.parse_text(obj)
 
+    @staticmethod
+    def parse_texts(*texts):
+        """Parses a text by ignoring non ascii characters and replacing \\n with \n.
+        Args:
+            text (str): Text that will be parsed.
+        Returns:
+            (str):  A totally compatible ASCII text. Some characters may have been removed."""
+        text = ''
+        for msg in texts:    text += Parser.to_string(msg)
+        return text
+        
+
 class Logger:
     """Logger class. Has the static methods that write the log history of the workspace."""
     @staticmethod

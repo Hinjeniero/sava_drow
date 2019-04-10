@@ -314,26 +314,47 @@ class PathAppraiser(object):
         character = next(cell.get_char() for cell in all_cells if cell.get_real_index() == start_pos)
         #TODO Create the algorithm itself, since the helpiung values have been written already
         danger_multiplier = PathAppraiser.get_danger_multiplier(character, all_cells)
-        start_danger = PathAppraiser.get_danger_in_position(start_pos, character.owner_uuid, paths_graph, distances, current_map, all_cells, level_size)*danger_multiplier
+        start_danger = PathAppraiser.get_danger_in_position(start_pos, character.owner_uuid, paths_graph, distances, all_cells, level_size)*danger_multiplier
         bait_ratios = {}
         destinies_danger = {}
         kill_values = {}
         for index in possible_destinies:
-            #Creating mock current map, since some enemy chars change paths based on enemies nearby TODO still noir working
-            mock_map = current_map.copy()
-            #mock_map[start_pos].ally = False
-            #mock_map[index].ally = True
-            #End of mock map
-            bait_ratios[index] = PathAppraiser.get_bait_value(character, index, paths_graph, distances, mock_map, all_cells, level_size)
-            destinies_danger[index] = PathAppraiser.get_danger_in_position(index, character.owner_uuid, paths_graph, distances, mock_map, all_cells, level_size)
-            destinies_danger[index] *= danger_multiplier
             destiny_cell = next(cell for cell in all_cells if index == cell.get_real_index())
+            bait_ratios[index] = PathAppraiser.get_bait_value(character, index, paths_graph, distances, current_map, all_cells, level_size)
             kill_values[index] = PathAppraiser.get_kill_value(destiny_cell, character)
-            #LOG.log('info', "VALUES FOR DESTINY ", destiny_cell, ", baitValue: ", bait_ratios[index], ", dangerValue: ", destinies_danger[index], ", kill_value: ", kill_values[index])
-            LOG.log('info', "TANHS FOR DESTINY ", destiny_cell, ", baitTanh: ", math.tanh(bait_ratios[index]), ", dangerdifferenceTanh: ", math.tanh(start_danger/destinies_danger[index]), ", killTanh: ", math.tanh(kill_values[index]))
-            fitness = 0.6*(math.tanh(kill_values[index]))+0.6*(math.tanh(start_danger/destinies_danger[index]))+0.2*(math.tanh(bait_ratios[index]))
+            destinies_danger[index] = PathAppraiser.get_danger_in_position(index, character.owner_uuid, paths_graph, distances, all_cells, level_size)
+            destinies_danger[index] *= danger_multiplier# if kill_values[index] != 0 else (danger_multiplier*2)
+            LOG.log('info', '---------------INDEX CELL RESULTS ', index, '-------------')
+            LOG.log('info', 'Danger multiplier ', danger_multiplier)
+            LOG.log('info', 'Start pos danger ', start_danger," vs destiny danger: ", destinies_danger[index])
+            LOG.log('info', 'Bait value ', bait_ratios[index])
+            LOG.log('info', 'Kill value ', kill_values[index])
+            LOG.log('info', 'Start pos danger ', start_danger," vs destiny danger: ", destinies_danger[index])
+            LOG.log('info', "IN TANH VALUES: bait ", math.tanh(bait_ratios[index]), ", danger difference: ", math.tanh(destinies_danger[index]/start_danger), ", kill: ", math.tanh(kill_values[index]))
+            print("----------------------------------")
+            fitness = 0.6*(math.tanh(kill_values[index]))+0.6*(math.tanh(destinies_danger[index]/start_danger))+0.2*(math.tanh(bait_ratios[index]))
+            print("fitness for "+str(index)+" is "+str(fitness))
             fitnesses[index] = min(fitness, 1)
+            fitnesses[index] = max(fitness, 0)
         return fitnesses
+
+    @staticmethod
+    def invert_map(self, current_map):
+        for path_obj in current_map.values():
+            if path_obj.has_ally():
+                path_obj.enemy = True
+                path_obj.ally = False
+            elif path_obj.has_enemy():
+                path_obj.enemy = False
+                path_obj.ally = True
+
+    @staticmethod
+    def generate_current_map(all_cells, player):
+        """This code is redundant, but oh well"""
+        map_for_player = {}
+        for cell in all_cells:
+            map_for_player[cell.get_real_index()]=cell.to_path(player)
+        return map_for_player 
 
     @staticmethod
     def get_kill_value(destination, my_char):
@@ -356,19 +377,33 @@ class PathAppraiser(object):
         return ratio
 
     @staticmethod
-    def get_danger_in_position(cell_index, player, graph, distances, current_map, all_cells, level_size):
+    def get_danger_in_position(cell_index, player, graph, distances, all_cells, level_size):
         """From 0 to 1. 0 worst case, 1 no danger whatsoever"""
-        #TODO COPY DICTIONARY AND CHANGE IN CURRENT_MAP THE POSITION OF THE LITTLE SHIT
         danger_value = 1
         enemies_ready = 0
-        for cell in all_cells:  #TODO CHANGE HERE IN FIRST LINE, THATS WHY ALGORITH  NOT WORKING THAT WELL YET, MAYBE?
-            if cell.get_char() and cell.get_char().owner_uuid != player\
-            and cell_index in cell.get_char().get_paths(graph, distances, current_map, cell.get_real_index(), level_size):  #If there is another char of another player that can move here
-                enemies_ready += 1
+        for cell in all_cells:
+            if cell.get_char() and cell.get_char().owner_uuid != player:
+                enemy_map = PathAppraiser.generate_current_map(all_cells, cell.get_char().owner_uuid)
+                enemy_destinies = tuple(path[-1] for path in cell.get_char().get_paths(graph, distances, enemy_map, cell.get_real_index(), level_size))
+                print("Character "+cell.get_char().get_type()+' in index '+str(cell.get_real_index())+" has destinies ")
+                print(enemy_destinies)
+                #print("CHAR "+cell.get_char().id+" has master "+str(cell.get_char().owner_uuid)+" while player is "+str(player))
+                if cell_index in enemy_destinies:   #If there is another char of another player that can move here
+                    print("ENemy reayd") #TODO THE PROBLEM IS THE DETECTION OF WHO IS THE ENEMY PLAYER; BEING DONE BACKWARDS in the current_map of get_paths.
+                    enemies_ready += 1
         return danger_value/(enemies_ready+1)
 
     @staticmethod
-    def get_bait_value(my_char, destination, graph, distances, current_map, all_cells, level_size):
+    def get_bait_value(my_char, destination, graph, distances, current_map, all_cells, level_size): #TODO CHECK THIS; NOT WORKIKNG PROPERLY. GOOD WAY TO CHECK THIS IS WITH THYE 2 WIZARDS IN THE CENTER
+        '''current_map[start_pos].ally = False
+            has_enemy = current_map[index].enemy
+            current_map[index].enemy = False
+            current_map[index].ally = True
+                #Restoring the current_map
+            current_map[index].enemy = has_enemy
+            current_map[index].ally = False
+            #End of for
+        current_map[start_pos].ally = True  #Restoring the current map'''
         bait_value = 1
         vengeful_allies = 0
         baited_enemy_values = []

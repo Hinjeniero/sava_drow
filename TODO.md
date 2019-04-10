@@ -5,7 +5,7 @@
 - [ ] Make simple IA based on the alpha-beta proning.
 - [ ] Keep and drop servers based in a keep/alive fashion
 - [ ] Bug when moving char besides enemy pawn, since in the destinies is not this cell cuz of closer to enemies restriction.
-- [ ] Test recent changes
+- [ ] Test recent changes on network board
 
 #### TODO WHENEVER:
 - [ ] Effect when chars colliding with each other.

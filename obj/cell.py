@@ -60,7 +60,7 @@ class Cell(Circle):
 
     @staticmethod
     def generate(self):
-        self.add_text_sprite(self.id+"_text", str(self.pos[0])+"-"+str(self.pos[1]), text_size=tuple(x*0.75 for x in self.rect.size))
+        self.add_text_sprite(self.id+"_text", str(self.index), text_size=tuple(x*0.75 for x in self.rect.size)) #str(self.pos[0])+"-"+str(self.pos[1])
 
     @run_async_not_pooled
     def show_fitness_value(self, fitness_value):

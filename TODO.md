@@ -1,10 +1,9 @@
 #### TODO CURRENT:
+- [ ] Make simple IA based on the alpha-beta proning.
 - [ ] Set tutorial
 - [ ] Complete the update character in the network_board
 - [ ] Parse text to have decents numbers and letters instead of shitty indexes
-- [ ] Make simple IA based on the alpha-beta proning.
 - [ ] Keep and drop servers based in a keep/alive fashion
-- [ ] Bug when moving char besides enemy pawn, since in the destinies is not this cell cuz of closer to enemies restriction.
 - [ ] Test recent changes on network board
 
 #### TODO WHENEVER:
@@ -40,3 +39,4 @@
 - [X] Check set_canvas_size with the fitness sprites.
 - [X] Probability in dice modified to turns and number of throws. Do this in the arch dice, or make dice for each player?
 - [X] Add percentage to the loading screen (Added msgs instead)
+- [X] Bug when moving char besides enemy pawn, since in the destinies is not this cell cuz of closer to enemies restriction.

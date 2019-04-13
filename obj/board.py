@@ -178,6 +178,13 @@ class Board(Screen):
         self.swapper        = None
         Board.generate(self, empty, *players)
     
+    ###SIMULATES ON_SCREEN CONSOLEEEE
+    def LOG_ON_SCREEN(self, *msgs):
+        text = Parser.parse_texts(*msgs)
+        LOG.log('info', text)
+        self.overlay_console.add_msg(text)
+
+    #ALL THE GENERATION OF ELEMENTS AND PLAYERS NEEDED
     @staticmethod
     def generate(self, empty, *players):
         UtilityBox.join_dicts(self.params, Board.__default_config)
@@ -193,18 +200,13 @@ class Board(Screen):
         else:
             self.LOG_ON_SCREEN("WARNING: Generating board in empty mode, needs server attributes to work")
         self.add_players(*players)
-        self.swapper = self.character_swapper()
+        self.swapper = self.character_swapper() #Simple generator to promote characters
         self.swapper.send(None) #Needed in the first execution of generator
 
     def generate_onscreen_console(self):
         start = time.time()
         self.overlay_console = ScrollingText('updates', self.event_id, self.resolution, transparency=180)
         LOG.log('info', 'The console have been generated in ', (time.time()-start)*1000, 'ms')
-
-    def LOG_ON_SCREEN(self, *msgs):
-        text = Parser.parse_texts(*msgs)
-        LOG.log('info', text)
-        self.overlay_console.add_msg(text)
 
     @no_size_limit
     def generate_platform(self):
@@ -218,69 +220,6 @@ class Board(Screen):
            platform.image.set_alpha(self.params['platform_transparency'])
            return platform
         return self.params['platform_sprite']
-
-    @run_async
-    @no_size_limit
-    def generate_infoboard(self):
-        self.infoboard = self.generate_infoboard_sync()
-        self.LOG_ON_SCREEN("The game infoboard has been generated")
-
-    def generate_infoboard_sync(self):
-        infoboard = InfoBoard(self.id+'_infoboard', 0, (0, 0), (0.15*self.resolution[0], self.resolution[1]),\
-                            self.resolution, texture=self.params['infoboard_texture'], keep_aspect_ratio = False, cols=6)
-        infoboard.set_position((self.resolution[0]-infoboard.rect.width, 0))
-        return infoboard
-
-    @no_size_limit
-    def generate_dialogs(self):
-        scoreboard = InfoBoard(self.id+'_scoreboard', USEREVENTS.DIALOG_USEREVENT, (0, 0), (self.resolution[0]//1.1, self.resolution[1]//1.5),\
-                                self.resolution, keep_aspect_ratio = False, rows=len(self.players)+1, cols=len(self.players[0].get_stats().keys()),
-                                texture=self.params['scoreboard_texture'])
-        scoreboard.set_position(tuple(x//2-y//2 for x, y in zip(self.resolution, scoreboard.rect.size)))
-        self.scoreboard = scoreboard
-        promotion_table = Dialog(self.id+'_promotion', USEREVENTS.DIALOG_USEREVENT, (self.resolution[0]//1.05, self.resolution[1]//8),\
-                                self.resolution, keep_aspect_ratio = False, texture=self.params['promotion_texture'])
-        self.promotion_table = promotion_table
-        self.gray_overlay = ScrollingText('nuthing', self.event_id, self.resolution, transparency=128)
-        self.LOG_ON_SCREEN("The board scoreboard and promotion table have been generated.")
-
-    @run_async
-    def generate_dice(self):
-        dice = Dice('dice', (0, 0), tuple(0.1*x for x in self.resolution), self.resolution, shuffle_time=1500, sprite_folder=self.params['dice_textures_folder'], animation_delay=2)
-        dice.set_position((self.infoboard.rect.centerx-dice.rect.width//2, self.resolution[1]-(dice.rect.height*2)))
-        self.dice.add(dice)
-        self.LOG_ON_SCREEN("Dice has been generated")
-
-    @run_async_not_pooled
-    def update_scoreboard(self):
-        try:
-            infoboard = self.generate_infoboard_sync() #self.scoreboard.clear()
-            for player in self.players:
-                if player.order == 0:
-                    for key in player.get_stats().keys():
-                        infoboard.add_text_element('text', key, 1)
-                for value in player.get_stats().values():
-                    if not player.dead:
-                        if player.order is self.current_player.order: #A bit redundant, since a dead player dissapears
-                            infoboard.add_text_element('text', value, 1, color=WHITE)
-                            continue
-                        infoboard.add_text_element('text', value, 1)
-                    else:
-                        infoboard.add_text_element('text', value, 1, color=DARKGRAY)
-            self.infoboard = infoboard
-            LOG.log('info', 'The scoreboard has been successfully updated.')
-        except NotEnoughSpaceException:
-            LOG.log('warning', 'Error while updating the scoreboard, trying again...')
-
-    @run_async_not_pooled
-    def update_promotion_table(self, *chars):
-        self.promotion_table.full_clear()
-        self.promotion_table.set_rows(1)
-        self.promotion_table.set_cols(len(chars))
-        for char in chars:
-            if not char.upgradable: #Upgradable ones cannot be upgraded to
-                self.promotion_table.add_sprite_to_elements(1, char)
-        LOG.log('info', 'The promotion table has been successfully updated.')
 
     def generate_mapping(self):
         axis_size = self.params['circles_per_lvl']*self.params['max_levels']
@@ -300,31 +239,70 @@ class Board(Screen):
         self.save_sprites()
         self.generated = True
 
-    def adjust_cells(self):
-        for cell in self.cells:
-            if cell.get_index()>=self.params['circles_per_lvl']:
-                continue
-            circumf = next(path for path in self.paths if str(cell.get_level()) in path.id)
-            offset = circumf.width//2
-            cell.rect.x -= offset*math.cos(cell.angle)
-            cell.rect.y -= offset*math.sin(cell.angle)
-            cell.set_position(cell.rect.topleft)
+    @run_async
+    def generate_all_cells(self, custom_cell_radius=None, growing_cells=True, growing_ratio=8/7):
+        """Generate all the cells of the board. Does this by calling generate_cells, and changing the radius.
+        The first inside circumference is done changing too the number of cells in it.
+        Args:
+            custom_cell_radius (int):   Radius of the cells themselves."""
+        self.cells.empty()
+        self.active_cell.empty()
+        ratio       = self.platform.rect.height//(2*self.params['max_levels'])
+        radius      = 0
+        small_radius= ratio//4 if not custom_cell_radius else int(custom_cell_radius)
+        for i in range (0, self.params['max_levels']):
+            radius              += ratio
+            if i is 0:          self.cells.add(self.__generate_cells(radius-ratio//3, self.platform.rect.center, small_radius, 4, 0, initial_offset=-45, texture=self.params['cell_texture']))
+            else:               self.cells.add(self.__generate_cells(radius-ratio//3, self.platform.rect.center, small_radius, self.params['circles_per_lvl'], i, texture=self.params['cell_texture']))
+            if growing_cells:   small_radius = int(small_radius*growing_ratio)
+        if self.params['center_cell']:
+            self.cells.add(self.__generate_center_cell(small_radius, self.params['circles_per_lvl'], self.params['max_levels'], texture=self.params['cell_texture']))
+        LOG.log('DEBUG', "Generated cells of ", self.id)
+        self.LOG_ON_SCREEN("All the cells have been generated")
+        self.assign_quadrants()
 
-    def save_sprites(self):
-        """Copies all the references of the sprites to the sprites list declared on the superclass.
-        Do this to modify all the graphical elements at once when needed in a more seamless manner.
-        Also because the super().draw method only draws the self.sprites.
-        Only adds the graphics regarding the board, the characters and player addons will be drawn later."""
-        self.sprites.add(self.platform, self.inter_paths.sprite, *self.paths.sprites(), *self.cells.sprites(), self.infoboard, self.dice)
+    def __generate_cells(self, radius, center, circle_radius, circle_number, lvl, initial_offset=-90, **cell_params):
+        """Generate the cells of one circumference/level of the board. 
+        Args:
+            radius (int):   Radius of the circumference that will support the cells. In short, which level.
+                            In pixels.
+            center (:tuple: int, int):  Center of the circumference. Will be used to position the cells (using cos and sin).
+                                        In pixels.
+            circle_radius (int):    Radius of each cell. In pixels.
+            circle_number (int):    Ammount of cells per circumference (per level).
+            initial_offset (float||int, default=-90):    Initial offset to draw the first cell. If its lower than 2*pi, will
+                                                        be considered in radians. Degrees otherwise. -90 degrees makes the first
+                                                        cell to appear at y=1, x=0.
+            **cell_params (:dict:): Dict of keywords and values as parameters to modify the surface of the cells.
+                                    This way, we can have a little more personalized look on the cells.
+        """
+        cells = []
+        two_pi  = 2*math.pi
+        initial_offset = initial_offset*(math.pi/180) if abs(initial_offset) > two_pi\
+        else initial_offset%360*(math.pi/180) if abs(initial_offset) > 360 else initial_offset
+        angle   = initial_offset*(math.pi/180) if initial_offset > two_pi else initial_offset
+        distance= two_pi/circle_number
+        index   = 0
+        while angle < (two_pi+initial_offset):
+            position    = (center[0]+(radius*math.cos(angle))-circle_radius, center[1]+(radius*math.sin(angle))-circle_radius)
+            cells.append(Cell((lvl, index), lvl*circle_number+index, position, (circle_radius*2, circle_radius*2), self.resolution, angle=angle, **cell_params))
+            index       += 1
+            angle       += distance
+        return cells
 
-    def __adjust_number_of_paths(self):
-        """Checks the inter path frequency. If the circles are not divisible by that frequency,
-        it rounds up the said frequency parameter."""
-        circles, paths = self.params['circles_per_lvl'], self.params['inter_path_frequency']
-        if circles%paths is not 0:
-            self.params['inter_path_frecuency'] = circles//math.ceil(circles/paths) 
-            LOG.log('DEBUG', "Changed number of paths from ", paths, " to ", self.params['inter_path_frecuency'])
-    
+    def __generate_center_cell(self, radius, circle_number, lvl_number, **cell_params):
+        index = circle_number*lvl_number
+        for i in range(0, 4):
+            self.enabled_paths[i][index], self.enabled_paths[index][i] = True, True
+            self.distances[i][index], self.distances[index][i] = 1, 1
+        cell = Cell((lvl_number-1, circle_number), index, tuple(center-radius for center in self.platform.rect.center), (radius*2, radius*2), self.resolution, **cell_params)
+        cell.promotion = True
+        cell.owner = 11110000
+        if self.params['cell_border']:
+            cell.add_border(self.params['cell_border'])
+        cell.set_center(self.platform.rect.center)
+        return cell
+
     def assign_quadrants(self):
         """Get the cells, sorts them, and inserts them in the appropiate quadrant.
         Args:
@@ -343,7 +321,7 @@ class Board(Screen):
             self.quadrants[quadrant_number] = Quadrant(quadrant_number, self.params['circles_per_lvl'],\
                                                         self.params['inter_path_frequency'], *quadrant_cells)
         if not self.params['quadrants_overlap']:
-            Quadrant.delete_overlapping_cells(*self.quadrants.values())                                    
+            Quadrant.delete_overlapping_cells(*self.quadrants.values())
 
     def __get_quadrant(self, cell_index):
         """Gets the respective quadrant of the cell index received.
@@ -429,123 +407,39 @@ class Board(Screen):
 
         self.__parse_two_way_distances()
         LOG.log('DEBUG', "Distances of this map: \n", self.distances)  
-        
-    def __parse_two_way_distances(self):
-        """Since our circumferencial path has a circular shape, to go from one cell to another,
-        we can go by two ways. This means that the maximum distance is half the distance of a circumference.
-        This methos parses those distances that need it, since they were generated without taking into account
-        this detail."""
-        lvls, circles = self.params['max_levels'], self.params['circles_per_lvl']
-        interior_limit = 4
-        limit = interior_limit//2
-        #Interior circle
-        for x in range(0, interior_limit):
-            for y in range(0, interior_limit):
-                if self.distances[x][y] > limit:
-                    dist = abs(self.distances[x][y]-limit)
-                    self.distances[x][y], self.distances[y][x] = dist, dist 
-        #Complete circles
-        limit = circles//2
-        for x in range(circles, lvls*circles):
-            for y in range(circles, lvls*circles):
-                if self.distances[x][y] > limit:    
-                    dist = abs(circles-self.distances[x][y])
-                    self.distances[x][y],self.distances[y][x] = dist, dist   
-
-    #Map lvl 1 circles to the lvl0 circle (less circles)
-    def __get_inside_cell(self, index):
-        """Returns:
-            (int): The correspondant cell index of the inside circumference for an index of the outside levels."""
-        ratio = self.params['circles_per_lvl']//4
-        return (index%self.params['circles_per_lvl'])//ratio if (index+1)%self.params['inter_path_frequency'] is 0 else None
-
-    @run_async
-    def generate_all_cells(self, custom_cell_radius=None, growing_cells=True, growing_ratio=8/7):
-        """Generate all the cells of the board. Does this by calling generate_cells, and changing the radius.
-        The first inside circumference is done changing too the number of cells in it.
-        Args:
-            custom_cell_radius (int):   Radius of the cells themselves."""
-        self.cells.empty()
-        self.active_cell.empty()
-        ratio       = self.platform.rect.height//(2*self.params['max_levels'])
-        radius      = 0
-        small_radius= ratio//4 if not custom_cell_radius else int(custom_cell_radius)
-        for i in range (0, self.params['max_levels']):
-            radius              += ratio
-            if i is 0:          self.cells.add(self.__generate_cells(radius-ratio//3, self.platform.rect.center, small_radius, 4, 0, initial_offset=-45, texture=self.params['cell_texture']))
-            else:               self.cells.add(self.__generate_cells(radius-ratio//3, self.platform.rect.center, small_radius, self.params['circles_per_lvl'], i, texture=self.params['cell_texture']))
-            if growing_cells:   small_radius = int(small_radius*growing_ratio)
-        if self.params['center_cell']:
-            self.cells.add(self.__generate_center_cell(small_radius, self.params['circles_per_lvl'], self.params['max_levels'], texture=self.params['cell_texture']))
-        LOG.log('DEBUG', "Generated cells of ", self.id)
-        self.LOG_ON_SCREEN("All the cells have been generated")
-        self.assign_quadrants()
-
-    def set_admin_mode(self, admin):
-        self.admin_mode = admin
-
-    def __generate_center_cell(self, radius, circle_number, lvl_number, **cell_params):
-        index = circle_number*lvl_number
-        for i in range(0, 4):
-            self.enabled_paths[i][index], self.enabled_paths[index][i] = True, True
-            self.distances[i][index], self.distances[index][i] = 1, 1
-        cell = Cell((lvl_number-1, circle_number), index, tuple(center-radius for center in self.platform.rect.center), (radius*2, radius*2), self.resolution, **cell_params)
-        cell.promotion = True
-        cell.owner = 11110000
-        if self.params['cell_border']:
-            cell.add_border(self.params['cell_border'])
-        cell.set_center(self.platform.rect.center)
-        return cell
-
-    def __generate_cells(self, radius, center, circle_radius, circle_number, lvl, initial_offset=-90, **cell_params):
-        """Generate the cells of one circumference/level of the board. 
-        Args:
-            radius (int):   Radius of the circumference that will support the cells. In short, which level.
-                            In pixels.
-            center (:tuple: int, int):  Center of the circumference. Will be used to position the cells (using cos and sin).
-                                        In pixels.
-            circle_radius (int):    Radius of each cell. In pixels.
-            circle_number (int):    Ammount of cells per circumference (per level).
-            initial_offset (float||int, default=-90):    Initial offset to draw the first cell. If its lower than 2*pi, will
-                                                        be considered in radians. Degrees otherwise. -90 degrees makes the first
-                                                        cell to appear at y=1, x=0.
-            **cell_params (:dict:): Dict of keywords and values as parameters to modify the surface of the cells.
-                                    This way, we can have a little more personalized look on the cells.
-        """
-        cells = []
-        two_pi  = 2*math.pi
-        initial_offset = initial_offset*(math.pi/180) if abs(initial_offset) > two_pi\
-        else initial_offset%360*(math.pi/180) if abs(initial_offset) > 360 else initial_offset
-        angle   = initial_offset*(math.pi/180) if initial_offset > two_pi else initial_offset
-        distance= two_pi/circle_number
-        index   = 0
-        while angle < (two_pi+initial_offset):
-            position    = (center[0]+(radius*math.cos(angle))-circle_radius, center[1]+(radius*math.sin(angle))-circle_radius)
-            cells.append(Cell((lvl, index), lvl*circle_number+index, position, (circle_radius*2, circle_radius*2), self.resolution, angle=angle, **cell_params))
-            index       += 1
-            angle       += distance
-        return cells
 
     @run_async
     @no_size_limit
-    def generate_paths(self, offset=False):
-        """Creates the circumferences themselves. Does this by getting the platform size,
-        and dividing it by the number of levels/circumferences of self.params. 
-        Args:
-            offset (boolean):   True if we don't want the circumferences to be so close to the platform borders."""
-        self.paths.empty()
-        self.active_path.empty()
-        ratio = self.platform.rect.height//self.params['max_levels']
-        radius = ratio//2-ratio//6 if offset else ratio//2
-        for i in range (0, self.params['max_levels']):
-            out_circle = Circumference('circular_path_'+str(i), tuple(x-radius for x in self.platform.rect.center),\
-                        (radius*2, radius*2), self.resolution, fill_gradient=False, overlay=False, texture=self.params['circumference_texture'],\
-                        border_color=self.params['path_color'], border_width=self.params['path_width'])
-            self.paths.add(out_circle)
-            radius+=ratio//2
-        self.LOG_ON_SCREEN("All the circumferences have been generated")
-        LOG.log('DEBUG', "Generated circular paths in ", self.id)
-    
+    def generate_infoboard(self):
+        self.infoboard = self.generate_infoboard_sync()
+        self.LOG_ON_SCREEN("The game infoboard has been generated")
+
+    def generate_infoboard_sync(self):
+        infoboard = InfoBoard(self.id+'_infoboard', 0, (0, 0), (0.15*self.resolution[0], self.resolution[1]),\
+                            self.resolution, texture=self.params['infoboard_texture'], keep_aspect_ratio = False, cols=6)
+        infoboard.set_position((self.resolution[0]-infoboard.rect.width, 0))
+        return infoboard
+
+    @run_async
+    def generate_dice(self):
+        dice = Dice('dice', (0, 0), tuple(0.1*x for x in self.resolution), self.resolution, shuffle_time=1500, sprite_folder=self.params['dice_textures_folder'], animation_delay=2)
+        dice.set_position((self.infoboard.rect.centerx-dice.rect.width//2, self.resolution[1]-(dice.rect.height*2)))
+        self.dice.add(dice)
+        self.LOG_ON_SCREEN("Dice has been generated")
+
+    @no_size_limit
+    def generate_dialogs(self):
+        scoreboard = InfoBoard(self.id+'_scoreboard', USEREVENTS.DIALOG_USEREVENT, (0, 0), (self.resolution[0]//1.1, self.resolution[1]//1.5),\
+                                self.resolution, keep_aspect_ratio = False, rows=len(self.players)+1, cols=len(self.players[0].get_stats().keys()),
+                                texture=self.params['scoreboard_texture'])
+        scoreboard.set_position(tuple(x//2-y//2 for x, y in zip(self.resolution, scoreboard.rect.size)))
+        self.scoreboard = scoreboard
+        promotion_table = Dialog(self.id+'_promotion', USEREVENTS.DIALOG_USEREVENT, (self.resolution[0]//1.05, self.resolution[1]//8),\
+                                self.resolution, keep_aspect_ratio = False, texture=self.params['promotion_texture'])
+        self.promotion_table = promotion_table
+        self.gray_overlay = ScrollingText('nuthing', self.event_id, self.resolution, transparency=128)
+        self.LOG_ON_SCREEN("The board scoreboard and promotion table have been generated.")
+
     @run_async
     @no_size_limit
     def generate_inter_paths(self):
@@ -581,6 +475,115 @@ class Board(Screen):
             point_list.append(self.get_cell(i, index).center)
         point_list.append(self.get_cell(0, self.__get_inside_cell(index)).center) #Final point
         UtilityBox.draw_bezier(surface, color=self.params['path_color'], width=self.params['path_width'], *(tuple(point_list)))
+
+    ###UPDATING OF THE ELEMENTS MID-GAME
+    @run_async_not_pooled
+    def update_scoreboard(self):
+        try:
+            infoboard = self.generate_infoboard_sync() #self.scoreboard.clear()
+            for player in self.players:
+                if player.order == 0:
+                    for key in player.get_stats().keys():
+                        infoboard.add_text_element('text', key, 1)
+                for value in player.get_stats().values():
+                    if not player.dead:
+                        if player.order is self.current_player.order: #A bit redundant, since a dead player dissapears
+                            infoboard.add_text_element('text', value, 1, color=WHITE)
+                            continue
+                        infoboard.add_text_element('text', value, 1)
+                    else:
+                        infoboard.add_text_element('text', value, 1, color=DARKGRAY)
+            self.infoboard = infoboard
+            LOG.log('info', 'The scoreboard has been successfully updated.')
+        except NotEnoughSpaceException:
+            LOG.log('warning', 'Error while updating the scoreboard, trying again...')
+
+    @run_async_not_pooled
+    def update_promotion_table(self, *chars):
+        self.promotion_table.full_clear()
+        self.promotion_table.set_rows(1)
+        self.promotion_table.set_cols(len(chars))
+        for char in chars:
+            if not char.upgradable: #Upgradable ones cannot be upgraded to
+                self.promotion_table.add_sprite_to_elements(1, char)
+        LOG.log('info', 'The promotion table has been successfully updated.')
+
+    def adjust_cells(self):
+        for cell in self.cells:
+            if cell.get_index()>=self.params['circles_per_lvl']:
+                continue
+            circumf = next(path for path in self.paths if str(cell.get_level()) in path.id)
+            offset = circumf.width//2
+            cell.rect.x -= offset*math.cos(cell.angle)
+            cell.rect.y -= offset*math.sin(cell.angle)
+            cell.set_position(cell.rect.topleft)
+
+    def save_sprites(self):
+        """Copies all the references of the sprites to the sprites list declared on the superclass.
+        Do this to modify all the graphical elements at once when needed in a more seamless manner.
+        Also because the super().draw method only draws the self.sprites.
+        Only adds the graphics regarding the board, the characters and player addons will be drawn later."""
+        self.sprites.add(self.platform, self.inter_paths.sprite, *self.paths.sprites(), *self.cells.sprites(), self.infoboard, self.dice)
+
+    def __adjust_number_of_paths(self):
+        """Checks the inter path frequency. If the circles are not divisible by that frequency,
+        it rounds up the said frequency parameter."""
+        circles, paths = self.params['circles_per_lvl'], self.params['inter_path_frequency']
+        if circles%paths is not 0:
+            self.params['inter_path_frecuency'] = circles//math.ceil(circles/paths) 
+            LOG.log('DEBUG', "Changed number of paths from ", paths, " to ", self.params['inter_path_frecuency'])                                
+        
+    def __parse_two_way_distances(self):
+        """Since our circumferencial path has a circular shape, to go from one cell to another,
+        we can go by two ways. This means that the maximum distance is half the distance of a circumference.
+        This methos parses those distances that need it, since they were generated without taking into account
+        this detail."""
+        lvls, circles = self.params['max_levels'], self.params['circles_per_lvl']
+        interior_limit = 4
+        limit = interior_limit//2
+        #Interior circle
+        for x in range(0, interior_limit):
+            for y in range(0, interior_limit):
+                if self.distances[x][y] > limit:
+                    dist = abs(self.distances[x][y]-limit)
+                    self.distances[x][y], self.distances[y][x] = dist, dist 
+        #Complete circles
+        limit = circles//2
+        for x in range(circles, lvls*circles):
+            for y in range(circles, lvls*circles):
+                if self.distances[x][y] > limit:    
+                    dist = abs(circles-self.distances[x][y])
+                    self.distances[x][y],self.distances[y][x] = dist, dist   
+
+    #Map lvl 1 circles to the lvl0 circle (less circles)
+    def __get_inside_cell(self, index):
+        """Returns:
+            (int): The correspondant cell index of the inside circumference for an index of the outside levels."""
+        ratio = self.params['circles_per_lvl']//4
+        return (index%self.params['circles_per_lvl'])//ratio if (index+1)%self.params['inter_path_frequency'] is 0 else None
+
+    def set_admin_mode(self, admin):
+        self.admin_mode = admin
+
+    @run_async
+    @no_size_limit
+    def generate_paths(self, offset=False):
+        """Creates the circumferences themselves. Does this by getting the platform size,
+        and dividing it by the number of levels/circumferences of self.params. 
+        Args:
+            offset (boolean):   True if we don't want the circumferences to be so close to the platform borders."""
+        self.paths.empty()
+        self.active_path.empty()
+        ratio = self.platform.rect.height//self.params['max_levels']
+        radius = ratio//2-ratio//6 if offset else ratio//2
+        for i in range (0, self.params['max_levels']):
+            out_circle = Circumference('circular_path_'+str(i), tuple(x-radius for x in self.platform.rect.center),\
+                        (radius*2, radius*2), self.resolution, fill_gradient=False, overlay=False, texture=self.params['circumference_texture'],\
+                        border_color=self.params['path_color'], border_width=self.params['path_width'])
+            self.paths.add(out_circle)
+            radius+=ratio//2
+        self.LOG_ON_SCREEN("All the circumferences have been generated")
+        LOG.log('DEBUG', "Generated circular paths in ", self.id)
 
     def get_cell(self, lvl, index):
         """Args:

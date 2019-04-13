@@ -94,6 +94,7 @@ class STRINGS:
     ANIMATED_BGS = (INITIAL_ANIMATED_BG, 'Animated rain tree',
                     'Animated rain china', 'Animated waterfall cave', 'Layered industrial')
     CELLS = ('Basic', 'Dark', 'Bordered')
+    IA_MODES = ('Fitness choosing', 'Alpha Beta deepening', 'Learning Machine')
 #STATE MACHINES
 class STATES:
     SCREEN = ('idle', 'stopped', 'cutscene')

@@ -102,6 +102,35 @@ def create_main_menu(result):
     result.append(main_menu) 
 
 @run_async
+def create_game_menu(result):
+    firstTime = False
+    try:
+        open(PATHS.UUID_FILE, "rb")
+    except FileNotFoundError:
+        firstTime = True
+    #Create elements, main menu buttons (POSITIONS AND SIZES ARE IN PERCENTAGES OF THE CANVAS_SIZE, can use absolute integers too)
+    positions       = UtilityBox.size_position_generator(9, 0.40, 0.05, 0.20, 0)
+    button_size     = next(positions)
+    #Creation of elements
+    elements, threads = [], []
+    element_generator = generate_ui_elements(elements, threads, button_size, USEREVENTS.MAINMENU_USEREVENT, resize_mode='fill', texture=PATHS.DARK_LONG_BUTTON)
+    element_generator.send(None)    #Starting generator
+    #Starts generating
+    #CHOOSE YOUR IA MODE
+    #separator 
+    #3 NORMAL MODES
+    #separator
+    #2 4vs4 modes
+    element_generator.send(('button_start', "start_game_go_main_board", next(positions), {'text': "Start new game"}))
+    element_generator.send(('button_online_host', "host_network_start_online_game_go_main_board", next(positions), {'text': "Host public game"}))
+    for end_event in threads:   end_event.wait()    #Waiting for all the buttons to be created
+    #Create Menu
+    #bg = AnimationGenerator.factory(STRINGS.INITIAL_ANIMATED_BG, INIT_PARAMS.INITIAL_RESOLUTION, PARAMS.ANIMATION_TIME, INIT_PARAMS.ALL_FPS, INIT_PARAMS.INITIAL_FPS)
+    game_menu   = Menu('main_menu', USEREVENTS.MAINMENU_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, *elements, animated_background=bg, background_path=PATHS.DEFAULT_BG, songs_paths=MENU_SONGS, do_align=False)
+    #game_menu.add_dialogs(DialogGenerator.create_exit_dialog('game', tuple(x//2 for x in INIT_PARAMS.INITIAL_RESOLUTION), INIT_PARAMS.INITIAL_RESOLUTION))
+    result.append(game_menu)
+
+@run_async
 def create_config_menu(result):
     button_size = (0.60, 0.15)
     positions   = UtilityBox.size_position_generator_no_adjustment(*button_size, 0.05, 0.15)

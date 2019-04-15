@@ -49,8 +49,16 @@ class CONFIG_MENU_DIALOGS:
 
     HOLY_CHAMPIONS_NUMBER_DIALOG="Number of holy champions per player. If the total number of characters surpass the free cell zones for each player, the board won't be spawned."
 
+class TUTORIAL:
+    MESSAGE_BOARD = "This is the board. It's composed of the cells themselves, placed in a circular shape. We will call the circles 'circumferences', and the paths that connect between them rank or interpath."
+    MESSAGE_MOVE_PAWN = "The pawn can move one space along any circumferences or rank, as long as the movement brings them closer to an enemy piece."
+    MESSAGE_DESTINIES_BLINKING = "The possible destinies appear when you pick up any character."
+    MESSAGE_FITNESS_NUMBERS = "If you have it activated, the possible movements will be evaluated in a scale 0->1."
+    MESSAGE_MOVE_WARRIOR = "Due to their superior stamina, the warriors can move for two turns instead of one, capturing in each one. But because the heavy armor that they wear, each turn will only yield an one space movement"
+    MESSAGE_MOVE_WIZARD = "A wizard can travel to positions that are three linked spaces away, regardless of intervening pieces."
+    MESSAGE_MOVE_PRIESTESS = "Priestess can move along any rank or circumference if there are not intervening pieces in the middle of the path."
+    MESSAGE_MOVE_MATRONMOTHER = "This is the matron mother. If it gets captured, you lose the game. It can move one space in any direction, regardless of circumstances"
+    ALL_MSGS = [MESSAGE_BOARD, MESSAGE_MOVE_PAWN, MESSAGE_DESTINIES_BLINKING, MESSAGE_FITNESS_NUMBERS, MESSAGE_MOVE_WIZARD, MESSAGE_MOVE_PRIESTESS, MESSAGE_MOVE_MATRONMOTHER]
+
 class CHARACTERS_DIALOGS:
-    pass
-    
-class TUTORIAL_DIALOGS:
     pass

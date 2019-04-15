@@ -744,6 +744,8 @@ class Board(Screen):
                 self.promotion_table.draw(surface)
             if self.show_score and self.scoreboard:
                 self.scoreboard.draw(surface)
+            if self.console_active:
+                self.overlay_console.draw(surface)
             if self.dialog and self.dialog.visible:
                 self.gray_overlay.draw(surface)
                 self.dialog.draw(surface)

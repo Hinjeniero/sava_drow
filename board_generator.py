@@ -10,6 +10,7 @@ __author__ = 'David Flaity Pardo'
 import random
 import pygame
 from obj.board import Board
+from obj.tutorial_board import TutorialBoard
 from obj.network_board import NetworkBoard
 from obj.board_server import Server
 from obj.utilities.logger import Logger as LOG
@@ -19,6 +20,7 @@ from settings import USEREVENTS, STRINGS, PARAMS, CHARACTERS, PATHS
 class BoardGenerator(object):
     def __init__(self, uuid):
         self.uuid = uuid
+        self.tutorial = False
         self.online = False
         self.server = False
         self.private = False
@@ -82,7 +84,9 @@ class BoardGenerator(object):
             self.board_params['animated_background'].set_resolution(resolution)
         except KeyError:
             pass
-        if 'classic' in self.game_mode:
+        if self.tutorial:
+            return self.generate_tutorial(resolution)
+        elif 'classic' in self.game_mode:
             return self.generate_classic(resolution)
         elif 'great' in self.game_mode:
             return self.generate_great_wheel(resolution)
@@ -115,6 +119,26 @@ class BoardGenerator(object):
                                     direct_connection=self.direct_connect, **board_params)
         return Board(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **board_params)
             
+    def generate_tutorial(self, resolution):
+        players_setting = self.players
+        board_params = self.board_params.copy()
+        board_params['max_levels'] = 4
+        board_params['circles_per_lvl'] = 8
+        board_params['random_filling'] = True
+        board_params['center_cell'] = True
+        board = TutorialBoard(PARAMS.BOARD_ID, USEREVENTS.BOARD_USEREVENT, USEREVENTS.END_CURRENT_GAME, resolution, **board_params)
+        char_settings = self.characters_params.copy()
+        char_settings['pawn']['ammount'] = 2
+        char_settings['warrior']['ammount'] = 1
+        char_settings['wizard']['ammount'] = 1
+        char_settings['priestess']['ammount'] = 1
+        char_settings['matron_mother']['ammount'] = 1
+        char_settings['holy_champion']['ammount'] = 1
+        self.players = 2
+        self.add_players(board, **char_settings)
+        self.players = players_setting
+        return board
+
     def generate_classic(self, resolution):
         board_params = self.board_params.copy()
         board_params['max_levels'] = 4

@@ -1156,7 +1156,7 @@ class ScrollingText(UIElement):
         self.image.set_alpha(transparency)
         self.changed = True
 
-    def has_changed(self):
+    def has_changed(self):  #Kinda like an once checkable flag
         changed = self.changed
         self.changed = False
         return changed
@@ -1170,7 +1170,12 @@ class ScrollingText(UIElement):
         text_sprite.set_position((text_sprite.rect.x, self.resolution[1]))
         for sprite in self.sprites:
             sprite.set_position((sprite.rect.x, sprite.rect.y-text_sprite.rect.height))
-        self.regenerate_image()
+        #self.regenerate_image()
+
+    @synchronized
+    def clear_msgs(self):
+        self.changed = True
+        self.sprites.empty()
 
     def regenerate_image(self):
         super().regenerate_image()

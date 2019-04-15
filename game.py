@@ -111,6 +111,8 @@ class Game(object):
                 return False
             elif event.type is USEREVENTS.MAINMENU_USEREVENT:
                 if 'start' in event.command.lower():
+                    if 'tutorial' in event.command.lower():
+                        self.board_generator.tutorial = True
                     if 'online' in event.command.lower() or 'network' in event.command.lower():
                         self.board_generator.online = True
                         if 'host' in event.command.lower():

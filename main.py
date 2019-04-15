@@ -75,13 +75,15 @@ def generate_ui_elements_different_sizes(results, thread_list, user_event_id, **
 @run_async
 def create_main_menu(result):
     #Create elements, main menu buttons (POSITIONS AND SIZES ARE IN PERCENTAGES OF THE CANVAS_SIZE, can use absolute integers too)
-    positions       = UtilityBox.size_position_generator(9, 0.40, 0.05, 0.20, 0)
+    positions       = UtilityBox.size_position_generator(10, 0.40, 0.05, 0.20, 0)    #TODO CHANGE
     button_size     = next(positions)
     #Creation of elements
     elements, threads = [], []
     element_generator = generate_ui_elements(elements, threads, button_size, USEREVENTS.MAINMENU_USEREVENT, resize_mode='fill', texture=PATHS.DARK_LONG_BUTTON)
     element_generator.send(None)    #Starting generator
     #Starts generating
+    #TODO DELETE THIS
+    element_generator.send(('button_start', "start_tutorial_go_main_board", next(positions), {'text': "Start tutorial"}))
     element_generator.send(('button_start', "start_game_go_main_board", next(positions), {'text': "Start new game"}))
     element_generator.send(('button_online_host', "host_network_start_online_game_go_main_board", next(positions), {'text': "Host public game"}))
     element_generator.send(('button_online_host', "host_private_network_start_online_game_go_main_board", next(positions), {'text': "Host private game"}))

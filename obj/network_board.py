@@ -427,8 +427,8 @@ class NetworkBoard(Board):
         In the non-host clients, when the mock-empty-players are created, we unblock the threads waiting to assign
             attributes to the players and characters to the board."""
         super().ALL_PLAYERS_LOADED()
-        self.console_active = True
         if self.started:
+            self.console_active = True
             if self.server:
                 self.send_player_and_chars_data()
                 return

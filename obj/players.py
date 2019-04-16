@@ -49,7 +49,7 @@ class Player(object):
         corpses (list->Character):  The captured characters. Saved to use the information on captures and such.
         dead (boolean): True if this player has lost the essential characters, and cannot continue playing. False otherwise.
     """
-    def __init__(self, name, order, sprite_size, canvas_size, human=True, infoboard=None, obj_uuid=None, empty=False, avatar=None, **character_params):
+    def __init__(self, name, order, sprite_size, canvas_size, infoboard=None, obj_uuid=None, empty=False, avatar=None, **character_params):
         """Player constructor.
         Args:
             name (str): Name of the player.
@@ -63,7 +63,7 @@ class Player(object):
             **character_params (:dict:):    Contains the more specific parameters to create the characters.
                                             Ammount of each type of char, name of their actions, and their folder paths."""
         self.uuid       = obj_uuid if obj_uuid else uuid.uuid1().int
-        self.human      = human
+        self.human      = True
         self.avatar     = None
         self.name       = name
         self.order      = order

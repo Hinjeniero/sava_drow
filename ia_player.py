@@ -1,14 +1,30 @@
 #import keras
 import math
-class ComputerPlayer(object):
-    def __init__(self, graph, distances, level_size):
+import random
+from obj.players import Player
+class ComputerPlayer(Player):
+    def __init__(self, graph, distances, level_size, name, order, sprite_size, canvas_size, ia_mode='random', infoboard=None, obj_uuid=None, avatar=None, **character_params):
+        super.__init__(name, order, sprite_size, canvas_size, infoboard=infoboard, obj_uuid=obj_uuid, empty=False, avatar=avatar, **character_params)
+        self.human = False
         self.ia_mode = None #alpha-beta-pruning | null-move | full blown IA with keras
         self.distances = distances 
         self.graph = graph
         self.circum_size = level_size
 
-    def generate_random_movement(self, totally_random=False):
-        pass
+    def get_movement(self, fitnesses_dict):
+        if 'random' in self.ia_mode:
+            return self.generate_random_movement(fitnesses_dict)
+        elif 'alpha' in self.ia_mode:
+            return self.generate_alpha_beta(**settings) #TODO SETTINGS FOR ALPHA BETA
+        elif 'neural' in self.ia_mode:
+            pass
+            
+    def generate_random_movement(self, fitnesses_dict, totally_random=False):
+        if totally_random:
+            return random.choice(fitnesses_dict.keys())
+        #TODO ORDER THE INDEXES ACCORDING TO FITNESS
+        #TODO GET A RANDOM TRIANGULAR?
+        return random.choice(fitnesses_dict.keys())
 
     def generate_alpha_beta(self, initial_map, depth, max_nodes, all_cells, current_player, all_players):
         all_values = {}

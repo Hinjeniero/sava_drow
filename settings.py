@@ -24,7 +24,8 @@ class INIT_PARAMS:
     GAME_NAME   = 'Sava Drow'
 
 class PARAMS:
-    BOARD_ID    = 'main_board'
+    BOARD_ID = 'main_board'
+    IA_MODES = ('Totally random', 'Fitness ordering', 'Alpha-beta', 'Keras deep NN') 
     PLAYERS_AMMOUNT = (2, 4, 1) #1 is for testing
     ANIMATION_TIME = 25
     NUM_THREADS = 32

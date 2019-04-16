@@ -65,7 +65,7 @@ class TutorialBoard(Board):
     
     def mouse_handler(self, event, mouse_buttons, mouse_movement, mouse_position):
         if self.console_active:
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.type == pygame.MOUSEBUTTONDOWN:    #IF DICE: Do shit. Go activating and deactivating the spritse in the order that we want thhe player to play them.
                 self.hide_messages()
             return
         super().mouse_handler(event, mouse_buttons, mouse_movement, mouse_position)

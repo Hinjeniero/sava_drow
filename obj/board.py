@@ -987,6 +987,9 @@ class Board(Screen):
             self.current_player.pause_characters()
             char.set_state('idle')
             char.active = True  #Only can move this one afterwards
+            if not self.current_player.human:
+                self.do_ia_player_turn()
+                return
         char.update_info_sprites()
 
     def next_player_turn(self, use_stop_state=True):
@@ -1008,6 +1011,22 @@ class Board(Screen):
                 break
         self.dice.sprite.add_turn(self.current_player.uuid)
         self.update_scoreboard()
+        if not self.current_player.human:
+            self.current_player.pause_characters()  #We don't want the human players fiddling with the chars
+            self.do_ia_player_turn()
+
+    @run_async
+    def do_ia_player_turn(self):
+        #TODO first we set to that player the updated board. After that, we only need to add to drag char sprite the fuckin char, and we nare good to go!
+        movement = self.current_player.get_movement()
+        character = self.get_cell_by_real_index(movement[0]).get_char()
+        self.drag_char.add(character)
+        self.active_cell.add(self.get_cell_by_real_index(movement[1]))
+        self.move_character(character)
+        if self.update_promotion_table:
+            #DO THIS SHIT
+            pass
+        self.next_char_turn()
 
     def kill_character(self, cell, killer):
         #Badass Animation

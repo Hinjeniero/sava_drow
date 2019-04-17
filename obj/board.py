@@ -179,10 +179,10 @@ class Board(Screen):
         Board.generate(self, empty, *players)
     
     ###SIMULATES ON_SCREEN CONSOLEEEE
-    def LOG_ON_SCREEN(self, *msgs):
+    def LOG_ON_SCREEN(self, *msgs, **text_params):
         text = Parser.parse_texts(*msgs)
         LOG.log('info', text)
-        self.overlay_console.add_msg(text)
+        self.overlay_console.add_msg(text, **text_params)
 
     #ALL THE GENERATION OF ELEMENTS AND PLAYERS NEEDED
     @staticmethod
@@ -809,7 +809,7 @@ class Board(Screen):
             elif self.active_char.sprite: 
                 self.pickup_character()
             elif self.dice.sprite.hover:
-                self.dice.sprite.shuffle()
+                self.shuffle()
         
         #CLICK UP
         elif event.type == pygame.MOUSEBUTTONUP:  #If we are dragging it we will have a char in here
@@ -838,6 +838,9 @@ class Board(Screen):
                 self.dice.sprite.set_hover(True)
             else:
                 self.dice.sprite.set_hover(False)
+
+    def shuffle(self):
+        self.dice.sprite.shuffle()
 
     def character_swapper(self):
         """This is to try a generator in a kinda non-generator situation"""

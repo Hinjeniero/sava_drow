@@ -53,12 +53,19 @@ class TUTORIAL:
     MESSAGE_BOARD = "This is the board. It's composed of the cells themselves, placed in a circular shape. We will call the circles 'circumferences', and the paths that connect between them rank or interpath."
     MESSAGE_MOVE_PAWN = "The pawn can move one space along any circumferences or rank, as long as the movement brings them closer to an enemy piece."
     MESSAGE_DESTINIES_BLINKING = "The possible destinies appear when you pick up any character."
-    MESSAGE_FITNESS_NUMBERS = "If you have it activated, the possible movements will be evaluated in a scale 0->1."
+    MESSAGE_FITNESS_NUMBERS = ""
     MESSAGE_MOVE_WARRIOR = "Due to their superior stamina, the warriors can move for two turns instead of one, capturing in each one. But because the heavy armor that they wear, each turn will only yield an one space movement"
     MESSAGE_MOVE_WIZARD = "A wizard can travel to positions that are three linked spaces away, regardless of intervening pieces."
     MESSAGE_MOVE_PRIESTESS = "Priestess can move along any rank or circumference if there are not intervening pieces in the middle of the path."
+    MESSAGE_MOVE_HOLYCHAMPION = "The Holy Champion, with the range of movement of a wizard and a priestess combined. But can't capture or be captured until it is promoted on one of the cells with this property."
     MESSAGE_MOVE_MATRONMOTHER = "This is the matron mother. If it gets captured, you lose the game. It can move one space in any direction, regardless of circumstances"
-    ALL_MSGS = [MESSAGE_BOARD, MESSAGE_MOVE_PAWN, MESSAGE_DESTINIES_BLINKING, MESSAGE_FITNESS_NUMBERS, MESSAGE_MOVE_WIZARD, MESSAGE_MOVE_PRIESTESS, MESSAGE_MOVE_MATRONMOTHER]
+    MESSAGE_DICE = "This is the spider dice. A roll of six will give you the power to control one enemy piece (Turncoat). This piece will not be able to capture the matron mother.\n"+\
+                "A One has no effect, and other results will cause you to lose your turn. You can try it in every round, but the more you try, the more unlikely will it be to not lose your turn.\n"+\
+                "Don't leave it all to luck, use skill."
+    MESSAGE_HOVER_CELL = "When you pickup a character, the possible destinies of this one will blink in red. If you wait enough and have activated, the value of each move will be also roughly calculated.\n"+\
+                "The possible movements will be evaluated in a scale 0->1."
+    ALL_MSGS = [MESSAGE_BOARD, MESSAGE_MOVE_PAWN, MESSAGE_DESTINIES_BLINKING, MESSAGE_FITNESS_NUMBERS, MESSAGE_MOVE_WARRIOR, MESSAGE_MOVE_WIZARD, MESSAGE_MOVE_PRIESTESS,\
+            MESSAGE_MOVE_MATRONMOTHER, MESSAGE_MOVE_HOLYCHAMPION, MESSAGE_DICE, MESSAGE_HOVER_CELL]
 
 class CHARACTERS_DIALOGS:
     pass

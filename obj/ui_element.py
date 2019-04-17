@@ -1162,10 +1162,11 @@ class ScrollingText(UIElement):
         return changed
 
     @synchronized
-    def add_msg(self, text, msg_size=(0.85, 0.10)):
+    def add_msg(self, text, msg_size=(0.85, 0.10), **params):
+        print(msg_size)
         self.changed = True
         self.add_text_sprite('screen_msg_'+str(len(self.sprites.sprites())), text,\
-                            text_size=tuple(x*y for x,y in zip(self.rect.size, msg_size)))
+                            text_size=tuple(x*y for x,y in zip(self.rect.size, msg_size)), **params)
         text_sprite = self.sprites.sprites()[-1]
         text_sprite.set_position((text_sprite.rect.x, self.resolution[1]))
         for sprite in self.sprites:

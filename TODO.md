@@ -4,6 +4,7 @@
 - [ ] Parse text to have decents numbers and letters instead of shitty indexes
 - [ ] Keep and drop servers based in a keep/alive fashion
 - [ ] Test recent changes on network board
+- [ ] Change the tutorial following a step-process. Altho its pretty good for now.
 
 #### TODO WHENEVER:
 - [ ] Effect when chars colliding with each other.

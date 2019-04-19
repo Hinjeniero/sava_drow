@@ -26,6 +26,10 @@ class BoardGenerator(object):
         self.private = False
         self.direct_connect = True
         self.players = 2
+        self.only_cpu = False
+        self.only_human = True
+        self.computer_players = 1
+        self.computer_players_mode = 'random'
         self.game_mode = 'custom'
         self.prefab_size = 'default'
         self.characters_params = CHARACTERS.CHARACTER_SETTINGS.copy()
@@ -64,6 +68,10 @@ class BoardGenerator(object):
         self.board_params.update(params)
 
     def add_players(self, board, **char_settings):
+        #TODO COMPUETR PLAYER SHERE 
+                                    self.only_cpu = False
+                                self.only_human = True
+                                USE THIS
         if self.online and not self.server:
             return
         for i in range (0, 4, 4//self.players): #Im the host or a local game.

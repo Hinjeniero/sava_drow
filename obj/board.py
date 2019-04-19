@@ -23,9 +23,9 @@ from settings import MESSAGES, USEREVENTS, PATHS
 from obj.screen import Screen, LoadingScreen
 from obj.dice import Dice
 from obj.cell import Cell, Quadrant
-from obj.players import Player
 from obj.paths import Path, PathAppraiser
-from obj.players import Character, Restriction
+from obj.ai_player import ComputerPlayer
+from obj.players import Player, Character, Restriction
 from obj.sprite import Sprite
 from obj.ui_element import TextSprite, InfoBoard, Dialog, ScrollingText
 from obj.polygons import Circle, Rectangle, Circumference
@@ -103,7 +103,7 @@ class Board(Screen):
                         'center_cell'           : False,
                         'path_color'            : WHITE,
                         'path_width'            : 8,
-                        'loading_screen_text'   : "Loading, hang tight",
+                        'loading_screen_text'   : "",
                         'cell_texture'          : None,
                         'cell_border'           : None,
                         'circumference_texture' : None,
@@ -648,7 +648,7 @@ class Board(Screen):
             self.update_scoreboard()
             self.console_active = False
 
-    def create_player(self, name, number, chars_size, empty=False, **player_settings):
+    def create_player(self, name, number, chars_size, cpu=False, cpu_mode=None, empty=False, **player_settings):
         """Queues the creation of a player on the async method.
         Args:
             name (str): Identifier of the player
@@ -663,7 +663,7 @@ class Board(Screen):
                 raise PlayerNameExistsException("The player name "+name+" already exists")
         if not empty and sum(x['ammount'] for x in player_settings.values()) > len(self.quadrants[0].cells):
             raise TooManyCharactersException('There are too many characters in player for a quadrant.')
-        self.__create_player(name, number, chars_size, empty, **player_settings)
+        self.__create_player(name, number, chars_size, cpu, empty, cpu_mode, **player_settings)
         LOG.log('DEBUG', "Queue'd player to load, total players ", self.total_players, " already loaded ", self.loaded_players)
 
     def __add_player(self, player):
@@ -708,7 +708,7 @@ class Board(Screen):
         for player in players:  self.__add_player(player)
 
     @run_async
-    def __create_player(self, player_name, player_number, chars_size, empty, **player_params):
+    def __create_player(self, player_name, player_number, chars_size, cpu, empty, ia_mode, **player_params):
         """Asynchronous method (@run_async decorator). Creates a player with the the arguments and adds him to the board.
         Args:
             player_name (str):  Identifier of the player
@@ -718,7 +718,10 @@ class Board(Screen):
                                         Ammount of each type of char, name of their actions, and their folder paths.
         Returns:
             (:obj:Threading.thread):    The thread doing the work. It is returned by the decorator."""
-        player = Player(player_name, player_number, chars_size, self.resolution, empty=empty, **player_params)
+        if cpu:
+            player = ComputerPlayer(player_name, player_number, chars_size, self.resolution, ia_mode=ia_mode, **player_params)
+        else:
+            player = Player(player_name, player_number, chars_size, self.resolution, empty=empty, **player_params)
         self.__add_player(player)
 
     def draw(self, surface):
@@ -963,7 +966,6 @@ class Board(Screen):
         self.last_cell.empty()  #Not last cell anymore, char was dropped succesfully
         #THIS CONDITION TO SHOW THE UPGRADE TABLE STARTS HERE
         if active_cell.promotion and (None != active_cell.owner != character.owner_uuid):
-            #TODO MAKE SHIT HERE WITH HOLY CHAMPION
             if 'champion' in self.drag_char.sprite.get_type().lower():
                 self.update_character()
                 #return #TODO CHECk THIS
@@ -1020,16 +1022,31 @@ class Board(Screen):
 
     @run_async
     def do_ia_player_turn(self):
-        #TODO first we set to that player the updated board. After that, we only need to add to drag char sprite the fuckin char, and we nare good to go!
-        movement = self.current_player.get_movement()
+        all_fitnesses = []
+        all_cells = {}
+        for cell in self.cells:
+            if cell.has_char():
+                start_index = cell.get_real_index()
+                all_cells[start_index] = cell.get_char()
+                if cell.get_char().owner_uuid == self.current_player:
+                    destinations = cell.get_char().get_paths(self.enabled_paths, self.distances, self.current_map,\
+                                    start_index, self.params['circles_per_lvl'])
+                    fitnesses_done = self.generate_fitnesses(start_index, destinations)
+                    fitnesses_done.wait()
+                    for key, value in self.fitnesses.items():
+                        all_fitnesses.append(((start_index, key), value))   #Append a tuple ((start, destiny), fitness_eval_of_movm)
+                    self.fitnesses = {}
+
+        #At this point, we already have the fitnesses of the entire board
+        movement = self.current_player.get_movement(all_fitnesses, self.current_map, all_cells)
         character = self.get_cell_by_real_index(movement[0]).get_char()
         self.drag_char.add(character)
         self.active_cell.add(self.get_cell_by_real_index(movement[1]))
-        self.move_character(character)
-        if self.update_promotion_table:
-            #DO THIS SHIT
-            pass
-        self.next_char_turn()
+        self.move_character(character)  #In here the turn is advanced one
+        if self.update_promotion_table: #If the update table was triggered
+            char_revived = random.choice(self.promotion_table.elements)
+            self.swapper.send(char_revived)
+        #self.next_char_turn(character)
 
     def kill_character(self, cell, killer):
         #Badass Animation

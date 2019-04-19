@@ -113,7 +113,7 @@ class Game(object):
                 if 'start' in event.command.lower():
                     if 'tutorial' in event.command.lower():
                         self.board_generator.tutorial = True
-                    if 'online' in event.command.lower() or 'network' in event.command.lower():
+                    elif 'online' in event.command.lower() or 'network' in event.command.lower():
                         self.board_generator.online = True
                         if 'host' in event.command.lower():
                             self.board_generator.server = True
@@ -127,6 +127,14 @@ class Game(object):
                             self.board_generator.direct_connect = True
                     else:
                         self.board_generator.online = False
+                    #After we decided on the board type
+                    if all('human', 'cpu') in event.command.lower():
+                        self.board_generator.only_cpu = False
+                        self.board_generator.only_human = False
+                    elif 'human' in event.command.lower():
+                        self.board_generator.only_human = True
+                    else:   #CPU players only
+                        self.board_generator.only_cpu = True
                     self.initiate()
                 self.change_screen(*event.command.lower().split('_'))
             elif event.type is USEREVENTS.SOUND_USEREVENT:
@@ -218,7 +226,7 @@ class Game(object):
             self.board_generator.set_cell_texture(value)
         elif 'size' in command:
             self.board_generator.set_board_size(value)
-        elif 'player' in command:
+        elif 'player' in command and 'total' in command:
             self.board_generator.set_players(value)
         elif any(char in command for char in characters):
             self.board_generator.set_character_ammount(command, value)
@@ -239,6 +247,11 @@ class Game(object):
                 self.board_generator.set_board_params(random_filling=True)
             else:
                 self.board_generator.set_board_params(random_filling=False)
+        elif 'computer' in command:
+            if 'player' in command:
+                self.board_generator.computer_players = value
+            elif 'mode' in command:
+                self.board_generator.computer_players_mode = value.lower()
 
     def board_handler(self, command, value=None):
         if 'turn' in command:

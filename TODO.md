@@ -1,4 +1,5 @@
 #### TODO CURRENT:
+- [ ] Check enemy working with basic IAs
 - [ ] Test simple IA based on the alpha-beta pruning.
 - [ ] Complete the update character in the network_board
 - [ ] Parse text to have decents numbers and letters instead of shitty indexes
@@ -42,3 +43,5 @@
 - [X] Bug when moving char besides enemy pawn, since in the destinies is not this cell cuz of closer to enemies restriction.
 - [X] Make simple IA based on the alpha-beta pruning.
 - [X] Set tutorial
+- [X] Connect IA settings with game
+- [X] Allow insertion of cpu players when creating the board. 

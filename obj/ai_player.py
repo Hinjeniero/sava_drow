@@ -6,25 +6,32 @@ class ComputerPlayer(Player):
     def __init__(self, graph, distances, level_size, name, order, sprite_size, canvas_size, ia_mode='random', infoboard=None, obj_uuid=None, avatar=None, **character_params):
         super.__init__(name, order, sprite_size, canvas_size, infoboard=infoboard, obj_uuid=obj_uuid, empty=False, avatar=avatar, **character_params)
         self.human = False
-        self.ia_mode = None #alpha-beta-pruning | null-move | full blown IA with keras
+        self.ia_mode = ia_mode #alpha-beta-pruning | null-move | full blown IA with keras
         self.distances = distances 
         self.graph = graph
         self.circum_size = level_size
 
-    def get_movement(self, fitnesses_dict):
+    def get_movement(self, fitnesses, current_map, all_cells): #Fitnesses list of tuples like so: ((start, destiny), fitness_eval_of_movm)
         if 'random' in self.ia_mode:
-            return self.generate_random_movement(fitnesses_dict)
+            if 'half' in self.ia_mode:
+                return self.generate_random_movement(fitnesses, somewhat_random=True)
+            return self.generate_random_movement(fitnesses, totally_random=True)
+        elif 'fitness' in self.ia_mode:
+            return self.generate_random_movement(fitnesses)
         elif 'alpha' in self.ia_mode:
-            return self.generate_alpha_beta(**settings) #TODO SETTINGS FOR ALPHA BETA
+            return self.generate_alpha_beta(fitnesses, current_map, all_cells)
         elif 'neural' in self.ia_mode:
             pass
             
-    def generate_random_movement(self, fitnesses_dict, totally_random=False):
+    def generate_random_movement(self, fitnesses, totally_random=False, somewhat_random=False):
         if totally_random:
-            return random.choice(fitnesses_dict.keys())
-        #TODO ORDER THE INDEXES ACCORDING TO FITNESS
-        #TODO GET A RANDOM TRIANGULAR?
-        return random.choice(fitnesses_dict.keys())
+            return random.choice(fitnesses)[0]
+        fitnesses.sort(key=lambda tup: tup[1], reverse=True)
+        if somewhat_random:
+            return random.choices(fitnesses, weights=list(score[1] for score in fitnesses))[0]
+        else:
+            only_best_movements = list(score[0] for score in fitnesses if score[1] == fitnesses[0][1])  #IF the score is the same as the best elements inn the ordered list
+            return random.choice(only_best_movements)
 
     def generate_alpha_beta(self, initial_map, depth, max_nodes, all_cells, current_player, all_players):
         all_values = {}

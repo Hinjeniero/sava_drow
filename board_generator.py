@@ -68,14 +68,19 @@ class BoardGenerator(object):
         self.board_params.update(params)
 
     def add_players(self, board, **char_settings):
-        #TODO COMPUETR PLAYER SHERE 
-                                    self.only_cpu = False
-                                self.only_human = True
-                                USE THIS
         if self.online and not self.server:
             return
-        for i in range (0, 4, 4//self.players): #Im the host or a local game.
-            board.create_player(random.choice(STRINGS.PLAYER_NAMES), i, (200, 200), **char_settings)
+        for i in range (0, 4, 4//self.players):     #Im the host or an online game or a local game.
+            if self.only_cpu:
+                cpu_player = True
+                cpu_mode = self.computer_players_mode
+            elif self.only_human:
+                cpu_player = False
+                cpu_mode = None
+            else:   #Mix of human players and machine controlled players
+
+                pass
+            board.create_player(random.choice(STRINGS.PLAYER_NAMES), i, (200, 200), cpu=cpu_player, cpu_mode=cpu_mode, **char_settings)
         if self.online:
             board.server.set_chars(sum(x['ammount'] for x in char_settings.values()))
 

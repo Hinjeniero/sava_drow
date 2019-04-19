@@ -78,8 +78,12 @@ class BoardGenerator(object):
                 cpu_player = False
                 cpu_mode = None
             else:   #Mix of human players and machine controlled players
-
-                pass
+                if i < self.computer_players:   #This works for 2 and 4 players.
+                    cpu_player = True
+                    cpu_mode = self.computer_players_mode
+                else:
+                    cpu_player = False
+                    cpu_mode = None
             board.create_player(random.choice(STRINGS.PLAYER_NAMES), i, (200, 200), cpu=cpu_player, cpu_mode=cpu_mode, **char_settings)
         if self.online:
             board.server.set_chars(sum(x['ammount'] for x in char_settings.values()))

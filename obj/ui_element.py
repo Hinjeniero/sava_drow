@@ -578,20 +578,6 @@ class Slider (UIElement):
         In slider does nothing. This way we don't do the useless work of super() update, useless in Slider."""
         pass 
 
-    '''def draw_overlay(self, surface, offset=None):
-        """Draws an overlay of a random color each time over the dial. Simulates animation in this way.
-        The overlay has the same shape as the dial.
-        Args:
-            surface (:obj: pygame.Surface): Surface in which to draw the dial overlay."""
-        dial    = self.dial
-        _       = self.params
-        dial_rect = pygame.Rect(self.get_sprite_abs_position(dial), dial.rect.size)
-        if offset:
-            dial_rect.topleft = tuple(off+pos for off, pos in zip(offset, dial_rect.topleft))
-        if 'circ' in _['dial_shape']:       pygame.draw.circle(surface, color, dial_rect.center, dial.rect.height//2)
-        elif 'ellip' in _['dial_shape']:    pygame.draw.ellipse(surface, color, dial_rect)
-        else:                               pygame.draw.rect(surface, color, dial_rect)'''
-
 class VerticalSlider(Slider):
     def __init__(self, id_, command, user_event_id, position, size, canvas_size, default_value=0.0, **params):
         """VerticalSlider constructor.
@@ -726,8 +712,8 @@ class InfoBoard (UIElement):
         size        = self.get_element_size(spaces, scale)
         text        = TextSprite(id_, (0, 0), size, self.rect.size, text, text_color=color)
         position    = self.get_element_position(spaces, text.rect.size)
-        text.set_position(position)
         self.add_sprite(text)
+        text.set_position(position)
         self.taken_spaces += spaces
     
     def get_element_size(self, spaces, scale):

@@ -411,14 +411,11 @@ class Board(Screen):
     @run_async
     @no_size_limit
     def generate_infoboard(self):
-        self.infoboard = self.generate_infoboard_sync()
-        self.LOG_ON_SCREEN("The game infoboard has been generated")
-
-    def generate_infoboard_sync(self):
         infoboard = InfoBoard(self.id+'_infoboard', 0, (0, 0), (0.15*self.resolution[0], self.resolution[1]),\
-                            self.resolution, texture=self.params['infoboard_texture'], keep_aspect_ratio = False, cols=6)
+                    self.resolution, texture=self.params['infoboard_texture'], keep_aspect_ratio = False, cols=6)
         infoboard.set_position((self.resolution[0]-infoboard.rect.width, 0))
-        return infoboard
+        self.infoboard = infoboard
+        self.LOG_ON_SCREEN("The game infoboard has been generated")
 
     @run_async
     def generate_dice(self):
@@ -429,16 +426,19 @@ class Board(Screen):
 
     @no_size_limit
     def generate_dialogs(self):
-        scoreboard = InfoBoard(self.id+'_scoreboard', USEREVENTS.DIALOG_USEREVENT, (0, 0), (self.resolution[0]//1.1, self.resolution[1]//1.5),\
-                                self.resolution, keep_aspect_ratio = False, rows=len(self.players)+1, cols=len(self.players[0].get_stats().keys()),
-                                texture=self.params['scoreboard_texture'])
-        scoreboard.set_position(tuple(x//2-y//2 for x, y in zip(self.resolution, scoreboard.rect.size)))
-        self.scoreboard = scoreboard
+        self.scoreboard = self.generate_scoreboard()
         promotion_table = Dialog(self.id+'_promotion', USEREVENTS.DIALOG_USEREVENT, (self.resolution[0]//1.05, self.resolution[1]//8),\
                                 self.resolution, keep_aspect_ratio = False, texture=self.params['promotion_texture'])
         self.promotion_table = promotion_table
         self.gray_overlay = ScrollingText('nuthing', self.event_id, self.resolution, transparency=128)
         self.LOG_ON_SCREEN("The board scoreboard and promotion table have been generated.")
+
+    def generate_scoreboard(self):
+        scoreboard = InfoBoard(self.id+'_scoreboard', USEREVENTS.DIALOG_USEREVENT, (0, 0), (self.resolution[0]//1.1, self.resolution[1]//1.5),\
+                                self.resolution, keep_aspect_ratio = False, rows=len(self.players)+1, cols=len(self.players[0].get_stats().keys()),
+                                texture=self.params['scoreboard_texture'])
+        scoreboard.set_position(tuple(x//2-y//2 for x, y in zip(self.resolution, scoreboard.rect.size)))
+        return scoreboard
 
     @run_async
     @no_size_limit
@@ -480,20 +480,22 @@ class Board(Screen):
     @run_async_not_pooled
     def update_scoreboard(self):
         try:
-            infoboard = self.generate_infoboard_sync() #self.scoreboard.clear()
+            scoreboard = self.generate_scoreboard() #self.scoreboard.clear()
             for player in self.players:
+                player_stats = player.get_stats()
                 if player.order == 0:
-                    for key in player.get_stats().keys():
-                        infoboard.add_text_element('text', key, 1)
-                for value in player.get_stats().values():
+                    for key in player_stats.keys():
+                        scoreboard.add_text_element('text', key, 1)
+                for value in player_stats.values():
                     if not player.dead:
                         if player.order is self.current_player.order: #A bit redundant, since a dead player dissapears
-                            infoboard.add_text_element('text', value, 1, color=WHITE)
+                            scoreboard.add_text_element('text', value, 1, color=WHITE)
                             continue
-                        infoboard.add_text_element('text', value, 1)
+                        scoreboard.add_text_element('text', value, 1)
                     else:
-                        infoboard.add_text_element('text', value, 1, color=DARKGRAY)
-            self.infoboard = infoboard
+                        scoreboard.add_text_element('text', value, 1, color=DARKGRAY)
+                print(str(scoreboard.taken_spaces)+'/'+str(scoreboard.spaces)+" spaces taken!")
+            self.scoreboard = scoreboard
             LOG.log('info', 'The scoreboard has been successfully updated.')
         except NotEnoughSpaceException:
             LOG.log('warning', 'Error while updating the scoreboard, trying again...')
@@ -1039,7 +1041,6 @@ class Board(Screen):
         #print("FINTNESES" +str(self.fitnesses))
         for start_pos, rated_destinies in self.fitnesses.items():
             for dest, score in rated_destinies.items():
-                #print("TUPLKE cresated is "+str(((start_index, key), value)))
                 all_fitnesses.append(((start_pos, dest), score))   #Append a tuple ((start, destiny), fitness_eval_of_movm)
         #At this point, we already have the fitnesses of the entire board
         #Simulation of a player driven pick up

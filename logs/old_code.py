@@ -2089,3 +2089,18 @@ class LoopedAnimation(Animation):
                 print("SWAPIINNG")
                 sprite = self.inter_paths.sprite
                 break'''
+
+
+    '''def draw_overlay(self, surface, offset=None):
+        """Draws an overlay of a random color each time over the dial. Simulates animation in this way.
+        The overlay has the same shape as the dial.
+        Args:
+            surface (:obj: pygame.Surface): Surface in which to draw the dial overlay."""
+        dial    = self.dial
+        _       = self.params
+        dial_rect = pygame.Rect(self.get_sprite_abs_position(dial), dial.rect.size)
+        if offset:
+            dial_rect.topleft = tuple(off+pos for off, pos in zip(offset, dial_rect.topleft))
+        if 'circ' in _['dial_shape']:       pygame.draw.circle(surface, color, dial_rect.center, dial.rect.height//2)
+        elif 'ellip' in _['dial_shape']:    pygame.draw.ellipse(surface, color, dial_rect)
+        else:                               pygame.draw.rect(surface, color, dial_rect)'''

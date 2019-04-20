@@ -145,7 +145,7 @@ class Path(object):
         return all(mine == his for mine, his in zip (self.pos, path.pos))
         
     @staticmethod
-    @time_it
+    #@time_it
     def all_paths_factory(graph, distances, level_size, restrictions):
         """Generates all the possible paths from every cell, taking into account some restrictions.
         Its a general method that works for pretty much everything. 
@@ -268,7 +268,7 @@ class Path(object):
         return final_paths
 
     @staticmethod
-    @time_it
+    #@time_it
     def generate_paths(graph, initial_index, restrictions):
         """Generates all the possible routes from an initial index.
         Uses a backtracking approach, and works for every distance and for linked spaces too.
@@ -307,7 +307,7 @@ class PathAppraiser(object):
         pass
 
     @staticmethod
-    @time_it
+    #@time_it
     def rate_movement(start_pos, possible_destinies, paths_graph, distances, current_map, all_cells, level_size):
         """Returns a tuple with indexes of the destinies, and a fitness going from 0 to 1."""
         fitnesses = {}
@@ -327,16 +327,16 @@ class PathAppraiser(object):
             current_map[start_pos].ally = False #This to get proper paths to this method to get a useful bait result
             bait_ratios[index] = PathAppraiser.get_bait_value(character, index, paths_graph, distances, current_map, all_cells, level_size)
             current_map[start_pos].ally = True
-            LOG.log('info', '---------------INDEX CELL RESULTS ', index, '-------------')
+            '''LOG.log('info', '---------------INDEX CELL RESULTS ', index, '-------------')
             LOG.log('info', 'Danger multiplier ', danger_multiplier)
             LOG.log('info', 'Start pos danger ', start_danger," vs destiny danger: ", destinies_danger[index])
             LOG.log('info', 'Bait value ', bait_ratios[index])
             LOG.log('info', 'Kill value ', kill_values[index])
             LOG.log('info', 'Start pos danger ', start_danger," vs destiny danger: ", destinies_danger[index])
             LOG.log('info', "IN TANH VALUES: bait ", math.tanh(bait_ratios[index]), ", danger difference: ", math.tanh(destinies_danger[index]/start_danger), ", kill: ", math.tanh(kill_values[index]))
-            print("----------------------------------")
+            print("----------------------------------")'''
             fitness = 0.6*(math.tanh(kill_values[index]))+0.6*(math.tanh(destinies_danger[index]/start_danger))+0.2*(math.tanh(bait_ratios[index]))
-            print("fitness for "+str(index)+" is "+str(fitness))
+            #print("fitness for "+str(index)+" is "+str(fitness))
             fitnesses[index] = min(fitness, 1)
             fitnesses[index] = max(fitness, 0)
         return fitnesses

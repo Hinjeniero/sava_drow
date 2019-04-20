@@ -259,6 +259,19 @@ def pre_start():
     game.add_screens(*menus)
     game.update_board_params(**create_board_params())
     return game
+
+@time_it
+@no_size_limit
+def pre_start_test():
+    start_pygame()
+    draw_start_bg()
+    game = Game('sava_drow', INIT_PARAMS.INITIAL_RESOLUTION, INIT_PARAMS.INITIAL_FPS)
+    menus = []
+    threads = [create_main_menu(menus), create_game_menu(menus), create_online_menu(menus)]
+    for menu_end_event in threads: menu_end_event.wait()
+    game.add_screens(*menus)
+    game.update_board_params(**create_board_params())
+    return game
     
 def draw_start_bg():
     start_bg = ResizedSurface.get_surface(PATHS.START_BG, INIT_PARAMS.INITIAL_RESOLUTION, 'fill', False)
@@ -266,5 +279,11 @@ def draw_start_bg():
     pygame.display.flip()
 
 if __name__ == "__main__":
-    game = pre_start()
+    arguments = tuple(arg[1:] for arg in sys.argv if arg[0]=='-')
+    print("All arguments are: "+str(sys.argv))
+    print("Valid arguments are: "+str(arguments))
+    if any('test' in arg for arg in arguments):
+        game = pre_start_test() 
+    else:
+        game = pre_start()
     game.start('main', 'menu')

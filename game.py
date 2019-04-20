@@ -128,7 +128,7 @@ class Game(object):
                     else:
                         self.board_generator.online = False
                     #After we decided on the board type
-                    if all('human', 'cpu') in event.command.lower():
+                    if all(kw in event.command.lower() for kw in ('human', 'cpu')):
                         self.board_generator.only_cpu = False
                         self.board_generator.only_human = False
                     elif 'human' in event.command.lower():

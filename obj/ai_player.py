@@ -4,7 +4,7 @@ import random
 from obj.players import Player
 class ComputerPlayer(Player):
     def __init__(self, graph, distances, level_size, name, order, sprite_size, canvas_size, ia_mode='random', infoboard=None, obj_uuid=None, avatar=None, **character_params):
-        super.__init__(name, order, sprite_size, canvas_size, infoboard=infoboard, obj_uuid=obj_uuid, empty=False, avatar=avatar, **character_params)
+        super().__init__(name, order, sprite_size, canvas_size, infoboard=infoboard, obj_uuid=obj_uuid, empty=False, avatar=avatar, **character_params)
         self.human = False
         self.ia_mode = ia_mode #alpha-beta-pruning | null-move | full blown IA with keras
         self.distances = distances 

@@ -719,7 +719,8 @@ class Board(Screen):
         Returns:
             (:obj:Threading.thread):    The thread doing the work. It is returned by the decorator."""
         if cpu:
-            player = ComputerPlayer(player_name, player_number, chars_size, self.resolution, ia_mode=ia_mode, **player_params)
+            player = ComputerPlayer(self.enabled_paths, self.distances, self.params['circles_per_lvl'], player_name,\
+                                    player_number, chars_size, self.resolution, ia_mode=ia_mode, **player_params)
         else:
             player = Player(player_name, player_number, chars_size, self.resolution, empty=empty, **player_params)
         self.__add_player(player)
@@ -993,7 +994,7 @@ class Board(Screen):
             char.set_state('idle')
             char.active = True  #Only can move this one afterwards
             if not self.current_player.human:
-                self.do_ia_player_turn()
+                self.do_ai_player_turn()
                 return
         char.update_info_sprites()
 
@@ -1017,33 +1018,40 @@ class Board(Screen):
         self.dice.sprite.add_turn(self.current_player.uuid)
         self.update_scoreboard()
         if not self.current_player.human:
+            print("Next player is computer controlled!")
             self.current_player.pause_characters()  #We don't want the human players fiddling with the chars
-            self.do_ia_player_turn()
+            self.do_ai_player_turn()
 
     @run_async
-    def do_ia_player_turn(self):
+    def do_ai_player_turn(self):
         all_fitnesses = []
         all_cells = {}
         for cell in self.cells:
             if cell.has_char():
                 start_index = cell.get_real_index()
                 all_cells[start_index] = cell.get_char()
-                if cell.get_char().owner_uuid == self.current_player:
+                if cell.get_char().owner_uuid == self.current_player.uuid:
                     destinations = cell.get_char().get_paths(self.enabled_paths, self.distances, self.current_map,\
                                     start_index, self.params['circles_per_lvl'])
-                    fitnesses_done = self.generate_fitnesses(start_index, destinations)
-                    fitnesses_done.wait()
-                    for key, value in self.fitnesses.items():
-                        all_fitnesses.append(((start_index, key), value))   #Append a tuple ((start, destiny), fitness_eval_of_movm)
-                    self.fitnesses = {}
-
+                    #print("DESTINATIONS FOR "+str(start_index)+" ARE "+str(destinations))
+                    fitnesses_thread = self.generate_fitnesses(start_index, destinations)
+                    fitnesses_thread.join()
+        #print("FINTNESES" +str(self.fitnesses))
+        for start_pos, rated_destinies in self.fitnesses.items():
+            for dest, score in rated_destinies.items():
+                #print("TUPLKE cresated is "+str(((start_index, key), value)))
+                all_fitnesses.append(((start_pos, dest), score))   #Append a tuple ((start, destiny), fitness_eval_of_movm)
         #At this point, we already have the fitnesses of the entire board
+        #Simulation of a player driven pick up
+        #print("ALL DESTINATIONS ARE "+str(all_fitnesses))
         movement = self.current_player.get_movement(all_fitnesses, self.current_map, all_cells)
+        print("MOVEMENT CHOSEN WAS "+str(movement))
         character = self.get_cell_by_real_index(movement[0]).get_char()
         self.drag_char.add(character)
-        self.active_cell.add(self.get_cell_by_real_index(movement[1]))
+        self.last_cell.add(self.get_cell_by_real_index(movement[0]))
+        self.active_cell.add(self.get_cell_by_real_index(movement[-1]))
         self.move_character(character)  #In here the turn is advanced one
-        if self.update_promotion_table: #If the update table was triggered
+        if self.show_promotion: #If the update table was triggered
             char_revived = random.choice(self.promotion_table.elements)
             self.swapper.send(char_revived)
         #self.next_char_turn(character)

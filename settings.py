@@ -210,5 +210,6 @@ class PATHS:
     DICE_FOLDER = IMAGE_FOLDER+'dice\\'
     #Icons
     HELP_ICON = IMAGE_FOLDER+'help_icon.png'
+    WARNING_ICON = IMAGE_FOLDER+'warning_icon.png'
     #Rectangles
     DARK_BRICK = IMAGE_FOLDER+'cave_dark_brick.png'

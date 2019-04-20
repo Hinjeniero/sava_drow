@@ -27,7 +27,7 @@ from obj.paths import Path, PathAppraiser
 from obj.ai_player import ComputerPlayer
 from obj.players import Player, Character, Restriction
 from obj.sprite import Sprite
-from obj.ui_element import TextSprite, InfoBoard, Dialog, ScrollingText
+from obj.ui_element import ButtonAction, TextSprite, InfoBoard, Dialog, ScrollingText
 from obj.polygons import Circle, Rectangle, Circumference
 from obj.utilities.utility_box import UtilityBox
 from obj.utilities.colors import RED, WHITE, DARKGRAY, LIGHTGRAY, TRANSPARENT_GRAY
@@ -111,7 +111,9 @@ class Board(Screen):
                         'scoreboard_texture'    : None,
                         'promotion_texture'     : None,
                         'infoboard_texture'     : None,
-                        'dice_textures_folder'  : None
+                        'dice_textures_folder'  : None,
+                        'fitness_button_texture': None,
+                        'help_button_texture'   : None
     }
     #CHANGE MAYBE THE THREADS OF CHARACTER TO JOIN INSTEAD OF NUM PLAYERS AND SHIT
     def __init__(self, id_, event_id, end_event_id, resolution, *players, empty=False, **params):
@@ -140,6 +142,8 @@ class Board(Screen):
         self.fitnesses      = {}
         self.inter_paths    = pygame.sprite.GroupSingle()
         self.dice           = pygame.sprite.GroupSingle()
+        self.fitness_button = pygame.sprite.GroupSingle()
+        self.help_button    = pygame.sprite.GroupSingle()
         self.paths          = pygame.sprite.Group()
         self.characters     = pygame.sprite.OrderedUpdates()
         self.current_player = None  #Created in add_player
@@ -236,6 +240,22 @@ class Board(Screen):
         self.adjust_cells()
         threads = [self.generate_inter_paths(), self.generate_dice()]
         for end_event in threads:   end_event.wait()
+        #Generate fitness and help buttons
+        fitness_button = ButtonAction('fitness_button', "", self.event_id, (0, 0), tuple(x*0.1 for x in self.resolution), self.resolution,\
+                                    texture=self.params['fitness_button_texture'], text="")
+
+        #fitness_button.set_position((self.dice.sprite.rect.x, self.dice.sprite.rect.y-fitness_button.rect.height))
+        fitness_pos_y = self.dice.sprite.rect.centery-((fitness_button.rect.height//2+self.dice.sprite.rect.height//2)//0.9)
+        fitness_button.set_center((self.dice.sprite.rect.centerx, fitness_pos_y))
+
+        help_button = ButtonAction('help_button', "", self.event_id, (0, 0), tuple(x*0.1 for x in self.resolution), self.resolution,\
+                                    texture=self.params['help_button_texture'], text="")
+
+        help_pos_y = fitness_button.rect.centery-((fitness_button.rect.height//2+help_button.rect.height//2)//0.9)
+        help_button.set_center((fitness_button.rect.centerx, help_pos_y))
+
+        self.fitness_button.add(fitness_button), self.help_button.add(help_button)
+        #End, saving
         self.save_sprites()
         self.generated = True
 
@@ -525,7 +545,7 @@ class Board(Screen):
         Do this to modify all the graphical elements at once when needed in a more seamless manner.
         Also because the super().draw method only draws the self.sprites.
         Only adds the graphics regarding the board, the characters and player addons will be drawn later."""
-        self.sprites.add(self.platform, self.inter_paths.sprite, *self.paths.sprites(), *self.cells.sprites(), self.infoboard, self.dice)
+        self.sprites.add(self.platform, self.inter_paths.sprite, *self.paths.sprites(), *self.cells.sprites(), self.infoboard, self.dice, self.fitness_button, self.help_button)
 
     def __adjust_number_of_paths(self):
         """Checks the inter path frequency. If the circles are not divisible by that frequency,
@@ -816,7 +836,11 @@ class Board(Screen):
                 self.pickup_character()
             elif self.dice.sprite.hover:
                 self.shuffle()
-        
+            elif self.fitness_button.sprite.hover:
+                self.fitness_button.sprite.set_enabled(not self.fitness_button.sprite.enabled)
+            elif self.help_button.sprite.hover:
+                self.help_button.sprite.set_enabled(not self.help_button.sprite.enabled)
+
         #CLICK UP
         elif event.type == pygame.MOUSEBUTTONUP:  #If we are dragging it we will have a char in here
             if self.drag_char.sprite:   self.drop_character()
@@ -844,6 +868,18 @@ class Board(Screen):
                 self.dice.sprite.set_hover(True)
             else:
                 self.dice.sprite.set_hover(False)
+            if pygame.sprite.spritecollideany(mouse_sprite, self.fitness_button, collided=pygame.sprite.collide_mask):
+                self.fitness_button.sprite.set_active(True)
+                self.fitness_button.sprite.set_hover(True)
+            else:
+                self.fitness_button.sprite.set_active(False)
+                self.fitness_button.sprite.set_hover(False)
+            if pygame.sprite.spritecollideany(mouse_sprite, self.help_button, collided=pygame.sprite.collide_mask):
+                self.help_button.sprite.set_active(True)
+                self.help_button.sprite.set_hover(True)
+            else:
+                self.help_button.sprite.set_active(False)
+                self.help_button.sprite.set_hover(False)
 
     def shuffle(self):
         self.dice.sprite.shuffle()
@@ -879,7 +915,8 @@ class Board(Screen):
         if get_dests:
             destinations = self.drag_char.sprite.get_paths(self.enabled_paths, self.distances, self.current_map,\
                                                             self.active_cell.sprite.index, self.params['circles_per_lvl'])
-            self.generate_fitnesses(self.active_cell.sprite.get_real_index(), destinations)
+            if self.fitness_button.sprite.enabled:  #If we want them to show
+                self.generate_fitnesses(self.active_cell.sprite.get_real_index(), destinations)
             for cell_index in destinations:
                 if cell_index not in self.locked_cells:
                     self.possible_dests.add(self.get_cell_by_real_index(cell_index[-1]))

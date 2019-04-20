@@ -73,21 +73,23 @@ def generate_ui_elements_different_sizes(results, thread_list, user_event_id, **
         thread_list.append(UIElement.threaded_factory(results, id_, command, user_event_id, position, size, INIT_PARAMS.INITIAL_RESOLUTION, **params))
 
 @run_async
-def create_main_menu(result):
+def create_main_menu(result, test=False):
     #Create elements, main menu buttons (POSITIONS AND SIZES ARE IN PERCENTAGES OF THE CANVAS_SIZE, can use absolute integers too)
-    positions       = UtilityBox.size_position_generator(6, 0.40, 0.05, 0.20, 0)    #TODO CHANGE
+    elements_ammount = 3 if test else 6
+    positions       = UtilityBox.size_position_generator(elements_ammount, 0.40, 0.05, 0.20, 0)
     button_size     = next(positions)
     #Creation of elements
     elements, threads = [], []
-    element_generator = generate_ui_elements(elements, threads, button_size, USEREVENTS.MAINMENU_USEREVENT, resize_mode='fill', texture=PATHS.DARK_LONG_BUTTON)
+    element_generator = generate_ui_elements(elements, threads, button_size, USEREVENTS.MAINMENU_USEREVENT, resize_mode='fit', texture=PATHS.DARK_LONG_BUTTON)
     element_generator.send(None)    #Starting generator
     #Starts generating
     element_generator.send(('button_start_game', "go_game_menu", next(positions), {'text': "Start new game"}))
     element_generator.send(('button_start_online_game', "go_online_menu", next(positions), {'text': "Start new online game"}))
     element_generator.send(('button_continue', "continue_game_go_main_board", next(positions), {'text': "Continue last game"}))
-    element_generator.send(('button_params_menu', "go_menu_params_config", next(positions), {'text': "Game settings"}))
-    element_generator.send(('button_sound', "go_menu_sound_music", next(positions), {'text': "Sound settings"}))
-    element_generator.send(('button_graphics', "go_menu_graphics_display", next(positions), {'text': "Graphics settings"}))
+    if not test:
+        element_generator.send(('button_params_menu', "go_menu_params_config", next(positions), {'text': "Game settings"}))
+        element_generator.send(('button_sound', "go_menu_sound_music", next(positions), {'text': "Sound settings"}))
+        element_generator.send(('button_graphics', "go_menu_graphics_display", next(positions), {'text': "Graphics settings"}))
     for end_event in threads:   end_event.wait()    #Waiting for all the buttons to be created
     #Create Menu
     bg = AnimationGenerator.factory(STRINGS.INITIAL_ANIMATED_BG, INIT_PARAMS.INITIAL_RESOLUTION, PARAMS.ANIMATION_TIME, INIT_PARAMS.ALL_FPS, INIT_PARAMS.INITIAL_FPS)
@@ -245,6 +247,8 @@ def create_board_params():
     board_params['infoboard_texture'] = PATHS.INFOBOARD_GRADIENT
     board_params['promotion_texture'] = PATHS.LONG_RED_BAR
     board_params['dice_textures_folder'] = PATHS.DICE_FOLDER
+    board_params['fitness_button_texture'] = PATHS.WARNING_ICON
+    board_params['help_button_texture'] = PATHS.HELP_ICON
     return board_params
 
 @time_it
@@ -267,7 +271,7 @@ def pre_start_test():
     draw_start_bg()
     game = Game('sava_drow', INIT_PARAMS.INITIAL_RESOLUTION, INIT_PARAMS.INITIAL_FPS)
     menus = []
-    threads = [create_main_menu(menus), create_game_menu(menus), create_online_menu(menus)]
+    threads = [create_main_menu(menus, test=True), create_game_menu(menus), create_online_menu(menus)]
     for menu_end_event in threads: menu_end_event.wait()
     game.add_screens(*menus)
     game.update_board_params(**create_board_params())

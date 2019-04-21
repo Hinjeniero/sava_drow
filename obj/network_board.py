@@ -121,7 +121,7 @@ class NetworkBoard(Board):
             dialog = DialogGenerator.create_input_dialog('ip_port', tuple(x//3 for x in self.resolution), self.resolution, ('ip', 'send_ip', str(NETWORK.CLIENT_IP)), ('port', 'send_port', str(NETWORK.SERVER_PORT)))
         else:
             rows = self.get_all_servers()
-            dialog = DialogGenerator.create_table_dialog('server_explorer', 'ip_port', (self.resolution[0]//1.3, self.resolution[1]//10), self.resolution, CONFIG_BOARD_DIALOGS.SERVER_TABLE_KEYS, *rows)
+            dialog = DialogGenerator.create_table_dialog('server_explorer', 'set_ip_port', (self.resolution[0]//1.3, self.resolution[1]//10), self.resolution, CONFIG_BOARD_DIALOGS.SERVER_TABLE_KEYS, *rows)
         self.dialogs.add(dialog)
         if direct_connection:   self.show_dialog('input')
         else:                   self.show_dialog('table')
@@ -132,7 +132,7 @@ class NetworkBoard(Board):
         for server in result['data']:
             date = datetime.datetime.fromtimestamp(float(server['timestamp'])).strftime('%Y-%m-%d %H:%M:S')
             data = (server['alias'], server['ip'], server['port'], server['players']+'/'+server['total_players'], date)
-            servers.append(data)
+            servers.append((data, server['ip']+':'+server['port']))
         print(servers)
         return servers
 

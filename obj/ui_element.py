@@ -946,7 +946,7 @@ class Dialog (InfoBoard):
                 except:
                     element = constructor(self.id+"_element", self.event_id, position, self.rect.size, text=text, **params)
         else:
-            element = UIElement.factory(self.id+"_element", command, self.event_id, position, size, self.rect.size, *elements, default_values=None, **params) 
+            element = UIElement.factory(self.id+"_element", command, self.event_id, position, size, self.rect.size, *elements, **params) 
         self.adjust_position(size, position, element, centering=centering)
         self.elements.add(element)
         self.taken_spaces += spaces
@@ -999,20 +999,23 @@ class SelectableTable(Dialog):
         SelectableTable.generate(self, row_size, command, keys, *data)
     
     @staticmethod
-    def generate(self, row_size, command, keys, *rows):
+    def generate(self, row_size, command, keys, *rows): #TODO ROWS FOLLOWIN A SCHEMA (text, value)
         font = None
         try:
             font = self.params['text_font']
         except KeyError:
             pass
-        new_keys, new_rows = self.parse_data(keys, *rows)
+        new_keys, new_rows = self.parse_data(keys, *tuple(row[0] for row in rows))  #Only the first part of the rows
         self.add_button(1, self.build_row(new_keys), command, scale=1, only_text=True, text_font=font)
+        new_rows = [(x, y[1]) for x, y in zip(new_rows, rows)]  #Resstructuring it again
         #print(self.build_row(new_keys))
         #print("LEN "+str(len(self.build_row(new_keys))))
         for row in new_rows:
             #print(self.build_row(row))
             #print("LEN "+str(len(self.build_row(row))))
-            self.add_button(1, self.build_row(row), command, scale=1, only_text=True, text_font=font)
+            print(row[1])
+            self.add_ui_element(1, self.build_row(row[0]), command, scale=1, default_values=(row[1],), only_text=True, shows_value=False, text_font=font)
+        self.elements.sprites()[0].set_enabled(False) #We dont want the keys to be clickable
 
     def build_row(self, row):
         """Returns the entire row sring"""

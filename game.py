@@ -192,9 +192,12 @@ class Game(object):
         if not self.last_command:   #In this case the dialog just popped-up
             self.last_command = command
             return
-        if 'ip' in command:
+        print("COMMAND IN DIALOG "+command+" WITH VALUE "+str(value))
+        if 'ip' in command and 'port' in command:   #From table of servers
+            self.current_screen.set_ip_port(ip=value.split(':')[0], port=int(value.split(':')[1]))
+        elif 'ip' in command:                       #From direct connection dialog
             self.current_screen.set_ip_port(ip=value)
-        elif 'port' in command:
+        elif 'port' in command:                     #From direct connection dialog
             self.current_screen.set_ip_port(port=int(value))
         elif 'cancel' in command or 'no' in command or 'false' in command:
             print("CANCEL BUTTON WAS PRESSED")

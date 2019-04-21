@@ -705,7 +705,12 @@ class InfoBoard (UIElement):
         if draw_grid:   #Testing purposes
             UtilityBox.draw_grid(self.image, self.params['rows'], self.params['cols'])
     
-    def add_text_element(self, id_, text, spaces, color=(0, 0, 0), scale=0.95):
+    def update_element(self, id_, text):
+        for element in self.sprites:
+            if element.id == id_:
+                element.set_text(text)
+
+    def add_text_element(self, id_, text, spaces, color=(0, 0, 0), scale=0.95, **text_params):
         """Creates and adds a text sprite with a size matching the number of occupied spaces
         defined on the input.
         The position and size are determined with helping methods. 

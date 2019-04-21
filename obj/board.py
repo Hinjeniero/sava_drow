@@ -432,10 +432,21 @@ class Board(Screen):
     @no_size_limit
     def generate_infoboard(self):
         infoboard = InfoBoard(self.id+'_infoboard', 0, (0, 0), (0.15*self.resolution[0], self.resolution[1]),\
-                    self.resolution, texture=self.params['infoboard_texture'], keep_aspect_ratio = False, cols=6)
+                    self.resolution, texture=self.params['infoboard_texture'], keep_aspect_ratio = False, rows=6, cols=2)
         infoboard.set_position((self.resolution[0]-infoboard.rect.width, 0))
+        infoboard.add_text_element('turn_label', 'Board turn', 1, scale=1.4)
+        infoboard.add_text_element('turn', str(self.turn+1), 1, scale=0.6)
+        infoboard.add_text_element('turn_char_label', 'Char turn', 1, scale=1.4)
+        infoboard.add_text_element('turn_char', str(self.char_turns+1), 1, scale=0.6)
+        infoboard.add_text_element('player_name_label', 'Playing: ', 1)
         self.infoboard = infoboard
         self.LOG_ON_SCREEN("The game infoboard has been generated")
+
+    @run_async_not_pooled
+    def update_infoboard(self):
+        self.infoboard.update_element('turn', str(self.turn+1))
+        self.infoboard.update_element('turn_char', str(self.char_turns+1))
+        self.infoboard.update_element('player_name', self.current_player.name)
 
     @run_async
     def generate_dice(self):
@@ -662,6 +673,7 @@ class Board(Screen):
             self.play_sound('success')
             if not self.current_player: #If this is the first player added
                 self.current_player = self.players[0]
+                self.infoboard.add_text_element('player_name', self.players[0].name, 1)
                 self.current_player.unpause_characters()
                 self.update_map()       #This goes according to current_player
             self.dice.sprite.add_turn(self.current_player.uuid)
@@ -1029,6 +1041,7 @@ class Board(Screen):
             self.char_turns = 0
             self.next_player_turn()
         elif self.char_turns < char.turns and self.char_turns == 1:
+            self.update_infoboard()
             self.current_player.pause_characters()
             char.set_state('idle')
             char.active = True  #Only can move this one afterwards
@@ -1056,6 +1069,7 @@ class Board(Screen):
                 break
         self.dice.sprite.add_turn(self.current_player.uuid)
         self.update_scoreboard()
+        self.update_infoboard()
         if not self.current_player.human:
             print("Next player is computer controlled!")
             self.current_player.pause_characters()  #We don't want the human players fiddling with the chars

@@ -64,7 +64,7 @@ app.post('/host/add/', addHostMiddleware(), (req, res) => {
         res.json(200, {success: true, message: 'Your server with uuid '+data['uuid']+' was added succesfully'})
         return
     }
-    res.json(400, JSON_SERVER_ALREADY_EXISTS)
+    res.json(200, JSON_SERVER_ALREADY_EXISTS)
 });
 
 app.post('/host/update', updateHostMiddleware(), (req, res) => {
@@ -92,7 +92,7 @@ app.post('/host/delete', (req, res) => {
         res.json(200, {success: true, message: 'Your server with uuid '+uuid+' was deleted successfully'})
         return
     }
-    res.json(400, JSON_SERVER_NOT_FOUND)
+    res.json(200, JSON_SERVER_NOT_FOUND)
 });
 
 app.listen(PORT, () => {

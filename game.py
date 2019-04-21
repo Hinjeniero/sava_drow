@@ -205,14 +205,14 @@ class Game(object):
             self.last_command = command
             return
         elif 'cancel' in command or 'no' in command or 'false' in command:
-            print("CANCEL BUTTON WAS PRESSED")
+            #print("CANCEL BUTTON WAS PRESSED")
             self.current_screen.hide_dialog()
             if 'ip' in command or 'port' in self.last_command:
                 self.current_screen.destroy()
                 self.restart_main_menu()
             self.last_command = None
         elif 'ok' in command or 'yes' in command or 'agree' in command:   #The OK button was pressed
-            print("OK BUTTON WAS PRESSED")
+            #print("OK BUTTON WAS PRESSED")
             if 'exit' in command:
                 raise GameEndException("Byebye!")
             elif 'input' in command:

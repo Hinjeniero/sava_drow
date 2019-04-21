@@ -88,7 +88,7 @@ class Server(MastermindServerTCP):
         if id_ in self.clients.values():
             self.clients.update_item(id_, conn_client)
             return {"success": True, "msg": "The client "+str(id_)+" connection object was updated successfully."}
-        elif len(self.clients.values() < self.total_players):
+        elif len(self.clients.values()) < self.total_players:
             self.clients.add_item(id_, conn_client)
             self.update_server()
             return {"success": True, "msg": "The client "+str(id_)+" was added successfully."}

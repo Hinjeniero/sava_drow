@@ -118,10 +118,12 @@ class NetworkBoard(Board):
     def generate_connect_dialog(self, direct_connection):
         #TODO To update this just destroy it and rebuild it or whatever. Take into edxample the update_scoreboard in Board.
         if direct_connection:
-            dialog = DialogGenerator.create_input_dialog('ip_port', tuple(x//3 for x in self.resolution), self.resolution, ('ip', 'send_ip', str(NETWORK.CLIENT_IP)), ('port', 'send_port', str(NETWORK.SERVER_PORT)))
+            dialog = DialogGenerator.create_input_dialog('ip_port', tuple(x//3 for x in self.resolution), self.resolution,\
+                                                        ('ip', 'send_ip', str(NETWORK.CLIENT_IP)), ('port', 'send_port', str(NETWORK.SERVER_PORT)))
         else:
             rows = self.get_all_servers()
-            dialog = DialogGenerator.create_table_dialog('server_explorer', 'set_ip_port', (self.resolution[0]//1.3, self.resolution[1]//10), self.resolution, CONFIG_BOARD_DIALOGS.SERVER_TABLE_KEYS, *rows)
+            dialog = DialogGenerator.create_table_dialog('server_explorer', 'set_ip_port', (self.resolution[0]//1.3, self.resolution[1]//10),\
+                                                        self.resolution, CONFIG_BOARD_DIALOGS.SERVER_TABLE_KEYS, *rows)
         self.dialogs.add(dialog)
         if direct_connection:   self.show_dialog('input')
         else:                   self.show_dialog('table')
@@ -130,10 +132,9 @@ class NetworkBoard(Board):
         result = UtilityBox.do_request(NETWORK.TABLE_SERVERS_GET_ALL_ENDPOINT)
         servers = []
         for server in result['data']:
-            date = datetime.datetime.fromtimestamp(float(server['timestamp'])).strftime('%Y-%m-%d %H:%M:S')
+            date = datetime.datetime.fromtimestamp(float(server['timestamp'])).strftime('%m-%d %H:%M')
             data = (server['alias'], server['ip'], server['port'], server['players']+'/'+server['total_players'], date)
             servers.append((data, server['ip']+':'+server['port']))
-        print(servers)
         return servers
 
     @run_async_not_pooled
@@ -162,6 +163,7 @@ class NetworkBoard(Board):
         try:
             if not host:
                 self.flags["ip_port_done"].wait()
+            self.LOG_ON_SCREEN('Trying to connect to the server in ', self.ip, ':', self.port)
             self.connect()
             self.keep_alive() #Creating thread
             self.receive_worker()
@@ -176,17 +178,14 @@ class NetworkBoard(Board):
         if port:
             self.port = port
         if self.ip and self.port:
-            try:
-                self.flags["ip_port_done"].set()
-            except KeyError:
-                pass
+            self.flags["ip_port_done"].set()
 
     def send_handshake(self, host):
         """"Sends the first request to the server, with our ID and a host boolean.
         If this is the host, will send the parameters for the board creation.
         Otherwise, will ask for those parameters, along with other essential data like
         the generated players data, the ammount of players, or the generated characters data (like dropping cell).
-        ARgs:"""
+        Args:"""
         self.send_data({"host": host, "id": self.uuid})
         if host:
             self.send_data_async({"params": self.get_board_params()})

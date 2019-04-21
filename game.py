@@ -189,16 +189,21 @@ class Game(object):
         self.get_screen('main', 'menu').enable_sprites(False, 'continue')
 
     def dialog_handler(self, command, value=None):
-        if not self.last_command:   #In this case the dialog just popped-up
-            self.last_command = command
-            return
         print("COMMAND IN DIALOG "+command+" WITH VALUE "+str(value))
         if 'ip' in command and 'port' in command:   #From table of servers
-            self.current_screen.set_ip_port(ip=value.split(':')[0], port=int(value.split(':')[1]))
+            try:
+                self.current_screen.set_ip_port(ip=value.split(':')[0], port=int(value.split(':')[1]))
+                self.current_screen.hide_dialog()
+                return
+            except AttributeError:
+                pass
         elif 'ip' in command:                       #From direct connection dialog
             self.current_screen.set_ip_port(ip=value)
         elif 'port' in command:                     #From direct connection dialog
             self.current_screen.set_ip_port(port=int(value))
+        if not self.last_command:   #In this case the dialog just popped-up
+            self.last_command = command
+            return
         elif 'cancel' in command or 'no' in command or 'false' in command:
             print("CANCEL BUTTON WAS PRESSED")
             self.current_screen.hide_dialog()
@@ -206,16 +211,16 @@ class Game(object):
                 self.current_screen.destroy()
                 self.restart_main_menu()
             self.last_command = None
-        else:   #The OK button was pressed
+        elif 'ok' in command or 'yes' in command or 'agree' in command:   #The OK button was pressed
             print("OK BUTTON WAS PRESSED")
             if 'exit' in command:
                 raise GameEndException("Byebye!")
             elif 'input' in command:
                 self.current_screen.dialog.trigger_all_elements()
                 self.current_screen.hide_dialog()
-                self.last_command = None
-            else:
-                LOG.log('warning', 'the command ',command,' is not recognized.')
+            self.last_command = None
+        else:
+            LOG.log('warning', 'the command ',command,' is not recognized.')
 
     def config_handler(self, command, value):
         characters = ('pawn', 'warrior', 'wizard', 'priestess', 'matron')

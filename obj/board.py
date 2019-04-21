@@ -514,7 +514,7 @@ class Board(Screen):
                         scoreboard.add_text_element('text', value, 1)
                     else:
                         scoreboard.add_text_element('text', value, 1, color=DARKGRAY)
-                print(str(scoreboard.taken_spaces)+'/'+str(scoreboard.spaces)+" spaces taken!")
+                #print(str(scoreboard.taken_spaces)+'/'+str(scoreboard.spaces)+" spaces taken!")
             self.scoreboard = scoreboard
             LOG.log('info', 'The scoreboard has been successfully updated.')
         except NotEnoughSpaceException:

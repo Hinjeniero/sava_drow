@@ -837,6 +837,13 @@ class Board(Screen):
         #CHECKING BUTTONS FIRST. CLICK DOWN
         if event.type == pygame.MOUSEBUTTONDOWN:  #On top of the char and clicking on it
             self.play_sound('key')
+            if mouse_buttons[1] and self.help_button.enabled:
+                if self.active_char.sprite:
+                    self.active_char.sprite.set_help_dialog_state(not self.active_char.sprite.dialog_active)
+                    char_w_active_dialog = next((char for char in self.characters if (char.dialog_active and char is not self.active_char.sprite)), None)
+                    if char_w_active_dialog:
+                        char_w_active_dialog.hide_help_dialog()
+                        return
             if self.show_promotion:
                 try:
                     element = next(element for element in self.promotion_table.elements if element.hover)

@@ -1,7 +1,7 @@
 from obj.utilities.decorators import run_async
 from obj.utilities.utility_box import UtilityBox
 from settings import PATHS, STRINGS
-from strings import CONFIG_MENU_DIALOGS
+from strings import CONFIG_MENU_DIALOGS, CHARACTERS_DIALOGS
 class HelpDialogs(object):
     @staticmethod
     def add_help_dialogs(menu_id, elements, resolution):
@@ -61,5 +61,16 @@ class HelpDialogs(object):
     @staticmethod
     @run_async
     def add_character_dialog(char, resolution):
-        pass    
-    
+        kwargs = {'dialog_size': (resolution[0]//3, resolution[0]//2), 'dialog_texture': PATHS.DARK_BRICK}
+        if 'pawn' in char.get_type():
+            char.add_hover_dialog(CHARACTERS_DIALOGS.MOVEMENT_PAWN, dialog_lines=UtilityBox.line_number(CHARACTERS_DIALOGS.MOVEMENT_PAWN), **kwargs)
+        elif 'wizard' in char.get_type():
+            char.add_hover_dialog(CHARACTERS_DIALOGS.MOVEMENT_WIZARD, dialog_lines=UtilityBox.line_number(CHARACTERS_DIALOGS.MOVEMENT_WIZARD), **kwargs)
+        elif 'warrior' in char.get_type():
+            char.add_hover_dialog(CHARACTERS_DIALOGS.MOVEMENT_WARRIOR, dialog_lines=UtilityBox.line_number(CHARACTERS_DIALOGS.MOVEMENT_WARRIOR), **kwargs)    
+        elif 'priest' in char.get_type():
+            char.add_hover_dialog(CHARACTERS_DIALOGS.MOVEMENT_PRIESTESS, dialog_lines=UtilityBox.line_number(CHARACTERS_DIALOGS.MOVEMENT_PRIESTESS), **kwargs)    
+        elif 'matron' in char.get_type():
+            char.add_hover_dialog(CHARACTERS_DIALOGS.MOVEMENT_MATRONMOTHER, dialog_lines=UtilityBox.line_number(CHARACTERS_DIALOGS.MOVEMENT_MATRONMOTHER), **kwargs)    
+        elif 'holy' in char.get_type():
+            char.add_hover_dialog(CHARACTERS_DIALOGS.MOVEMENT_HOLYCHAMPION, dialog_lines=UtilityBox.line_number(CHARACTERS_DIALOGS.MOVEMENT_HOLYCHAMPION), **kwargs)    

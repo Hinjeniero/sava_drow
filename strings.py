@@ -68,4 +68,9 @@ class TUTORIAL:
             MESSAGE_MOVE_MATRONMOTHER, MESSAGE_MOVE_HOLYCHAMPION, MESSAGE_DICE, MESSAGE_HOVER_CELL]
 
 class CHARACTERS_DIALOGS:
-    pass
+    MOVEMENT_PAWN = "The pawn can move one space along any connected path if the movement brings him closer to an enemy piece in that direct path."
+    MOVEMENT_WARRIOR = "Warriors can move for two turns with no restrictions. In each turn moves one space in any direction."
+    MOVEMENT_WIZARD = "A wizard can travel three linked spaces away. Intervening pieces don't matter."
+    MOVEMENT_PRIESTESS = "Priestesses can move for any number of spaces in any direct path, if there are not intervening pieces."
+    MOVEMENT_HOLYCHAMPION = "The Holy Champion, combines the movement of a wizard and a priestess. Can't capture or be captured until it is promoted."
+    MOVEMENT_MATRONMOTHER = "Matron mothers can move one space in any direction."

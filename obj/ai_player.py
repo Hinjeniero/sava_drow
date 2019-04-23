@@ -12,7 +12,8 @@ class ComputerPlayer(Player):
         self.graph = graph
         self.circum_size = level_size
 
-    def get_movement(self, fitnesses, current_map, all_cells): #Fitnesses list of tuples like so: ((start, destiny), fitness_eval_of_movm)
+    def get_movement(self, fitnesses, current_map, all_cells, my_player, all_players, max_depth=5, max_nodes=100):
+        #Fitnesses list of tuples like so: ((start, destiny), fitness_eval_of_movm)
         if 'random' in self.ia_mode:
             if 'half' in self.ia_mode:
                 return self.generate_random_movement(fitnesses, somewhat_random=True)
@@ -20,7 +21,9 @@ class ComputerPlayer(Player):
         elif 'fitness' in self.ia_mode:
             return self.generate_random_movement(fitnesses)
         elif 'alpha' in self.ia_mode:
-            return self.generate_alpha_beta(fitnesses, current_map, all_cells)
+            if 'order' in self.ia_mode:
+                return self.generate_alpha_beta_ordered(fitnesses, max_depth, max_nodes, all_cells, current_map, my_player, all_players)    
+            return self.generate_alpha_beta(max_depth, max_nodes, all_cells, current_map, my_player, all_players)
         elif 'neural' in self.ia_mode:
             pass
             
@@ -35,11 +38,22 @@ class ComputerPlayer(Player):
             return random.choice(only_best_movements)
 
     @time_it
-    def generate_alpha_beta(self, depth, max_nodes, all_cells, current_map, current_player, all_players):
+    def generate_alpha_beta_ordered(self, fitnesses, max_depth, max_nodes, all_cells, current_map, current_player, all_players):   #TODO ADD ORDERING OF DESTINIES BY FITNESSES
         all_paths = {}
         #cells_with_char IS DONE LIKE THIS: A DICT WITH ONLY THE CELLS WITH A CHAR IN IT!!{INDEX: CHAR}
         cells_with_char = {cell.get_real_index(): cell.get_char() for cell in all_cells if cell.has_char()} #Creating the dict as written below
-        self.minimax(current_player, cells_with_char, current_map, all_paths, [], 0, 5, True, -math.inf, math.inf)
+        self.minimax(current_player, cells_with_char, current_map, all_paths, [], 0, max_depth, True, -math.inf, math.inf)
+        rated_movements = [(dest[0], score) for dest, score in all_paths.items()]  #TODO MAKE THIS PROPERLY, dest[0] is most likely not the way to go, we have to create a movement (source, dest) or something here
+        rated_movements.sort(key=lambda dest:dest[1], reversed=True)
+        print("FINAL MOVEMENTS RATED BY ALPHA BETA "+str(rated_movements))
+        return rated_movements[0]
+
+    @time_it
+    def generate_alpha_beta(self, max_depth, max_nodes, all_cells, current_map, current_player, all_players):
+        all_paths = {}
+        #cells_with_char IS DONE LIKE THIS: A DICT WITH ONLY THE CELLS WITH A CHAR IN IT!!{INDEX: CHAR}
+        cells_with_char = {cell.get_real_index(): cell.get_char() for cell in all_cells if cell.has_char()} #Creating the dict as written below
+        self.minimax(current_player, cells_with_char, current_map, all_paths, [], 0, max_depth, True, -math.inf, math.inf)
         rated_movements = [(dest[0], score) for dest, score in all_paths.items()]  #TODO MAKE THIS PROPERLY, dest[0] is most likely not the way to go, we have to create a movement (source, dest) or something here
         rated_movements.sort(key=lambda dest:dest[1], reversed=True)
         print("FINAL MOVEMENTS RATED BY ALPHA BETA "+str(rated_movements))

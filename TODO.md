@@ -1,16 +1,16 @@
 #### TODO CURRENT:
-- [ ] Check enemy working with basic IAs
 - [ ] Test simple IA based on the alpha-beta pruning.
-- [ ] Complete the update character in the network_board
-- [ ] Parse text to have decents numbers and letters instead of shitty indexes
+- [ ] Complete network_board (update character)
 - [ ] Keep and drop servers based in a keep/alive fashion
-- [ ] Test recent changes on network board
-- [ ] Change the tutorial following a step-process. Altho its pretty good for now.
+- [ ] Test changes on network board
+- [ ] Add dialogs to chars.
 
 #### TODO WHENEVER:
+- [ ] Parse text to have decents numbers and letters instead of shitty indexes
 - [ ] Effect when chars colliding with each other.
 - [ ] Bar of taunts below, the cursor turns into whatever and sends the position to the rest of the clients.
 - [ ] Add some animations and shit to promotion of a char, like stars or particles or something
+- [ ] Change the tutorial following a step-process. Altho its pretty good for now. 
 
 #### DONE:
 - [X] Implement spider dice + sprite. Needs to randomize the game a little bit.
@@ -44,4 +44,13 @@
 - [X] Make simple IA based on the alpha-beta pruning.
 - [X] Set tutorial
 - [X] Connect IA settings with game
-- [X] Allow insertion of cpu players when creating the board. 
+- [X] Allow insertion of cpu players when creating the board.
+- [X] Check enemy working with basic IAs
+- [X] Make selectable table of public servers work when clicked.
+- [X] Finish alpha beta
+- [X] Fix scoreboard bug 
+- [X] Improve board's functions (fitness and help buttons)
+- [X] Improve board's infoboard (info like turns)
+- [X] Add dialogs to characters, in case we don't remember how to use them.
+- [X] Add functionality to the help button
+

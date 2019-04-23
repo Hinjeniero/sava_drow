@@ -382,6 +382,11 @@ class Character(AnimatedSprite):
             self.kill_sprite.draw(surface, offset=offset)
             self.movm_sprite.draw(surface, offset=offset)
 
+    def set_help_dialog_state(self, state):
+        if self.hover_dialog:
+            if not state:   self.hide_help_dialog()
+            elif state:     self.show_help_dialog()
+
     def json(self, cell_index=None):
         """This to share in the online variant and drop in the same positions."""
         response = {'uuid': self.uuid,

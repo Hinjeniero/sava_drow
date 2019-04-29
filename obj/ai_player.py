@@ -3,6 +3,7 @@ import math
 import random
 from obj.players import Player
 from obj.utilities.decorators import time_it
+
 class ComputerPlayer(Player):
     def __init__(self, graph, distances, level_size, name, order, sprite_size, canvas_size, ia_mode='random', infoboard=None, obj_uuid=None, avatar=None, **character_params):
         super().__init__(name, order, sprite_size, canvas_size, infoboard=infoboard, obj_uuid=obj_uuid, empty=False, avatar=avatar, **character_params)
@@ -140,3 +141,151 @@ class ComputerPlayer(Player):
                     beta = min(beta, bestVal)
                     if beta <= alpha:
                         return bestVal
+
+    #Monte carlo tree search from here on
+
+
+class Node(object):
+    def __init__(self, board_hash, board_state, parent):
+        self.board_hash = board_hash
+        self.state_hash = None
+        self.board_state = board_state
+        self.parent = parent
+        self.children = None
+        self.visited = False
+        self.total_n = 0
+        self.total_value = 0
+
+    def expand(self):
+        if not node.children:   #If it's empty, we expand it. (Add the nodes to )
+            pass
+            #SIMULATE ALL ACTIONS FROM THE SAVED STATE BOARD OF THIS NODE.
+            #ADD ALL ACTIONS(NODES) TO THIS ONE (CRATING THE NODE WITH THE INPUT NODE AS A PARENT) 
+    
+    def get_uct_value(self, exploration_const=1):
+        if self.total_n == 0: 
+            return math.inf
+        return (self.total_value/self.total_n)+(exploration_const*(math.sqrt(math.log(parent.total_n)/self.total_n))) #Upper Confidence bound applied to trees
+
+    def at_end_game(self):
+        return False
+        #TODO check the board_state for my playah
+
+    def board_evaluation(self):
+        return 0
+        #TODO To be used before backpropagating
+
+class MonteCarloSearch(object):
+    EXPLORATION_CONSTANT = 1.5
+    
+    @staticmethod
+    def monte_carlo_tree_search(board_hash, root_node, all_cells, current_map, timeout=10): #10 seconds of computational power
+        start = time.time()
+        while (time.time-start) < timeout:
+            leaf = traverse(root_node)   #leaf = unvisited node 
+            simulation_result = rollout(leaf)
+            backpropagate(leaf, simulation_result)
+        return best_child(root)
+
+    @staticmethod
+    def traverse(node):
+        leaf = None
+        while not leaf:
+            node.expand()   #If its already expanded, it will not expand any further, so we can leave this line like this
+            leaf = next(child for child in node.children if child.total_n == 0, None)   #Get the first child unexplored, or the best one
+            if not leaf:
+                node = max(child for child in node.children, key=lambda child:child.get_uct_value(exploration_const=EXPLORATION_CONSTANT)) #If not unexplored, gets the one with the best UCT value to expand
+        return leaf if leaf else node   #Check if endgame or what is this. TODO Check this line
+
+    @staticmethod
+    def rollout(node, all_cells, current_map, my_player):
+        #Gotta copy those structures for the simulations to not affect the original ones
+        while not node.at_end_game():
+            node = rollout_policy(node)
+        return node.board_evaluation()
+    
+    @staticmethod
+    def rollout_policy(node, policy='random'):
+        if 'rand' in policy:
+            pass    #Gonna choose random anyway
+        return random.choice(node.children)
+
+    @staticmethod
+    def backpropagate(node, result):
+        while node.parent:  #Loops until we have no parent, the top of the tree 
+            node.total_n += 1
+            node.total_value += result
+            node = node.parent
+
+    #FROM HERE ON ITS NOT USEFUL/USED EXCEPT FOR REFERENCE
+    
+    """def best_child(node):
+        pick child with highest number of visits
+
+        @staticmethod
+        def montecarlo_next_movement():
+            pass
+
+        def best_action(self, simulations_number):
+        for _ in range(0, simulations_number):            
+            v = self.tree_policy()
+            reward = v.rollout()
+            v.backpropagate(reward)
+        # exploitation only
+        return self.root.best_child(c_param = 0.)
+
+        def tree_policy(self):
+            current_node = self.root
+            while not current_node.is_terminal_node():
+                if not current_node.is_fully_expanded():
+                    return current_node.expand()
+                else:
+                    current_node = current_node.best_child()
+            return current_node
+
+class TwoPlayersGameMonteCarloTreeSearchNode(MonteCarloTreeSearchNode):
+
+    def __init__(self, state: TwoPlayersGameState, parent):
+        super(TwoPlayersGameMonteCarloTreeSearchNode, self).__init__(state, parent)
+        self._number_of_visits = 0.
+        self._results = defaultdict(int)
+
+    @property
+    def untried_actions(self):
+        if not hasattr(self, '_untried_actions'):
+            self._untried_actions = self.state.get_legal_actions()
+        return self._untried_actions
+
+    @property
+    def q(self):
+        wins = self._results[self.parent.state.next_to_move]
+        loses = self._results[-1 * self.parent.state.next_to_move]
+        return wins - loses
+
+    @property
+    def n(self):
+        return self._number_of_visits
+
+    def expand(self):
+        action = self.untried_actions.pop()
+        next_state = self.state.move(action)
+        child_node = TwoPlayersGameMonteCarloTreeSearchNode(next_state, parent = self)
+        self.children.append(child_node)
+        return child_node
+
+    def is_terminal_node(self):
+        return self.state.is_game_over()
+
+    def rollout(self):
+        current_rollout_state = self.state
+        while not current_rollout_state.is_game_over():
+            possible_moves = current_rollout_state.get_legal_actions()
+            action = self.rollout_policy(possible_moves)
+            current_rollout_state = current_rollout_state.move(action)
+        return current_rollout_state.game_result
+
+    def backpropagate(self, result):
+        self._number_of_visits += 1.
+        self._results[result] += 1.
+        if self.parent:
+            self.parent.backpropagate(result)"""

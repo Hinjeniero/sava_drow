@@ -1,5 +1,6 @@
 #import keras
 import math
+import time
 import random
 from obj.players import Player
 from obj.utilities.decorators import time_it
@@ -151,13 +152,13 @@ class Node(object):
         self.state_hash = None
         self.board_state = board_state
         self.parent = parent
-        self.children = None
+        self.children = []
         self.visited = False
         self.total_n = 0
         self.total_value = 0
 
     def expand(self):
-        if not node.children:   #If it's empty, we expand it. (Add the nodes to )
+        if not self.children:   #If it's empty, we expand it. (Add the nodes to )
             pass
             #SIMULATE ALL ACTIONS FROM THE SAVED STATE BOARD OF THIS NODE.
             #ADD ALL ACTIONS(NODES) TO THIS ONE (CRATING THE NODE WITH THE INPUT NODE AS A PARENT) 
@@ -182,9 +183,9 @@ class MonteCarloSearch(object):
     def monte_carlo_tree_search(board_hash, root_node, all_cells, current_map, timeout=10): #10 seconds of computational power
         start = time.time()
         while (time.time-start) < timeout:
-            leaf = traverse(root_node)   #leaf = unvisited node 
-            simulation_result = rollout(leaf)
-            backpropagate(leaf, simulation_result)
+            leaf = MonteCarloSearch.traverse(root_node)   #leaf = unvisited node 
+            simulation_result = MonteCarloSearch.rollout(leaf)
+            MonteCarloSearch.backpropagate(leaf, simulation_result)
         return best_child(root)
 
     @staticmethod
@@ -192,16 +193,16 @@ class MonteCarloSearch(object):
         leaf = None
         while not leaf:
             node.expand()   #If its already expanded, it will not expand any further, so we can leave this line like this
-            leaf = next(child for child in node.children if child.total_n == 0, None)   #Get the first child unexplored, or the best one
+            leaf = next((child for child in node.children if child.total_n == 0), None)   #Get the first child unexplored, or the best one
             if not leaf:
-                node = max(child for child in node.children, key=lambda child:child.get_uct_value(exploration_const=EXPLORATION_CONSTANT)) #If not unexplored, gets the one with the best UCT value to expand
+                node = max((child for child in node.children), key=lambda child:child.get_uct_value(exploration_const=EXPLORATION_CONSTANT)) #If not unexplored, gets the one with the best UCT value to expand
         return leaf if leaf else node   #Check if endgame or what is this. TODO Check this line
 
     @staticmethod
     def rollout(node, all_cells, current_map, my_player):
         #Gotta copy those structures for the simulations to not affect the original ones
         while not node.at_end_game():
-            node = rollout_policy(node)
+            node = MonteCarloSearch.rollout_policy(node)
         return node.board_evaluation()
     
     @staticmethod

@@ -61,7 +61,8 @@ class ComputerPlayer(Player):
         print("FINAL MOVEMENTS RATED BY ALPHA BETA "+str(rated_movements))
         return rated_movements[0]
 
-    def generate_movements(self, all_cells, current_map, my_player, my_turn=True):
+    @staticmethod
+    def generate_movements(all_cells, current_map, my_player, my_turn=True):
         destinies = {}  #TODO current_map is paths? NO ITS NOT!
         for cell, char_inside_cell in all_cells.items():
             if char_inside_cell.owner_uuid == my_player and my_turn\
@@ -82,7 +83,7 @@ class ComputerPlayer(Player):
         if isMaximizingPlayer:
             bestVal = -math.inf 
             #generat4e-movemtns returns a dict weith the scheme: {cell_index_source: (all destinies)}
-            for source_index, destinies in self.generate_movements(all_cells, current_map, my_player).items():
+            for source_index, destinies in ComputerPlayer.generate_movements(all_cells, current_map, my_player).items():
                 for dest_index in destinies:
                     #SIMULATE MOVEMENT
                     char_moving = all_cells[source_index]   #Starting to save variables to restore later
@@ -112,7 +113,7 @@ class ComputerPlayer(Player):
                         return bestVal
         else:
             bestVal = math.inf  
-            for source_index, destinies in self.generate_movements(all_cells, current_map, my_player, False).items():
+            for source_index, destinies in ComputerPlayer.generate_movements(all_cells, current_map, my_player, False).items():
                 for dest_index in destinies:
                     #Inversion of current_map
                     #SIMULATE MOVEMENT
@@ -143,59 +144,89 @@ class ComputerPlayer(Player):
                     if beta <= alpha:
                         return bestVal
 
-    #Monte carlo tree search from here on
+    @staticmethod
+    def reverse_map(self, current_map):
+        """Reverses enemies and allies in the current map structure. Useful in simulations.
+        A current map follows a scheme: {cell_index: path object}"""
+        for path_obj in current_map.values():
+            if path_obj.ally or path_obj.enemy: #If there is a char in it
+                path_obj.ally = not path_obj.ally
+                path_obj.enemy = not path_obj.enemy #Reversing indeed. Its just that.
 
-
+#Monte carlo tree search from here on
 class Node(object):
-    def __init__(self, board_hash, board_state, parent):
+    def __init__(self, parent, board_hash, board_state, map_state):
+        self.parent = parent
         self.board_hash = board_hash
         self.state_hash = None
-        self.board_state = board_state
-        self.parent = parent
+        self.board_state = board_state  #{cell_index: character}
+        self.map_state = map_state      #{cell_index: path object}
         self.children = []
         self.visited = False
         self.total_n = 0
         self.total_value = 0
 
-    def expand(self):
-        if not self.children:   #If it's empty, we expand it. (Add the nodes to )
-            pass
-            #SIMULATE ALL ACTIONS FROM THE SAVED STATE BOARD OF THIS NODE.
-            #ADD ALL ACTIONS(NODES) TO THIS ONE (CRATING THE NODE WITH THE INPUT NODE AS A PARENT) 
+    def expand(self, all_cells, current_map, my_turn):
+        if not self.children:   #If it's empty, we expand it. (Add the result boards to the children)   #TODO CHECK PLAYERS TO REVERSE AND THAT SHIT
+            #SIMULATE MOVEMENT
+            for source_index, destinies in ComputerPlayer.generate_movements(all_cells, current_map, my_player, False).items():
+                for dest_index in destinies:
+                    #TODO COPY STRUCTURES! cafeul, onlyshallow copy
+                    #char_moving = all_cells[source_index]   #Starting to save variables to restore later
+                    #char_ded = all_cells[dest_index] if dest_index in all_cells else None
+                    #had_enemy = current_map[source_index].enemy
+                    #Start simulating
+                    del all_cells[source_index] 
+                    all_cells[dest_index] = all_cells[source_index]
+                    #----
+                    had_enemy = current_map[source_index].enemy
+                    current_map[source_index].ally = False
+                    current_map[dest_index].ally = True
+                    current_map[dest_index].enemy = False
+                    #CREATES THE CHILDREN
+                    self.children.append(Node(self, -1, all_cells, current_map))    #God knows how much this will occupy in memory...
+                    #Return current map to the way it was
+                    current_map[source_index].ally = True
+                    current_map[dest_index].ally = False
+                    current_map[dest_index].enemy = had_enemy               #Restoration in current_map correct
     
     def get_uct_value(self, exploration_const=1):
         if self.total_n == 0: 
             return math.inf
-        return (self.total_value/self.total_n)+(exploration_const*(math.sqrt(math.log(parent.total_n)/self.total_n))) #Upper Confidence bound applied to trees
+        return (self.total_value/self.total_n)+(exploration_const*(math.sqrt(math.log(self.parent.total_n)/self.total_n))) #Upper Confidence bound applied to trees
 
     def at_end_game(self):
-        return False
-        #TODO check the board_state for my playah
+        all_essential_pieces = []
+        for char in self.board_state:
+            if char.essential:
+                all_essential_pieces.append(char)
+        return False if any(char.owner_uuid != all_essential_pieces[0].owner_uuid for char in all_essential_pieces) else True
+        #If there are only essential pieces from a player left
 
-    def board_evaluation(self):
-        return 0
-        #TODO To be used before backpropagating
+    def board_evaluation(self, player):
+        my_total_char_value = sum(char.value for char in self.board_state if char.owner_uuid == player.uuid)
+        return (my_total_char_value/sum(char.value for char in self.board_state if char.owner_uuid != player.uuid))*my_total_char_value
 
 class MonteCarloSearch(object):
     EXPLORATION_CONSTANT = 1.5
     
     @staticmethod
-    def monte_carlo_tree_search(board_hash, root_node, all_cells, current_map, timeout=10): #10 seconds of computational power
+    def monte_carlo_tree_search(board_hash, root_node, all_cells, current_map, my_player, timeout=10): #10 seconds of computational power
         start = time.time()
         while (time.time-start) < timeout:
             leaf = MonteCarloSearch.traverse(root_node)   #leaf = unvisited node 
-            simulation_result = MonteCarloSearch.rollout(leaf)
+            simulation_result = MonteCarloSearch.rollout(leaf, all_cells, current_map, my_player)
             MonteCarloSearch.backpropagate(leaf, simulation_result)
-        return best_child(root)
+        return max((node for node in root_node.children), key=lambda node:node.total_n) #TODO check how to return the movement itself
 
     @staticmethod
     def traverse(node):
         leaf = None
         while not leaf:
-            node.expand()   #If its already expanded, it will not expand any further, so we can leave this line like this
             leaf = next((child for child in node.children if child.total_n == 0), None)   #Get the first child unexplored, or the best one
-            if not leaf:
-                node = max((child for child in node.children), key=lambda child:child.get_uct_value(exploration_const=EXPLORATION_CONSTANT)) #If not unexplored, gets the one with the best UCT value to expand
+            if not leaf: #If unexplored, gets the one with the best UCT value to expand it and get leafs in the next loop
+                node = max((child for child in node.children), key=lambda child:child.get_uct_value(exploration_const=MonteCarloSearch.EXPLORATION_CONSTANT))
+                node.expand()   #If its already expanded, it will not expand any further, so we can leave this line like this
         return leaf if leaf else node   #Check if endgame or what is this. TODO Check this line
 
     @staticmethod
@@ -217,76 +248,3 @@ class MonteCarloSearch(object):
             node.total_n += 1
             node.total_value += result
             node = node.parent
-
-    #FROM HERE ON ITS NOT USEFUL/USED EXCEPT FOR REFERENCE
-    
-    """def best_child(node):
-        pick child with highest number of visits
-
-        @staticmethod
-        def montecarlo_next_movement():
-            pass
-
-        def best_action(self, simulations_number):
-        for _ in range(0, simulations_number):            
-            v = self.tree_policy()
-            reward = v.rollout()
-            v.backpropagate(reward)
-        # exploitation only
-        return self.root.best_child(c_param = 0.)
-
-        def tree_policy(self):
-            current_node = self.root
-            while not current_node.is_terminal_node():
-                if not current_node.is_fully_expanded():
-                    return current_node.expand()
-                else:
-                    current_node = current_node.best_child()
-            return current_node
-
-class TwoPlayersGameMonteCarloTreeSearchNode(MonteCarloTreeSearchNode):
-
-    def __init__(self, state: TwoPlayersGameState, parent):
-        super(TwoPlayersGameMonteCarloTreeSearchNode, self).__init__(state, parent)
-        self._number_of_visits = 0.
-        self._results = defaultdict(int)
-
-    @property
-    def untried_actions(self):
-        if not hasattr(self, '_untried_actions'):
-            self._untried_actions = self.state.get_legal_actions()
-        return self._untried_actions
-
-    @property
-    def q(self):
-        wins = self._results[self.parent.state.next_to_move]
-        loses = self._results[-1 * self.parent.state.next_to_move]
-        return wins - loses
-
-    @property
-    def n(self):
-        return self._number_of_visits
-
-    def expand(self):
-        action = self.untried_actions.pop()
-        next_state = self.state.move(action)
-        child_node = TwoPlayersGameMonteCarloTreeSearchNode(next_state, parent = self)
-        self.children.append(child_node)
-        return child_node
-
-    def is_terminal_node(self):
-        return self.state.is_game_over()
-
-    def rollout(self):
-        current_rollout_state = self.state
-        while not current_rollout_state.is_game_over():
-            possible_moves = current_rollout_state.get_legal_actions()
-            action = self.rollout_policy(possible_moves)
-            current_rollout_state = current_rollout_state.move(action)
-        return current_rollout_state.game_result
-
-    def backpropagate(self, result):
-        self._number_of_visits += 1.
-        self._results[result] += 1.
-        if self.parent:
-            self.parent.backpropagate(result)"""

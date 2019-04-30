@@ -171,7 +171,7 @@ class Node(object):
             #SIMULATE MOVEMENT
             for source_index, destinies in ComputerPlayer.generate_movements(all_cells, current_map, my_player, False).items():
                 for dest_index in destinies:
-                    #TODO COPY STRUCTURES! cafeul, onlyshallow copy
+                    #TODO COPY STRUCTURES! careful, only shallow copy
                     #char_moving = all_cells[source_index]   #Starting to save variables to restore later
                     #char_ded = all_cells[dest_index] if dest_index in all_cells else None
                     #had_enemy = current_map[source_index].enemy

@@ -129,6 +129,9 @@ class Path(object):
     def accessible(self):
         return self.access
 
+    def copy(self):
+        return Path(self.pos, self.ally, self.enemy, self.access, self.index)
+
     def __lt__(self, path):
         return self.pos[0]<path.pos[0] if self.pos[0] != path.pos[0] else self.pos[1]<path.pos[1]
 

@@ -25,7 +25,7 @@ class INIT_PARAMS:
 
 class PARAMS:
     BOARD_ID = 'main_board'
-    IA_MODES = ('Totally random', 'Half random-fitness', 'Fitness best move', 'Alpha-beta', 'Keras deep NN') 
+    IA_MODES = ('Totally random', 'Half random-fitness', 'Fitness best move', 'Alpha-beta', 'Monte Carlo Search') 
     PLAYERS_AMMOUNT = (2, 4, 1) #1 is for testing
     IA_PLAYERS = (1, 2, 3) #1 is for testing
     ANIMATION_TIME = 25

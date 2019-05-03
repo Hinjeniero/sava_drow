@@ -224,7 +224,12 @@ class Game(object):
 
     def config_handler(self, command, value):
         characters = ('pawn', 'warrior', 'wizard', 'priestess', 'matron')
-        if 'game' in command or 'mode' in command:
+        if 'computer' in command:
+            if 'player' in command:
+                self.board_generator.computer_players = value
+            elif 'mode' in command:
+                self.board_generator.computer_players_mode = value.lower()
+        elif 'game' in command or 'mode' in command:
             self.board_generator.set_game_mode(value)
             if not 'custom' in value.lower() or 'free' in value.lower():
                 self.get_screen('params', 'menu', 'config').enable_sprites(False, 'set', 'board')
@@ -244,9 +249,7 @@ class Game(object):
             else:
                 self.board_generator.set_board_params(loading_screen=False)
         elif 'center' in command:
-            print("CENTER CELL")
             if 'on' in value.lower() or value == 1 or 'yes' in value.lower():
-                print("TRUE")
                 self.board_generator.set_board_params(center_cell=True)
             else:
                 self.board_generator.set_board_params(center_cell=False)
@@ -255,11 +258,6 @@ class Game(object):
                 self.board_generator.set_board_params(random_filling=True)
             else:
                 self.board_generator.set_board_params(random_filling=False)
-        elif 'computer' in command:
-            if 'player' in command:
-                self.board_generator.computer_players = value
-            elif 'mode' in command:
-                self.board_generator.computer_players_mode = value.lower()
 
     def board_handler(self, command, value=None):
         if 'turn' in command:

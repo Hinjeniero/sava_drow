@@ -1086,6 +1086,8 @@ class Board(Screen):
     def do_ai_player_turn(self):
         all_fitnesses = []
         all_cells = {}
+
+        #Getting fitnesses if needed. This method is redundant, have to check how to get the fitnesses in the ai player method
         for cell in self.cells:
             if cell.has_char():
                 start_index = cell.get_real_index()
@@ -1103,8 +1105,11 @@ class Board(Screen):
         #At this point, we already have the fitnesses of the entire board
         #Simulation of a player driven pick up
         #print("ALL DESTINATIONS ARE "+str(all_fitnesses))
-        movement = self.current_player.get_movement(all_fitnesses, self.current_map, all_cells)
+
+        movement = self.current_player.get_movement(all_fitnesses, self.current_map, self.cells, self.current_player.uuid, [player.uuid for player in self.players])
         print("MOVEMENT CHOSEN WAS "+str(movement))
+
+
         character = self.get_cell_by_real_index(movement[0]).get_char()
         self.drag_char.add(character)
         self.last_cell.add(self.get_cell_by_real_index(movement[0]))

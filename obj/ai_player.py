@@ -14,22 +14,25 @@ class ComputerPlayer(Player):
         self.graph = graph
         self.circum_size = level_size
 
-    def get_movement(self, fitnesses, current_map, all_cells, my_player, all_players, max_depth=5, max_nodes=100): #TODO FOR NOW USING -1 AS BOARD HASH, CHANGE THAT. SAME WITH STATE HASH
+    def get_movement(self, fitnesses, current_map, board_cells, my_player, all_players, max_depth=5, max_nodes=100): #TODO FOR NOW USING -1 AS BOARD HASH, CHANGE THAT. SAME WITH STATE HASH
         #Fitnesses list of tuples like so: ((start, destiny), fitness_eval_of_movm)
         if 'random' in self.ia_mode:
             if 'half' in self.ia_mode:
                 return self.generate_random_movement(fitnesses, somewhat_random=True)
             return self.generate_random_movement(fitnesses, totally_random=True)
-        elif 'fitness' in self.ia_mode:
+        if 'fitness' in self.ia_mode:
             return self.generate_random_movement(fitnesses)
-        elif 'alpha' in self.ia_mode:
+        #The other methods need the all_cells structure
+        all_cells = {cell.get_real_index(): cell.get_char() for cell in board_cells if cell.has_char()}   
+        if 'alpha' in self.ia_mode:
             if 'order' in self.ia_mode:
                 return self.generate_alpha_beta_ordered(fitnesses, max_depth, max_nodes, all_cells, current_map, my_player, all_players)    
             return self.generate_alpha_beta(max_depth, max_nodes, all_cells, current_map, my_player, all_players)
-        elif 'monte' in self.ia_mode:
+        if 'monte' in self.ia_mode:
             return MonteCarloSearch.monte_carlo_tree_search(self.graph, self.distances, self.circum_size, -1, all_cells, current_map, my_player, all_players)
             
     def generate_random_movement(self, fitnesses, totally_random=False, somewhat_random=False):
+        print("RANDOM METHOD")
         if totally_random:
             return random.choice(fitnesses)[0]
         fitnesses.sort(key=lambda tup: tup[1], reverse=True)
@@ -39,13 +42,13 @@ class ComputerPlayer(Player):
             only_best_movements = list(score[0] for score in fitnesses if score[1] == fitnesses[0][1])  #IF the score is the same as the best elements inn the ordered list
             return random.choice(only_best_movements)
 
+    #ALL PLAYERS IS NOTHING BUT  A LIST OF THE UUIDS OF ALL THE PLAYERS!!
     @time_it
     def generate_alpha_beta_ordered(self, fitnesses, max_depth, max_nodes, all_cells, current_map, my_player_uuid, all_players):   #TODO ADD ORDERING OF DESTINIES BY FITNESSES
         my_player_index = next((i for i in range(0, len(all_players)) if all_players[i] == my_player_uuid))
         all_paths = {}
         #cells_with_char IS DONE LIKE THIS: A DICT WITH ONLY THE CELLS WITH A CHAR IN IT!!{INDEX: CHAR}
-        cells_with_char = {cell.get_real_index(): cell.get_char() for cell in all_cells if cell.has_char()} #Creating the dict as written below
-        self.minimax(my_player_index, my_player_index, all_players, cells_with_char, current_map, all_paths, [], 0, max_depth, True, -math.inf, math.inf)
+        self.minimax(my_player_index, my_player_index, all_players, all_cells, current_map, all_paths, [], 0, max_depth, True, -math.inf, math.inf)
         rated_movements = [(dest[0], score) for dest, score in all_paths.items()]  #TODO MAKE THIS PROPERLY, dest[0] is most likely not the way to go, we have to create a movement (source, dest) or something here
         rated_movements.sort(key=lambda dest:dest[1], reversed=True)
         print("FINAL MOVEMENTS RATED BY ALPHA BETA "+str(rated_movements))
@@ -53,11 +56,11 @@ class ComputerPlayer(Player):
 
     @time_it
     def generate_alpha_beta(self, max_depth, max_nodes, all_cells, current_map, my_player_uuid, all_players):
+        print("BETA METHOD")
         my_player_index = next((i for i in range(0, len(all_players)) if all_players[i] == my_player_uuid))
         all_paths = {}
         #cells_with_char IS DONE LIKE THIS: A DICT WITH ONLY THE CELLS WITH A CHAR IN IT!!{INDEX: CHAR}
-        cells_with_char = {cell.get_real_index(): cell.get_char() for cell in all_cells if cell.has_char()} #Creating the dict as written below
-        self.minimax(my_player_index, my_player_index, all_players, cells_with_char, current_map, all_paths, [], 0, max_depth, True, -math.inf, math.inf)
+        self.minimax(my_player_index, my_player_index, all_players, all_cells, current_map, all_paths, [], 0, max_depth, True, -math.inf, math.inf)
         rated_movements = [(dest[0], score) for dest, score in all_paths.items()]  #TODO MAKE THIS PROPERLY, dest[0] is most likely not the way to go, we have to create a movement (source, dest) or something here
         rated_movements.sort(key=lambda dest:dest[1], reversed=True)
         print("FINAL MOVEMENTS RATED BY ALPHA BETA "+str(rated_movements))
@@ -66,20 +69,19 @@ class ComputerPlayer(Player):
     @staticmethod
     def generate_movements(path_graph, all_distances, circum_size, all_cells, current_map, current_player, my_turn=True):
         destinies = {}
-        for cell, char_inside_cell in all_cells.items():
+        for cell_index, char_inside_cell in all_cells.items():
             if char_inside_cell.owner_uuid == current_player and my_turn\
             or char_inside_cell.owner_uuid != current_player and not my_turn:
-                source = cell.get_real_index()
-                paths = char_inside_cell.get_paths(path_graph, all_distances, current_map, cell, circum_size)
-                destinies[source] = tuple(path[-1] for path in paths)
+                paths = char_inside_cell.get_paths(path_graph, all_distances, current_map, cell_index, circum_size)
+                destinies[cell_index] = tuple(path[-1] for path in paths)
         return destinies    #Return {char: (dest1,  dest2...), char2:...}
 
     def minimax(self, my_player_index, current_player_index, all_players, all_cells, current_map, all_paths, path, depth, max_depth, isMaximizingPlayer, alpha, beta):
         #map_situation is: {cellindex:char/False}
         if depth is max_depth:
-            value = sum(char.value for char in all_cells.values if char.owner_uuid == all_players[my_player_index])\
-                    -sum(char.value for char in all_cells.values if char.owner_uuid != all_players[my_player_index])   #My chars left minus his chars left
-            all_paths[path.copy()] = value  #This could also do it using only the first movm as key,since its the only one we are interested in.
+            value = sum(char.value for char in all_cells.values() if char.owner_uuid == all_players[my_player_index])\
+                    -sum(char.value for char in all_cells.values() if char.owner_uuid != all_players[my_player_index])   #My chars left minus his chars left
+            all_paths[tuple(path)] = value  #This could also do it using only the first movm as key,since its the only one we are interested in. THe rest are garbage, who did those mvnmsnts? no idea
             return value
 
         if isMaximizingPlayer:
@@ -115,6 +117,7 @@ class ComputerPlayer(Player):
                     bestVal = max(bestVal, value) 
                     alpha = max(alpha, bestVal)
                     if beta <= alpha:
+                        print("returning bestval maximax")
                         return bestVal
         else:
             bestVal = math.inf  
@@ -139,6 +142,7 @@ class ComputerPlayer(Player):
                     if current_player_index == my_player_index: #Checking this cuz it could have more than 2 players
                         isMaximizingPlayer = not isMaximizingPlayer
                     value = self.minimax(my_player_index, current_player_index, all_players, all_cells, current_map, all_paths, path, depth+1, max_depth, isMaximizingPlayer, alpha, beta)
+                    print("VALUE AFTER RETURNING "+str(value))
                     #UNDO SIMULATION
                     current_map[source_index].ally = True
                     current_map[dest_index].ally = False
@@ -152,7 +156,9 @@ class ComputerPlayer(Player):
                     bestVal = min(bestVal, value) 
                     beta = min(beta, bestVal)
                     if beta <= alpha:
+                        print("returning bestval minimaxc")
                         return bestVal
+        print("ARRIVED AT THE END") #TODO MUST WRITE ELSES IN THE COMPARISONS ABOVE
 
     @staticmethod
     def change_to_next_player(current_player_index, my_player_index, all_players, current_map):
@@ -195,7 +201,7 @@ class Node(object):
         self.board_hash = board_hash
         #Those 4 settings up there are inherited by the lower nodes
         self.state_hash = None
-        self.board_state = board_state                                                         #{cell_index: character}
+        self.board_state = board_state#{cell_index: character}
         self.map_state = map_state    #{cell_index: path object}
         self.children = []
         self.visited = False
@@ -204,23 +210,23 @@ class Node(object):
 
     def expand(self, all_cells, current_player):
         if not self.children:   #If it's empty, we expand it. (Add the result boards to the children)
-            for source_index, destinies in ComputerPlayer.generate_movements( self.paths_graph, self.distances, self.circum_size, all_cells, current_map, current_player).items():
+            for source_index, destinies in ComputerPlayer.generate_movements(self.paths_graph, self.distances, self.circum_size, all_cells, self.map_state, current_player).items():
                 for dest_index in destinies:
-                    all_cells = all_cells.copy()
+                    all_cells_node = all_cells.copy()
                     current_map = {cell_index: path_obj.copy() for cell_index, path_obj in self.map_state.items()}
                     #char_moving = all_cells[source_index]   #Starting to save variables to restore later
                     #char_ded = all_cells[dest_index] if dest_index in all_cells else None
                     #had_enemy = current_map[source_index].enemy
                     #Start simulating, all_cells
-                    del all_cells[source_index] 
-                    all_cells[dest_index] = all_cells[source_index]
+                    all_cells_node[dest_index] = all_cells[source_index]
+                    del all_cells_node[source_index]
                     #simulating in current_map
                     #had_enemy = current_map[source_index].enemy
                     current_map[source_index].ally = False
                     current_map[dest_index].ally = True
                     current_map[dest_index].enemy = False
                     #CREATES THE CHILDREN
-                    self.children.append(Node(self, self.paths_graph, self.distances, self.circum_size, -1, all_cells, current_map, (source_index, dest_index)))    #God knows how much this will occupy in memory...
+                    self.children.append(Node(self, self.paths_graph, self.distances, self.circum_size, -1, all_cells_node, current_map, (source_index, dest_index)))    #God knows how much this will occupy in memory...
                     #Return current map to the way it was
                     #current_map[source_index].ally = True
                     #current_map[dest_index].ally = False
@@ -234,7 +240,7 @@ class Node(object):
 
     def at_end_game(self):
         all_essential_pieces = []
-        for char in self.board_state:
+        for char in self.board_state.values():
             if char.essential:
                 all_essential_pieces.append(char)
         return False if any(char.owner_uuid != all_essential_pieces[0].owner_uuid for char in all_essential_pieces) else True
@@ -248,12 +254,14 @@ class MonteCarloSearch(object):
     EXPLORATION_CONSTANT = 1.5
     
     @staticmethod
-    def monte_carlo_tree_search(paths_graph, distances, circum_size, board_hash, all_cells, current_map, my_player, all_players, timeout=10): #10 seconds of computational power
+    def monte_carlo_tree_search(paths_graph, distances, circum_size, board_hash, all_cells, current_map, my_player, all_players, timeout=3): #10 seconds of computational power
+        print("MONTE CARLO METHOD")
         my_player_index = next((i for i in range(0, len(all_players)) if all_players[i] == my_player))
         current_player_index = my_player_index
         root_node = Node(None, paths_graph, distances, circum_size, -1, all_cells, current_map, (-1, -1))
+        root_node.expand(all_cells, all_players[current_player_index])
         start = time.time()
-        while (time.time-start) < timeout:
+        while (time.time()-start) < timeout:
             leaf = MonteCarloSearch.traverse(root_node, all_players[current_player_index])   #leaf = unvisited node 
             simulation_result = MonteCarloSearch.rollout(leaf)
             MonteCarloSearch.backpropagate(leaf, simulation_result)
@@ -282,7 +290,7 @@ class MonteCarloSearch(object):
     def rollout_policy(node, policy='random'):
         if 'rand' in policy:
             pass    #Gonna choose random anyway
-        return random.choice(node.children)
+        return random.choice(node.children) #TODO WE HAVE TO GET AT LEAST ONE MOVEMENT HERE
 
     @staticmethod
     def backpropagate(node, result):

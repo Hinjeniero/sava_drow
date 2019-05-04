@@ -263,7 +263,7 @@ class MonteCarloSearch(object):
         start = time.time()
         while (time.time()-start) < timeout:
             leaf = MonteCarloSearch.traverse(root_node, all_players[current_player_index])   #leaf = unvisited node 
-            simulation_result = MonteCarloSearch.rollout(leaf)
+            simulation_result = MonteCarloSearch.rollout(leaf, all_players[current_player_index])
             MonteCarloSearch.backpropagate(leaf, simulation_result)
             #CHECKS NEW TURN FOR THE NEW SIMULATION AND ROLLOUT
             current_player_index = current_player_index+1 if current_player_index < (len(all_players)-1) else 0
@@ -281,16 +281,27 @@ class MonteCarloSearch(object):
         return leaf if leaf else node   #Check if endgame or what is this. TODO Check this line
 
     @staticmethod
-    def rollout(node):
+    def rollout(node, current_player):
         while not node.at_end_game():
-            node = MonteCarloSearch.rollout_policy(node)
+            node = MonteCarloSearch.rollout_policy(node, current_player)
         return node.board_evaluation()
     
     @staticmethod
-    def rollout_policy(node, policy='random'):
+    def rollout_policy(node, player_uuid, policy='random'):
         if 'rand' in policy:
-            pass    #Gonna choose random anyway
-        return random.choice(node.children) #TODO WE HAVE TO GET AT LEAST ONE MOVEMENT HERE
+            source_index, moving_char = random.choice(tuple((index, char) for index, char in zip(node.board_state.items()) if char.owner_uuid == player_uuid))
+            destiny = random.choice(moving_char.get_paths(node.paths_graph, node.distances, node.map_state, source_index, node.circum_size))   #TODO get paths what type of structure returns?
+            all_cells_node = node.board_state.copy()
+            all_cells_node[destiny] = all_cells_node[source_index]
+            del all_cells_node[source_index]
+            #simulating in current_map
+            map_state = {cell_index: path_obj.copy() for cell_index, path_obj in node.map_state.items()}
+            map_state[source_index].ally = False
+            map_state[destiny].ally = True
+            map_state[destiny].enemy = False
+            child_node = Node(node, node.paths_graph, node.distances, node.circum_size, -1, all_cells_node, map_state, (source_index, destiny))
+        return child_node
+        #return random.choice(node.children) #TODO WE HAVE TO GET AT LEAST ONE MOVEMENT HERE
 
     @staticmethod
     def backpropagate(node, result):

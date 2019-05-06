@@ -44,27 +44,29 @@ class ComputerPlayer(Player):
 
     #ALL PLAYERS IS NOTHING BUT  A LIST OF THE UUIDS OF ALL THE PLAYERS!!
     @time_it
-    def generate_alpha_beta_ordered(self, fitnesses, max_depth, max_nodes, all_cells, current_map, my_player_uuid, all_players):   #TODO ADD ORDERING OF DESTINIES BY FITNESSES
+    def generate_alpha_beta_ordered(self, fitnesses, max_depth, max_nodes, all_cells, current_map, my_player_uuid, all_players, timeout=10):   #TODO ADD ORDERING OF DESTINIES BY FITNESSES
         my_player_index = next((i for i in range(0, len(all_players)) if all_players[i] == my_player_uuid))
         all_paths = {}
         #cells_with_char IS DONE LIKE THIS: A DICT WITH ONLY THE CELLS WITH A CHAR IN IT!!{INDEX: CHAR}
-        self.minimax(my_player_index, my_player_index, all_players, all_cells, current_map, all_paths, [], 0, max_depth, True, -math.inf, math.inf)
-        rated_movements = [(dest[0], score) for dest, score in all_paths.items()]  #TODO MAKE THIS PROPERLY, dest[0] is most likely not the way to go, we have to create a movement (source, dest) or something here
-        rated_movements.sort(key=lambda dest:dest[1], reversed=True)
+        self.minimax(my_player_index, my_player_index, all_players, all_cells, current_map, all_paths, [], 0, max_depth, True, -math.inf, math.inf, time.time(), timeout)
+        rated_movements = [((dest[0], dest[1]), score) for dest, score in all_paths.items()]
+        rated_movements.sort(key=lambda dest:dest[1], reverse=True)
         print("FINAL MOVEMENTS RATED BY ALPHA BETA "+str(rated_movements))
-        return rated_movements[0]
+        return rated_movements[0][0]    #Returning only the movement, we have no use for the score
 
     @time_it
-    def generate_alpha_beta(self, max_depth, max_nodes, all_cells, current_map, my_player_uuid, all_players):
+    def generate_alpha_beta(self, max_depth, max_nodes, all_cells, current_map, my_player_uuid, all_players, timeout=10):
         print("BETA METHOD")
         my_player_index = next((i for i in range(0, len(all_players)) if all_players[i] == my_player_uuid))
         all_paths = {}
         #cells_with_char IS DONE LIKE THIS: A DICT WITH ONLY THE CELLS WITH A CHAR IN IT!!{INDEX: CHAR}
-        self.minimax(my_player_index, my_player_index, all_players, all_cells, current_map, all_paths, [], 0, max_depth, True, -math.inf, math.inf)
-        rated_movements = [(dest[0], score) for dest, score in all_paths.items()]  #TODO MAKE THIS PROPERLY, dest[0] is most likely not the way to go, we have to create a movement (source, dest) or something here
-        rated_movements.sort(key=lambda dest:dest[1], reversed=True)
-        print("FINAL MOVEMENTS RATED BY ALPHA BETA "+str(rated_movements))
-        return rated_movements[0]
+        self.minimax(my_player_index, my_player_index, all_players, all_cells, current_map, all_paths, [], 0, max_depth, True, -math.inf, math.inf, time.time(), timeout)
+        print("The number of paths resolved is "+str(len(all_paths.keys())))
+        #print("FINAL MOVEMENTS PATHS "+str(all_paths))
+        rated_movements = [((dest[0], dest[1]), score) for dest, score in all_paths.items()]
+        rated_movements.sort(key=lambda dest:dest[1], reverse=True)
+        #print("FINAL MOVEMENTS RATED BY ALPHA BETA "+str(rated_movements))
+        return rated_movements[0][0]    #Returning only the movement, we have no use for the score
 
     @staticmethod
     def generate_movements(path_graph, all_distances, circum_size, all_cells, current_map, current_player, my_turn=True):
@@ -76,11 +78,12 @@ class ComputerPlayer(Player):
                 destinies[cell_index] = tuple(path[-1] for path in paths)
         return destinies    #Return {char: (dest1,  dest2...), char2:...}
 
-    def minimax(self, my_player_index, current_player_index, all_players, all_cells, current_map, all_paths, path, depth, max_depth, isMaximizingPlayer, alpha, beta):
+    def minimax(self, my_player_index, current_player_index, all_players, all_cells, current_map, all_paths, path, depth, max_depth, isMaximizingPlayer, alpha, beta, start_time, timeout):
         #map_situation is: {cellindex:char/False}
-        if depth is max_depth:
+        if depth is max_depth or (time.time()-start_time > timeout):
             value = sum(char.value for char in all_cells.values() if char.owner_uuid == all_players[my_player_index])\
-                    -sum(char.value for char in all_cells.values() if char.owner_uuid != all_players[my_player_index])   #My chars left minus his chars left
+                    /sum(char.value for char in all_cells.values() if char.owner_uuid != all_players[my_player_index])   #My chars left minus his chars left
+            #print("SOLUTION PATH IS "+str(path)+" with value "+str(value))
             all_paths[tuple(path)] = value  #This could also do it using only the first movm as key,since its the only one we are interested in. THe rest are garbage, who did those mvnmsnts? no idea
             return value
 
@@ -88,6 +91,8 @@ class ComputerPlayer(Player):
             bestVal = -math.inf 
             #generat4e-movemtns returns a dict weith the scheme: {cell_index_source: (all destinies)}
             for source_index, destinies in ComputerPlayer.generate_movements(self.graph, self.distances, self.circum_size, all_cells, current_map, all_players[current_player_index]).items():
+                if not path:    #First movement, this, we are interested in
+                    path.append(source_index)
                 for dest_index in destinies:
                     #SIMULATE MOVEMENT
                     char_moving = all_cells[source_index]   #Starting to save variables to restore later
@@ -104,7 +109,8 @@ class ComputerPlayer(Player):
                     #NEW CURRENT PLAYER
                     current_player_index = current_player_index+1 if current_player_index < (len(all_players)-1) else 0
                     ComputerPlayer.change_map(current_map, all_cells, all_players[current_player_index])
-                    value = self.minimax(my_player_index, current_player_index, all_players, all_cells, current_map, all_paths, path, depth+1, max_depth, False, alpha, beta)
+                    #RECURSIVE EXECUTION
+                    value = self.minimax(my_player_index, current_player_index, all_players, all_cells, current_map, all_paths, path, depth+1, max_depth, False, alpha, beta, start_time, timeout)
                     #UNDO SIMULATION
                     current_map[source_index].ally = True
                     current_map[dest_index].ally = False
@@ -115,15 +121,17 @@ class ComputerPlayer(Player):
                     del path[-1]
                     #end of restoration
                     bestVal = max(bestVal, value) 
-                    alpha = max(alpha, bestVal)
-                    if beta <= alpha:
-                        print("returning bestval maximax")
+                    alpha = max(alpha, value)
+                    if beta <= value:   #Pruning
                         return bestVal
-        else:
+                #print("·ppath "+str(path))
+                if len(path) is 1:
+                    del path[-1]
+            return bestVal
+        else:   #Minimizing player
             bestVal = math.inf  
             for source_index, destinies in ComputerPlayer.generate_movements(self.graph, self.distances, self.circum_size, all_cells, current_map, all_players[current_player_index], False).items():
                 for dest_index in destinies:
-                    #Inversion of current_map
                     #SIMULATE MOVEMENT
                     char_moving = all_cells[source_index]   #Starting to save variables to restore later
                     char_ded = all_cells[dest_index] if dest_index in all_cells else None
@@ -141,8 +149,7 @@ class ComputerPlayer(Player):
                     ComputerPlayer.change_map(current_map, all_cells, all_players[current_player_index])
                     if current_player_index == my_player_index: #Checking this cuz it could have more than 2 players
                         isMaximizingPlayer = not isMaximizingPlayer
-                    value = self.minimax(my_player_index, current_player_index, all_players, all_cells, current_map, all_paths, path, depth+1, max_depth, isMaximizingPlayer, alpha, beta)
-                    print("VALUE AFTER RETURNING "+str(value))
+                    value = self.minimax(my_player_index, current_player_index, all_players, all_cells, current_map, all_paths, path, depth+1, max_depth, isMaximizingPlayer, alpha, beta, start_time, timeout)
                     #UNDO SIMULATION
                     current_map[source_index].ally = True
                     current_map[dest_index].ally = False
@@ -152,13 +159,11 @@ class ComputerPlayer(Player):
                     else:               all_cells[dest_index] = char_ded
                     del path[-1]
                     #end of restoration
-                    #Re-Inversion of current_map
                     bestVal = min(bestVal, value) 
-                    beta = min(beta, bestVal)
-                    if beta <= alpha:
-                        print("returning bestval minimaxc")
+                    beta = min(beta, value)
+                    if beta <= alpha:   #Pruning
                         return bestVal
-        print("ARRIVED AT THE END") #TODO MUST WRITE ELSES IN THE COMPARISONS ABOVE
+            return bestVal
 
     @staticmethod
     def change_to_next_player(current_player_index, my_player_index, all_players, current_map):

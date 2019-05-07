@@ -14,7 +14,7 @@ class ComputerPlayer(Player):
         self.graph = graph
         self.circum_size = level_size
 
-    def get_movement(self, fitnesses, current_map, board_cells, my_player, all_players, max_depth=5, max_nodes=100): #TODO FOR NOW USING -1 AS BOARD HASH, CHANGE THAT. SAME WITH STATE HASH
+    def get_movement(self, fitnesses, current_map, board_cells, my_player, all_players, max_depth=4, max_nodes=100): #TODO FOR NOW USING -1 AS BOARD HASH, CHANGE THAT. SAME WITH STATE HASH
         #Fitnesses list of tuples like so: ((start, destiny), fitness_eval_of_movm)
         if 'random' in self.ia_mode:
             if 'half' in self.ia_mode:
@@ -48,7 +48,9 @@ class ComputerPlayer(Player):
         my_player_index = next((i for i in range(0, len(all_players)) if all_players[i] == my_player_uuid))
         all_paths = {}
         #cells_with_char IS DONE LIKE THIS: A DICT WITH ONLY THE CELLS WITH A CHAR IN IT!!{INDEX: CHAR}
-        self.minimax(my_player_index, my_player_index, all_players, all_cells, current_map, all_paths, [], 0, max_depth, True, -math.inf, math.inf, time.time(), timeout)
+        start = time.time()
+        self.minimax(my_player_index, my_player_index, all_players, all_cells, current_map, all_paths, [], 0, max_depth, True, -math.inf, math.inf, start, timeout)
+        print("The number of paths tested by alpha beta is "+str(len(all_paths.keys())), " with a max depth setting of "+str(max_depth)+", in a time of "+str(time.time()-start)+" seconds.")
         rated_movements = [((dest[0], dest[1]), score) for dest, score in all_paths.items()]
         rated_movements.sort(key=lambda dest:dest[1], reverse=True)
         print("FINAL MOVEMENTS RATED BY ALPHA BETA "+str(rated_movements))
@@ -60,12 +62,11 @@ class ComputerPlayer(Player):
         my_player_index = next((i for i in range(0, len(all_players)) if all_players[i] == my_player_uuid))
         all_paths = {}
         #cells_with_char IS DONE LIKE THIS: A DICT WITH ONLY THE CELLS WITH A CHAR IN IT!!{INDEX: CHAR}
-        self.minimax(my_player_index, my_player_index, all_players, all_cells, current_map, all_paths, [], 0, max_depth, True, -math.inf, math.inf, time.time(), timeout)
-        print("The number of paths resolved is "+str(len(all_paths.keys())))
-        #print("FINAL MOVEMENTS PATHS "+str(all_paths))
+        start = time.time()
+        self.minimax(my_player_index, my_player_index, all_players, all_cells, current_map, all_paths, [], 0, max_depth, True, -math.inf, math.inf, start, timeout)
+        print("The number of paths tested by alpha beta is "+str(len(all_paths.keys())), " with a max depth setting of "+str(max_depth)+", in a time of "+str(time.time()-start)+" seconds.")
         rated_movements = [((dest[0], dest[1]), score) for dest, score in all_paths.items()]
         rated_movements.sort(key=lambda dest:dest[1], reverse=True)
-        #print("FINAL MOVEMENTS RATED BY ALPHA BETA "+str(rated_movements))
         return rated_movements[0][0]    #Returning only the movement, we have no use for the score
 
     @staticmethod
@@ -214,6 +215,7 @@ class Node(object):
         self.total_value = 0
 
     def expand(self, all_cells, current_player):
+        #print("Expanding")
         if not self.children:   #If it's empty, we expand it. (Add the result boards to the children)
             for source_index, destinies in ComputerPlayer.generate_movements(self.paths_graph, self.distances, self.circum_size, all_cells, self.map_state, current_player).items():
                 for dest_index in destinies:
@@ -252,8 +254,12 @@ class Node(object):
         #If there are only essential pieces from a player left
 
     def board_evaluation(self, player):
-        my_total_char_value = sum(char.value for char in self.board_state if char.owner_uuid == player)
-        return (my_total_char_value/sum(char.value for char in self.board_state if char.owner_uuid != player))*my_total_char_value
+        my_total_char_value = sum(char.value for char in self.board_state.values() if char.owner_uuid == player)
+        try:
+            return (my_total_char_value/sum(char.value for char in self.board_state.values() if char.owner_uuid != player))*my_total_char_value
+        except ZeroDivisionError:   #Zero enemies left
+            print("cpupte")
+            return my_total_char_value*my_total_char_value
 
 class MonteCarloSearch(object):
     EXPLORATION_CONSTANT = 1.5
@@ -266,13 +272,19 @@ class MonteCarloSearch(object):
         root_node = Node(None, paths_graph, distances, circum_size, -1, all_cells, current_map, (-1, -1))
         root_node.expand(all_cells, all_players[current_player_index])
         start = time.time()
+        iters = 0
         while (time.time()-start) < timeout:
+            print("Start of ITERATION "+str(iters))
             leaf = MonteCarloSearch.traverse(root_node, all_players[current_player_index])   #leaf = unvisited node 
-            simulation_result = MonteCarloSearch.rollout(leaf, all_players[current_player_index])
+            #print("ROLLOUT")
+            simulation_result = MonteCarloSearch.rollout(leaf, all_players, my_player_index, current_player_index)
+            #print("BACKPROPHATAGE")
             MonteCarloSearch.backpropagate(leaf, simulation_result)
             #CHECKS NEW TURN FOR THE NEW SIMULATION AND ROLLOUT
             current_player_index = current_player_index+1 if current_player_index < (len(all_players)-1) else 0
             ComputerPlayer.change_map(current_map, all_cells, all_players[current_player_index])    #Change current map to be of the next player
+            print("End of ITERATION "+str(iters))
+            iters += 1
         return max((node for node in root_node.children), key=lambda node:node.total_n).previous_movement
 
     @staticmethod
@@ -286,27 +298,36 @@ class MonteCarloSearch(object):
         return leaf if leaf else node   #Check if endgame or what is this. TODO Check this line
 
     @staticmethod
-    def rollout(node, current_player):
+    def rollout(node, all_players, my_player_index, current_player_index):
+        current_player = current_player_index   #We copy this (basic type) so we don't modify it for the calling method
+        print("STARTED ROLLOUT")
         while not node.at_end_game():
-            node = MonteCarloSearch.rollout_policy(node, current_player)
-        return node.board_evaluation()
+            node = MonteCarloSearch.rollout_policy(node, all_players[current_player])
+            current_player = current_player+1 if current_player < (len(all_players)-1) else 0
+        print("REACHED END")
+        return node.board_evaluation(all_players[my_player_index])
     
     @staticmethod
     def rollout_policy(node, player_uuid, policy='random'):
         if 'rand' in policy:
-            source_index, moving_char = random.choice(tuple((index, char) for index, char in zip(node.board_state.items()) if char.owner_uuid == player_uuid))
-            destiny = random.choice(moving_char.get_paths(node.paths_graph, node.distances, node.map_state, source_index, node.circum_size))   #TODO get paths what type of structure returns?
+            #Creating shit
+            destinies = []
             all_cells_node = node.board_state.copy()
+            map_state = {cell_index: path_obj.copy() for cell_index, path_obj in node.map_state.items()}
+            ComputerPlayer.change_map(map_state, all_cells_node, player_uuid)    #Change current map to be of the current player
+            while not destinies:
+                source_index, moving_char = random.choice(tuple((index, char) for index, char in all_cells_node.items() if char.owner_uuid == player_uuid))
+                destinies = moving_char.get_paths(node.paths_graph, node.distances, map_state, source_index, node.circum_size)   #get_paths rreturns a list of tuples with the complete path in one movemetn.
+            destiny = random.choice(destinies)[-1]
+            print("Char "+moving_char.id+" with the movement "+str(source_index)+" -> "+str(destiny))
             all_cells_node[destiny] = all_cells_node[source_index]
             del all_cells_node[source_index]
             #simulating in current_map
-            map_state = {cell_index: path_obj.copy() for cell_index, path_obj in node.map_state.items()}
             map_state[source_index].ally = False
             map_state[destiny].ally = True
             map_state[destiny].enemy = False
             child_node = Node(node, node.paths_graph, node.distances, node.circum_size, -1, all_cells_node, map_state, (source_index, destiny))
         return child_node
-        #return random.choice(node.children) #TODO WE HAVE TO GET AT LEAST ONE MOVEMENT HERE
 
     @staticmethod
     def backpropagate(node, result):

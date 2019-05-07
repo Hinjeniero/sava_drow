@@ -311,6 +311,11 @@ class PathAppraiser(object):
 
     @staticmethod
     #@time_it
+    def rate_movement_lite(start_pos, possible_destinies, paths_graph, distances, current_map, all_cells, level_size):
+        """Returns a tuple with indexes of the destinies, and a fitness going from 0 to 1. Super light method for fast computing!"""
+
+    @staticmethod
+    #@time_it
     def rate_movement(start_pos, possible_destinies, paths_graph, distances, current_map, all_cells, level_size):
         """Returns a tuple with indexes of the destinies, and a fitness going from 0 to 1."""
         fitnesses = {}

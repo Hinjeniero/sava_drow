@@ -1118,6 +1118,7 @@ class Board(Screen):
         if self.show_promotion: #If the update table was triggered
             char_revived = random.choice(self.promotion_table.elements)
             self.swapper.send(char_revived)
+        self.drag_char.empty()
         #self.next_char_turn(character)
 
     def kill_character(self, cell, killer):

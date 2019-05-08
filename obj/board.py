@@ -148,6 +148,7 @@ class Board(Screen):
         self.characters     = pygame.sprite.OrderedUpdates()
         self.current_player = None  #Created in add_player
         self.scoreboard     = None  #Created in Board.generate
+        self.scoreboard_flag= False
         self.show_score     = False
         self.promotion_table= None  #Created in Board.generate
         self.gray_overlay   = None  #Created in Board.generate
@@ -510,18 +511,21 @@ class Board(Screen):
     ###UPDATING OF THE ELEMENTS MID-GAME
     @run_async_not_pooled
     def update_scoreboard(self):
-        if self.scoreboard.taken_spaces is 0:   #If the infoboard is empty (First time filling it up)
-            for key in self.players[0].get_stats().keys():
-                self.scoreboard.add_text_element(str(hash(key)), key, 1)
-        for player in self.players:
-            player_stats = player.get_stats()
-            for key, value in player_stats.items():
-                text_sprite = self.scoreboard.get_sprite(str(hash((player.uuid, key))))
-                if not text_sprite: #If this sprite wasnt created yet
-                    text_color = WHITE if not player.dead else DARKGRAY
-                    self.scoreboard.add_text_element(str(hash((player.uuid, key))), value, 1, color=text_color)
-                elif text_sprite.text != str(value):
-                    text_sprite.set_text(value)
+        if not self.scoreboard_flag:    #THis is to not overlap turns updates.
+            self.scoreboard_flag = True
+            if self.scoreboard.taken_spaces is 0:   #If the infoboard is empty (First time filling it up)
+                for key in self.players[0].get_stats().keys():
+                    self.scoreboard.add_text_element(str(hash(key)), key, 1)
+            for player in self.players:
+                player_stats = player.get_stats()
+                for key, value in player_stats.items():
+                    text_sprite = self.scoreboard.get_sprite(str(hash((player.uuid, key))))
+                    if not text_sprite: #If this sprite wasnt created yet
+                        text_color = WHITE if not player.dead else DARKGRAY
+                        self.scoreboard.add_text_element(str(hash((player.uuid, key))), value, 1, color=text_color)
+                    elif text_sprite.text != str(value):
+                        text_sprite.set_text(value)
+            self.scoreboard_flag = False
             LOG.log('info', 'The scoreboard has been successfully updated.')
 
     @run_async_not_pooled

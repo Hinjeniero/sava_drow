@@ -235,15 +235,15 @@ class Node(object):
         self.total_n = 0
         self.total_value = 0
 
-    def expand(self, all_cells, current_player):
+    def expand(self, current_player):
         #print("Expanding")
         if not self.children:   #If it's empty, we expand it. (Add the result boards to the children)
-            for source_index, destinies in ComputerPlayer.generate_movements(self.paths_graph, self.distances, self.circum_size, all_cells, self.map_state, current_player).items():
+            for source_index, destinies in ComputerPlayer.generate_movements(self.paths_graph, self.distances, self.circum_size, self.board_state, self.map_state, current_player).items():
                 for dest_index in destinies:
-                    all_cells_node = all_cells.copy()
+                    all_cells_node = self.board_state.copy()
                     current_map = {cell_index: path_obj.copy() for cell_index, path_obj in self.map_state.items()}
                     #Start simulating, all_cells
-                    all_cells_node[dest_index] = all_cells[source_index]
+                    all_cells_node[dest_index] = all_cells_node[source_index]
                     del all_cells_node[source_index]
                     #simulating in current_map
                     current_map[source_index].ally = False
@@ -276,34 +276,32 @@ class Node(object):
         my_total_char_value = sum(char.value for char in self.board_state.values() if char.owner_uuid == player)
         try:
             return (my_total_char_value/sum(char.value for char in self.board_state.values() if char.owner_uuid != player))*my_total_char_value
-        except ZeroDivisionError:   #Zero enemies left
-            print("cpupte")
-            return my_total_char_value*my_total_char_value
+        except ZeroDivisionError:   #No enemies left, so the sum would be zero
+             return my_total_char_value*my_total_char_value
 
 class MonteCarloSearch(object):
     EXPLORATION_CONSTANT = 1.5
     
     @staticmethod
-    def monte_carlo_tree_search(paths_graph, distances, circum_size, board_hash, all_cells, current_map, my_player, all_players, timeout=20): #10 seconds of computational power
+    def monte_carlo_tree_search(paths_graph, distances, circum_size, board_hash, all_cells, current_map, my_player, all_players, timeout=10): #10 seconds of computational power
         print("MONTE CARLO METHOD")
         my_player_index = next((i for i in range(0, len(all_players)) if all_players[i] == my_player))
         current_player_index = my_player_index
         root_node = Node(None, paths_graph, distances, circum_size, -1, all_cells, current_map, (-1, -1))
-        root_node.expand(all_cells, all_players[current_player_index])
+        root_node.expand(all_players[current_player_index])
         start = time.time()
         iters = 0
         while (time.time()-start) < timeout:
-            print("Start of ITERATION "+str(iters))
-            leaf = MonteCarloSearch.traverse(root_node, all_players[current_player_index])   #leaf = unvisited node 
-            #print("ROLLOUT")
-            simulation_result = MonteCarloSearch.rollout(leaf, all_players, my_player_index, current_player_index)
-            #print("BACKPROPHATAGE")
-            MonteCarloSearch.backpropagate(leaf, simulation_result)
+            #print("Start of ITERATION "+str(iters))
+            leaf = MonteCarloSearch.traverse(root_node, all_players[current_player_index])                          #leaf = unvisited node, EXPANSION
+            simulation_result = MonteCarloSearch.rollout(leaf, all_players, my_player_index, current_player_index)  #ROLLOUT
+            MonteCarloSearch.backpropagate(leaf, simulation_result)                                                 #BACKPROPAGATION
             #CHECKS NEW TURN FOR THE NEW SIMULATION AND ROLLOUT
             current_player_index = current_player_index+1 if current_player_index < (len(all_players)-1) else 0
             ComputerPlayer.change_map(current_map, all_cells, all_players[current_player_index])    #Change current map to be of the next player
-            print("End of ITERATION "+str(iters))
+            #print("End of ITERATION "+str(iters))
             iters += 1
+        print("MonteCarlo method completed "+str(iters)+" iterations of the complete algorithm in "+str(time.time()-start)+" seconds")
         return max((node for node in root_node.children), key=lambda node:node.total_n).previous_movement
 
     @staticmethod
@@ -313,17 +311,17 @@ class MonteCarloSearch(object):
             leaf = next((child for child in node.children if child.total_n == 0), None)   #Get the first child unexplored, or the best one
             if not leaf: #If unexplored, gets the one with the best UCT value to expand it and get leafs in the next loop
                 node = max((child for child in node.children), key=lambda child:child.get_uct_value(exploration_const=MonteCarloSearch.EXPLORATION_CONSTANT))
-                node.expand()   #If its already expanded, it will not expand any further, so we can leave this line like this
-        return leaf if leaf else node   #Check if endgame or what is this. TODO Check this line
+                node.expand(current_player)   #If its already expanded, it will not expand any further, so we can leave this line like this
+        return leaf
 
     @staticmethod
     def rollout(node, all_players, my_player_index, current_player_index):
         current_player = current_player_index   #We copy this (basic type) so we don't modify it for the calling method
-        print("STARTED ROLLOUT")
+        #print("STARTED ROLLOUT")
         while not node.at_end_game():
             node = MonteCarloSearch.rollout_policy(node, all_players[current_player])
             current_player = current_player+1 if current_player < (len(all_players)-1) else 0
-        print("REACHED END")
+        #print("REACHED END")
         return node.board_evaluation(all_players[my_player_index])
     
     @staticmethod
@@ -340,7 +338,7 @@ class MonteCarloSearch(object):
                 allies = tuple((index, char) for index, char in all_cells_node.items() if char.owner_uuid == player_uuid)
                 source_index, moving_char = random.choice(allies)
                 destinies = moving_char.get_paths(node.paths_graph, node.distances, map_state, source_index, node.circum_size)   #get_paths rreturns a list of tuples with the complete path in one movemetn.
-                if loops > 50: #Infinite loop
+                """if loops > 50: #Infinite loop
                     print("NOT DESTINIES IN THIS LOOP")
                     print("ALLIES ARE "+str(allies))
                     print("Tried to move "+moving_char.id+" from "+str(source_index))
@@ -349,7 +347,7 @@ class MonteCarloSearch(object):
                         print(path)
                     print("---------------------------")
                 if loops > 200:
-                    assert False
+                    assert False"""
             destiny = random.choice(destinies)[-1]
             #print("Char "+moving_char.id+" with the movement "+str(source_index)+" -> "+str(destiny))
             all_cells_node[destiny] = all_cells_node[source_index]
@@ -369,3 +367,5 @@ class MonteCarloSearch(object):
             node.total_n += 1
             node.total_value += result
             node = node.parent
+        node.total_n += 1   #Otherwise the top of the tree node doesn't get stats
+        node.total_value += result

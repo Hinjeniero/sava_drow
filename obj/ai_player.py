@@ -6,15 +6,25 @@ from obj.players import Player
 from obj.utilities.decorators import time_it
 
 class ComputerPlayer(Player):
-    def __init__(self, graph, distances, level_size, name, order, sprite_size, canvas_size, ia_mode='random', infoboard=None, obj_uuid=None, avatar=None, **character_params):
+    def __init__(self, graph, distances, level_size, name, order, sprite_size, canvas_size, ia_mode='random', infoboard=None, obj_uuid=None,\
+                avatar=None, max_depth=5, adaptative_max_depth=True,  **character_params):
         super().__init__(name, order, sprite_size, canvas_size, infoboard=infoboard, obj_uuid=obj_uuid, empty=False, avatar=avatar, **character_params)
         self.human = False
         self.ia_mode = ia_mode #alpha-beta-pruning | null-move | full blown IA with keras
         self.distances = distances 
         self.graph = graph
         self.circum_size = level_size
+        self.adaptative_max_depth = adaptative_max_depth
+        self.max_depth = max_depth
+        self.timeout_count = 0
 
-    def get_movement(self, fitnesses, current_map, board_cells, my_player, all_players, max_depth=4, max_nodes=100): #TODO FOR NOW USING -1 AS BOARD HASH, CHANGE THAT. SAME WITH STATE HASH
+    def increate_timeout_count(self):
+        self.timeout_count += 1
+        if self.adaptative_max_depth and self.timeout_count is 5:
+            self.timeout_count = 5
+            self.max_depth -= 1 if self.max_depth > 1 else 0   #Else we substract 0
+
+    def get_movement(self, fitnesses, current_map, board_cells, my_player, all_players, max_nodes=100): #TODO FOR NOW USING -1 AS BOARD HASH, CHANGE THAT. SAME WITH STATE HASH
         #Fitnesses list of tuples like so: ((start, destiny), fitness_eval_of_movm)
         if 'random' in self.ia_mode:
             if 'half' in self.ia_mode:
@@ -26,8 +36,8 @@ class ComputerPlayer(Player):
         all_cells = {cell.get_real_index(): cell.get_char() for cell in board_cells if cell.has_char()}   
         if 'alpha' in self.ia_mode:
             if 'order' in self.ia_mode:
-                return self.generate_alpha_beta_ordered(fitnesses, max_depth, max_nodes, all_cells, current_map, my_player, all_players)    
-            return self.generate_alpha_beta(max_depth, max_nodes, all_cells, current_map, my_player, all_players)
+                return self.generate_alpha_beta_ordered(fitnesses, max_nodes, all_cells, current_map, my_player, all_players)    
+            return self.generate_alpha_beta(max_nodes, all_cells, current_map, my_player, all_players)
         if 'monte' in self.ia_mode:
             return MonteCarloSearch.monte_carlo_tree_search(self.graph, self.distances, self.circum_size, -1, all_cells, current_map, my_player, all_players)
             
@@ -44,27 +54,29 @@ class ComputerPlayer(Player):
 
     #ALL PLAYERS IS NOTHING BUT  A LIST OF THE UUIDS OF ALL THE PLAYERS!!
     @time_it
-    def generate_alpha_beta_ordered(self, fitnesses, max_depth, max_nodes, all_cells, current_map, my_player_uuid, all_players, timeout=10):   #TODO ADD ORDERING OF DESTINIES BY FITNESSES
+    def generate_alpha_beta_ordered(self, fitnesses, max_nodes, all_cells, current_map, my_player_uuid, all_players, timeout=10):   #TODO ADD ORDERING OF DESTINIES BY FITNESSES
         my_player_index = next((i for i in range(0, len(all_players)) if all_players[i] == my_player_uuid))
         all_paths = {}
         #cells_with_char IS DONE LIKE THIS: A DICT WITH ONLY THE CELLS WITH A CHAR IN IT!!{INDEX: CHAR}
         start = time.time()
-        self.minimax(my_player_index, my_player_index, all_players, all_cells, current_map, all_paths, [], 0, max_depth, True, -math.inf, math.inf, start, timeout)
-        print("The number of paths tested by alpha beta is "+str(len(all_paths.keys())), " with a max depth setting of "+str(max_depth)+", in a time of "+str(time.time()-start)+" seconds.")
+        self.minimax(my_player_index, my_player_index, all_players, all_cells, current_map, all_paths, [], 0, True, -math.inf, math.inf, start, timeout)
+        print("The number of paths tested by alpha beta is "+str(len(all_paths.keys())), " with a max depth setting of "+str(self.max_depth)+", in a time of "+str(time.time()-start)+" seconds.")
         rated_movements = [((dest[0], dest[1]), score) for dest, score in all_paths.items()]
         rated_movements.sort(key=lambda dest:dest[1], reverse=True)
         print("FINAL MOVEMENTS RATED BY ALPHA BETA "+str(rated_movements))
         return rated_movements[0][0]    #Returning only the movement, we have no use for the score
 
     @time_it
-    def generate_alpha_beta(self, max_depth, max_nodes, all_cells, current_map, my_player_uuid, all_players, timeout=10):
+    def generate_alpha_beta(self, max_nodes, all_cells, current_map, my_player_uuid, all_players, timeout=10):
         print("BETA METHOD")
         my_player_index = next((i for i in range(0, len(all_players)) if all_players[i] == my_player_uuid))
         all_paths = {}
         #cells_with_char IS DONE LIKE THIS: A DICT WITH ONLY THE CELLS WITH A CHAR IN IT!!{INDEX: CHAR}
         start = time.time()
-        self.minimax(my_player_index, my_player_index, all_players, all_cells, current_map, all_paths, [], 0, max_depth, True, -math.inf, math.inf, start, timeout)
-        print("The number of paths tested by alpha beta is "+str(len(all_paths.keys())), " with a max depth setting of "+str(max_depth)+", in a time of "+str(time.time()-start)+" seconds.")
+        self.minimax(my_player_index, my_player_index, all_players, all_cells, current_map, all_paths, [], 0, True, -math.inf, math.inf, start, timeout)
+        if time.time()-start > timeout: #If we reached the timeout...
+            self.increate_timeout_count()
+        print("The number of paths tested by alpha beta is "+str(len(all_paths.keys())), " with a max depth setting of "+str(self.max_depth)+", in a time of "+str(time.time()-start)+" seconds.")
         rated_movements = [((dest[0], dest[1]), score) for dest, score in all_paths.items()]
         rated_movements.sort(key=lambda dest:dest[1], reverse=True)
         return rated_movements[0][0]    #Returning only the movement, we have no use for the score
@@ -79,9 +91,9 @@ class ComputerPlayer(Player):
                 destinies[cell_index] = tuple(path[-1] for path in paths)
         return destinies    #Return {char: (dest1,  dest2...), char2:...}
 
-    def minimax(self, my_player_index, current_player_index, all_players, all_cells, current_map, all_paths, path, depth, max_depth, isMaximizingPlayer, alpha, beta, start_time, timeout):
+    def minimax(self, my_player_index, current_player_index, all_players, all_cells, current_map, all_paths, path, depth, isMaximizingPlayer, alpha, beta, start_time, timeout):
         #map_situation is: {cellindex:char/False}
-        if depth is max_depth or (time.time()-start_time > timeout):
+        if depth is self.max_depth or (time.time()-start_time > timeout):
             value = sum(char.value for char in all_cells.values() if char.owner_uuid == all_players[my_player_index])\
                     /sum(char.value for char in all_cells.values() if char.owner_uuid != all_players[my_player_index])   #My chars left minus his chars left
             #print("SOLUTION PATH IS "+str(path)+" with value "+str(value))
@@ -113,7 +125,7 @@ class ComputerPlayer(Player):
                     current_player_index = current_player_index+1 if current_player_index < (len(all_players)-1) else 0
                     ComputerPlayer.change_map(current_map, all_cells, all_players[current_player_index])
                     #RECURSIVE EXECUTION
-                    value = self.minimax(my_player_index, current_player_index, all_players, all_cells, current_map, all_paths, path, depth+1, max_depth, False, alpha, beta, start_time, timeout)
+                    value = self.minimax(my_player_index, current_player_index, all_players, all_cells, current_map, all_paths, path, depth+1, False, alpha, beta, start_time, timeout)
                     #UNDO SIMULATION
                     current_map[source_index].ally = True
                     current_map[source_index].access = False
@@ -156,7 +168,7 @@ class ComputerPlayer(Player):
                     ComputerPlayer.change_map(current_map, all_cells, all_players[current_player_index])
                     if current_player_index == my_player_index: #Checking this cuz it could have more than 2 players
                         isMaximizingPlayer = not isMaximizingPlayer
-                    value = self.minimax(my_player_index, current_player_index, all_players, all_cells, current_map, all_paths, path, depth+1, max_depth, isMaximizingPlayer, alpha, beta, start_time, timeout)
+                    value = self.minimax(my_player_index, current_player_index, all_players, all_cells, current_map, all_paths, path, depth+1, isMaximizingPlayer, alpha, beta, start_time, timeout)
                     #UNDO SIMULATION
                     current_map[source_index].ally = True
                     current_map[source_index].access = False

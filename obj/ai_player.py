@@ -101,8 +101,10 @@ class ComputerPlayer(Player):
                     had_enemy = current_map[source_index].enemy
                     #Start simulating
                     current_map[source_index].ally = False
+                    current_map[source_index].access = True
                     current_map[dest_index].ally = True
                     current_map[dest_index].enemy = False   #Simulation in current_map correct
+                    current_map[source_index].access = False
                     del all_cells[source_index]
                     all_cells[dest_index] = char_moving     #Simulation in all_cells correct
                     path.append(dest_index)
@@ -114,8 +116,10 @@ class ComputerPlayer(Player):
                     value = self.minimax(my_player_index, current_player_index, all_players, all_cells, current_map, all_paths, path, depth+1, max_depth, False, alpha, beta, start_time, timeout)
                     #UNDO SIMULATION
                     current_map[source_index].ally = True
+                    current_map[source_index].access = False
                     current_map[dest_index].ally = False
                     current_map[dest_index].enemy = had_enemy               #Restoration in current_map correct
+                    current_map[dest_index].update_accessibility(char_moving)
                     all_cells[source_index] = char_moving                   #Restoration in all_cells correct
                     if not char_ded:    del all_cells[dest_index]           #If the cell we moved to didn't had an enemy
                     else:               all_cells[dest_index] = char_ded
@@ -139,8 +143,10 @@ class ComputerPlayer(Player):
                     had_enemy = current_map[source_index].enemy
                     #Start simulating
                     current_map[source_index].ally = False
+                    current_map[source_index].access = True
                     current_map[dest_index].ally = True
                     current_map[dest_index].enemy = False   #Simulation in current_map correct
+                    current_map[source_index].access = False
                     del all_cells[source_index]
                     all_cells[dest_index] = char_moving     #Simulation in all_cells correct
                     path.append(dest_index)
@@ -153,8 +159,10 @@ class ComputerPlayer(Player):
                     value = self.minimax(my_player_index, current_player_index, all_players, all_cells, current_map, all_paths, path, depth+1, max_depth, isMaximizingPlayer, alpha, beta, start_time, timeout)
                     #UNDO SIMULATION
                     current_map[source_index].ally = True
+                    current_map[source_index].access = False
                     current_map[dest_index].ally = False
                     current_map[dest_index].enemy = had_enemy               #Restoration in current_map correct
+                    current_map[dest_index].update_accessibility(char_moving)
                     all_cells[source_index] = char_moving                   #Restoration in all_cells correct
                     if not char_ded:    del all_cells[dest_index]           #If the cell we moved to didn't had an enemy
                     else:               all_cells[dest_index] = char_ded
@@ -194,6 +202,7 @@ class ComputerPlayer(Player):
             else:
                 current_map[cell_index].ally = False
                 current_map[cell_index].enemy = True
+            current_map[cell_index].update_accessibility(char)
 
 #Monte carlo tree search from here on
 class Node(object):
@@ -221,29 +230,27 @@ class Node(object):
                 for dest_index in destinies:
                     all_cells_node = all_cells.copy()
                     current_map = {cell_index: path_obj.copy() for cell_index, path_obj in self.map_state.items()}
-                    #char_moving = all_cells[source_index]   #Starting to save variables to restore later
-                    #char_ded = all_cells[dest_index] if dest_index in all_cells else None
-                    #had_enemy = current_map[source_index].enemy
                     #Start simulating, all_cells
                     all_cells_node[dest_index] = all_cells[source_index]
                     del all_cells_node[source_index]
                     #simulating in current_map
-                    #had_enemy = current_map[source_index].enemy
                     current_map[source_index].ally = False
+                    current_map[source_index].access = True
                     current_map[dest_index].ally = True
                     current_map[dest_index].enemy = False
+                    current_map[dest_index].access = False  
                     #CREATES THE CHILDREN
                     self.children.append(Node(self, self.paths_graph, self.distances, self.circum_size, -1, all_cells_node, current_map, (source_index, dest_index)))    #God knows how much this will occupy in memory...
-                    #Return current map to the way it was
-                    #current_map[source_index].ally = True
-                    #current_map[dest_index].ally = False
-                    #current_map[dest_index].enemy = had_enemy               #Restoration in current_map correct
-            self.map_state = None   #Hace no more need for this data.
+            self.map_state = None   #Have no more need for this data after expanding and getting all the possible movements from this board.
     
     def get_uct_value(self, exploration_const=1):
         if self.total_n == 0: 
             return math.inf
-        return (self.total_value/self.total_n)+(exploration_const*(math.sqrt(math.log(self.parent.total_n)/self.total_n))) #Upper Confidence bound applied to trees
+        try:
+            return (self.total_value/self.total_n)+(exploration_const*(math.sqrt(math.log(self.parent.total_n)/self.total_n))) #Upper Confidence bound applied to trees
+        except ValueError:
+            print("parnttotaln is "+str(self.parent.total_n))
+            raise ValueError("DICK")
 
     def at_end_game(self):
         all_essential_pieces = []
@@ -265,7 +272,7 @@ class MonteCarloSearch(object):
     EXPLORATION_CONSTANT = 1.5
     
     @staticmethod
-    def monte_carlo_tree_search(paths_graph, distances, circum_size, board_hash, all_cells, current_map, my_player, all_players, timeout=3): #10 seconds of computational power
+    def monte_carlo_tree_search(paths_graph, distances, circum_size, board_hash, all_cells, current_map, my_player, all_players, timeout=20): #10 seconds of computational power
         print("MONTE CARLO METHOD")
         my_player_index = next((i for i in range(0, len(all_players)) if all_players[i] == my_player))
         current_player_index = my_player_index
@@ -308,24 +315,39 @@ class MonteCarloSearch(object):
         return node.board_evaluation(all_players[my_player_index])
     
     @staticmethod
-    def rollout_policy(node, player_uuid, policy='random'):
+    def rollout_policy(node, player_uuid, policy='random'): #TODO THIS RANDOM SHOULD DESTROY MOVEMENTS ALREADSY DONE
         if 'rand' in policy:
             #Creating shit
             destinies = []
             all_cells_node = node.board_state.copy()
             map_state = {cell_index: path_obj.copy() for cell_index, path_obj in node.map_state.items()}
             ComputerPlayer.change_map(map_state, all_cells_node, player_uuid)    #Change current map to be of the current player
+            loops = 0
             while not destinies:
-                source_index, moving_char = random.choice(tuple((index, char) for index, char in all_cells_node.items() if char.owner_uuid == player_uuid))
+                loops += 1
+                allies = tuple((index, char) for index, char in all_cells_node.items() if char.owner_uuid == player_uuid)
+                source_index, moving_char = random.choice(allies)
                 destinies = moving_char.get_paths(node.paths_graph, node.distances, map_state, source_index, node.circum_size)   #get_paths rreturns a list of tuples with the complete path in one movemetn.
+                if loops > 50: #Infinite loop
+                    print("NOT DESTINIES IN THIS LOOP")
+                    print("ALLIES ARE "+str(allies))
+                    print("Tried to move "+moving_char.id+" from "+str(source_index))
+                    print(all_cells_node)
+                    for index, path in map_state.items():
+                        print(path)
+                    print("---------------------------")
+                if loops > 200:
+                    assert False
             destiny = random.choice(destinies)[-1]
-            print("Char "+moving_char.id+" with the movement "+str(source_index)+" -> "+str(destiny))
+            #print("Char "+moving_char.id+" with the movement "+str(source_index)+" -> "+str(destiny))
             all_cells_node[destiny] = all_cells_node[source_index]
             del all_cells_node[source_index]
             #simulating in current_map
             map_state[source_index].ally = False
+            map_state[source_index].access = True   #No one left in here, so you can do it
             map_state[destiny].ally = True
             map_state[destiny].enemy = False
+            map_state[destiny].access = False       #An ally here
             child_node = Node(node, node.paths_graph, node.distances, node.circum_size, -1, all_cells_node, map_state, (source_index, destiny))
         return child_node
 

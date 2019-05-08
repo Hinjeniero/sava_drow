@@ -116,6 +116,12 @@ class Path(object):
             (int): Index of the corresponding Cell."""
         return self.pos[1]
 
+    def update_accessibility(self, current_char_in_here):
+        if self.ally or (self.enemy and not current_char_in_here.can_die):
+            self.access = False
+        else:
+            self.access = True
+
     def has_enemy(self):
         """Returns:
             (boolean): True if enemies are here."""
@@ -131,6 +137,9 @@ class Path(object):
 
     def copy(self):
         return Path(self.pos, self.ally, self.enemy, self.access, self.index)
+
+    def __str__(self):
+        return "Cell generated Path "+str(self.index)+", with ally "+str(self.ally)+" and enemy "+str(self.enemy)+", access is "+str(self.access)
 
     def __lt__(self, path):
         return self.pos[0]<path.pos[0] if self.pos[0] != path.pos[0] else self.pos[1]<path.pos[1]

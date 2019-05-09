@@ -320,43 +320,59 @@ class PathAppraiser(object):
 
     @staticmethod
     #@time_it
-    def rate_movement_lite(start_pos, possible_destinies, paths_graph, distances, current_map, all_cells, level_size):
-        """Returns a tuple with indexes of the destinies, and a fitness going from 0 to 1. Super light method for fast computing!"""
-
-    @staticmethod
-    #@time_it
-    def rate_movement(start_pos, possible_destinies, paths_graph, distances, current_map, all_cells, level_size):
-        """Returns a tuple with indexes of the destinies, and a fitness going from 0 to 1."""
+    def rate_movements_lite(start_pos, possible_destinies, paths_graph, distances, current_map, all_cells, level_size):
         fitnesses = {}
         character = next(cell.get_char() for cell in all_cells if cell.get_real_index() == start_pos)
         #TODO Create the algorithm itself, since the helpiung values have been written already
         danger_multiplier = PathAppraiser.get_danger_multiplier(character, all_cells)
-        start_danger = PathAppraiser.get_danger_in_position(start_pos, character.owner_uuid, paths_graph, distances, all_cells, level_size)*danger_multiplier
+        start_danger = PathAppraiser.get_danger_in_position_lite(start_pos, character.owner_uuid, paths_graph, all_cells)*danger_multiplier
         bait_ratios = {}
         destinies_danger = {}
         kill_values = {}
         for index in possible_destinies:
             destiny_cell = next(cell for cell in all_cells if index == cell.get_real_index())
             kill_values[index] = PathAppraiser.get_kill_value(destiny_cell, character)
-            destinies_danger[index] = PathAppraiser.get_danger_in_position(index, character.owner_uuid, paths_graph, distances, all_cells, level_size)
-            destinies_danger[index] *= danger_multiplier# if kill_values[index] != 0 else (danger_multiplier*2)
+        """Returns a tuple with indexes of the destinies, and a fitness going from 0 to 1. Super light method for fast computing!"""
 
-            current_map[start_pos].ally = False #This to get proper paths to this method to get a useful bait result
+    @staticmethod
+    #@time_it
+    def rate_movements(start_pos, possible_destinies, paths_graph, distances, current_map, all_board_cells, level_size):
+        """Returns a tuple with indexes of the destinies, and a fitness going from 0 to 1."""
+        fitnesses = {}
+        character = next(cell.get_char() for cell in all_board_cells if cell.get_real_index() == start_pos)
+        all_cells = {cell.get_real_index(): cell.get_char() for cell in all_board_cells if cell.has_char()}   
+        #Algorihtm starts
+        danger_multiplier = PathAppraiser.get_danger_multiplier(character, all_cells)
+        start_danger = PathAppraiser.get_danger_in_position(start_pos, character.owner_uuid, paths_graph, distances, current_map, all_cells, level_size)*danger_multiplier
+        bait_ratios = {}
+        destinies_danger = {}
+        kill_values = {}
+        for index in possible_destinies:
+            destiny_char = all_cells[index] if index in all_cells else None
+            kill_values[index] = PathAppraiser.get_kill_value(destiny_char, character) if destiny_char else 0
+            destinies_danger[index] = PathAppraiser.get_danger_in_position(index, character.owner_uuid, paths_graph, distances, current_map, all_cells, level_size)
+            destinies_danger[index] *= danger_multiplier    # if kill_values[index] != 0 else (danger_multiplier*2)
+            current_map[start_pos].ally = False             #This to get proper paths to this method to get a useful bait result
             bait_ratios[index] = PathAppraiser.get_bait_value(character, index, paths_graph, distances, current_map, all_cells, level_size)
             current_map[start_pos].ally = True
-            '''LOG.log('info', '---------------INDEX CELL RESULTS ', index, '-------------')
-            LOG.log('info', 'Danger multiplier ', danger_multiplier)
-            LOG.log('info', 'Start pos danger ', start_danger," vs destiny danger: ", destinies_danger[index])
-            LOG.log('info', 'Bait value ', bait_ratios[index])
-            LOG.log('info', 'Kill value ', kill_values[index])
-            LOG.log('info', 'Start pos danger ', start_danger," vs destiny danger: ", destinies_danger[index])
-            LOG.log('info', "IN TANH VALUES: bait ", math.tanh(bait_ratios[index]), ", danger difference: ", math.tanh(destinies_danger[index]/start_danger), ", kill: ", math.tanh(kill_values[index]))
-            print("----------------------------------")'''
-            fitness = 0.6*(math.tanh(kill_values[index]))+0.6*(math.tanh(destinies_danger[index]/start_danger))+0.2*(math.tanh(bait_ratios[index]))
+            fitness = PathAppraiser.calculate_fitness(index, danger_multiplier, start_danger, destinies_danger[index], bait_ratios[index], kill_values[index], print_complete=False)
             #print("fitness for "+str(index)+" is "+str(fitness))
             fitnesses[index] = min(fitness, 1)
             fitnesses[index] = max(fitness, 0)
         return fitnesses
+
+    @staticmethod
+    def calculate_fitness(cell_index, danger_multiplier, start_danger, destiny_danger, bait_score, kill_score, print_complete=False):
+        if print_complete:
+            LOG.log('info', '---------------INDEX CELL RESULTS ', cell_index, '-------------')
+            LOG.log('info', 'Danger multiplier ', danger_multiplier)
+            LOG.log('info', 'Start pos danger ', start_danger," vs destiny danger: ", destiny_danger)
+            LOG.log('info', 'Bait value ', bait_score)
+            LOG.log('info', 'Kill value ', kill_score)
+            LOG.log('info', 'Start pos danger ', start_danger," vs destiny danger: ", destiny_danger)
+            LOG.log('info', "IN TANH VALUES: bait ", math.tanh(bait_score), ", danger difference: ", math.tanh(destiny_danger/start_danger), ", kill: ", math.tanh(kill_score))
+            LOG.log('info', "---------------------------------------------------")
+        return 0.6*(math.tanh(kill_score))+0.6*(math.tanh(destiny_danger/start_danger))+0.2*(math.tanh(bait_score))
 
     @staticmethod
     def invert_map(self, current_map):
@@ -369,17 +385,24 @@ class PathAppraiser(object):
                 path_obj.ally = True
 
     @staticmethod
-    def generate_current_map(all_cells, player):
+    def generate_player_map(current_map, all_cells, player):
         """This code is redundant, but oh well"""
         map_for_player = {}
-        for cell in all_cells:
-            map_for_player[cell.get_real_index()]=cell.to_path(player)
+        for index in current_map.keys():
+            if index in all_cells:
+                char = all_cells[index]
+                map_for_player[index]=current_map[index].copy()
+                current_map[index].ally = True if char.uuid == player else False
+                current_map[index].enemy = True if char.uuid != player else False
+                current_map[index].update_accessibility(char)
+                continue
+            map_for_player[index]=current_map[index].copy() #Outside the if, means there are no chars in the cell with this index
         return map_for_player 
 
     @staticmethod
-    def get_kill_value(destination, my_char):
-        if destination.has_char() and (destination.has_char().owner_uuid != my_char.owner_uuid):
-            return 1*math.sqrt(destination.has_char().value/my_char.value)
+    def get_kill_value(destiny_char, my_char):
+        if (destiny_char.owner_uuid != my_char.owner_uuid):
+            return 1*math.sqrt(destiny_char.value/my_char.value)
         return 0 
 
     @staticmethod
@@ -388,45 +411,59 @@ class PathAppraiser(object):
         my_type_of_char = 0
         essential_pieces = 0 
         all_value = 0
-        for cell in all_cells:
-            if cell.has_char() and cell.has_char().owner_uuid == my_char.owner_uuid:
-                my_type_of_char += 1 if my_char.get_type() == cell.has_char().get_type() else 0
-                essential_pieces += 1 if cell.has_char().essential else 0
-                all_value += cell.has_char().value
+        for char in all_cells.values():
+            if char.owner_uuid == my_char.owner_uuid:
+                my_type_of_char += 1 if my_char.get_type() == char.get_type() else 0
+                essential_pieces += 1 if char.essential else 0
+                all_value += char.value
         ratio *= (my_char.value/my_type_of_char) * (my_char.value/all_value) * (1 if not my_char.essential else my_char.value/essential_pieces if essential_pieces>1 else 999)
         return ratio
 
     @staticmethod
-    def get_danger_in_position(cell_index, player, graph, distances, all_cells, level_size):
+    def get_danger_in_position(cell_index, player, graph, distances, current_map, all_cells, level_size):
         """From 0 to 1. 0 worst case, 1 no danger whatsoever"""
         danger_value = 1
         enemies_ready = 0
-        for cell in all_cells:
-            if cell.get_char() and cell.get_char().owner_uuid != player:
-                enemy_map = PathAppraiser.generate_current_map(all_cells, cell.get_char().owner_uuid)
-                enemy_destinies = tuple(path[-1] for path in cell.get_char().get_paths(graph, distances, enemy_map, cell.get_real_index(), level_size))
+        for index, char in all_cells.items():
+            if char.owner_uuid != player:
+                enemy_map = PathAppraiser.generate_player_map(current_map, all_cells, char.owner_uuid)
+                enemy_destinies = tuple(path[-1] for path in char.get_paths(graph, distances, enemy_map, index, level_size))
                 if cell_index in enemy_destinies:   #If there is another char of another player that can move here
                     enemies_ready += 1
         return danger_value/(enemies_ready+1)
 
     @staticmethod
-    def get_bait_value(my_char, destination, graph, distances, current_map, all_cells, level_size): #TODO CHECK THIS; NOT WORKIKNG PROPERLY. GOOD WAY TO CHECK THIS IS WITH THYE 2 WIZARDS IN THE CENTER
+    def get_danger_in_position_lite(cell_index, player, graph, current_map, all_cells, level_size): #TODO THIS NOW
+        """From 0 to 1. 0 worst case, 1 no danger whatsoever"""
+        danger_value = 1
+        enemies_ready = 0
+        start_of_my_circumference = (cell_index//level_size)*level_size
+        for i in range (cell_index, start_of_my_circumference+level_size):
+            if cell.get_char() and cell.get_char().owner_uuid != player:
+                print("Dick")
+        for index, char in all_cells.items():
+            if char.owner_uuid != player:
+                if cell_index in enemy_destinies:   #If there is another char of another player that can move here
+                    enemies_ready += 1
+        return danger_value/(enemies_ready+1)
+
+    @staticmethod
+    def get_bait_value(my_char, destination, graph, distances, current_map, all_cells, level_size):
         bait_value = 1
         vengeful_allies = 0
         baited_enemy_values = []
         has_enemy = current_map[destination].enemy  #So the paths of the allies are correct, as if its an enemy here after killing our bait char.
         current_map[destination].enemy = True       #So the paths of the allies are correct, as if its an enemy here after killing our bait char.
-        for cell in all_cells:
-            if cell.get_char():
-                if cell.get_char().owner_uuid == my_char.owner_uuid:
-                    ally_destinies = tuple(path[-1] for path in cell.get_char().get_paths(graph, distances, current_map, cell.get_real_index(), level_size))
-                    if destination in ally_destinies:
-                        vengeful_allies += 1
-                else:
-                    enemy_map = PathAppraiser.generate_current_map(all_cells, cell.get_char().owner_uuid)
-                    enemy_destinies = tuple(path[-1] for path in cell.get_char().get_paths(graph, distances, enemy_map, cell.get_real_index(), level_size))
-                    if destination in enemy_destinies:
-                        baited_enemy_values.append(cell.get_char().value)
+        for index, char in all_cells.items():
+            if char.owner_uuid == my_char.owner_uuid:
+                ally_destinies = tuple(path[-1] for path in char.get_paths(graph, distances, current_map, index, level_size))
+                if destination in ally_destinies:
+                    vengeful_allies += 1
+            else:
+                enemy_map = enemy_map = PathAppraiser.generate_player_map(current_map, all_cells, char.owner_uuid)
+                enemy_destinies = tuple(path[-1] for path in char.get_paths(graph, distances, enemy_map, index, level_size))
+                if destination in enemy_destinies:
+                    baited_enemy_values.append(char.value)
         current_map[destination].enemy = has_enemy #Restoring the map of paths object
         if vengeful_allies == 0 or len(baited_enemy_values) == 0 or my_char.essential:
             return 0

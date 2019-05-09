@@ -325,7 +325,7 @@ class MonteCarloSearch(object):
         return node.board_evaluation(all_players[my_player_index])
     
     @staticmethod
-    def rollout_policy(node, player_uuid, policy='random'): #TODO THIS RANDOM SHOULD DESTROY MOVEMENTS ALREADSY DONE
+    def rollout_policy(node, player_uuid, policy='random'): #TODO THIS RANDOM SHOULD DESTROY MOVEMENTS ALREADY DONE
         if 'rand' in policy:
             #Creating shit
             destinies = []

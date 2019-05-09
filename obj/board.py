@@ -944,7 +944,7 @@ class Board(Screen):
         try: 
             self.fitnesses[source_cell]
         except KeyError:
-            self.fitnesses[source_cell] = PathAppraiser.rate_movement(self.active_cell.sprite.get_real_index(), tuple(x[-1] for x in destinations), self.enabled_paths,\
+            self.fitnesses[source_cell] = PathAppraiser.rate_movements(self.active_cell.sprite.get_real_index(), tuple(x[-1] for x in destinations), self.enabled_paths,\
                                                                     self.distances, self.current_map, self.cells.sprites(), self.params['circles_per_lvl'])
         for fitness_key, fitness_value in self.fitnesses[source_cell].items():
             if self.drag_char.sprite:   #If we didnt drop the char before the fitnesses were assigned

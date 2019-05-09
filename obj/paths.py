@@ -14,6 +14,7 @@ __author__ = 'David Flaity Pardo'
 import os
 import functools
 import math
+import pygame   #This is only needed to check the type of all_board_cells
 from obj.utilities.logger import Logger as LOG
 from obj.utilities.synch_dict import Dictionary
 from obj.utilities.decorators import time_it
@@ -319,13 +320,14 @@ class PathAppraiser(object):
         pass
 
     @staticmethod
-    #@time_it
+    @time_it
     def rate_movements_lite(start_pos, possible_destinies, paths_graph, current_map, all_board_cells, level_size):
         """Returns a tuple with indexes of the destinies, and a fitness going from 0 to 1. Faster method than the complete one by avoiding the bait ratio and the danger multiplier.
         Also uses a less complete danger detection (But way faster)"""
+        print("LITE FACTOR, CHECKIN HOW LONGS IT TAKES to get fitnesses FOR "+str(len(possible_destinies)))
         fitnesses = {}
         character = next(cell.get_char() for cell in all_board_cells if cell.get_real_index() == start_pos)
-        all_cells = {cell.get_real_index(): cell.get_char() for cell in all_board_cells if cell.has_char()}   
+        all_cells = {cell.get_real_index(): cell.get_char() for cell in all_board_cells if cell.has_char()} if isinstance(all_board_cells, pygame.sprite.Group) else all_board_cells 
         #Algorihtm starts
         start_danger = PathAppraiser.get_danger_in_position_lite(start_pos, character.owner_uuid, paths_graph, current_map, all_cells, level_size)#*danger_multiplier
         destinies_danger = {}
@@ -340,12 +342,13 @@ class PathAppraiser(object):
         return fitnesses
 
     @staticmethod
-    #@time_it
+    @time_it
     def rate_movements(start_pos, possible_destinies, paths_graph, distances, current_map, all_board_cells, level_size):
         """Returns a tuple with indexes of the destinies, and a fitness going from 0 to 1."""
+        print("CHECKIN HOW LONGS IT TAKES to get fitnesses FOR "+str(len(possible_destinies)))
         fitnesses = {}
         character = next(cell.get_char() for cell in all_board_cells if cell.get_real_index() == start_pos)
-        all_cells = {cell.get_real_index(): cell.get_char() for cell in all_board_cells if cell.has_char()}   
+        all_cells = {cell.get_real_index(): cell.get_char() for cell in all_board_cells if cell.has_char()} if isinstance(all_board_cells, pygame.sprite.Group) else all_board_cells
         #Algorihtm starts
         danger_multiplier = PathAppraiser.get_danger_multiplier(character, all_cells)
         start_danger = PathAppraiser.get_danger_in_position(start_pos, character.owner_uuid, paths_graph, distances, current_map, all_cells, level_size)*danger_multiplier
@@ -460,7 +463,7 @@ class PathAppraiser(object):
                 if all_cells[index].owner_uuid != player:
                     enemies_ready += 1
                     index = cell_index if index < cell_index else start_of_my_circumference+level_size
-        for index in range (level_size+(cell_index%level_size), len(current_map), level_size):                          #Checking interpaths
+        for index in range (level_size+(cell_index%level_size), len(current_map)-level_size, level_size):                          #Checking interpaths
             if graph[index][index+level_size] and index in all_cells:     #If there is a path to the next circumference and enemy...
                 if all_cells[index].owner_uuid != player:
                     enemies_ready += 1

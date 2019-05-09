@@ -2104,3 +2104,23 @@ class LoopedAnimation(Animation):
         if 'circ' in _['dial_shape']:       pygame.draw.circle(surface, color, dial_rect.center, dial.rect.height//2)
         elif 'ellip' in _['dial_shape']:    pygame.draw.ellipse(surface, color, dial_rect)
         else:                               pygame.draw.rect(surface, color, dial_rect)'''
+
+        #OLD CODE IN DO AI PLAYER TURN IN BOARD.PY
+        #Getting fitnesses if needed. This method is redundant, have to check how to get the fitnesses in the ai player method
+        for cell in self.cells:
+            if cell.has_char():
+                start_index = cell.get_real_index()
+                all_cells[start_index] = cell.get_char()
+                if cell.get_char().owner_uuid == self.current_player.uuid:
+                    destinations = cell.get_char().get_paths(self.enabled_paths, self.distances, self.current_map,\
+                                    start_index, self.params['circles_per_lvl'])
+                    #print("DESTINATIONS FOR "+str(start_index)+" ARE "+str(destinations))
+                    fitnesses_thread = self.generate_fitnesses(start_index, destinations)
+                    fitnesses_thread.join()
+        #print("FINTNESES" +str(self.fitnesses))
+        for start_pos, rated_destinies in self.fitnesses.items():
+            for dest, score in rated_destinies.items():
+                all_fitnesses.append(((start_pos, dest), score))   #Append a tuple ((start, destiny), fitness_eval_of_movm)
+        #At this point, we already have the fitnesses of the entire board
+        #Simulation of a player driven pick up
+        #print("ALL DESTINATIONS ARE "+str(all_fitnesses))

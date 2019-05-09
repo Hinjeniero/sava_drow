@@ -940,12 +940,14 @@ class Board(Screen):
                 dest.set_active(True)
 
     @run_async_not_pooled
-    def generate_fitnesses(self, source_cell, destinations):
+    def generate_fitnesses(self, source_cell, destinations, lite=False):
         try: 
             self.fitnesses[source_cell]
         except KeyError:
-            self.fitnesses[source_cell] = PathAppraiser.rate_movements(self.active_cell.sprite.get_real_index(), tuple(x[-1] for x in destinations), self.enabled_paths,\
-                                                                    self.distances, self.current_map, self.cells.sprites(), self.params['circles_per_lvl'])
+            self.fitnesses[source_cell] =   PathAppraiser.rate_movements(self.active_cell.sprite.get_real_index(), tuple(x[-1] for x in destinations), self.enabled_paths,\
+                                                                self.distances, self.current_map, self.cells.sprites(), self.params['circles_per_lvl']) if not lite else \
+                                            PathAppraiser.rate_movements_lite(self.active_cell.sprite.get_real_index(), tuple(x[-1] for x in destinations), self.enabled_paths,\
+                                                                    self.current_map, self.cells.sprites(), self.params['circles_per_lvl'])
         for fitness_key, fitness_value in self.fitnesses[source_cell].items():
             if self.drag_char.sprite:   #If we didnt drop the char before the fitnesses were assigned
                 dest_cell = self.get_cell_by_real_index(fitness_key)
@@ -1084,29 +1086,8 @@ class Board(Screen):
         all_fitnesses = []
         all_cells = {}
 
-        #Getting fitnesses if needed. This method is redundant, have to check how to get the fitnesses in the ai player method
-        for cell in self.cells:
-            if cell.has_char():
-                start_index = cell.get_real_index()
-                all_cells[start_index] = cell.get_char()
-                if cell.get_char().owner_uuid == self.current_player.uuid:
-                    destinations = cell.get_char().get_paths(self.enabled_paths, self.distances, self.current_map,\
-                                    start_index, self.params['circles_per_lvl'])
-                    #print("DESTINATIONS FOR "+str(start_index)+" ARE "+str(destinations))
-                    fitnesses_thread = self.generate_fitnesses(start_index, destinations)
-                    fitnesses_thread.join()
-        #print("FINTNESES" +str(self.fitnesses))
-        for start_pos, rated_destinies in self.fitnesses.items():
-            for dest, score in rated_destinies.items():
-                all_fitnesses.append(((start_pos, dest), score))   #Append a tuple ((start, destiny), fitness_eval_of_movm)
-        #At this point, we already have the fitnesses of the entire board
-        #Simulation of a player driven pick up
-        #print("ALL DESTINATIONS ARE "+str(all_fitnesses))
-
-        movement = self.current_player.get_movement(all_fitnesses, self.current_map, self.cells, self.current_player.uuid, [player.uuid for player in self.players])
+        movement = self.current_player.get_movement(self.current_map, self.cells, self.current_player.uuid, [player.uuid for player in self.players])
         print("MOVEMENT CHOSEN WAS "+str(movement))
-
-
         character = self.get_cell_by_real_index(movement[0]).get_char()
         self.drag_char.add(character)
         self.last_cell.add(self.get_cell_by_real_index(movement[0]))

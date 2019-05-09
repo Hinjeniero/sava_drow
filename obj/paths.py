@@ -315,7 +315,7 @@ class Path(object):
 class PathAppraiser(object):
     @staticmethod
     @time_it
-    def rate_path(start_pos, possible_destinies, current_map, character):
+    def rate_path(start_pos, possible_destinies, current_map, character): #TODO CHEEEEECK THE CURRENT MAP SO ITS NOT MODIFIIIIIED
         pass
 
     @staticmethod
@@ -358,7 +358,7 @@ class PathAppraiser(object):
             destinies_danger[index] = PathAppraiser.get_danger_in_position(index, character.owner_uuid, paths_graph, distances, current_map, all_cells, level_size)
             destinies_danger[index] *= danger_multiplier    # if kill_values[index] != 0 else (danger_multiplier*2)
             current_map[start_pos].ally = False             #This to get proper paths to this method to get a useful bait result
-            current_map[start_pos].access = True             #This to get proper paths to this method to get a useful bait result
+            current_map[start_pos].access = True            #This to get proper paths to this method to get a useful bait result
             bait_ratios[index] = PathAppraiser.get_bait_value(character, index, paths_graph, distances, current_map, all_cells, level_size)
             current_map[start_pos].ally = True
             current_map[start_pos].access = False
@@ -409,9 +409,9 @@ class PathAppraiser(object):
             if index in all_cells:
                 char = all_cells[index]
                 map_for_player[index]=current_map[index].copy()
-                current_map[index].ally = True if char.uuid == player else False
-                current_map[index].enemy = True if char.uuid != player else False
-                current_map[index].update_accessibility(char)
+                map_for_player[index].ally = True if char.owner_uuid == player else False
+                map_for_player[index].enemy = True if char.owner_uuid != player else False
+                map_for_player[index].update_accessibility(char)
                 continue
             map_for_player[index]=current_map[index].copy() #Outside the if, means there are no chars in the cell with this index
         return map_for_player 
@@ -486,7 +486,7 @@ class PathAppraiser(object):
                 if destination in ally_destinies:
                     vengeful_allies += 1
             else:
-                enemy_map = enemy_map = PathAppraiser.generate_player_map(current_map, all_cells, char.owner_uuid)
+                enemy_map = PathAppraiser.generate_player_map(current_map, all_cells, char.owner_uuid)
                 enemy_destinies = tuple(path[-1] for path in char.get_paths(graph, distances, enemy_map, index, level_size))
                 if destination in enemy_destinies:
                     baited_enemy_values.append(char.value)

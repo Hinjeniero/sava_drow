@@ -26,7 +26,7 @@ from obj.cell import Cell, Quadrant
 from obj.paths import Path, PathAppraiser
 from obj.ai_player import ComputerPlayer
 from obj.players import Player, Character, Restriction
-from obj.sprite import Sprite
+from obj.sprite import Sprite, AnimatedSprite
 from obj.ui_element import ButtonAction, TextSprite, InfoBoard, Dialog, ScrollingText
 from obj.polygons import Circle, Rectangle, Circumference
 from obj.utilities.utility_box import UtilityBox
@@ -144,6 +144,7 @@ class Board(Screen):
         self.dice           = pygame.sprite.GroupSingle()
         self.fitness_button = pygame.sprite.GroupSingle()
         self.help_button    = pygame.sprite.GroupSingle()
+        self.thinking_sprite= pygame.sprite.GroupSingle()
         self.paths          = pygame.sprite.Group()
         self.characters     = pygame.sprite.OrderedUpdates()
         self.current_player = None  #Created in add_player
@@ -247,15 +248,18 @@ class Board(Screen):
 
         #fitness_button.set_position((self.dice.sprite.rect.x, self.dice.sprite.rect.y-fitness_button.rect.height))
         fitness_pos_y = self.dice.sprite.rect.centery-((fitness_button.rect.height//2+self.dice.sprite.rect.height//2)//0.9)
-        fitness_button.set_center((self.dice.sprite.rect.centerx, fitness_pos_y))
-
+        fitness_button.set_center((self.dice.sprite.rect.x, fitness_pos_y))
+        #help_button
         help_button = ButtonAction('help_button', "", self.event_id, (0, 0), tuple(x*0.1 for x in self.resolution), self.resolution,\
                                     texture=self.params['help_button_texture'], text="")
-
-        help_pos_y = fitness_button.rect.centery-((fitness_button.rect.height//2+help_button.rect.height//2)//0.9)
-        help_button.set_center((fitness_button.rect.centerx, help_pos_y))
-
-        self.fitness_button.add(fitness_button), self.help_button.add(help_button)
+        help_pos_y = self.dice.sprite.rect.centery-((help_button.rect.height//2+self.dice.sprite.rect.height//2)//0.9)
+        help_button.set_center((self.dice.sprite.rect.x+self.dice.sprite.rect.width, help_pos_y))
+        #thinking_sprite
+        thinking_sprite = AnimatedSprite('ia_thinking_sprite', (0, 0), self.dice.sprite.rect.size, self.resolution, sprite_folder=PATHS.WIZARD, resize_mode='fill', animation_delay=3)
+        thinking_pos_y = self.dice.sprite.rect.y -max(help_button.rect.height, fitness_button.rect.height) -(thinking_sprite.rect.height//1.5)  #1.5 instead of 2 to get some separation/margin
+        thinking_sprite.set_center((self.dice.sprite.rect.centerx, thinking_pos_y)) #Could also use self.infoboard.rect.centerx instead of the dice. But its the same.
+        #Adding buttons to matching groupsingles
+        self.fitness_button.add(fitness_button), self.help_button.add(help_button), self.thinking_sprite.add(thinking_sprite)
         #End, saving
         self.save_sprites()
         self.generated = True
@@ -553,7 +557,8 @@ class Board(Screen):
         Do this to modify all the graphical elements at once when needed in a more seamless manner.
         Also because the super().draw method only draws the self.sprites.
         Only adds the graphics regarding the board, the characters and player addons will be drawn later."""
-        self.sprites.add(self.platform, self.inter_paths.sprite, *self.paths.sprites(), *self.cells.sprites(), self.infoboard, self.dice, self.fitness_button, self.help_button)
+        self.sprites.add(self.platform, self.inter_paths.sprite, *self.paths.sprites(), *self.cells.sprites(),\
+                        self.infoboard, self.dice, self.fitness_button, self.help_button, self.thinking_sprite)
 
     def __adjust_number_of_paths(self):
         """Checks the inter path frequency. If the circles are not divisible by that frequency,
@@ -1083,9 +1088,6 @@ class Board(Screen):
 
     @run_async
     def do_ai_player_turn(self):
-        all_fitnesses = []
-        all_cells = {}
-
         movement = self.current_player.get_movement(self.current_map, self.cells, self.current_player.uuid, [player.uuid for player in self.players])
         print("MOVEMENT CHOSEN WAS "+str(movement))
         character = self.get_cell_by_real_index(movement[0]).get_char()

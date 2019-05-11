@@ -175,6 +175,7 @@ class Board(Screen):
         self.player_index   = 0
 
         #Started
+        self.ai_turn        = False
         self.started        = False
         self.finished       = False
         self.generated      = False
@@ -258,6 +259,7 @@ class Board(Screen):
         thinking_sprite = AnimatedSprite('ia_thinking_sprite', (0, 0), self.dice.sprite.rect.size, self.resolution, sprite_folder=PATHS.WIZARD, resize_mode='fill', animation_delay=3)
         thinking_pos_y = self.dice.sprite.rect.y -max(help_button.rect.height, fitness_button.rect.height) -(thinking_sprite.rect.height//1.5)  #1.5 instead of 2 to get some separation/margin
         thinking_sprite.set_center((self.dice.sprite.rect.centerx, thinking_pos_y)) #Could also use self.infoboard.rect.centerx instead of the dice. But its the same.
+        thinking_sprite.set_visible(False)
         #Adding buttons to matching groupsingles
         self.fitness_button.add(fitness_button), self.help_button.add(help_button), self.thinking_sprite.add(thinking_sprite)
         #End, saving
@@ -855,7 +857,7 @@ class Board(Screen):
                     return
             elif self.active_char.sprite: 
                 self.pickup_character()
-            elif self.dice.sprite.hover:
+            elif self.dice.sprite.hover and not self.ia_turn:
                 self.shuffle()
             elif self.fitness_button.sprite.hover:
                 self.fitness_button.sprite.set_enabled(not self.fitness_button.sprite.enabled)
@@ -874,12 +876,14 @@ class Board(Screen):
                 for colliding in self.promotion_table.get_collisions(mouse_sprite):     colliding.set_hover(True)
                 return
 
-            if self.drag_char.sprite:   
-                self.drag_char.sprite.rect.center = mouse_position
-            
-            #Checking collision with cells (Using this instead of hit_sprite because the hit method is different)
-            collided_cell = pygame.sprite.spritecollideany(mouse_sprite, self.cells, collided=pygame.sprite.collide_circle)
-            self.set_active_cell(collided_cell)
+            if not self.ai_turn:
+                #Checking if Im holding a sprite
+                if self.drag_char.sprite:   
+                    self.drag_char.sprite.rect.center = mouse_position
+                
+                #Checking collision with cells (Using this instead of hit_sprite because the hit method is different)
+                collided_cell = pygame.sprite.spritecollideany(mouse_sprite, self.cells, collided=pygame.sprite.collide_circle)
+                self.set_active_cell(collided_cell)
 
             #Checking collision with paths (Using this instead of hit_sprite because the hit method is different)
             path = pygame.sprite.spritecollideany(mouse_sprite, self.paths, collided=pygame.sprite.collide_mask)
@@ -889,12 +893,14 @@ class Board(Screen):
                 self.dice.sprite.set_hover(True)
             else:
                 self.dice.sprite.set_hover(False)
+
             if pygame.sprite.spritecollideany(mouse_sprite, self.fitness_button, collided=pygame.sprite.collide_mask):
                 self.fitness_button.sprite.set_active(True)
                 self.fitness_button.sprite.set_hover(True)
             else:
                 self.fitness_button.sprite.set_active(False)
                 self.fitness_button.sprite.set_hover(False)
+                
             if pygame.sprite.spritecollideany(mouse_sprite, self.help_button, collided=pygame.sprite.collide_mask):
                 self.help_button.sprite.set_active(True)
                 self.help_button.sprite.set_hover(True)
@@ -1088,6 +1094,8 @@ class Board(Screen):
 
     @run_async
     def do_ai_player_turn(self):
+        self.ai_turn = True
+        self.thinking_sprite.sprite.set_visible(True)
         movement = self.current_player.get_movement(self.current_map, self.cells, self.current_player.uuid, [player.uuid for player in self.players])
         print("MOVEMENT CHOSEN WAS "+str(movement))
         character = self.get_cell_by_real_index(movement[0]).get_char()
@@ -1099,6 +1107,8 @@ class Board(Screen):
             char_revived = random.choice(self.promotion_table.elements)
             self.swapper.send(char_revived)
         self.drag_char.empty()
+        self.thinking_sprite.sprite.set_visible(False)
+        self.ai_turn = False
         #self.next_char_turn(character)
 
     def kill_character(self, cell, killer):

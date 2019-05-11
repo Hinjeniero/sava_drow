@@ -32,8 +32,8 @@ class ComputerPlayer(Player):
     def generate_fitnesses(self, all_cells, current_player, paths_graph, distances, current_map, level_size):
         all_fitnesses = []
         for start_index, char in all_cells.items():
-            if char.owner_uuid == current_player.uuid:
-                destinations = char.get_paths(paths_graph, distances, current_map, start_index, level_size)
+            if char.owner_uuid == current_player:
+                destinations = [path[-1] for path in char.get_paths(paths_graph, distances, current_map, start_index, level_size)]
                 fitnesses = PathAppraiser.rate_movements(start_index, destinations, paths_graph, distances, current_map, all_cells, level_size)
             for destiny, score in fitnesses.items():
                 all_fitnesses.append(((start_index, destiny), score))   #Append a tuple ((start, destiny), fitness_eval_of_movm)
@@ -42,7 +42,7 @@ class ComputerPlayer(Player):
     def get_movement(self, current_map, board_cells, my_player, all_players, max_nodes=100): #TODO FOR NOW USING -1 AS BOARD HASH, CHANGE THAT. SAME WITH STATE HASH
         #Fitnesses list of tuples like so: ((start, destiny), fitness_eval_of_movm)
         all_cells = {cell.get_real_index(): cell.get_char() for cell in board_cells if cell.has_char()}
-        fitnesses = self.generate_fitnesses(all_cells, my_player, self.graph, self.distances, current_map, self.level_size)
+        fitnesses = self.generate_fitnesses(all_cells, my_player, self.graph, self.distances, current_map, self.circum_size)
         if 'random' in self.ia_mode:
             if 'half' in self.ia_mode:
                 return self.generate_random_movement(fitnesses, somewhat_random=True)

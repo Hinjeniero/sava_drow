@@ -14,7 +14,6 @@ __author__ = 'David Flaity Pardo'
 import os
 import functools
 import math
-import pygame   #This is only needed to check the type of all_board_cells
 from obj.utilities.logger import Logger as LOG
 from obj.utilities.synch_dict import Dictionary
 from obj.utilities.decorators import time_it
@@ -326,8 +325,8 @@ class PathAppraiser(object):
         Also uses a less complete danger detection (But way faster)"""
         print("LITE FACTOR, CHECKIN HOW LONGS IT TAKES to get fitnesses FOR "+str(len(possible_destinies)))
         fitnesses = {}
-        character = next(cell.get_char() for cell in all_board_cells if cell.get_real_index() == start_pos)
-        all_cells = {cell.get_real_index(): cell.get_char() for cell in all_board_cells if cell.has_char()} if isinstance(all_board_cells, pygame.sprite.Group) else all_board_cells 
+        all_cells = {cell.get_real_index(): cell.get_char() for cell in all_board_cells if cell.has_char()} if isinstance(all_board_cells, list) else all_board_cells 
+        character = all_cells[start_pos]
         #Algorihtm starts
         start_danger = PathAppraiser.get_danger_in_position_lite(start_pos, character.owner_uuid, paths_graph, current_map, all_cells, level_size)#*danger_multiplier
         destinies_danger = {}
@@ -347,8 +346,9 @@ class PathAppraiser(object):
         """Returns a tuple with indexes of the destinies, and a fitness going from 0 to 1."""
         print("CHECKIN HOW LONGS IT TAKES to get fitnesses FOR "+str(len(possible_destinies)))
         fitnesses = {}
-        character = next(cell.get_char() for cell in all_board_cells if cell.get_real_index() == start_pos)
-        all_cells = {cell.get_real_index(): cell.get_char() for cell in all_board_cells if cell.has_char()} if isinstance(all_board_cells, pygame.sprite.Group) else all_board_cells
+        all_cells = {cell.get_real_index(): cell.get_char() for cell in all_board_cells if cell.has_char()} if isinstance(all_board_cells, list) else all_board_cells
+        print(type(all_cells))
+        character = all_cells[start_pos]
         #Algorihtm starts
         danger_multiplier = PathAppraiser.get_danger_multiplier(character, all_cells)
         start_danger = PathAppraiser.get_danger_in_position(start_pos, character.owner_uuid, paths_graph, distances, current_map, all_cells, level_size)*danger_multiplier

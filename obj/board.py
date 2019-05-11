@@ -857,7 +857,7 @@ class Board(Screen):
                     return
             elif self.active_char.sprite: 
                 self.pickup_character()
-            elif self.dice.sprite.hover and not self.ia_turn:
+            elif self.dice.sprite.hover and not self.ai_turn:
                 self.shuffle()
             elif self.fitness_button.sprite.hover:
                 self.fitness_button.sprite.set_enabled(not self.fitness_button.sprite.enabled)

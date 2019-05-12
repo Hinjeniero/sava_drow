@@ -135,6 +135,7 @@ class Board(Screen):
         self.loading_screen = None  #Created in Board.generate
         self.overlay_console= None
         self.console_active = True
+        self.dice_screen    = None  #Created in Board.generate
         self.cells          = pygame.sprite.Group()
         self.quadrants      = {}
         self.locked_cells   = []
@@ -214,6 +215,24 @@ class Board(Screen):
         start = time.time()
         self.overlay_console = ScrollingText('updates', self.event_id, self.resolution, transparency=180)
         LOG.log('info', 'The console have been generated in ', (time.time()-start)*1000, 'ms')
+    
+    @run_async
+    def generate_dice_screen(self, transparency=128):
+        """Generates the dice screen so players can try their luck to get their turn!"""
+        start = time.time()
+        self.dice_screen = Dialog('Initial_dice_screen', self.event_id, self.resolution, self.resolution, fill_color=DARKGRAY, rows=3, cols=6)
+        self.dice_screen.image = self.dice_screen.image.convert()
+        self.dice_screen.image.set_alpha(transparency)
+        LOG.log('info', 'The console have been generated in ', (time.time()-start)*1000, 'ms')
+
+    @run_async
+    def add_dices_to_screen(self, player_list):
+        """In this way is easily overridable for network board to work properly"""
+        for player in player_list:
+            self.dice_screen.add_text_element(str(player.uuid), player.name, 1)
+        for player in player_list:
+            dice = Dice('dice_'+str(player.uuid), (0, 0), tuple(0.25*x for x in self.resolution), self.resolution, shuffle_time=1500, sprite_folder=self.params['dice_textures_folder'], animation_delay=2)
+            self.dice_screen.add_sprite_to_elements(1, dice)
 
     @no_size_limit
     def generate_platform(self):
@@ -685,6 +704,8 @@ class Board(Screen):
             self.generate_dialogs()
             self.update_scoreboard()
             self.console_active = False
+            self.add_dices_to_screen(self.players)
+            #TODO CONTINUE THIS! And when dices are thrown show the nuymber and add it to the screen! And turns after that!
 
     def create_player(self, name, number, chars_size, cpu=False, cpu_mode=None, empty=False, **player_settings):
         """Queues the creation of a player on the async method.

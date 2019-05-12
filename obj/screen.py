@@ -282,11 +282,14 @@ class Screen(object):
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.active_sprite_in_dialog():
-                if self.hit_sprite.has_input:
-                    adjusted_mouse_pos = tuple(x-y for x, y in zip(mouse_position, self.dialog.rect.topleft))
-                    self.send_to_active_sprite('mouse_button', value=adjusted_mouse_pos)
-                else:
-                    self.send_to_active_sprite('do_action_or_add_value', -1)
+                try:
+                    if self.hit_sprite.has_input:
+                        adjusted_mouse_pos = tuple(x-y for x, y in zip(mouse_position, self.dialog.rect.topleft))
+                        self.send_to_active_sprite('mouse_button', value=adjusted_mouse_pos)
+                        return
+                except AttributeError:  #The active sprite has no has_input attribute. If this is the case of it is false, our behavior is the same.
+                    pass
+                self.send_to_active_sprite('do_action_or_add_value', -1)
             elif self.scroll_sprite != None:
                 new_scroll_value = self.scroll_sprite.get_value()
                 if event.button == 4:
@@ -323,8 +326,21 @@ class Screen(object):
         """Returns:
             (boolean):  True if the Screen Dialog is active, False otherwise"""
         return True if self.dialog else False
+ 
+    def get_dialog(self, *keywords):
+        """Returns the dialog with the most matching keywords in its id"""
+        dialogs = self.dialogs.sprites()
+        best = 0
+        best_index = -1
+        for i in range (0, len(dialogs)):
+            kw_matches = sum(1 for kw in keywords if kw.lower() in dialogs[i].id.lower() 
+                                                    or dialogs[i].id.lower() in kw.lower())
+            if kw_matches > best:
+                best = kw_matches
+                best_index = i
+        return False if best_index == -1 else dialogs[best_index]
 
-    def show_dialog(self, id_):
+    def show_dialog(self, id_, send_event=True):
         """Makes the Screen's Dialog visible. (If it exists)."""
         for dialog in self.dialogs:
             try:
@@ -332,10 +348,11 @@ class Screen(object):
                 or id_ in dialog.command or dialog.command in id_:
                     dialog.set_visible(True)
                     self.dialog = dialog
-                    self.dialog.send_event()
+                    if send_event:
+                        self.dialog.send_event()
                     return
             except AttributeError:  #It doesn't have a command. If its comparing commands, the id_ wasnt found in the id
-                LOG.error_traceback()
+                pass
         LOG.log('warning', 'The input with id ', id_, 'was not found.')
 
     def hide_dialog(self):

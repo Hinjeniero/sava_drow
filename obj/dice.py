@@ -38,12 +38,15 @@ class Dice(AnimatedSprite):
         else:
             LOG.log('info', 'You spent your ammount of throws, you rolled enough already, dont you think?')
 
+    def hitbox_action(self, *pr, **kw): #This is only used for the initial dices
+        self.shuffle()
+
     def add_turn(self, next_player):
         self.turns += 1
         self.current_player = next_player
-        try:                self.throws[self.current_player]
+        try:                
+            self.throws[self.current_player]
         except KeyError:    
-            print("Added "+str(next_player))
             self.throws[self.current_player] = 1
         self.deactivating_dice()
 

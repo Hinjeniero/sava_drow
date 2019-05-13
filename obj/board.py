@@ -241,6 +241,7 @@ class Board(Screen):
             dice.add_turn(player.uuid)
             dice.reactivating_dice()
             dice_screen.add_sprite_to_elements(4//len(player_list), dice)
+            dice.overlay = None
 
     @no_size_limit
     def generate_platform(self):

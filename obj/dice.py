@@ -9,8 +9,8 @@ from obj.utilities.logger import Logger as LOG
 
 class Dice(AnimatedSprite):
     MAX_DICE_VALUE = 6
-    WEIGHTS = [1 for _ in range(0, MAX_DICE_VALUE)]
-    VALUES = [i for i in range(0, MAX_DICE_VALUE)]
+    WEIGHTS = [1 for _ in range(1, MAX_DICE_VALUE)]
+    VALUES = [i for i in range(1, MAX_DICE_VALUE)]
     def __init__(self, id_, position, size, canvas_size, shuffle_time=0, rotate_kw='rot', result_kw='res', limit_throws=3, **params):
         """Shuffle time in miliseconds"""
         super().__init__(id_, position, size, canvas_size, **params)

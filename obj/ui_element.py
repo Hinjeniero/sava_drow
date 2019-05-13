@@ -908,6 +908,9 @@ class Dialog (InfoBoard):
             for element in self.elements:   #Draws elements onto self.imgge
                 element.draw(surface, offset=self.rect.topleft)
                 if element.active and element.overlay:
+                    print("DRAW OVERLAY")
+                    print(element.overlay)
+                    print(type(element.overlay))
                     element.draw_overlay(surface, offset=self.rect.topleft)
     
     def set_canvas_size(self, resolution):

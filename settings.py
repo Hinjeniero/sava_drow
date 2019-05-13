@@ -137,6 +137,7 @@ class PATHS:
     AUDIO_FOLDER = os.path.join(ASSETS_FOLDER, 'sounds\\')
     SOUNDS_FOLDER = AUDIO_FOLDER+'common\\'
     SECRET_FOLDER = AUDIO_FOLDER+'secret\\'
+    AVATAR_FOLDER = IMAGE_FOLDER+'avatars\\'
     #uuid
     UUID_FILE = ASSETS_FOLDER+'myid.sav'
     #Characters

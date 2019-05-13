@@ -312,7 +312,6 @@ class UtilityBox (object):
             yield position
             index += 1
 
-
     @staticmethod
     def rainbow_gradient_generator(gradient, ammount_elements, transparency=255):
         """To generate the desired colors."""

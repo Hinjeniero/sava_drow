@@ -68,7 +68,7 @@ class ResizedSurface(object):
         return surfaces
 
     @staticmethod
-    def get_surface(path, intended_size, resize_mode, resize_smooth, keep_aspect_ratio=True):
+    def get_surface(path, intended_size, resize_mode='fit', resize_smooth=True, keep_aspect_ratio=True):
         surface = ResizedSurface(path, intended_size, resize_mode, resize_smooth, keep_aspect_ratio=keep_aspect_ratio)
         hash_key = hash(surface)
         if hash_key in ResizedSurface.RESIZED_SURFACES_LOADED.keys():

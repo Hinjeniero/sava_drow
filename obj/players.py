@@ -19,11 +19,12 @@ __author__ = 'David Flaity Pardo'
 #Python libraries
 import pygame
 import uuid
+import random
 from os import listdir
 from os.path import isfile, join, dirname
 #Selfmade libraries
-from settings import PATHS, CHARACTERS
-from obj.sprite  import AnimatedSprite, TextSprite
+from settings import PATHS, CHARACTERS, EXTENSIONS
+from obj.sprite import Sprite, AnimatedSprite, TextSprite
 from obj.ui_element import InfoBoard
 from obj.paths import Restriction, Movements
 from obj.utilities.exceptions import BadCharacterInitException, StateNotFoundException, SwapFailedException
@@ -31,7 +32,7 @@ from obj.utilities.resizer import Resizer
 from obj.utilities.logger import Logger as LOG
 from obj.utilities.decorators import run_async
 from obj.utilities.utility_box import UtilityBox
-from obj.utilities.surface_loader import no_size_limit
+from obj.utilities.surface_loader import no_size_limit, ResizedSurface
 
 class Player(object):
     """Player class. Each player has a name, some characters and his own turn.
@@ -49,7 +50,7 @@ class Player(object):
         corpses (list->Character):  The captured characters. Saved to use the information on captures and such.
         dead (boolean): True if this player has lost the essential characters, and cannot continue playing. False otherwise.
     """
-    def __init__(self, name, order, sprite_size, canvas_size, infoboard=None, obj_uuid=None, empty=False, avatar=None, **character_params):
+    def __init__(self, name, order, sprite_size, canvas_size, avatar_folder=PATHS.AVATAR_FOLDER, infoboard=None, obj_uuid=None, empty=False, avatar=None, **character_params):
         """Player constructor.
         Args:
             name (str): Name of the player.
@@ -64,7 +65,7 @@ class Player(object):
                                             Ammount of each type of char, name of their actions, and their folder paths."""
         self.uuid       = obj_uuid if obj_uuid else uuid.uuid1().int
         self.human      = True
-        self.avatar     = None
+        self.avatar     = None  #Created in generate
         self.name       = name
         self.order      = order
         self.characters = None
@@ -76,10 +77,10 @@ class Player(object):
         self.corpses    = []    #Contains dead chars of the other players.
         self.fallen     = []    #Contains my captured/killed pieces
         self.dead       = False #If the player has already lost
-        Player.generate(self, sprite_size, canvas_size, empty, **character_params)
+        Player.generate(self, sprite_size, canvas_size, empty, avatar_folder, **character_params)
 
     @staticmethod
-    def generate(self, sprite_size, canvas_size, empty, **character_params):
+    def generate(self, sprite_size, canvas_size, empty, avatar_folder, **character_params):
         """Called at the end of the constructor. Generates the uuid, the characters, and the infoboard
         (Following the input parameters, and if it's needed).
         Args:
@@ -90,29 +91,32 @@ class Player(object):
             **character_params (:dict:):Contains the more specific parameters to create the characters.
                                         Ammount of each type of char, name of their actions, and their folder paths.
             """
-        if self.avatar:
-            pass    #TODO THIS SHIT
         if not empty:
             self.characters = Character.factory(self.name, self.uuid, sprite_size, canvas_size, **character_params)
         else:
             self.characters = pygame.sprite.OrderedUpdates()
         self.generate_infoboard(canvas_size)
+        self.generate_avatar(avatar_folder)
 
-    @no_size_limit
+    
     def generate_infoboard(self, resolution):
         infoboard = InfoBoard(self.name+'_infoboard', 0, (0, 0), (0.15*resolution[0], resolution[1]),\
                             resolution, texture=PATHS.INFOBOARD, keep_aspect_ratio = False, cols=6)
         cols = infoboard.get_cols()
-        if self.avatar:
-            pass
-        else:
-            infoboard.add_text_element('initial_padding', '', cols)
         infoboard.add_text_element('player_name', self.name, cols-2)   #Player name
         infoboard.add_text_element('player_number', 'id: '+str(self.order+1), cols-2)   #Player order
         infoboard.add_text_element('player_chars', 'Total characters: '+str(len(self.characters)), cols)   #Player total ammount of chars
         infoboard.add_text_element('player_kills', 'Total kills: '+str(self.kills), cols)
         infoboard.add_text_element('player_movements', 'Total movements: '+str(self.movements), cols)
         self.infoboard = infoboard
+
+    @no_size_limit
+    def generate_avatar(self, avatar_folder):
+        avatars_paths = UtilityBox.get_all_files(avatar_folder, *EXTENSIONS.IMAGE_FORMATS)      #TODO CREATE SPRITE
+        surface = ResizedSurface.get_surface(random.choice(avatars_paths), self.infoboard.get_element_size(self.infoboard.get_cols(), 0.8))#, _['resize_mode'], _['resize_smooth'], _['keep_aspect_ratio'])
+        self.avatar = Sprite('avatar_'+str(self.uuid), (0, 0), surface.get_size(), self.infoboard.rect.size, surface=surface)
+        self.infoboard.add_and_adjust_sprites((self.avatar, self.infoboard.get_cols()))
+
 
     def register_movement(self, character):
         """Saves the movements into the stats of the player and character.

@@ -79,7 +79,7 @@ class Dice(AnimatedSprite):
         x = math.log10(self.turns/(self.throws[self.current_player]*3))
         weights[-1] += math.tanh(x)
         weights[-1] = max(0.3, weights[-1])
-        print("Pos of getting a 6 is "+str(weights[-1]))
+        #print("Pos of getting a 6 is "+str(weights[-1]))
         return random.choices(Dice.VALUES, weights)[0]
 
     def throw(self):

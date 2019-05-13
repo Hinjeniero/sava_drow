@@ -908,9 +908,6 @@ class Dialog (InfoBoard):
             for element in self.elements:   #Draws elements onto self.imgge
                 element.draw(surface, offset=self.rect.topleft)
                 if element.active and element.overlay:
-                    print("DRAW OVERLAY")
-                    print(element.overlay)
-                    print(type(element.overlay))
                     element.draw_overlay(surface, offset=self.rect.topleft)
     
     def set_canvas_size(self, resolution):
@@ -1174,7 +1171,6 @@ class ScrollingText(UIElement):
 
     @synchronized
     def add_msg(self, text, msg_size=(0.85, 0.10), **params):
-        print(msg_size)
         self.changed = True
         self.add_text_sprite('screen_msg_'+str(len(self.sprites.sprites())), text,\
                             text_size=tuple(x*y for x,y in zip(self.rect.size, msg_size)), **params)

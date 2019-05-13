@@ -1,9 +1,10 @@
 #### TODO CURRENT:
-- [ ] Test simple IA based on the alpha-beta pruning.
 - [ ] Complete network_board (update character)
 - [ ] Keep and drop servers based in a keep/alive fashion
 - [ ] Test changes on network board
 - [ ] Add dialogs to chars.
+- [ ] Test trenchcoat mode.
+- [ ] Internal documentation.
 
 #### TODO WHENEVER:
 - [ ] Parse text to have decents numbers and letters instead of shitty indexes
@@ -53,4 +54,8 @@
 - [X] Improve board's infoboard (info like turns)
 - [X] Add dialogs to characters, in case we don't remember how to use them.
 - [X] Add functionality to the help button
+- [X] Test simple IA based on the alpha-beta pruning.
+- [X] Test IA based in MonteCarlo algorithm
+- [X] Set dices in local games to have some sort of ordering.
+- [X] Add avatars to players.
 

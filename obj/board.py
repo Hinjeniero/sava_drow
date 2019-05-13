@@ -237,11 +237,10 @@ class Board(Screen):
             dice_screen.add_text_element(str(player.uuid), player.name, 4//len(player_list))
         for player in player_list:
             dice = Dice('dice_'+str(player.uuid), (0, 0), tuple(0.20*x for x in self.resolution), self.resolution, shuffle_time=1500,\
-                        sprite_folder=self.params['dice_textures_folder'], animation_delay=2, limit_throws=1)
+                        sprite_folder=self.params['dice_textures_folder'], animation_delay=2, limit_throws=1, overlay=False)
             dice.add_turn(player.uuid)
             dice.reactivating_dice()
             dice_screen.add_sprite_to_elements(4//len(player_list), dice)
-            dice.overlay = None
 
     @no_size_limit
     def generate_platform(self):
@@ -1038,7 +1037,11 @@ class Board(Screen):
             self.starting_dices[self.current_player.uuid].set()
             self.dices_values[self.current_player.uuid] = value
             if all(flag.is_set() for flag in self.starting_dices.values()):
-                print("ALL DONEEE")
+                all_values = [(player_uuid, value) for player_uuid, value in self.dices_values.items()]
+                all_values.sort(key=lambda player_value: player_value[-1])
+                ordered_players = [next(player for player in self.players if player.uuid == value[0]) for value in all_values]
+                self.players = ordered_players
+                self.current_player = self.players[-1]  #To make the next player turn be the self.players[0]
                 self.hide_dialog()
             value = -1  #To jump to the next player turn line.
         if value == 6:

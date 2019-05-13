@@ -5,6 +5,7 @@
 - [ ] Add dialogs to chars.
 - [ ] Test trenchcoat mode.
 - [ ] Internal documentation.
+- [ ] Add more choices in IA settings, like time timeout and stuff
 
 #### TODO WHENEVER:
 - [ ] Parse text to have decents numbers and letters instead of shitty indexes

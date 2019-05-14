@@ -1,7 +1,10 @@
 """--------------------------------------------
-main module. Starts everything.
+Main module. Starts everything. File that you should call as argument with 
+your python version. Also calls an instance of the overseer class Game and initiates it.
+Creates the menus and adds them all to the Game instance.
+In short, the Main file.
 --------------------------------------------"""
-__version__ = '0.1'
+__version__ = '0.6'
 __author__ = 'David Flaity Pardo'
 
 #Python librariess
@@ -9,10 +12,12 @@ import pygame
 import os
 import threading
 import sys
-import faulthandler
+#import faulthandler    #This class and line are very useful if we screw up badly and need to check a segmnetation fault
+#faulthandler.enable()
 from pygame.locals import *
 from pygame.key import *
 from obj.screen import Screen
+
 #Selfmade Libraries
 from settings import USEREVENTS, INIT_PARAMS, PATHS, CHARACTERS, PARAMS,\
                     STRINGS, EXTENSIONS, SCREEN_FLAGS, SOUND_PARAMS
@@ -30,20 +35,24 @@ from obj.utilities.surface_loader import ResizedSurface, no_size_limit
 from obj.utilities.utility_box import UtilityBox
 from obj.utilities.decorators import time_it, run_async
 
-#This because segmentation fault
-faulthandler.enable()
-
-#MUSIC
+#Music files of the menus and board
 MENU_SONGS = UtilityBox.get_all_files(PATHS.MENU_SONGS, *EXTENSIONS.MUSIC_FORMATS)
 BOARD_SONGS = UtilityBox.get_all_files(PATHS.BOARD_SONGS, *EXTENSIONS.MUSIC_FORMATS)
 COMMON_SONGS = UtilityBox.get_all_files(PATHS.COMMON_SONGS, *EXTENSIONS.MUSIC_FORMATS)
 MENU_SONGS.extend(COMMON_SONGS)
 BOARD_SONGS.extend(COMMON_SONGS)
-#Music for the buttons, to show the titles and that shit
+
+#Songs cropped names, very useful to show them in the configuration buttons, so the user can choose!
 MENU_CROPPED_SONGS = [song.split('\\')[-1].split('.')[0] for song in MENU_SONGS]
 BOARD_CROPPED_SONGS = [song.split('\\')[-1].split('.')[0] for song in BOARD_SONGS]
 
 def start_pygame(resolution=INIT_PARAMS.INITIAL_RESOLUTION):
+    """Starts the essential services of pygame, needed to suppor all the structures and
+    buses of the game.
+    Args:
+        resolution (tuple: (int, int), default=INITIAL_RESOLUTION in settings): Initial resolution at which the game will start.
+                                        The tuple follows the schema (width, height), in pixels.
+    """
     pygame.mixer.pre_init(*INIT_PARAMS.MIXER)
     pygame.init()
     pygame.mouse.set_visible(INIT_PARAMS.MOUSE_VISIBLE)
@@ -54,19 +63,50 @@ def start_pygame(resolution=INIT_PARAMS.INITIAL_RESOLUTION):
     pygame.display.set_mode(resolution, SCREEN_FLAGS.WINDOWED)  
 
 def generate_ui_elements(results, thread_list, element_size, user_event_id, **params):
-    """accepts args in each send, and yields the thread working on the element. 
-    In this way we dont have to repeat the kwargs every single time.
-    Don't work with elements that contain another elements (Infoboards)."""
+    """Generator of UI elements.
+    It accepts object input arguments in each send, and yields the thread working on the UI element. 
+    The generator remembers the arguments and keyword arguments used in the last element, so its not needed to 
+        input them again if they are the same.
+    Return the threads working on the elements, and the elements themselves when they are ready.
+    To use it properly, you need to check each thread status before trying to access such UI elements.
+
+    Haven't been tested with elements that contain another elements (Infoboards).
+    Args:
+        results (list): List in which the finished UI elements will be returned in.
+        thread_list (list): List that will contain the threads working on the UI element. 
+                            Such threads are useful to know when the elements are finished.
+        element_size (tuple: (int, int)): Size of each UI element. Follows the schema (width, height), in pixels. 
+                                        Can't be changed between elements.
+        user_event_id (int):    Pygame event that the UI elements will return when interacted with.
+                                Can't be changed between elements.
+        **params (dict):    Keyworded parameters that will be initally used. 
+                            This is better used to set the base kw parameters that the majority of the UI Elements will share.
+    """
     while True:
         id_, command, position, new_kwargs = yield
         params.update(new_kwargs)
         thread_list.append(UIElement.threaded_factory(results, id_, command, user_event_id, position, element_size, INIT_PARAMS.INITIAL_RESOLUTION, **params))
 
 def generate_ui_elements_different_sizes(results, thread_list, user_event_id, **params):
-    """accepts args in each send, and yields the thread working on the element. 
-    In this way we dont have to repeat the kwargs every single time.
-    Don't work with elements that contain another elements (Infoboards).
-    Difference with the base method is that in this one you have to send the size too"""
+    """Generator of UI elements.
+    It accepts object input arguments in each send, and yields the thread working on the UI element. 
+    The generator remembers the arguments and keyword arguments used in the last element, so its not needed to 
+        input them again if they are the same.
+    Return the threads working on the elements, and the elements themselves when they are ready.
+    To use it properly, you need to check each thread status before trying to access such UI elements.
+    Haven't been tested with elements that contain another elements (Infoboards).    
+    
+    IMPORTANT: The difference between the base method and this one, is that in this one you can set different sizes for the different 
+    UI elements.
+    Args:
+        results (list): List in which the finished UI elements will be returned in.
+        thread_list (list): List that will contain the threads working on the UI element. 
+                            Such threads are useful to know when the elements are finished.
+        user_event_id (int):    Pygame event that the UI elements will return when interacted with.
+                                Can't be changed between elements.
+        **params (dict):    Keyworded parameters that will be initally used. 
+                            This is better used to set the base kw parameters that the majority of the UI Elements will share.
+    """
     while True:
         id_, command, position, size, new_kwargs = yield
         params.update(new_kwargs)
@@ -74,6 +114,16 @@ def generate_ui_elements_different_sizes(results, thread_list, user_event_id, **
 
 @run_async
 def create_main_menu(result, test=False):
+    """Creates the main menu, with all its elements. 
+    Buttons contains: Start game, Start new online game, Continue last game (Grayed out at the start), Game, sound, and graphic settings.
+    This method is threaded, that meants that it will return the thread working on it, and the final result will be contained in an input structure.
+    If test is True, the three settings buttons are not created (to save time).
+    Args:
+        result (list): List that will contain the created menu once the thread finishes.
+        test (boolean, default=False): Test flag. False means normal execution, True fastest execution for fast debugging.
+    Returns:
+        (obj: threading.Thread):    Thread working in the creating of the menu.
+    """
     #Create elements, main menu buttons (POSITIONS AND SIZES ARE IN PERCENTAGES OF THE CANVAS_SIZE, can use absolute integers too)
     elements_ammount = 3 if test else 6
     positions       = UtilityBox.size_position_generator(elements_ammount, 0.40, 0.05, 0.20, 0)
@@ -102,6 +152,19 @@ def create_main_menu(result, test=False):
 
 @run_async
 def create_game_menu(result):
+    """Creates the game  menu, with all its elements. 
+    Buttons contains: Player vs Computer, Computer vs computer, Player vs Player, the IA settings used in the case of a computer player, and
+        a top button Play tutorial (If its the first time that you initiated the game), or a bottom button Replay tutorial.
+
+    The detection of the first time is done by trying to find the user UUID file. If it doesn't exist, its the first time the this game has been started,
+        and will be created at a later date.
+
+    This method is threaded, that meants that it will return the thread working on it, and the final result will be contained in an input structure.
+    Args:
+        result (list): List that will contain the created menu once the thread finishes.
+    Returns:
+        (obj: threading.Thread):    Thread working in the creating of the menu.
+    """
     firstTime = False
     try:
         open(PATHS.UUID_FILE, "rb")
@@ -137,6 +200,16 @@ def create_game_menu(result):
 
 @run_async
 def create_online_menu(result):
+    """Creates the online menu, with all its elements. 
+    Buttons contains: Host public game, host private game, connect to public server, and to private server.
+    The IA settings used in the case of a computer player, and
+
+    This method is threaded, that meants that it will return the thread working on it, and the final result will be contained in an input structure.
+    Args:
+        result (list): List that will contain the created menu once the thread finishes.
+    Returns:
+        (obj: threading.Thread):    Thread working in the creating of the menu.
+    """
     #Create elements, main menu buttons (POSITIONS AND SIZES ARE IN PERCENTAGES OF THE CANVAS_SIZE, can use absolute integers too)
     positions       = UtilityBox.size_position_generator(7, 0.40, 0.05, 0.20, 0)
     button_size     = next(positions)
@@ -162,6 +235,15 @@ def create_online_menu(result):
 
 @run_async
 def create_config_menu(result):
+    """Creates the configuration menu of the game, with all its elements. 
+    Each button has a explicative dialog that is shown when the middle mouse button is presesd.
+
+    This method is threaded, that meants that it will return the thread working on it, and the final result will be contained in an input structure.
+    Args:
+        result (list): List that will contain the created menu once the thread finishes.
+    Returns:
+        (obj: threading.Thread):    Thread working in the creating of the menu.
+    """    
     button_size = (0.60, 0.15)
     positions   = UtilityBox.size_position_generator_no_adjustment(*button_size, 0.05, 0.15)
     gradients   = UtilityBox.looped_rainbow_gradient_generator(((255, 0, 0), (0, 0, 0)), 3)
@@ -192,6 +274,15 @@ def create_config_menu(result):
 
 @run_async
 def create_sound_menu(result):
+    """Creates the configuration menu of the game sound and music, with all its elements. 
+    Each button has a explicative dialog that is shown when the middle mouse button is presesd.
+
+    This method is threaded, that meants that it will return the thread working on it, and the final result will be contained in an input structure.
+    Args:
+        result (list): List that will contain the created menu once the thread finishes.
+    Returns:
+        (obj: threading.Thread):    Thread working in the creating of the menu.
+    """        
     #Sliders/buttons of the music and sound menu
     positions           = UtilityBox.size_position_generator(6, 0.80, 0.05)
     element_size        = next(positions)
@@ -215,6 +306,15 @@ def create_sound_menu(result):
 
 @run_async
 def create_video_menu(result):
+    """Creates the configuration menu of the game graphics, with all its elements. 
+    Each button has a explicative dialog that is shown when the middle mouse button is presesd.
+
+    This method is threaded, that meants that it will return the thread working on it, and the final result will be contained in an input structure.
+    Args:
+        result (list): List that will contain the created menu once the thread finishes.
+    Returns:
+        (obj: threading.Thread):    Thread working in the creating of the menu.
+    """    
     positions           = UtilityBox.size_position_generator(5, 0.60, 0.10, 0.10, final_offset=0.15)
     button_size         = next(positions)
     #Creation of elements
@@ -234,6 +334,10 @@ def create_video_menu(result):
     result.append(graphics_menu)
 
 def create_board_params():
+    """Creates the board parameters for its initialization. Apart from settings paths and doing assignations to a dict,
+        it also creates any animation if its configured this way (heavy computational tasks).
+    Returns:
+        (Dict): Dict with all the parameters to use as input arguments when creating the Board."""b
     board_params = {}
     bg = AnimationGenerator.factory(STRINGS.INITIAL_ANIMATED_BG, INIT_PARAMS.INITIAL_RESOLUTION, PARAMS.ANIMATION_TIME, INIT_PARAMS.ALL_FPS, INIT_PARAMS.INITIAL_FPS)
     board_params['cell_border'] = PATHS.CELL_GOLDEN_BORDER 
@@ -253,31 +357,28 @@ def create_board_params():
 
 @time_it
 @no_size_limit
-def pre_start():
+def pre_start(test=False):
+    """First method called. Start the pygame params and does the first drawing while everything loads.
+    This loading includes creating the menus, the game instance, adding those menus, and returning the resulting game instance.
+    Returns:
+        (obj: Game):    Game instance, result of everything above mentioned. It also contains the board params for when the game starts.
+    """
     start_pygame()
     draw_start_bg()
     game = Game('sava_drow', INIT_PARAMS.INITIAL_RESOLUTION, INIT_PARAMS.INITIAL_FPS)
     menus = []
-    threads = [create_main_menu(menus), create_sound_menu(menus), create_config_menu(menus), create_video_menu(menus), create_game_menu(menus), create_online_menu(menus)]
+    threads = [create_main_menu(menus), create_game_menu(menus), create_online_menu(menus)]
+    if not test:
+        threads.append(create_sound_menu(menus), create_config_menu(menus), create_video_menu(menus))
     for menu_end_event in threads: menu_end_event.wait()
     game.add_screens(*menus)
     game.update_board_params(**create_board_params())
     return game
 
-@time_it
-@no_size_limit
-def pre_start_test():
-    start_pygame()
-    draw_start_bg()
-    game = Game('sava_drow', INIT_PARAMS.INITIAL_RESOLUTION, INIT_PARAMS.INITIAL_FPS)
-    menus = []
-    threads = [create_main_menu(menus, test=True), create_game_menu(menus), create_online_menu(menus)]
-    for menu_end_event in threads: menu_end_event.wait()
-    game.add_screens(*menus)
-    game.update_board_params(**create_board_params())
-    return game
-    
 def draw_start_bg():
+    """Draws the first scene on screen. It only draws once, so it doesn't steal processor cycles from the
+    heavier tasks of loading and creating elements.
+    Right now it only creates a surface of a local image of a landscape, and draws it."""
     start_bg = ResizedSurface.get_surface(PATHS.START_BG, INIT_PARAMS.INITIAL_RESOLUTION, 'fill', False)
     pygame.display.get_surface().blit(start_bg, (0, 0))
     pygame.display.flip()
@@ -286,8 +387,6 @@ if __name__ == "__main__":
     arguments = tuple(arg[1:] for arg in sys.argv if arg[0]=='-')
     print("All arguments are: "+str(sys.argv))
     print("Valid arguments are: "+str(arguments))
-    if any('test' in arg for arg in arguments):
-        game = pre_start_test() 
-    else:
-        game = pre_start()
+    test = True if any('test' in arg for arg in arguments) else False
+    game = pre_start(test=test) 
     game.start('main', 'menu')

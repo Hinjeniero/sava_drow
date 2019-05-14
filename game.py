@@ -5,7 +5,7 @@ Have the following classes:
     Game
 --------------------------------------------"""
 __all__ = ['Game']
-__version__ = '0.5'
+__version__ = '0.9'
 __author__ = 'David Flaity Pardo'
 
 #Python librariess
@@ -18,6 +18,7 @@ import uuid
 from pygame.locals import *
 from pygame.key import *
 from obj.screen import Screen
+
 #Selfmade Libraries
 from dialog_generator import DialogGenerator
 from obj.utilities.decorators import run_async
@@ -36,7 +37,42 @@ from settings import PATHS, USEREVENTS, SCREEN_FLAGS, INIT_PARAMS, PARAMS
 from animation_generator import AnimationGenerator
 
 class Game(object):
+    """Game class. Overseer of the entire underlying structure.
+    Takes care of changing the screens, of redirecing the inputs, redirecting the events produced
+        in each of the screens, managing execution according to parameters and, in short, to connect everything.
+    Attributes:
+        id (int): Identifier of this game instance.
+        uuid (int): Unique identifier of game instance. It is contained in a local file, and it's created if it's missing.
+        display (obj: pygame.Surface): Current root surface that will be displayed to the user.
+        clock (obj: pygame.time.Clock): Clock that will synchronize and control the game framerate.
+        screens (List->Screen): All of the screens of this game. A screen is akin to a complete change of context 
+                        (Menu is a screen, and the board is a different one).
+        started (Boolean):  Flag that signals when the game itself (A board) had been created and its in execution.
+        resolution (:tuple: int, int): Resolution of the screen. In pixels. The display surface will have this initial resolution.
+        fps (int):  Current frames per second (Times that the display surface is updated in a second).
+        fps_text (:obj: pygame.Surface):    Text of the current fps achieved. Useful to show if we are pushing our computer too far (Not reaching stable fps).
+        last_inputs (List->String): Saves the latest keystrokes of the player. Useful to trigger easter eggs.
+        last_command (String):  Last command received from a dialog. Switches between a value and None. Used to know when a dialog was just shown and when
+                                to execute the command contained within it.
+        current_screen (:obj: Screen):  The screen that the game is currently at.
+        board_generator (:obj: BoardGenerator): Object with the task of creating the Board/NetworkBoard with the configuration parameters setted beforehand by the user.
+        popups (:obj: pygame.sprite.Group): Subtype of Group that holds the different popups or messages that will be shown in the different situations.
+        fullscreen (boolean): Flag that shows if the game is currently in Fullscreen mode or Windowed mode.
+        count_lock (:obj: threading.Lock): Lock that restrict the access to the countdown variable to one thread at the same time.
+        countdown (int): Counter of the seconds that have passed since the game was created. Useful with programmed executions.
+        waiting_for (List->Tuple->(Int:Tuple)):     List of programmed tasks. The first member of the tuple is the second of execution (Counting from the issuing),
+                                                    and the second member is a tuple like this: (method_direction, *args, **kwargs)<
+        todo (List->Tuple->(Method, List, Dict)):   Structure with the tasks that have to be execute already, since their countdown have been reached. 
+                                                        The tasks in here are taken care of as soon as possible, in order of arrival.
+    """
     def __init__(self, id_, resolution, fps, **board_params):
+        """Game constructor.
+        Args:
+            id_ (int): Identifier of this game instance.
+            resolution (:tuple: int, int): Initial resolution of the screen. In pixels.
+            fps (int):  Initial frames per second (Times that the display surface is updated in a second).
+            board_params (Dict-> Any:Any):  Initial input params that will be used in BoardGenerator (To create a board).
+        """
         self.id             = id_
         self.uuid           = None  #Created in Game.start()
         self.display        = None  #Created in Game.generate()
@@ -48,19 +84,23 @@ class Game(object):
         self.fps_text       = None
         self.last_inputs    = []    #Easter Eggs 
         self.last_command   = None
-        self.game_config    = {}    #Created in Game.generate()
         self.current_screen = None  #Created in Game.start()
         self.board_generator= None  #Created in Game.generate()
         self.popups         = pygame.sprite.OrderedUpdates()  
         self.fullscreen     = False
         self.count_lock     = threading.Lock()
         self.countdown      = 0
-        self.waiting_for    = []  #Waiting for second tuple[0], to do method tuple[1]
+        self.waiting_for    = []
         self.todo           = []
         Game.generate(self)
 
     @staticmethod
     def generate(self):
+        """Generate method. It's called at the end of the constructor.
+        This method complete the object by checking if the uuid file exists, creating the display surface,
+            creating the board generator, and setting the timers. In short, it handles the heavy tasks of the constructor.
+        Args:
+            self (:obj: Game):  Instance of the object that will be modified accordingly."""
         pygame.display.set_mode(self.resolution)
         self.generate_uuid()
         self.display = pygame.display.get_surface()
@@ -68,6 +108,8 @@ class Game(object):
         self.set_timers()
 
     def generate_uuid(self):
+        """Checks if the game's folder contains the UUID file. If it does, it loads it in memory. 
+        Otherwise, it is created and saved in a file for future loads."""
         try:
             uuid_file = open(PATHS.UUID_FILE, "rb")
             self.uuid = pickle.load(uuid_file)
@@ -80,15 +122,27 @@ class Game(object):
             LOG.log('info', "UUID was not found, generated a new one. Your new UUID is ", self.uuid) 
 
     def set_timers(self):
+        """Set and starts the pygame timers. Right now, there is only one, 
+        triggering an event each second, to signal that a second has passed."""
         pygame.time.set_timer(USEREVENTS.TIMER_ONE_SEC, 1000) #Each second
 
     def __add_timed_execution(self, second, method, *args, **kwargs):
-        """Dunno the effects of this if this is called from another class.
-        The seconds are the seconds from this instant, not in absolute terms."""
+        """Add a scheduled execution of a method. The input arguments specify the details.
+        Not tested from another class.
+        The second argument means the seconds from the instant this methos is called, not in absolute terms.
+        Args:
+            second (int): Seconds until teh future instant in which the method will be scheduled to be executed.
+            method (callback):  Method itself to be executed. Being a cb, has to be the direction of the method, not the call (not parenthesis)
+            args (Tuple->Any):  Input saguments of the method call.
+            kwargs (Dict->Any:Any): Keyworded input arguments of the method call.
+        """
         self.waiting_for.append((int(self.countdown+second), method, args, kwargs))
         self.waiting_for.sort(key=lambda method: method[0])
 
     def add_screens(self, *screens):
+        """Add all of the input screens to the game instance.
+        Args:
+            screens (Tuple->Screen): The screen instances to be added."""
         for screen in screens:
             if isinstance(screen, Screen):
                 self.screens.append(screen)
@@ -96,15 +150,20 @@ class Game(object):
                 raise InvalidGameElementException('Can`t add an element of type '+str(type(screen)))
 
     def user_command_handler(self, event):
-        """Ou shit the user command handler, good luck m8
-        USEREVENT+0: Change of screens
-        UESREVENT+1: Change in sound settings
-        USEREVENT+2: Change in graphic settings
-        USEREVENT+3: Change in board configuration settings
-        USEREVENT+4: Action in board. Unused rn.
-        USEREVENT+5: Action in dialogs/etc. Unused rn.
-        USEREVENT+6: Signals the end of the current board.
-        USEREVENT+7: Called every second. Timer.
+        """Method that handles all of the custom made commands and events (Greated that pygame.USEREVENT).
+        Takes care of the MAINMENU events in the method itself, and the rest of them are redirected to their matching methods.
+        Modularization at its finest. The custom events are numerated in the following manner:
+            USEREVENT+0: Change of screens
+            UESREVENT+1: Change in sound settings
+            USEREVENT+2: Change in graphic settings
+            USEREVENT+3: Change in board configuration settings
+            USEREVENT+4: Action in board. Unused rn.
+            USEREVENT+5: Action in dialogs/etc. Unused rn.
+            USEREVENT+6: Signals the end of the current board.
+            USEREVENT+7: Called every second. Timer.
+        Args:
+            event (pygame.Event): Event object that will be analyzed to trigger an action.
+                                An event object in this game has a type, a command, and sometimes a value as attributes.
         """
         try:
             if event.type < pygame.USEREVENT:       
@@ -175,6 +234,9 @@ class Game(object):
             LOG.error_traceback()
 
     def end_board(self, win=False):
+        """Makes the actions that show the end of a game. Shows a lose or win popup, and makes you go back to the main menu after a set time.
+        Args:
+            win (boolean, default=False): Flag that is True if you won the game, and False otherwise."""
         if win:
             self.show_popup('win')
         else:
@@ -183,12 +245,17 @@ class Game(object):
         self.__add_timed_execution(7, self.restart_main_menu)
 
     def restart_main_menu(self):
+        """Restarts the state of the game, returning to the main menu and disabling any ways to go back to the last game (board screen)."""
         self.started = False
         self.change_screen('main', 'menu')
         self.get_screen('params', 'menu', 'config').enable_all_sprites(True)
         self.get_screen('main', 'menu').enable_sprites(False, 'continue')
 
     def dialog_handler(self, command, value=None):
+        """Handles all the events related to Dialogs.
+        Args:
+            command (String):   Specific command that the event holds, describes the action to trigger.
+            value (Any, default=None):  Sometimes an action will require a value. This one fills that necessity."""
         print("COMMAND IN DIALOG "+command+" WITH VALUE "+str(value))
         if 'ip' in command and 'port' in command:   #From table of servers
             try:
@@ -223,6 +290,9 @@ class Game(object):
             LOG.log('warning', 'the command ',command,' is not recognized.')
 
     def config_handler(self, command, value):
+        """The events that are related to the configuration of parameters, are checked in this method.
+            command (String):   Specific command that the event holds, describes the action to trigger.
+            value (Any):  Value to set/change in the specific option or parameter""" 
         characters = ('pawn', 'warrior', 'wizard', 'priestess', 'matron')
         if 'computer' in command:
             if 'player' in command:
@@ -260,6 +330,9 @@ class Game(object):
                 self.board_generator.set_board_params(random_filling=False)
 
     def board_handler(self, command, value=None):
+        """Board events and NetworkBoard events method. 
+            command (String):   Specific command that the event holds, describes the action to trigger.
+            value (Any, default=None):  Sometimes an action will require a value. This one fills that necessity."""
         if 'turn' in command:
             self.show_popup('turn')
         elif 'dice' in command: #The current player shuffled the dice
@@ -275,6 +348,9 @@ class Game(object):
                 self.show_popup('enemy_admin_off')
 
     def graphic_handler(self, command, value):
+        """Graphic options related method. Those events will come to here.
+            command (String):   Specific command that the event holds, describes the action to trigger.
+            value (Any):    Value to set/change in the specific option or parameter."""
         if 'fps' in command:          
             self.fps = value
             for screen in self.screens:
@@ -296,6 +372,10 @@ class Game(object):
                 self.set_background(self.get_screen('board'), value)
 
     def set_resolution(self, resolution):
+        """Changes the resolution of the game context. Achieves this by changing the attributes that show the current resolution,
+        and by changing all the surfaces sizes. Pretty taxing method, since in most cases the surfaces are created again with the new params.
+        Args:
+            resolution ((int, int)): New resolution to change to. In pixels. Only one tuple."""
         self.resolution = resolution
         if self.fullscreen:
             self.display = pygame.display.set_mode(self.resolution, SCREEN_FLAGS.FULLSCREEN)
@@ -310,13 +390,21 @@ class Game(object):
 
     @run_async
     def set_background(self, screen, new_bg_id):
+        """Sets a new animated background to the input screen. The input bg id must match with some of the prefabbed ids
+        in the factory method in animation_generator.py.
+        Args:
+            screen (:obj: Screen):  Screen to which to create and add the new animated background.
+            new_bg_id (String): Identifier of the desired animated background to create and add.""" 
         new_animated_bg = AnimationGenerator.factory(new_bg_id, self.resolution, PARAMS.ANIMATION_TIME,\
                                                     INIT_PARAMS.ALL_FPS, self.fps)
         screen.animated_background = True
         screen.background = new_animated_bg
 
     def sound_handler(self, command, value):
-        """Kinda an unconventional method, calls the whatever method """
+        """Sound and music related events are taken care of by this method.
+        Args:
+            command (String):   Specific command that the event holds, describes the action to trigger.
+            value (Any):    Value to set/change in the specific option or parameter."""
         #Getting the affected screens:
         sound = True if 'sound' in command else False
         music = True if 'song' in command or 'music' in command else False
@@ -337,6 +425,11 @@ class Game(object):
                 self.call_screens_method('board', Screen.set_song, value)
 
     def event_handler(self, events):
+        """Even if it's called event handler, what this method does is detecting the user inputs (By keyboard and mouse), and
+        processing them/redirect them to whichever screen, in a case by case basis.
+        Args:
+            events (List->pygame.Event):    All the input events that are still stuck in the event queue that pygame provides.
+        """
         all_keys            = pygame.key.get_pressed()          #Get all the pressed keyboard keys
         all_mouse_buttons   = pygame.mouse.get_pressed()        #Get all the pressed mouse buttons
         mouse_pos           = pygame.mouse.get_pos()            #Get the current mouse position

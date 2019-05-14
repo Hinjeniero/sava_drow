@@ -1,10 +1,10 @@
 """--------------------------------------------
-Main module. Starts everything. File that you should call as argument with 
+main module. Starts everything. File that you should call as argument with 
 your python version. Also calls an instance of the overseer class Game and initiates it.
 Creates the menus and adds them all to the Game instance.
 In short, the Main file.
 --------------------------------------------"""
-__version__ = '0.6'
+__version__ = '1.0'
 __author__ = 'David Flaity Pardo'
 
 #Python librariess

@@ -1,10 +1,5 @@
 FONT = './local/zelda_font.ttf'
-#MONOSPACED_FONT = './local/HyliaSerifBeta.ttf'
 MONOSPACED_FONT = './local/ShareTechMono.ttf'
-
-#ENGLISH
-
-#SPANISH
 
 #References
 MAIN_MENU = ()
@@ -16,9 +11,11 @@ INFOBOARD = ()
 #HELP_DIALOGS_TEXT
 #CONFIG_MENU
 class CONFIG_BOARD_DIALOGS:
+	"""Strings that appear on each row of the table of servers when searching for public servers"""
     SERVER_TABLE_KEYS = ('NAME', 'IP', 'PORT', 'PLAYERS', 'DEPLOYMENT')
 
 class CONFIG_MENU_DIALOGS:
+	"""Help dialogs that appear in the configuration menu. They appear when middle-clicking each option, explaining what this one changes."""  
     CELL_TEXTURE_DIALOG= "This setting changes the appearance of the cells. The Basic option is just plain wood, the dark one is some kind of obsidian stone,"+\
             "and the double is slightly darker wood than the basic with a silver ring around it."
     LOADING_SCREEN_DIALOG="True shows a loading screen while the board itself is filled with characters, False shows the board and the characters appear as"+\
@@ -50,6 +47,7 @@ class CONFIG_MENU_DIALOGS:
     HOLY_CHAMPIONS_NUMBER_DIALOG="Number of holy champions per player. If the total number of characters surpass the free cell zones for each player, the board won't be spawned."
 
 class TUTORIAL:
+	"""Help dialogs that appear in the tutorial. Some of them appear in order, and some when interacting with some element for the first time."""
     MESSAGE_BOARD = "This is the board. It's composed of the cells themselves, placed in a circular shape. We will call the circles 'circumferences', and the paths that connect between them rank or interpath."
     MESSAGE_MOVE_PAWN = "The pawn can move one space along any circumferences or rank, as long as the movement brings them closer to an enemy piece."
     MESSAGE_DESTINIES_BLINKING = "The possible destinies appear when you pick up any character."

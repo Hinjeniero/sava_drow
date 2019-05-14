@@ -1,8 +1,9 @@
 import pygame
 import os
 
-#PYGAME_USEREVENTS
 class USEREVENTS:
+    """Identificators of each type of custom event that we create and detect.
+    Each ID is a value between 24 (int until it are reserved for pygame) and 32 (max number allowed)"""
     MAINMENU_USEREVENT  = pygame.USEREVENT
     SOUND_USEREVENT     = pygame.USEREVENT+1
     GRAPHIC_USEREVENT   = pygame.USEREVENT+2
@@ -12,9 +13,9 @@ class USEREVENTS:
     END_CURRENT_GAME    = pygame.USEREVENT+6
     TIMER_ONE_SEC       = pygame.USEREVENT+7
 
-#GLOBAL VARIABLES, LIKE ALL THE FPS ALLOWED; ETC; ETC
-#---Graphics/PARAMS
 class INIT_PARAMS:
+    """Global variables that will hold each parameter of the game's configuration.
+    The names are pretty self-explanatory, so no problem there."""
     INITIAL_RESOLUTION = (1280, 720)
     RESOLUTIONS = (INITIAL_RESOLUTION, (1366, 768), (1600, 900), (1920, 1080), (256, 144), (640, 360), (848, 480), (1024, 576))
     INITIAL_FPS = 60
@@ -24,14 +25,17 @@ class INIT_PARAMS:
     GAME_NAME   = 'Sava Drow'
 
 class PARAMS:
-    BOARD_ID = 'main_board'
-    IA_MODES = ('Totally random', 'Half random-fitness', 'Fitness best move', 'Alpha-beta', 'Monte Carlo Search') 
-    PLAYERS_AMMOUNT = (2, 4, 1) #1 is for testing
-    IA_PLAYERS = (1, 2, 3) #1 is for testing
-    ANIMATION_TIME = 25
-    NUM_THREADS = 32
+    """Hold some of the options for configurations and some default parameters. Further comments in the not so clear ones."""
+    BOARD_ID = 'main_board' 
+    IA_MODES = ('Totally random', 'Half random-fitness', 'Fitness best move', 'Alpha-beta', 'Monte Carlo Search')   #All possible IA modes strings. 
+    PLAYERS_AMMOUNT = (2, 4, 1)     #ALl possible ammounts of total players in a game. 1 is for testing
+    IA_PLAYERS = (1, 2, 3)          #ALl possible ammounts of computer controlled players in a game. If we want 4, choose 4 playeres and computer vs computer.
+    ANIMATION_TIME = 25     #TODO Being honest, I dont remember what this was for. Will have to come back later.
+    NUM_THREADS = 32    #Max number of concurrent active threads when drawing threads from the threading pool (Normal run_async decorator).
 
 class CHARACTERS:
+    """Default variables that regard the characters. They are used when creating an instance of that class or any of it's subclasses."""
+    #Default ammount of each subclass of character in a classic board.
     PAWN_AMMOUNT = 8
     WARRIOR_AMMOUNT = 2
     WIZARD_AMMOUNT = 2
@@ -45,16 +49,18 @@ class CHARACTERS:
                     'matron_mother':{'ammount': MATRONMOTHER_AMMOUNT},
                     'holy_champion':{'ammount': HOLYCHAMPION_AMMOUNT}
     }
+    
+    #All options for the ammount of each subclass, when the user chose custom game mode. 
+    #Take care, since if the total number of characters is greater than the spaces designated for each player (in a board), you will receive an error.""
     PAWN_OPTIONS = (PAWN_AMMOUNT, 16, 24, 32, 0, 4)
     WARRIOR_OPTIONS = (WARRIOR_AMMOUNT, 4, 6, 8, 0, 1)
     WIZARD_OPTIONS = (WIZARD_AMMOUNT, 4, 6, 8, 0, 1)
     PRIESTESS_OPTIONS = (PRIESTESS_AMMOUNT, 4, 6, 8, 0, 1)
     MATRONMOTHER_OPTIONS = (MATRONMOTHER_AMMOUNT, 2, 4)
     HOLYCHAMPION_OPTIONS = (HOLYCHAMPION_AMMOUNT, 1, 2, 4)
-    '''__default_config (:dict:): Contains parameters about the actions aliases. Those aliases are highly dependent
-        on how your images are named. It's kind like a parser of those names, since series of sprites are not always
-        named the same. Another workaround is name those series of images with the same as the default alias.
-        In that way you will link each action in the folder (divided in sprites), with each action here in the character.'''
+
+    #Aliases of each action. The aliases are just a way to associate an action of the character (key) with the name
+    #of the frames (images in your hard disk) that you want to show when performing that action.
     DEFAULT_ALIASES = {"idle" : "idle", "fight" : "fight", "attack" : "attack", "pickup" : "pickup",\
                         "drop" : "drop", "action" : "action", "die" : "die", "stop": "stop"}
     PAWN_ALIASES = {'pickup': 'running'}
@@ -65,28 +71,35 @@ class CHARACTERS:
     HOLYCHAMPION_ALIASES = {'pickup': 'pick'}
 
 class SOUND_PARAMS:
-    SOUND_CHANNELS_AMMOUNT = 8
-    INIT_VOLUME = 0.01
+    """Parameters of the sound of the game."""
+    SOUND_CHANNELS_AMMOUNT = 8  #Maximum simultaneous sound channels
+    INIT_VOLUME = 0.01          #Initial sound volume. Go with caution, it can be VERY loud.
 
 #---Miscellaneous
 class SCREEN_FLAGS:
+    """Screen flags that will be used when the game is in fullscreen or window-mode.
+    Don't touch without reading the pygame documentation portraying this."""
     FULLSCREEN  = pygame.HWSURFACE | pygame.FULLSCREEN | pygame.DOUBLEBUF
     WINDOWED    = pygame.DOUBLEBUF
 
 class SIZES:
+    """Image size parameters. The MAX_SURFACE_SIZE is the maximum axis size than a loaded image can have.
+    Without it, the game ate more RAM than a multitab google chrome session. Can be deactivated using the no_max_size decorator."""
     MAX_SURFACE_SIZE = 256
     
 class EXTENSIONS:
+    """Accepted formats in each of the cases."""
     SOUND_FORMATS = ('.ogg', '.mp3')
     MUSIC_FORMATS = ('.ogg', '.mp3')
     IMAGE_FORMATS = ('.png', '.jpg', '.jpeg', 'bmp', '.gif', '.tga', '.pcx', '.tif', '.lbm', '.pbm', '.xbm')
 
 class STRINGS:
-    #Strings, but not related to texts, more like names and shit
-    CHARS_PER_LINE = 36
+    """Strings that make up all the configuration options on the different menus. There is also some list/tuples with other purposes tho.
+    Also contain parameters related to texts."""
+    CHARS_PER_LINE = 36 #When using the return_lines_number method in utility_box.py, it will calculate the result according to this.
     GAMEMODES = ('Custom', 'Classic', 'Great Wheel')
-    BOARD_SIZES = ('Normal', 'Lite', 'Small', 'Extra', 'Huge', 'Insane', 'MemoryError')
     PLAYER_NAMES = ['Mitches', 'Hayesshine', 'Rolbo Gordonggins', 'Spencerpop', 'Palka', 'Rainrobinson', 'Kingolas', 'Zippotudo',
+    BOARD_SIZES = ('Normal', 'Lite', 'Small', 'Extra', 'Huge', 'Insane', 'MemoryError')
                     'Zimrcia', 'Coxobby Ohmswilson', 'Uwotm8', 'Orangeman', 'npc', 'Totallynot Arobot', 'Bigba Lshanging']
     SPRITE_NAMES = ('Manolo', 'Eustaquio', 'Zimamamio')
     MOVE_KEYWORDS = ('run', )
@@ -97,27 +110,30 @@ class STRINGS:
                     'Animated rain china', 'Animated waterfall cave', 'Layered industrial')
     CELLS = ('Basic', 'Dark', 'Bordered')
     IA_MODES = ('Fitness choosing', 'Alpha Beta deepening', 'Learning Machine')
+
 #STATE MACHINES
 class STATES:
+    """Possible states for a screen. Unused right now, very useful for future expansions."""
     SCREEN = ('idle', 'stopped', 'cutscene')
 
 class NETWORK:
+    """Network settings, used when connecting to other players, be it in LAN or through the internet"""
     #Settings if yo are the server
-    SERVER_ALIAS = 'TEST_SERVER'
-    SERVER_REFRESH_TIME = 1
-    SERVER_CONNECTION_REFRESH = 1
+    SERVER_ALIAS = 'TEST_SERVER'    #The name that your server will have in the community list if you set it to public
+    SERVER_REFRESH_TIME = 1         #Refresh time of the server
+    SERVER_CONNECTION_REFRESH = 1   #Refrest time of the server connection
     SERVER_CONNECTION_TIMEOUT = 30
     SERVER_IP = '0.0.0.0'
     SERVER_PORT = 6397
     #Settings to connect to
-    CLIENT_LOCAL_IP = '127.0.0.1'    #USED IF IM THE SERVER
     CLIENT_IP = '192.168.1.254'      #USED TO CONNECT TO AN EXTERNAL COMPUTER AS A SERVER
+    CLIENT_LOCAL_IP = '127.0.0.1'    #USED IF IM THE SERVER
     CLIENT_TIMEOUT_CONNECT = 30
     CLIENT_TIMEOUT_RECEIVE = 30
     #URLS
     GET_IP = 'http://jsonip.com'
     #TABLE_SERVERS_URL = 'http://savadrow.servegame.com'
-    TABLE_SERVERS_URL = 'http://192.168.1.254'
+    TABLE_SERVERS_URL = 'http://192.168.1.254'  #Direction of the host of the node service returning the public servers
     TABLE_SERVERS_PORT = 9001
     TABLE_SERVERS_ADD_ENDPOINT = TABLE_SERVERS_URL+':'+str(TABLE_SERVERS_PORT)+'/host/add'
     TABLE_SERVERS_UPDATE_ENDPOINT = TABLE_SERVERS_URL+':'+str(TABLE_SERVERS_PORT)+'/host/update'
@@ -125,11 +141,12 @@ class NETWORK:
     TABLE_SERVERS_GET_ALL_ENDPOINT = TABLE_SERVERS_URL+':'+str(TABLE_SERVERS_PORT)+'/host/get/all'
     
 class MESSAGES:
+    """Messages used in recurrent errors with the pygame library."""
     LOCKED_SURFACE_EXCEPTION = ('Warning', 'A surface was locked during the blit, skipping until next frame.')
 
-#PATHS TO FILES/IMAGES/SOUNDS
-#---Global paths(Container paths)
 class PATHS:
+    """Contain all the global paths to every local element needed in the game. (FILES/IMAGES/SOUNDS)"""
+    #Folders
     ROOT_FOLDER = os.path.dirname(__file__)
     ASSETS_FOLDER = os.path.join(ROOT_FOLDER, 'local\\')
     IMAGE_FOLDER = os.path.join(ASSETS_FOLDER, 'img\\')
@@ -138,8 +155,9 @@ class PATHS:
     SOUNDS_FOLDER = AUDIO_FOLDER+'common\\'
     SECRET_FOLDER = AUDIO_FOLDER+'secret\\'
     AVATAR_FOLDER = IMAGE_FOLDER+'avatars\\'
-    #uuid
-    UUID_FILE = ASSETS_FOLDER+'myid.sav'
+    
+    UUID_FILE = ASSETS_FOLDER+'myid.sav'    #Your user UUID file, generated only once. Will serve as your session ID too.
+    
     #Characters
     PAWN = IMAGE_FOLDER+'Pawn'
     WIZARD = IMAGE_FOLDER+'Wizard'
@@ -148,7 +166,8 @@ class PATHS:
     MATRONMOTHER = IMAGE_FOLDER+'Matronmother'
     HOLYCHAMPION = IMAGE_FOLDER+'Matronmother'
     SANS = IMAGE_FOLDER+'sans_hd'
-    #---Specific paths, animation_generator
+    
+    #Char and sprites used in animations (animated backgrounds and such)
     CHARS = (PAWN, WARRIOR, WIZARD, PRIESTESS,MATRONMOTHER)
     DOOR = IMAGE_FOLDER+'Portal'
     ANIMATED_TREE = IMAGE_FOLDER+'Tree'
@@ -159,17 +178,20 @@ class PATHS:
     INDUSTRIAL_LAYERED_BG = IMAGE_FOLDER+'Industrial'
     EXPLOSIONS = IMAGE_FOLDER+'Explosion'
     ALL_EXPLOSIONS = ['Small', 'Normal', 'big', 'nuclear', 'bomb', 'supernova']
-    #---Main, the songs folders
+    
+    #Audio folders, separated by screens
     MENU_SONGS = AUDIO_FOLDER+'menu'
     BOARD_SONGS = AUDIO_FOLDER+'board'
     COMMON_SONGS = AUDIO_FOLDER+'common_music\\'
-    #---Screen
+    
+    #Sprites and static backgrounds used by the Screen class and LoadingScreen subclass
     DEFAULT_BG = IMAGE_FOLDER+'background.jpg'
     LOADING_BG = IMAGE_FOLDER+'loading_background.png'
     START_BG = IMAGE_FOLDER+'start_background.png'
     LOADING_STATIC_CIRCLE = IMAGE_FOLDER+'loading_circle.png'
     LOADING_ANIMATED_CIRCLE = ''
-    #---Menus, buttons and such
+    
+    #Menu sprites, buttons, infoboards and dialogs
     LONG_POPUP = IMAGE_FOLDER+'pixel_panel_2.png'
     SHORT_BUTTON = IMAGE_FOLDER+'button.png'
     SHORT_GOLD_BUTTON = IMAGE_FOLDER+'golden_button.png'
@@ -181,13 +203,15 @@ class PATHS:
     INFOBOARD = IMAGE_FOLDER+'infoboard.png'
     INFOBOARD_GRADIENT = IMAGE_FOLDER+'infoboard_02.png'
     DIALOG_SILVER = IMAGE_FOLDER+'dialog.png'
-    #---sliders
+    
+    #Menu sprites, sliders and filling bars
     BROWN_SLIDER = IMAGE_FOLDER+'brown_slider.png'
     GOLD_SLIDER = IMAGE_FOLDER+'gold_slider.png'
     BROWN_BAR = IMAGE_FOLDER+'brown_bar.png'
     RED_BAR = IMAGE_FOLDER+'basic_red_bar.png'
     BLUE_BAR = IMAGE_FOLDER+'blue_bar.png'
-    #---Board
+    
+    #Board elements, cells and circumferences
     CELL_BASIC = IMAGE_FOLDER+'cell_basic.png'
     DARK_CELL = IMAGE_FOLDER+'cell_dark.png'
     BORDERED_CELL = IMAGE_FOLDER+'cell_double.png'
@@ -196,21 +220,23 @@ class PATHS:
     THIN_CIRCUMFERENCE = IMAGE_FOLDER+'thin_circle.png'
     SCOREBOARD_BASIC = IMAGE_FOLDER+'scoreboard.png'
     LONG_RED_BAR = IMAGE_FOLDER+'long_red_bar.png'
-    #---Textures
+    
+    #Textures
     BASIC_TEXTURIZED_BG = IMAGE_FOLDER+'background_02.png'
     WOOD_TEXTURE_BASIC = TEXTURES_FOLDER+'wood.jpg'
     WOOD_TEXTURE_DARK = TEXTURES_FOLDER+'dark_wood.png'
     DARK_CAVE_TEXTURE = TEXTURES_FOLDER+'cave.png'
     GRASSLAND_TEXTURE = TEXTURES_FOLDER+'grassland.png'
     DESERT_TEXTURE = TEXTURES_FOLDER+'desert.png'
-    #---objects
+    DARK_BRICK = IMAGE_FOLDER+'cave_dark_brick.png'
+
+    #Misc objects
     CHEST = IMAGE_FOLDER+'chest.png'
     SHIELD = IMAGE_FOLDER+'shield.png'
     SHIELD_ICON = IMAGE_FOLDER+'shield_icon.png'
     DIAMOND_SPEAR = IMAGE_FOLDER+'diamond_spear.png'
     DICE_FOLDER = IMAGE_FOLDER+'dice\\'
+    
     #Icons
     HELP_ICON = IMAGE_FOLDER+'help_icon.png'
     WARNING_ICON = IMAGE_FOLDER+'warning_icon.png'
-    #Rectangles
-    DARK_BRICK = IMAGE_FOLDER+'cave_dark_brick.png'

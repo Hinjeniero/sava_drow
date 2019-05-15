@@ -7,15 +7,18 @@ __all__ = ['BoardGenerator']
 __version__ = '0.6'
 __author__ = 'David Flaity Pardo'
 
+#Python libraries
 import random
 import pygame
+
+#Selfmade libraries
+from settings import USEREVENTS, STRINGS, PARAMS, CHARACTERS, PATHS
 from obj.board import Board
 from obj.tutorial_board import TutorialBoard
 from obj.network_board import NetworkBoard
 from obj.board_server import Server
 from obj.utilities.logger import Logger as LOG
 from obj.utilities.decorators import time_it
-from settings import USEREVENTS, STRINGS, PARAMS, CHARACTERS, PATHS
 
 class BoardGenerator(object):
     def __init__(self, uuid):

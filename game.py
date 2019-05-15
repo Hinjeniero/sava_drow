@@ -493,7 +493,7 @@ class Game(object):
     def show_popup(self, id_):
         """Makes visible and active the popup that matches with the input id. If it's not found, a warning is shown in console.
         Args:
-            id_ (String):   Id os substring of that id to search for in the popup list."""
+            id_ (String):   Id or substring of that id to search for in the popup list."""
         for popup in self.popups:
             if id_ in popup.id or popup.id in id_:
                 popup.set_visible(True)
@@ -504,7 +504,7 @@ class Game(object):
     def get_popup(self, id_):
         """Returns the popup that matches with the input id.
         Args:
-            id_ (String):   Id os substring of that id to search for in the popup list.
+            id_ (String):   Id or substring of that id to search for in the popup list.
         Returns:
             (:obj: Dialog | None):  Returns the matching dialog if its found, but None if no one matches."""
         for popup in self.popups:

@@ -79,8 +79,8 @@ def generate_ui_elements(results, thread_list, element_size, user_event_id, **pa
                                         Can't be changed between elements.
         user_event_id (int):    Pygame event that the UI elements will return when interacted with.
                                 Can't be changed between elements.
-        **params (dict):    Keyworded parameters that will be initally used. 
-                            This is better used to set the base kw parameters that the majority of the UI Elements will share.
+        **params (Dict->Any:Any):   Keyworded parameters that will be initally used. 
+                                    This is better used to set the base kw parameters that the majority of the UI Elements will share.
     """
     while True:
         id_, command, position, new_kwargs = yield
@@ -104,8 +104,8 @@ def generate_ui_elements_different_sizes(results, thread_list, user_event_id, **
                             Such threads are useful to know when the elements are finished.
         user_event_id (int):    Pygame event that the UI elements will return when interacted with.
                                 Can't be changed between elements.
-        **params (dict):    Keyworded parameters that will be initally used. 
-                            This is better used to set the base kw parameters that the majority of the UI Elements will share.
+        **params (Dict->Any:Any):   Keyworded parameters that will be initally used. 
+                                    This is better used to set the base kw parameters that the majority of the UI Elements will share.
     """
     while True:
         id_, command, position, size, new_kwargs = yield

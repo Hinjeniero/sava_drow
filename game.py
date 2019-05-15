@@ -427,8 +427,13 @@ class Game(object):
     def event_handler(self, events):
         """Even if it's called event handler, what this method does is detecting the user inputs (By keyboard and mouse), and
         processing them/redirect them to whichever screen, in a case by case basis.
+        Some special cases are:
+            ALT+F4: Closes the game itself.
+            ESC:    Goes back to the main menu if possible, or show a confirmation dialog.
         Args:
             events (List->pygame.Event):    All the input events that are still stuck in the event queue that pygame provides.
+        Returns:
+            (boolean):  True if the received input leads to close the game, False otherwise. 
         """
         all_keys            = pygame.key.get_pressed()          #Get all the pressed keyboard keys
         all_mouse_buttons   = pygame.mouse.get_pressed()        #Get all the pressed mouse buttons
@@ -453,6 +458,8 @@ class Game(object):
         return False
 
     def process_last_input(self, event):
+        """Gets the last user input, and acts hiding the current visible popups (Popups hide when any button is clicked).
+        Also checks if the last_inputs structure is overloaded (Over 20 chars), and check the easter eggs to trigger the right one if matching. """ 
         self.hide_popups()
         if len(self.last_inputs) > 20:
             del self.last_inputs[0]
@@ -460,6 +467,7 @@ class Game(object):
         self.check_easter_eggs()
 
     def set_popups(self):
+        """Create the popups (Dialog instances), and adds them to the game itself."""
         self.add_popups(*DialogGenerator.generate_popups(self.resolution,\
                         ('secret_acho', 'Gz, you found a secret! all your SFXs will be achos now.'),\
                         ('secret_admin', 'Admin mode activated! You can move your character to any cell.'),\
@@ -471,16 +479,21 @@ class Game(object):
                         ('next_turn', 'It`s your turn! Wreak some havoc!'),\
                         ('connection_error', 'There was a connection error, check the console for details.'),\
                         ('enemy_admin_on', 'Other player activated the admin mode! Be careful!'),\
-                        ('enemy_admin_off', 'The admin mode was deactivated in another board.'),\
-                        ))
+                        ('enemy_admin_off', 'The admin mode was deactivated in another board.')))
 
     def add_popups(self, *popups):
+        """Add the input popups to the game.
+        Args:
+            (tuple->:obj: Dialog):  All the popups to add."""
         for popup in popups:
             popup.set_active(False)
             popup.set_visible(False)
             self.popups.add(popup)
 
     def show_popup(self, id_):
+        """Makes visible and active the popup that matches with the input id. If it's not found, a warning is shown in console.
+        Args:
+            id_ (String):   Id os substring of that id to search for in the popup list."""
         for popup in self.popups:
             if id_ in popup.id or popup.id in id_:
                 popup.set_visible(True)
@@ -489,16 +502,31 @@ class Game(object):
         LOG.log('warning', 'Popup ', id_,'not found')
 
     def get_popup(self, id_):
+        """Returns the popup that matches with the input id.
+        Args:
+            id_ (String):   Id os substring of that id to search for in the popup list.
+        Returns:
+            (:obj: Dialog | None):  Returns the matching dialog if its found, but None if no one matches."""
         for popup in self.popups:
             if id_ in popup.id or popup.id in id_:
                 return popup
     
     def hide_popups(self):
+        """Hides all the popups in the game by rendering them invisible and inactive."""  
         for popup in self.popups:
             popup.set_active(False)
             popup.set_visible(False)
 
     def check_easter_eggs(self):
+        """Check for the last user actions to see if an easter egg must be triggered and shown.
+        If its done by checking the last_inputs structure, so only keyboard strokes count. Mouse inputs are not saved.
+        Some easter eggs are (If the last inputs by the player match the easter egg):
+            ACHO:   All the sounds will be switched with an ACHO voice-recorded sound. This is not reversable except for a restart.
+            DEJAVU: The background music will be Initial D track Dejavu. This is reversable by changing songs in the sound options.
+            RUNNING:The background music will be Initial D track Running in the 90s. This is reversable by changing songs in the sound options.
+            ADMIN:  When in a board, it activates the admin mode, that allows players to move their characters wherever they want. 
+                    Very useful for testing.
+        """
         secret = None
         easter_egg_sound = False
         easter_egg_music = False
@@ -539,26 +567,25 @@ class Game(object):
                     self.last_inputs.clear()
             
     def esc_handler(self):
+        """Esc key keystroke handler. Basically changes back to main menu, and if already in main menu,
+        shows a dialog or hides a dialog, depending in if the dialog was already active or not."""
         LOG.log('DEBUG', "Pressed esc in ", self.current_screen.id)
         id_screen = self.current_screen.id.lower()
-        if 'main' in id_screen and 'menu' in id_screen: self.__esc_main_menu()
-        elif 'menu' in id_screen:                       self.__esc_menu()
-        elif 'board' in id_screen:                      self.__esc_board()
-
-    def __esc_board(self):
-        self.change_screen('main', 'menu')
-
-    def __esc_menu(self):
-        self.change_screen("main", "menu")  
-
-    def __esc_main_menu(self):
-        if not self.current_screen.dialog_active():
-            self.current_screen.show_dialog('exit')   
-        else:  
-            self.current_screen.hide_dialog()
-            self.last_command = None
+        if 'main' in id_screen and 'menu' in id_screen:
+            if not self.current_screen.dialog_active():
+                self.current_screen.show_dialog('exit')   
+            else:  
+                self.current_screen.hide_dialog()
+                self.last_command = None
+        elif 'menu' in id_screen or 'board' in id_screen:   
+            self.change_screen('main', 'menu')
             
     def get_screen(self, *keywords):
+        """Gets and returns the screen that have more matches with the input keywords.
+        Args:
+            keywords (Tuple->String):   Keywords to search for in the ids of all the screens.
+        Returns:
+            (:obj:Screen | None):   Returns the screen with most matches. If zero matches were found, returns None."""
         screen = None
         count = 0
         for i in range(0, len(self.screens)):
@@ -569,6 +596,13 @@ class Game(object):
         return screen
 
     def call_screens_method(self, keywords, method, *method_args, **method_kwargs):
+        """Calls the input method of the screen that has more matches with the input keywords.
+        It's a hacky way to so it, but hey, it works.
+        Args:
+            keywords(Tuple->String):    Keywords to search for in the ids of all the screens.
+            method (callback):  Method itself to be executed. Being a cb, has to be the direction of the method, not the call (not parenthesis)
+            args (Tuple->Any):  Input arguments of the method call.
+            kwargs (Dict->Any:Any): Keyworded input arguments of the method call."""
         #hasattr(Dynamo, 'mymethod') and callable(getattr(Dynamo, 'mymethod'))
         if isinstance(keywords, str):   #If it's only a keyword (A string)
             keywords = keywords,        #String to tuple
@@ -580,6 +614,10 @@ class Game(object):
             LOG.log('error', 'The method ', str(method), ' is not found in the class Screen')
 
     def change_screen(self, *keywords):
+        """Changes the current screen to the one with most matches with the input keywords.
+        This implies to pause the last screen music (If it exists), and also starting the new screen music.
+        Raises:
+            (ScreenNotFoundException):  When there isn't even a single match with any of the screens."""
         LOG.log('DEBUG', "Requested change of screen to ", keywords)
         count = 0
         new_index = 0
@@ -599,25 +637,37 @@ class Game(object):
         else:  
             raise ScreenNotFoundException('A screen with any of the keywords'+ str(keywords)+'wasn`t found')
 
-    def enable_board_sliders(self):
+    def enable_board_sliders(self): #TODO Check if used at all
+        """Enable the music menus sliders (The board ones)."""
         self.get_screen('music', 'menu').enable_all_sprites()
 
     def check_state(self):
-        if len(self.screens) > 0:
-            if any(isinstance(screen, Menu) and 'main' in screen.id for screen in self.screens):
-                return True
+        """Checks if the game contains at least a screen, and at least a main menu
+        Returns:
+            (boolean):  True if the above conditions comply. If not, well, it raises an error. No False here, all or nothing.
+        Raises:
+            (NoScreensException):   When the game doesn't meet any of the above conditions."""
+        if (len(self.screens) > 0) and any(isinstance(screen, Menu) and 'main' in screen.id for screen in self.screens):
+            return True
         raise NoScreensException('A game needs at least a main menu to start.')
 
     def init_log(self):
+        """Shows the initial LOG messages that prove that the game has started."""
         LOG.log('INFO', "GAME STARTING!")
         LOG.log('INFO', "----Initial Pygame parameters----")
         LOG.log('INFO', "Game initial frames per second: ", self.fps)
         LOG.log('INFO', "RESOLUTION: ", self.display.get_size())
 
     def update_board_params(self, **params):
+        """Self-explanatory, updates the board generator params with the input ones.
+        Args:
+            params (Dict->Any:Any): Params to update with."""
         self.board_generator.set_board_params(**params)
 
     def initiate(self):
+        """Performs all the initial checks and actions that must be done when creating a new board.
+        Enables all disabled buttons. If there are too many characters to fit in the new board, you will be 
+        thrown back to the main menu with an exception."""
         try:
             if self.get_screen('board'):
                 for i in range(0, len(self.screens)):
@@ -633,12 +683,21 @@ class Game(object):
         except TooManyCharactersException:
             self.show_popup('chars')
             return
-        self.get_screen('params', 'menu', 'config').enable_all_sprites(False)
+        #self.get_screen('params', 'menu', 'config').enable_all_sprites(False)
         self.get_screen('music', 'menu', 'sound').enable_all_sprites(True)
         self.get_screen('main', 'menu').enable_all_sprites(True)
         self.started = True
 
     def start(self, *first_screen_keywords):
+        """Starts the game instance. Perform checks and start all the methods needed. 
+        Upon calling, you will have a working Game instance that shows something in the screen and that
+        you can interact with.
+        It contains an infinite loop that processes all inputs and acts accordingly.
+        When the loop is broken out of, the method ends, and so does the game itself, closing it.
+        Args:
+            first_screen_keywords (Tuple->String):  Keywords to set the first screen instance that will be shown to the user.
+                                                    Usually, this one should be the main menu.
+        """
         try:
             self.set_popups()
             self.check_state()

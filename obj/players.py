@@ -54,7 +54,7 @@ class Player(object):
         """Player constructor.
         Args:
             name (str): Name of the player.
-            order (int):    Order of arrival. A numerical identifier, if you prefer.
+            order (int):    Order of turn. A numerical identifier, if you prefer.
             sprite_size (:tuple: int, int): Size of the image of the characters. In pixels.
             canvas_size (:tuple: int, int): Resolution of the screen. In pixels.
             infoboard (:obj: Infoboard, default=None):  Infoboard of the player. It's shown through the game.

@@ -1080,7 +1080,7 @@ class Board(Screen):
         #THIS CONDITION TO SHOW THE UPGRADE TABLE STARTS HERE
         if active_cell.promotion and (None != active_cell.owner != character.owner_uuid):
             if 'champion' in self.drag_char.sprite.get_type().lower():
-                self.update_character()
+                self.update_character(self.drag_char.sprite)
                 #return #TODO CHECk THIS
             elif self.drag_char.sprite.upgradable\
             and any(not char.upgradable for char in self.current_player.fallen):
@@ -1090,10 +1090,10 @@ class Board(Screen):
                 #return
         self.next_char_turn(self.drag_char.sprite)
 
-    def update_character(self):
-        self.drag_char.sprite.can_kill = True
-        self.drag_char.sprite.can_die = True
-        self.drag_char.sprite.value = 8
+    def update_character(self, char):
+        char.can_kill = True
+        char.can_die = True
+        char.value = 8
 
     def next_char_turn(self, char):
         self.fitnesses = {} #Cleaning the history of fitnesses
@@ -1136,8 +1136,8 @@ class Board(Screen):
             self.current_player.pause_characters()  #We don't want the human players fiddling with the chars
             self.do_ai_player_turn()
 
-    @run_async
-    def do_ai_player_turn(self):
+    @run_async_not_pooled
+    def do_ai_player_turn(self, result=None):
         self.ai_turn = True
         self.thinking_sprite.sprite.set_visible(True)
         movement = self.current_player.get_movement(self.current_map, self.cells, self.current_player.uuid, [player.uuid for player in self.players])
@@ -1146,17 +1146,18 @@ class Board(Screen):
         self.drag_char.add(character)
         self.last_cell.add(self.get_cell_by_real_index(movement[0]))
         self.active_cell.add(self.get_cell_by_real_index(movement[-1]))
-        self.move_character(character)  #In here the turn is advanced one
+        self.move_character(character)  #In here the turn is incremebted one (next_char_turn its executed)
         if self.show_promotion: #If the update table was triggered
             char_revived = random.choice(self.promotion_table.elements)
             self.swapper.send(char_revived)
         self.drag_char.empty()
         self.thinking_sprite.sprite.set_visible(False)
         self.ai_turn = False
-        #self.next_char_turn(character)
+        if result:  #We return the movement performed. Useful for network board. 
+            result = movement
 
     def kill_character(self, cell, killer):
-        #Badass Animation
+        #TODO Badass Animation
         corpse = cell.kill_char()
         self.update_cells(cell)
         self.characters.remove(corpse)  #To delete it from the char list in board. It's dead.

@@ -349,9 +349,12 @@ class NetworkBoard(Board):
             #TODO SHOW NOTIFICATION
             self.dice.sprite.add_throw(response['player'])
         elif "turncoat" in response:    #All characters will be locked down in this turn.
+            #TODO SHOW NOTIFICATION
             #They will all be paused only in our screen (Only graphically), the actions of the user client will still reach here.
             my_player = next(player.uuid == self.my_player for player in self.players)
             my_player.pause_characters()
+        elif "cpu_player" in response:  #Its the cpu player turn in host
+            pass#TODO SHOW NOTIFICATION
         elif "admin" in response:
             if response["admin"]:
                 pygame.event.post(pygame.event.Event(self.event_id, command='admin', value=True))
@@ -503,13 +506,13 @@ class NetworkBoard(Board):
 
     def after_swap(self, orig_char, new_char):
         super().after_swap(orig_char, new_char)
-        if orig_char.owner_uuid == self.my_player and new_char.owner_uuid == self.my_player:    #If this was a local swap and not a received one in response_handler from another player
+        if orig_char.owner_uuid == self.my_player and new_char.owner_uuid == self.my_player\
+        or self.server and not self.current_player.human:    #If this was a local swap and not a received one in response_handler from another player
             self.send_data_async({"swap": True, "original": orig_char.uuid, "new": new_char.uuid})
 
-    def update_character(self):
-        super().update_character
-        assert False
-        #TODO senf that info to the other players
+    def update_character(self, char):
+        super().update_character(char)
+        self.send_data_async({"character": char.uuid, "update_character": True})
 
     def drop_character(self):
         """Makes the action of the superclass if my_turn is True. Otherwise, just moves the character to the last cell
@@ -529,6 +532,13 @@ class NetworkBoard(Board):
 
     def next_player_turn(self):
         """Makes the actions needed to advance a turn, and communicates with the server if my_turn is True."""
+        # if self.my_turn:
+        #     self.my_turn = False
+        #     self.send_data_async({"end_turn": True})
+        # else:
+        #     if self.current_player.uuid == self.my_player:
+        #         self.my_turn = True
+        #         self.show_my_turn_popup()
         super().next_player_turn(use_stop_state=False)
         if self.my_turn:
             self.my_turn = False
@@ -537,6 +547,19 @@ class NetworkBoard(Board):
             if self.current_player.uuid == self.my_player:
                 self.my_turn = True
                 self.show_my_turn_popup()
+        # if self.server and not self.current_player.human: #The only place in which this will be False (The attribute) Is the host itself.
+        # #TODO do what here
+
+    @run_async_not_pooled
+    def do_ai_player_turn(self):
+        #do ai turn calls move chjaracter without calling drop character, which is the onw that sends
+        #good shit here
+        movement_executed = []  #This is written like this so pylint doesn't show an error, actually it doesn't matter, it will be assigned inside thje super method
+        thread_doing_the_work = super().do_ai_player_turn(result=movement_executed)
+        thread_doing_the_work.wait()
+        #Processing of
+        character = self.get_cell_by_real_index(movement_executed[0]).get_char()
+        self.send_data_async({'drop_character': character.uuid, 'cell': movement_executed[-1]})
 
     def dice_value_result(self, value):
         """To sync the dices across all the clients"""

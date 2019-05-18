@@ -116,7 +116,7 @@ class Board(Screen):
                         'help_button_texture'   : None
     }
     #CHANGE MAYBE THE THREADS OF CHARACTER TO JOIN INSTEAD OF NUM PLAYERS AND SHIT
-    def __init__(self, id_, event_id, end_event_id, resolution, *players, empty=False, **params):
+    def __init__(self, id_, event_id, end_event_id, resolution, *players, empty=False, initial_dice_screen=True, **params):
         """Board constructor. Inherits from Screen.
         Args:
             id_ (str):  Identifier of the Screen.
@@ -185,7 +185,7 @@ class Board(Screen):
         self.win_event      = pygame.event.Event(end_event_id, command='win')
         self.lose_event     = pygame.event.Event(end_event_id, command='lose')
         self.swapper        = None
-        Board.generate(self, empty, *players)
+        Board.generate(self, empty, initial_dice_screen, *players)
     
     ###SIMULATES ON_SCREEN CONSOLEEEE
     def LOG_ON_SCREEN(self, *msgs, **text_params):
@@ -195,7 +195,7 @@ class Board(Screen):
 
     #ALL THE GENERATION OF ELEMENTS AND PLAYERS NEEDED
     @staticmethod
-    def generate(self, empty, *players):
+    def generate(self, empty, initial_dice_screen, *players):
         UtilityBox.join_dicts(self.params, Board.__default_config)
         #INIT
         self.generate_onscreen_console()
@@ -205,7 +205,7 @@ class Board(Screen):
         self.platform = self.generate_platform()
         if not empty:
             self.generate_mapping()
-            self.generate_environment()
+            self.generate_environment(initial_dice_screen)
         else:
             self.LOG_ON_SCREEN("WARNING: Generating board in empty mode, needs server attributes to work")
         self.add_players(*players)
@@ -216,31 +216,6 @@ class Board(Screen):
         start = time.time()
         self.overlay_console = ScrollingText('updates', self.event_id, self.resolution, transparency=180)
         LOG.log('info', 'The console have been generated in ', (time.time()-start)*1000, 'ms')
-    
-    @run_async
-    def generate_dice_screen(self, transparency=128):
-        """Generates the dice screen so players can try their luck to get their turn!"""
-        start = time.time()
-        dice_screen = Dialog('Initial_dices_screen', self.event_id, self.resolution, self.resolution, fill_color=DARKGRAY, rows=3, cols=4)
-        dice_screen.image = dice_screen.image.convert()
-        dice_screen.image.set_alpha(transparency)
-        self.add_dialogs(dice_screen)
-        LOG.log('info', 'The console have been generated in ', (time.time()-start)*1000, 'ms')
-
-    @run_async
-    def add_dices_to_screen(self, player_list):
-        """In this way is easily overridable for network board to work properly"""
-        dice_screen = self.get_dialog('dice', 'init')
-        for player in player_list:
-            self.starting_dices[player.uuid] = threading.Event()
-            self.dices_values[player.uuid] = None
-            dice_screen.add_text_element(str(player.uuid), player.name, 4//len(player_list))
-        for player in player_list:
-            dice = Dice('dice_'+str(player.uuid), (0, 0), tuple(0.20*x for x in self.resolution), self.resolution, shuffle_time=1500,\
-                        sprite_folder=self.params['dice_textures_folder'], animation_delay=2, limit_throws=1, overlay=False)
-            dice.add_turn(player.uuid)
-            dice.reactivating_dice()
-            dice_screen.add_sprite_to_elements(4//len(player_list), dice)
 
     @no_size_limit
     def generate_platform(self):
@@ -264,8 +239,10 @@ class Board(Screen):
         self.enabled_paths  = numpy.zeros(dimensions, dtype=bool)       #Shows if the path exist
 
     @time_it
-    def generate_environment(self):
-        threads = [self.generate_all_cells(), self.generate_paths(offset=True), self.generate_map_board(), self.generate_infoboard(), self.generate_dice_screen()]
+    def generate_environment(self, initial_dice_screen):
+        threads = [self.generate_all_cells(), self.generate_paths(offset=True), self.generate_map_board(), self.generate_infoboard()]
+        if initial_dice_screen:
+            threads.append(self.generate_dice_screen())
         for end_event in threads:   end_event.wait()
         self.adjust_cells()
         threads = [self.generate_inter_paths(), self.generate_dice()]
@@ -274,7 +251,6 @@ class Board(Screen):
         fitness_button = ButtonAction('fitness_button', "", self.event_id, (0, 0), tuple(x*0.1 for x in self.resolution), self.resolution,\
                                     texture=self.params['fitness_button_texture'], text="")
 
-        #fitness_button.set_position((self.dice.sprite.rect.x, self.dice.sprite.rect.y-fitness_button.rect.height))
         fitness_pos_y = self.dice.sprite.rect.centery-((fitness_button.rect.height//2+self.dice.sprite.rect.height//2)//0.9)
         fitness_button.set_center((self.dice.sprite.rect.x, fitness_pos_y))
         #help_button
@@ -292,6 +268,32 @@ class Board(Screen):
         #End, saving
         self.save_sprites()
         self.generated = True
+
+    @run_async
+    def generate_dice_screen(self, transparency=128):
+        """Generates the dice screen so players can try their luck to get their turn!"""
+        start = time.time()
+        dice_screen = Dialog('Initial_dices_screen', self.event_id, self.resolution, self.resolution, fill_color=DARKGRAY, rows=3, cols=4)
+        dice_screen.image = dice_screen.image.convert()
+        dice_screen.image.set_alpha(transparency)
+        self.add_dialogs(dice_screen)
+        LOG.log('info', 'The console have been generated in ', (time.time()-start)*1000, 'ms')
+
+    @run_async
+    def add_dices_to_screen(self, player_list):
+        """In this way is easily overridable for network board to work properly"""
+        dice_screen = self.get_dialog('dice', 'init')
+        if dice_screen: #If the dialog was found
+            for player in player_list:
+                self.starting_dices[player.uuid] = threading.Event()
+                self.dices_values[player.uuid] = None
+                dice_screen.add_text_element(str(player.uuid), player.name, 4//len(player_list))
+            for player in player_list:
+                dice = Dice('dice_'+str(player.uuid), (0, 0), tuple(0.20*x for x in self.resolution), self.resolution, shuffle_time=1500,\
+                            sprite_folder=self.params['dice_textures_folder'], animation_delay=2, limit_throws=1, overlay=False)
+                dice.add_turn(player.uuid)
+                dice.reactivating_dice()
+                dice_screen.add_sprite_to_elements(4//len(player_list), dice)
 
     @run_async
     def generate_all_cells(self, custom_cell_radius=None, growing_cells=True, growing_ratio=8/7):
@@ -473,6 +475,7 @@ class Board(Screen):
         infoboard.add_text_element('turn_char_label', 'Char turn', 1, scale=1.4)
         infoboard.add_text_element('turn_char', str(self.char_turns+1), 1, scale=0.6)
         infoboard.add_text_element('player_name_label', 'Playing: ', 1)
+        infoboard.add_text_element('player_name', '------------', 1)
         self.infoboard = infoboard
         self.LOG_ON_SCREEN("The game infoboard has been generated")
 
@@ -700,12 +703,12 @@ class Board(Screen):
         """Returns:
             (boolean): True if all the requested players have been loaded already."""
         if not self.started and (self.loaded_players is self.total_players) and self.generated:
-            self.add_dices_to_screen(self.players)
+            self.add_dices_to_screen(self.players)  #Won't do anything if the flag initial_dice_screen is False
             self.players.sort(key=lambda player:player.order)
             self.play_sound('success')
             if not self.current_player: #If this is the first player added
                 self.current_player = self.players[0]
-                self.infoboard.add_text_element('player_name', self.players[0].name, 1)
+                self.infoboard.update_element('player_name', self.current_player.name)
                 self.current_player.unpause_characters()
                 self.update_map()       #This goes according to current_player
             self.dice.sprite.add_turn(self.current_player.uuid)
@@ -713,8 +716,7 @@ class Board(Screen):
             self.generate_dialogs()
             self.update_scoreboard()
             self.console_active = False
-            self.show_dices = True
-            self.show_dialog('dice', send_event=False)
+            self.show_dialog('dice', send_event=False)  #Won't show if the flag initial_dice_screen is False
             #TODO CONTINUE THIS! And when dices are thrown show the nuymber and add it to the screen! And turns after that!
 
     def create_player(self, name, number, chars_size, cpu=False, cpu_mode=None, empty=False, **player_settings):
@@ -1044,7 +1046,7 @@ class Board(Screen):
                 self.current_player = self.players[-1]  #To make the next player turn be the self.players[0]
                 self.hide_dialog()
             value = -1  #To jump to the next player turn line.
-        if value == 6:
+        if value == Dice.GOLD_VALUE:
             self.activate_turncoat_mode()
             return
         #TODO SHOW NOTIFICATION MAYBE? IN NETWOK BOARD AND HERE TOO

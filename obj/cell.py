@@ -60,7 +60,20 @@ class Cell(Circle):
 
     @staticmethod
     def generate(self):
-        self.add_text_sprite(self.id+"_text", str(self.index), text_size=tuple(x*0.75 for x in self.rect.size)) #str(self.pos[0])+"-"+str(self.pos[1])
+        #self.add_text_sprite(self.id+"_text", str(self.index), text_size=tuple(x*0.75 for x in self.rect.size))    #This line when testing, easier to spot mistakes in paths and shit.
+        self.add_text_sprite(self.id+"_text", str(self.text_parser()), text_size=tuple(x*0.75 for x in self.rect.size))
+
+    def text_parser(self):
+        """Returns the matching alphabetic scheme according to our real_index attribute"""
+        result_text = ''
+        alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        my_level_index = self.pos[0]
+        if my_level_index > len(alphabet):  #Won't be in a position higher than 26^2
+            result_text += alphabet[my_level_index//len(alphabet)]
+            my_level_index %= len(alphabet)
+        result_text += alphabet[my_level_index]
+        result_text += '-'+str(self.pos[-1])
+        return result_text
 
     @run_async_not_pooled
     def show_fitness_value(self, fitness_value):

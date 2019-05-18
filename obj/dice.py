@@ -8,6 +8,7 @@ from obj.utilities.decorators import run_async_not_pooled
 from obj.utilities.logger import Logger as LOG
 
 class Dice(AnimatedSprite):
+    GOLD_VALUE = 6
     MAX_DICE_VALUE = 6
     WEIGHTS = [1 for _ in range(1, MAX_DICE_VALUE)]
     VALUES = [i for i in range(1, MAX_DICE_VALUE)]
@@ -83,7 +84,7 @@ class Dice(AnimatedSprite):
         return random.choices(Dice.VALUES, weights)[0]
 
     def throw(self):
-        self.throws[self.current_player] += 1
+        self.add_throw(self.current_player)
         self.current_result = self.get_random_value()
         self.event.value = self.current_result
         pygame.event.post(self.event)
@@ -95,3 +96,6 @@ class Dice(AnimatedSprite):
                 self.currently_shuffling = False
                 self.deactivating_dice()
                 return
+    
+    def add_throw(self, player_uuid):
+        self.throws[player_uuid] += 1

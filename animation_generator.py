@@ -227,6 +227,7 @@ class AnimationGenerator(object):
         return AnimationGenerator.animated_static_background('chinese_chon_hon', PATHS.ANIMATED_RAIN_CHINESE_BG, resolution, time, *fps)
     
     @staticmethod
+    def explosions_bottom(resolution, *fps, bottom_offset=0.00, init_ratio=0.05):
         """Generates a linear path of different explosions in screen. Pretty curious for a loading screen or something of the sort. 
         Args:
             resolution (Tuple->int, int):   Current Resolution of the screen. In pixels.
@@ -235,7 +236,6 @@ class AnimationGenerator(object):
             init_ratio (float): Ratio that controls the proportion at how each explosion in the path is greater than the preceding one.
         Returns
             (:obj:LoopedAnimation): The animated path of explosions generated."""
-    def explosions_bottom(resolution, *fps, bottom_offset=0.00, init_ratio=0.05):
         animation = LoopedAnimation('MICHAEL BAY')
         folder = PATHS.EXPLOSIONS
         index = 1

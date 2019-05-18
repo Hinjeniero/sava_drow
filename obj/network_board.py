@@ -67,9 +67,9 @@ class NetworkBoard(Board):
         """
         params['loading_screen_text'] = ''
         if host:
-            super().__init__(id_, event_id, end_event_id, resolution, **params)
+            super().__init__(id_, event_id, end_event_id, resolution, initial_dice_screen=False, **params)
         else:
-            super().__init__(id_, event_id, end_event_id, resolution, empty=True, **params) #To generate the environment later
+            super().__init__(id_, event_id, end_event_id, resolution, empty=True, initial_dice_screen=False, **params) #To generate the environment later
         self.uuid = obj_uuid if obj_uuid else uuid.uuid1().int    #Using this if crashing would led to more conns than players
         self.ip = None
         self.port = None
@@ -178,7 +178,10 @@ class NetworkBoard(Board):
         if port:
             self.port = port
         if self.ip and self.port:
-            self.flags["ip_port_done"].set()
+            try:
+                self.flags["ip_port_done"].set()
+            except KeyError:
+                pass
 
     def send_handshake(self, host):
         """"Sends the first request to the server, with our ID and a host boolean.
@@ -196,7 +199,7 @@ class NetworkBoard(Board):
             self.request_data_async("players_data")     #To get the data of the players
             self.request_data_async("characters_data")  #To get the data of the characters
         dice = random.randint(1, 6)
-        self.send_data_async({"dice": dice, "id":self.uuid})    #Sending dice result for the player assignments
+        self.send_data_async({"start_dice": dice, "id":self.uuid})    #Sending dice result for the player assignments
         self.LOG_ON_SCREEN("rolled a "+str(dice))
 
     def connect(self):   #TODO SEND ID IN CONNECT?
@@ -336,11 +339,19 @@ class NetworkBoard(Board):
             self.change_turn.wait()
             self.next_player_turn()
             self.change_turn.clear()
+            self.activate_my_characters()   #Just in case they have been frozen earlier
         elif "swap" in response:
             original_char = next(char for char in self.characters if char.uuid == response['original'])
             player = next(player for player in self.players if player.uuid == original_char.owner_uuid)
             self.swapper.send(original_char)
             self.swapper.send(next(char for char in player.fallen if char.uuid == response['new']))
+        elif "dice_value" in response:  #The dice in this board will be updated
+            #TODO SHOW NOTIFICATION
+            self.dice.sprite.add_throw(response['player'])
+        elif "turncoat" in response:    #All characters will be locked down in this turn.
+            #They will all be paused only in our screen (Only graphically), the actions of the user client will still reach here.
+            my_player = next(player.uuid == self.my_player for player in self.players)
+            my_player.pause_characters()
         elif "admin" in response:
             if response["admin"]:
                 pygame.event.post(pygame.event.Event(self.event_id, command='admin', value=True))
@@ -348,6 +359,11 @@ class NetworkBoard(Board):
                 pygame.event.post(pygame.event.Event(self.event_id, command='admin', value=False))
         else:
             LOG.log('info', 'Unexpected response: ', response)
+
+    def shuffle(self):
+        """Only want the dice to shuffle if it's our turn, otherwise do nothing."""
+        if self.my_turn:
+           super().shuffle() 
 
     def activate_my_characters(self):
         """Called each turn."""
@@ -521,6 +537,16 @@ class NetworkBoard(Board):
             if self.current_player.uuid == self.my_player:
                 self.my_turn = True
                 self.show_my_turn_popup()
+
+    def dice_value_result(self, value):
+        """To sync the dices across all the clients"""
+        super().dice_value_result(value)
+        self.send_data_async({"player": self.current_player.uuid, "dice_value": value})
+            
+    def activate_turncoat_mode(self):
+        """This is to avoid conflicts when the other players move their chars around"""
+        super().activate_turncoat_mode()
+        self.send_data_async({"player": self.current_player.uuid, "turncoat": True, "lock_characters": True})   
 
     def draw(self, surface):
         try:

@@ -90,7 +90,8 @@ class Server(MastermindServerTCP):
             return {"success": True, "msg": "The client "+str(id_)+" connection object was updated successfully."}
         elif len(self.clients.values()) < self.total_players:
             self.clients.add_item(id_, conn_client)
-            self.update_server()
+            if not self.private_server:
+                self.update_server()
             return {"success": True, "msg": "The client "+str(id_)+" was added successfully."}
         else:
             return {"success": False, "error": "The server is full."}
@@ -246,15 +247,15 @@ class Server(MastermindServerTCP):
                     if len(self.chars_data.keys()) < self.total_chars:
                         raise KeyError
                     reply = {"characters_data": self.chars_data.values_list()}
-            elif "dice" in data:
+            elif "start_dice" in data:
                 LOG.log('info', 'Client ', data['id'], ' rolled a ', data['dice'])
                 self.add_to_barrier(connection_object, data)
             elif "keepalive" in data or "keep_alive" in data or "keep-alive" in data or "update" in data:
                 pass
-            else:
+            else:   #Most messages will have this behaviour, being broadcasted to all clients except the origin
                 self.broadcast_data(self.clients.values(), data, connection_object)
-                #elif "move_character" in data or "drop_character" in data or "end_turn" in data or "admin" in data or "swap" in data: 
-                #LOG.log('warning', 'Petitions commands are not supported ', data)
+                #elif "move_character" in data or "drop_character" in data or "end_turn" in data or "admin" in data or "swap" in data:
+                #or "dice_value" in data or "turncoat" in data or "lock_characters" in data
         except (KeyError, IndexError):    #Can't attend this petition right now, most likely due to lack of data.
             self.hold_petition(connection_object, data)
         if not reply:

@@ -99,15 +99,14 @@ class STRINGS:
     CHARS_PER_LINE = 36 #When using the return_lines_number method in utility_box.py, it will calculate the result according to this.
     GAMEMODES = ('Custom', 'Classic', 'Great Wheel')
     PLAYER_NAMES = ['Mitches', 'Hayesshine', 'Rolbo Gordonggins', 'Spencerpop', 'Palka', 'Rainrobinson', 'Kingolas', 'Zippotudo',
-    BOARD_SIZES = ('Normal', 'Lite', 'Small', 'Extra', 'Huge', 'Insane', 'MemoryError')
                     'Zimrcia', 'Coxobby Ohmswilson', 'Uwotm8', 'Orangeman', 'npc', 'Totallynot Arobot', 'Bigba Lshanging']
+    BOARD_SIZES = ('Normal', 'Lite', 'Small', 'Extra', 'Huge', 'Insane', 'MemoryError')
     SPRITE_NAMES = ('Manolo', 'Eustaquio', 'Zimamamio')
     MOVE_KEYWORDS = ('run', )
     YES_NO_OPTIONS = ('On', 'Off')
     YES_NO_REVERSED = ('Off', 'On')
-    INITIAL_ANIMATED_BG = 'Animated waterfall'
-    ANIMATED_BGS = (INITIAL_ANIMATED_BG, 'Animated rain tree',
-                    'Animated rain china', 'Animated waterfall cave', 'Layered industrial')
+    ANIMATED_BGS = ('Animated waterfall', 'Animated rain tree', 'Animated rain china', 'Animated waterfall cave', 'Layered industrial')
+    INITIAL_ANIMATED_BG = ANIMATED_BGS[0]
     CELLS = ('Basic', 'Dark', 'Bordered')
     IA_MODES = ('Fitness choosing', 'Alpha Beta deepening', 'Learning Machine')
 

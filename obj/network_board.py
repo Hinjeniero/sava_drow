@@ -149,14 +149,14 @@ class NetworkBoard(Board):
             raise exception
         except (MastermindErrorSocket, MastermindError):   #If there was an error connecting
             LOG.error_traceback()
-            pygame.event.post(self.connection_error_event)
+            self.post_event('connection_error')
         except requests.exceptions.ConnectionError:
             LOG.error_traceback()
-            pygame.event.post(self.connection_error_event)
+            self.post_event('connection_error')
             raise ServiceNotAvailableException("The server that holds the table of open games is down right now.")
         except Exception:
             LOG.error_traceback()
-            pygame.event.post(self.connection_error_event)
+            self.post_event('connection_error')
 
     @run_async_not_pooled
     def start(self, host):
@@ -309,7 +309,7 @@ class NetworkBoard(Board):
             self.activate_my_characters()
             if self.current_player.uuid == self.my_player:
                 self.update_map()
-                self.show_my_turn_popup()
+                self.post_event('my_turn')  #This makes the popup saying that is my turn, show.
                 self.my_turn = True
         elif "player_id" in response:
             self.my_player = response['player_id']
@@ -349,17 +349,15 @@ class NetworkBoard(Board):
             #TODO SHOW NOTIFICATION
             self.dice.sprite.add_throw(response['player'])
         elif "turncoat" in response:    #All characters will be locked down in this turn.
-            #TODO SHOW NOTIFICATION
             #They will all be paused only in our screen (Only graphically), the actions of the user client will still reach here.
+            self.post_event('turncoat')
             my_player = next(player.uuid == self.my_player for player in self.players)
             my_player.pause_characters()
         elif "cpu_player" in response:  #Its the cpu player turn in host
-            pass#TODO SHOW NOTIFICATION
+            self.post_event('cpu')
         elif "admin" in response:
-            if response["admin"]:
-                pygame.event.post(pygame.event.Event(self.event_id, command='admin', value=True))
-            else:
-                pygame.event.post(pygame.event.Event(self.event_id, command='admin', value=False))
+            event_id_string = 'admin_on' if response["admin"] else 'admin_off'
+            self.post_event(event_id_string)
         else:
             LOG.log('info', 'Unexpected response: ', response)
 
@@ -377,9 +375,6 @@ class NetworkBoard(Board):
                     char.set_active(True)
                 else:
                     char.set_active(False)
-
-    def show_my_turn_popup(self):
-        pygame.event.post(self.next_turn_event)
 
     def get_board_params(self):
         """Chisels down the entire parameters to get just the ones that all the clients must share.
@@ -532,23 +527,14 @@ class NetworkBoard(Board):
 
     def next_player_turn(self):
         """Makes the actions needed to advance a turn, and communicates with the server if my_turn is True."""
-        # if self.my_turn:
-        #     self.my_turn = False
-        #     self.send_data_async({"end_turn": True})
-        # else:
-        #     if self.current_player.uuid == self.my_player:
-        #         self.my_turn = True
-        #         self.show_my_turn_popup()
         super().next_player_turn(use_stop_state=False)
-        if self.my_turn:
-            self.my_turn = False
+        if self.my_turn or (not self.current_player.human and self.server):
+            self.my_turn = False    #If the second condition, this doesn't really matter
             self.send_data_async({"end_turn": True})
         else:
             if self.current_player.uuid == self.my_player:
                 self.my_turn = True
-                self.show_my_turn_popup()
-        # if self.server and not self.current_player.human: #The only place in which this will be False (The attribute) Is the host itself.
-        # #TODO do what here
+                self.post_event('my_turn')
 
     @run_async_not_pooled
     def do_ai_player_turn(self):
@@ -557,7 +543,6 @@ class NetworkBoard(Board):
         movement_executed = []  #This is written like this so pylint doesn't show an error, actually it doesn't matter, it will be assigned inside thje super method
         thread_doing_the_work = super().do_ai_player_turn(result=movement_executed)
         thread_doing_the_work.wait()
-        #Processing of
         character = self.get_cell_by_real_index(movement_executed[0]).get_char()
         self.send_data_async({'drop_character': character.uuid, 'cell': movement_executed[-1]})
 
@@ -594,7 +579,7 @@ class NetworkBoard(Board):
         else:
             LOG.log("info", "Tough luck, you lost this battle!")
             self.play_sound('lose')
-            pygame.event.post(self.lose_event)
+            self.post_event('lose')
             self.finished = True    #To disregard events except esc and things like that
             self.show_score = True  #To show the infoboard.
 

@@ -476,7 +476,11 @@ class Game(object):
                         ('toomany_chars', 'Too many chars, can`t generate a board. Change the params.'),\
                         ('winner', 'Gz, you won! You sure showed them!'),\
                         ('loser', 'You lost! Use your head more the next time!'),\
-                        ('next_turn', 'It`s your turn! Wreak some havoc!'),\
+                        ('next_turn', 'Next turn is an enemy`s! Brace yourself!'),\
+                        ('my_turn', 'It`s your turn! Wreak some havoc!'),\
+                        ('cpu_turn', 'Its the turn of a computer controlled player!'),\
+                        ('turncoat_on', 'Turncoat mode activated! Current player can control any char in this turn.'),\
+                        ('servers_table_off', 'The table of public servers can`t be reached, check the service'),\
                         ('connection_error', 'There was a connection error, check the console for details.'),\
                         ('enemy_admin_on', 'Other player activated the admin mode! Be careful!'),\
                         ('enemy_admin_off', 'The admin mode was deactivated in another board.')))

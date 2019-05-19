@@ -174,7 +174,9 @@ class Board(Screen):
         self.players        = []
         self.player_index   = 0
 
-        #Started
+        #Started and misc
+        self.events         = {}
+        self.end_event_id   = end_event_id
         self.starting_dices = {}    #Flags to know which dices have been casted. A bit redundant, but its done this way
         self.dices_values   = {}
         self.ai_turn        = False
@@ -182,8 +184,6 @@ class Board(Screen):
         self.finished       = False
         self.generated      = False
         self.admin_mode     = False
-        self.win_event      = pygame.event.Event(end_event_id, command='win')
-        self.lose_event     = pygame.event.Event(end_event_id, command='lose')
         self.swapper        = None
         Board.generate(self, empty, initial_dice_screen, *players)
     
@@ -198,6 +198,7 @@ class Board(Screen):
     def generate(self, empty, initial_dice_screen, *players):
         UtilityBox.join_dicts(self.params, Board.__default_config)
         #INIT
+        self.generate_events()
         self.generate_onscreen_console()
         if self.params['loading_screen']:
             self.loading_screen = LoadingScreen(self.id+"_loading", self.event_id, self.resolution, text=self.params['loading_screen_text'])
@@ -216,6 +217,18 @@ class Board(Screen):
         start = time.time()
         self.overlay_console = ScrollingText('updates', self.event_id, self.resolution, transparency=180)
         LOG.log('info', 'The console have been generated in ', (time.time()-start)*1000, 'ms')
+
+    @run_async
+    def generate_events(self):
+        self.events['win'] = pygame.event.Event(self.end_event_id, command='win')
+        self.events['lose'] = pygame.event.Event(self.end_event_id, command='lose')
+        self.events['my_turn'] = pygame.event.Event(self.event_id, command='my_turn')
+        self.events['cpu_turn'] = pygame.event.Event(self.event_id, command='cpu_turn')
+        self.events['next_turn'] = pygame.event.Event(self.event_id, command='next_turn')
+        self.events['admin_on'] = pygame.event.Event(self.event_id, command='admin', value = True)
+        self.events['admin_off'] = pygame.event.Event(self.event_id, command='admin', value = False)
+        self.events['connection_error'] = pygame.event.Event(self.event_id, command='connection_error')
+        self.events['turncoat'] = pygame.event.Event(self.event_id, command='turncoat')
 
     @no_size_limit
     def generate_platform(self):
@@ -239,7 +252,7 @@ class Board(Screen):
         self.enabled_paths  = numpy.zeros(dimensions, dtype=bool)       #Shows if the path exist
 
     @time_it
-    def generate_environment(self, initial_dice_screen):
+    def generate_environment(self, initial_dice_screen=False):
         threads = [self.generate_all_cells(), self.generate_paths(offset=True), self.generate_map_board(), self.generate_infoboard()]
         if initial_dice_screen:
             threads.append(self.generate_dice_screen())
@@ -391,7 +404,7 @@ class Board(Screen):
             else:           return 0,    #Associated with first quadrant
         if rest is 0 and result is not 0: return result, result-1
         return result,
-
+    
     @run_async
     def generate_map_board(self):
         """Fills the essential graphs of the current board.
@@ -718,6 +731,23 @@ class Board(Screen):
             self.console_active = False
             self.show_dialog('dice', send_event=False)  #Won't show if the flag initial_dice_screen is False
             #TODO CONTINUE THIS! And when dices are thrown show the nuymber and add it to the screen! And turns after that!
+
+    def get_event(self, id):
+        """Gets the first event whose identificator contains or matches the id input argument.
+        Args:
+            id (String):    Id to search for in the events of the board.
+        Returns:
+            (:obj: pygame.Event | None):    Returns an event if a matching one is found, None otherwise."""
+        return next((event for key, event in self.events.items() if id in key), None)
+
+    def post_event(self, id):
+        """Gets the first event whose identificator contains or matches the id input argument.
+        Afterwards, if an event was found, it is posted in the pygame event queue to trigger the adequate action. 
+        Args:
+            id (String):    Id to search for in the events of the board."""
+        event_to_send = self.get_event(id)
+        if event_to_send:
+            pygame.event.post(event_to_send)
 
     def create_player(self, name, number, chars_size, cpu=False, cpu_mode=None, empty=False, **player_settings):
         """Queues the creation of a player on the async method.
@@ -1181,7 +1211,7 @@ class Board(Screen):
     def win(self):
         LOG.log("info", "Winner winner chicken dinner!")
         self.play_sound('win')
-        pygame.event.post(self.win_event)
+        self.post_event('win')
         self.finished = True    #To disregard events except esc and things like that
         self.show_score = True  #To show the infoboard.
 

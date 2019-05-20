@@ -715,7 +715,10 @@ class Board(Screen):
         self.save_sprites()
 
     def ALL_PLAYERS_LOADED(self):
-        """Returns:
+        """ Checks if all of the board players have been created and loaded succesfully.
+        Once it is done, it activates some of the board flags, and generates and updates some attributes.
+        Also, if the starting dice screen is activated, it is shown to make the throws.
+        Returns:
             (boolean): True if all the requested players have been loaded already."""
         if not self.started and (self.loaded_players is self.total_players) and self.generated:
             self.add_dices_to_screen(self.players)  #Won't do anything if the flag initial_dice_screen is False
@@ -898,12 +901,14 @@ class Board(Screen):
         TODO
         Args:
             event (:obj: pygame.event): Event received from the pygame queue.
+            mouse_buttons (List->boolean): List with 3 positions regarding the 3 normal buttons on a mouse.
+                                            Each will be True if that button was pressed.
             mouse_movement( boolean, default=False):    True if there was mouse movement since the last call.
             mouse_position (:tuple: int, int, default=(0,0)):   Current mouse position. In pixels.
         """
         #IF THERE IS A DIALOG ON TOP WE MUST NOT INTERACT WITH WHAT IS BELOW IT
         if self.dialog: #Using it here since we wont have ever a scrollbar in a board, and this saves cycles wuen a dialog is not active
-            #Thats why we call the super method here instead of always
+            #Thats why we call the super method here instead of doing in the overloaded method.
             super().mouse_handler(event, mouse_buttons, mouse_movement, mouse_position)
             return
         
@@ -978,6 +983,8 @@ class Board(Screen):
                 self.help_button.sprite.set_hover(False)
 
     def shuffle(self):
+        """Shuffles and throws the board's infoboard's dice. Upon returning a value, the method
+        dice_result_value is called. A result can yield you a turncoat method or the losing of your turn."""
         self.dice.sprite.shuffle()
 
     def character_swapper(self):

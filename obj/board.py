@@ -162,6 +162,7 @@ class Board(Screen):
         self.active_char    = pygame.sprite.GroupSingle()
         self.drag_char      = pygame.sprite.GroupSingle()
         self.platform       = None  #Created in Board.generate
+        self.last_movement  = None  #Updated in each move_character method
         
         #Paths and maping
         self.distances      = None  #Created in Board.generate
@@ -218,7 +219,6 @@ class Board(Screen):
         self.overlay_console = ScrollingText('updates', self.event_id, self.resolution, transparency=180)
         LOG.log('info', 'The console have been generated in ', (time.time()-start)*1000, 'ms')
 
-    @run_async
     def generate_events(self):
         self.events['win'] = pygame.event.Event(self.end_event_id, command='win')
         self.events['lose'] = pygame.event.Event(self.end_event_id, command='lose')
@@ -227,7 +227,6 @@ class Board(Screen):
         self.events['next_turn'] = pygame.event.Event(self.event_id, command='next_turn')
         self.events['admin_on'] = pygame.event.Event(self.event_id, command='admin', value = True)
         self.events['admin_off'] = pygame.event.Event(self.event_id, command='admin', value = False)
-        self.events['connection_error'] = pygame.event.Event(self.event_id, command='connection_error')
         self.events['turncoat'] = pygame.event.Event(self.event_id, command='turncoat')
 
     @no_size_limit
@@ -481,14 +480,16 @@ class Board(Screen):
     @no_size_limit
     def generate_infoboard(self):
         infoboard = InfoBoard(self.id+'_infoboard', 0, (0, 0), (0.15*self.resolution[0], self.resolution[1]),\
-                    self.resolution, texture=self.params['infoboard_texture'], keep_aspect_ratio = False, rows=6, cols=2)
+                    self.resolution, texture=self.params['infoboard_texture'], keep_aspect_ratio = False, rows=8, cols=2)
         infoboard.set_position((self.resolution[0]-infoboard.rect.width, 0))
         infoboard.add_text_element('turn_label', 'Board turn', 1, scale=1.4)
         infoboard.add_text_element('turn', str(self.turn+1), 1, scale=0.6)
         infoboard.add_text_element('turn_char_label', 'Char turn', 1, scale=1.4)
         infoboard.add_text_element('turn_char', str(self.char_turns+1), 1, scale=0.6)
         infoboard.add_text_element('player_name_label', 'Playing: ', 1)
-        infoboard.add_text_element('player_name', '------------', 1)
+        infoboard.add_text_element('player_name', '------------', 1)                        #Dummy text
+        infoboard.add_text_element('last_movement_label', 'LAST MOVE ', 2, scale = 0.8)
+        infoboard.add_text_element('last_movement', 'From A-99 to A-99', 2, scale = 0.8)    #Dummy text
         self.infoboard = infoboard
         self.LOG_ON_SCREEN("The game infoboard has been generated")
 
@@ -497,6 +498,7 @@ class Board(Screen):
         self.infoboard.update_element('turn', str(self.turn+1))
         self.infoboard.update_element('turn_char', str(self.char_turns+1))
         self.infoboard.update_element('player_name', self.current_player.name)
+        self.infoboard.update_element('last_movement', 'From '+self.last_movement[0]+' to '+self.last_movement[1])
 
     @run_async
     def generate_dice(self):
@@ -722,8 +724,12 @@ class Board(Screen):
             if not self.current_player: #If this is the first player added
                 self.current_player = self.players[0]
                 self.infoboard.update_element('player_name', self.current_player.name)
-                self.current_player.unpause_characters()
                 self.update_map()       #This goes according to current_player
+                if not self.current_player.human:
+                    self.post_event('cpu')
+                    self.do_ai_player_turn()
+                else:
+                    self.current_player.unpause_characters()
             self.dice.sprite.add_turn(self.current_player.uuid)
             self.started = True
             self.generate_dialogs()
@@ -1068,6 +1074,11 @@ class Board(Screen):
         if self.dialog and 'dice' in self.dialog.id:
             self.starting_dices[self.current_player.uuid].set()
             self.dices_values[self.current_player.uuid] = value
+            #Adding teh value sprite to the dialog itself
+            dice_screen = self.get_dialog('dice', 'init')
+            if dice_screen: #If the dialog was found (SHOULD BE IN THIS FIRST IF, but whatever, lets check again)
+                dice_value = TextSprite('value', (0, 0), tuple(0.10*x for x in self.resolution), self.resolution, str(value))
+                dice_screen.add_sprite_to_elements(4//len(self.players), dice_value)
             if all(flag.is_set() for flag in self.starting_dices.values()):
                 all_values = [(player_uuid, value) for player_uuid, value in self.dices_values.items()]
                 all_values.sort(key=lambda player_value: player_value[-1])
@@ -1079,7 +1090,6 @@ class Board(Screen):
         if value == Dice.GOLD_VALUE:
             self.activate_turncoat_mode()
             return
-        #TODO SHOW NOTIFICATION MAYBE? IN NETWOK BOARD AND HERE TOO
         self.next_player_turn()
 
     def activate_turncoat_mode(self):
@@ -1106,6 +1116,7 @@ class Board(Screen):
         active_cell.add_char(character)
         self.current_player.register_movement(character)
         self.update_cells(self.last_cell.sprite, active_cell)
+        self.last_movement = (self.last_cell.sprite.text_pos, active_cell.text_pos)
         self.last_cell.empty()  #Not last cell anymore, char was dropped succesfully
         #THIS CONDITION TO SHOW THE UPGRADE TABLE STARTS HERE
         if active_cell.promotion and (None != active_cell.owner != character.owner_uuid):

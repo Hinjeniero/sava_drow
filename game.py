@@ -339,6 +339,7 @@ class Game(object):
             self.get_screen('main', 'board').dice_value_result(int(value))
         elif 'conn' in command and 'error' in command:
             self.show_popup('connection_error')
+            self.current_screen.destroy()
             self.__add_timed_execution(3, self.restart_main_menu)
             self.__add_timed_execution(3, self.hide_popups)
         elif 'admin' in command:
@@ -346,6 +347,17 @@ class Game(object):
                 self.show_popup('enemy_admin_on')
             else:
                 self.show_popup('enemy_admin_off')
+        elif 'cpu_turn' in command or 'my_turn' in command or 'next_turn' in command:
+            self.show_popup(command)
+        elif 'pause_game' in command:
+            self.show_popup('player_disconnect')
+        elif 'turncoat' in command:
+            self.show_popup('turncoat')
+        elif 'server' in command and 'table' in command and 'unreach' in command:
+            self.show_popup('servers_table_off')
+            self.current_screen.destroy()
+            self.__add_timed_execution(3, self.restart_main_menu)
+            self.__add_timed_execution(3, self.hide_popups)
 
     def graphic_handler(self, command, value):
         """Graphic options related method. Those events will come to here.
@@ -367,9 +379,9 @@ class Game(object):
                 self.fullscreen = False
         elif 'bg' in command or 'background' in command:
             if 'menu' in command:
-                self.set_background(self.get_screen('main', 'menu'), value)
+                self.set_background(value, *self.get_screens('menu'))
             elif 'board' in command:
-                self.set_background(self.get_screen('board'), value)
+                self.set_background(value, *self.get_screen('board'))
 
     def set_resolution(self, resolution):
         """Changes the resolution of the game context. Achieves this by changing the attributes that show the current resolution,
@@ -389,16 +401,17 @@ class Game(object):
         LOG.log('DEBUG', "Changed resolution to ", resolution)
 
     @run_async
-    def set_background(self, screen, new_bg_id):
-        """Sets a new animated background to the input screen. The input bg id must match with some of the prefabbed ids
+    def set_background(self, new_bg_id, *screens):
+        """Sets a new animated background to the input screens. The input bg id must match with some of the prefabbed ids
         in the factory method in animation_generator.py.
         Args:
-            screen (:obj: Screen):  Screen to which to create and add the new animated background.
+            *screens (:obj: Screens):  All the screens to which to create and add the new animated background.
             new_bg_id (String): Identifier of the desired animated background to create and add.""" 
         new_animated_bg = AnimationGenerator.factory(new_bg_id, self.resolution, PARAMS.ANIMATION_TIME,\
                                                     INIT_PARAMS.ALL_FPS, self.fps)
-        screen.animated_background = True
-        screen.background = new_animated_bg
+        for screen in screens:
+            screen.animated_background = True
+            screen.background = new_animated_bg
 
     def sound_handler(self, command, value):
         """Sound and music related events are taken care of by this method.
@@ -482,6 +495,7 @@ class Game(object):
                         ('turncoat_on', 'Turncoat mode activated! Current player can control any char in this turn.'),\
                         ('servers_table_off', 'The table of public servers can`t be reached, check the service'),\
                         ('connection_error', 'There was a connection error, check the console for details.'),\
+                        ('player_disconnected', 'One of the players disconnected, the game will pause now.'),\
                         ('enemy_admin_on', 'Other player activated the admin mode! Be careful!'),\
                         ('enemy_admin_off', 'The admin mode was deactivated in another board.')))
 
@@ -583,7 +597,19 @@ class Game(object):
                 self.last_command = None
         elif 'menu' in id_screen or 'board' in id_screen:   
             self.change_screen('main', 'menu')
-            
+
+    def get_screens(self, *keywords):
+        """Gets and returns all the screens whose ID have any match with any of the input keywords 
+        Args:
+            keywords (Tuple->String):   Keywords to search for in the ids of all the screens.
+        Returns:
+            (List->:obj:Screen):   Returns a list of the screens with matches."""
+        screens = []
+        for screen in self.screens:
+            if any(kw in screen.id for kw in keywords):
+                screens.append(screen)
+        return screens
+
     def get_screen(self, *keywords):
         """Gets and returns the screen that have more matches with the input keywords.
         Args:

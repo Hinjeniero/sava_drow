@@ -163,7 +163,7 @@ class Server(MastermindServerTCP):
         self.barrier_lock.release()
 
     def group_responses_handler(self):  #ALready got the lock to barrier
-        if 'dice' in self.barrier[0][1].keys():
+        if 'start_dice' in self.barrier[0][1].keys():
             #Tuples - (conn, data(json)), 'dice' in saved json
             self.barrier.sort(key=lambda tuple_: tuple_[1]['dice'], reverse=True)
             self.all_players_received.wait()
@@ -252,6 +252,8 @@ class Server(MastermindServerTCP):
                 self.add_to_barrier(connection_object, data)
             elif "keepalive" in data or "keep_alive" in data or "keep-alive" in data or "update" in data:
                 pass
+            elif "disconnect" in data:
+                self.broadcast_data(self.clients.values(), {'pause':True, 'msg': 'Game paused because a client disconnected, waiting until his reconnection'}, connection_object)
             else:   #Most messages will have this behaviour, being broadcasted to all clients except the origin
                 self.broadcast_data(self.clients.values(), data, connection_object)
                 #elif "move_character" in data or "drop_character" in data or "end_turn" in data or "admin" in data or "swap" in data:

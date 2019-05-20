@@ -47,6 +47,7 @@ class Cell(Circle):
         params['overlay'] = False
         super().__init__("cell_"+str(real_index), position, size, canvas_size, **params)
         self.pos    = grid_position
+        self.text_pos = None
         self.fitness_active = False
         self.current_fitness = -1
         self.def_overlay = self.overlay
@@ -60,8 +61,9 @@ class Cell(Circle):
 
     @staticmethod
     def generate(self):
+        self.text_pos = str(self.text_parser())
         #self.add_text_sprite(self.id+"_text", str(self.index), text_size=tuple(x*0.75 for x in self.rect.size))    #This line when testing, easier to spot mistakes in paths and shit.
-        self.add_text_sprite(self.id+"_text", str(self.text_parser()), text_size=tuple(x*0.75 for x in self.rect.size))
+        self.add_text_sprite(self.id+"_text", self.text_pos, text_size=tuple(x*0.75 for x in self.rect.size))
 
     def text_parser(self):
         """Returns the matching alphabetic scheme according to our real_index attribute"""

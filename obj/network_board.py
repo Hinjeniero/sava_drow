@@ -114,6 +114,12 @@ class NetworkBoard(Board):
         except Exception as exc:
             self.exception_handler(exc)
 
+    def generate_events(self):
+        super().generate_events()
+        self.events['connection_error'] = pygame.event.Event(self.event_id, command='connection_error')
+        self.events['pause_game'] = pygame.event.Event(self.event_id, command='pause_game')  #Sent when anything happens in this client
+        self.events['servers_table'] = pygame.event.Event(self.event_id, command='servers_table_unreachable')  #Sent when anything happens in this client
+
     @run_async_not_pooled
     def generate_connect_dialog(self, direct_connection):
         #TODO To update this just destroy it and rebuild it or whatever. Take into edxample the update_scoreboard in Board.
@@ -129,13 +135,16 @@ class NetworkBoard(Board):
         else:                   self.show_dialog('table')
 
     def get_all_servers(self):
-        result = UtilityBox.do_request(NETWORK.TABLE_SERVERS_GET_ALL_ENDPOINT)
-        servers = []
-        for server in result['data']:
-            date = datetime.datetime.fromtimestamp(float(server['timestamp'])).strftime('%m-%d %H:%M')
-            data = (server['alias'], server['ip'], server['port'], server['players']+'/'+server['total_players'], date)
-            servers.append((data, server['ip']+':'+server['port']))
-        return servers
+        try:
+            result = UtilityBox.do_request(NETWORK.TABLE_SERVERS_GET_ALL_ENDPOINT)
+            servers = []
+            for server in result['data']:
+                date = datetime.datetime.fromtimestamp(float(server['timestamp'])).strftime('%m-%d %H:%M')
+                data = (server['alias'], server['ip'], server['port'], server['players']+'/'+server['total_players'], date)
+                servers.append((data, server['ip']+':'+server['port']))
+            return servers
+        except Exception:   #The endpoint of table servers couldn't be reached
+            self.post_event('servers_table')
 
     @run_async_not_pooled
     def generate_players_names(self):
@@ -201,6 +210,7 @@ class NetworkBoard(Board):
         dice = random.randint(1, 6)
         self.send_data_async({"start_dice": dice, "id":self.uuid})    #Sending dice result for the player assignments
         self.LOG_ON_SCREEN("rolled a "+str(dice))
+
 
     def connect(self):   #TODO SEND ID IN CONNECT?
         """Connects the client to the server if the ip and port are available."""
@@ -311,7 +321,7 @@ class NetworkBoard(Board):
                 self.update_map()
                 self.post_event('my_turn')  #This makes the popup saying that is my turn, show.
                 self.my_turn = True
-        elif "player_id" in response:
+        elif "player_id" in response:   #TODO THIS IS POORLY DONE, THE ID SENT IS THE BOARD ONE!!!
             self.my_player = response['player_id']
             LOG.log('info', 'My player is ', self.my_player)
         elif "success" in response: #This one needs no action
@@ -336,6 +346,7 @@ class NetworkBoard(Board):
             self.update_cells(last_cell, dest_cell)
             self.change_turn.set()
         elif "end_turn" in response:    #Next turn with the player that should play it
+            self.thinking_sprite.sprite.set_visible(False)
             self.change_turn.wait()
             self.next_player_turn()
             self.change_turn.clear()
@@ -355,9 +366,13 @@ class NetworkBoard(Board):
             my_player.pause_characters()
         elif "cpu_player" in response:  #Its the cpu player turn in host
             self.post_event('cpu')
+            self.thinking_sprite.sprite.set_visible(True)
         elif "admin" in response:
             event_id_string = 'admin_on' if response["admin"] else 'admin_off'
             self.post_event(event_id_string)
+        elif "pause" in response:   #This will usually happen when another client disconnects.
+            self.post_event('pause_game')   #TODO for now, a disconenction will issue a game lost msg.
+            #TODO BLOCK MOVEMENTS! And how to make the player updated to the last information??
         else:
             LOG.log('info', 'Unexpected response: ', response)
 
@@ -451,10 +466,14 @@ class NetworkBoard(Board):
     def send_player_and_chars_data(self):
         """"Sends all the players and the characters info to the server, 
         for it to be broadcasted to the clients when requested. 
-        Executed just on the host."""
+        Executed just on the host.
+        Also takes care of sending the starting dice value of the cpu controlled players, since
+        they were the only ones left to send."""
         players = []
         for player in self.players:
             players.append(player.json())
+            if not player.human:    #Sends the starting dice value, so the server can finally return the ordering of players
+                self.send_data_async({"start_dice": random.randint(1, 6), "cpu_player": player.uuid, "id":self.uuid})
         self.send_data_async({"players_data": players})
         chars = []
         for cell in self.cells:
@@ -586,6 +605,10 @@ class NetworkBoard(Board):
     def destroy(self):
         """Sets the flags to signal the end of the threads and disconnects 
         clients, and the server if this networkboard is the host."""
+        try:
+            self.send_data_async({"disconnect": True, "client": self.uuid})
+        except Exception:
+            pass
         self.reconnect = False
         self.client.disconnect()
         for flag in self.flags.keys():

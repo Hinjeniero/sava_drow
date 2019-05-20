@@ -227,7 +227,7 @@ class ComputerPlayer(Player):
         return rated_movements[0][0]    #Returning only the movement, we have no use for the score
 
     @staticmethod
-    def generate_movements(paths_graph, all_distances, circum_size, all_cells, current_map, current_player, my_turn=True):
+    def generate_movements(paths_graph, all_distances, circum_size, all_cells, current_map, current_player, my_turn=True, order_by_fitness=False):
         """Generates and returns all the possible movements in a board state for a specific player and his characters.
         Args:
             paths_graph (:obj: numpy.Matrix):   Matrix of enabled/directly connected paths of the current board.
@@ -247,7 +247,7 @@ class ComputerPlayer(Player):
         for cell_index, char_inside_cell in all_cells.items():
             if char_inside_cell.owner_uuid == current_player and my_turn\
             or char_inside_cell.owner_uuid != current_player and not my_turn:
-                paths = char_inside_cell.get_paths(path_graph, all_distances, current_map, cell_index, circum_size)
+                paths = char_inside_cell.get_paths(paths_graph, all_distances, current_map, cell_index, circum_size)
                 destinies[cell_index] = tuple(path[-1] for path in paths)
         return destinies    #Return {char: (dest1,  dest2...), char2:...}
 

@@ -133,6 +133,7 @@ class Sprite(pygame.sprite.Sprite):
         """Draws the sprite over a surface. Draws the overlay too if use_overlay is True.
         Args:
             surface (:obj: pygame.Surface): Surface to draw the Sprite. It's usually the display.
+            offset (Container: int, int, default=None): Offset in pixels to be taken into account when drawing.
         """
         if offset and offset == (0, 0): offset=None
         if self.visible:
@@ -172,14 +173,11 @@ class Sprite(pygame.sprite.Sprite):
             tuple(int, int):    Resolution/canvas size of this Sprite."""
         return self.resolution
 
-    '''def get_rect_if_canvas_size(self, canvas_size):
-        return pygame.Rect( tuple([x*y for x,y in zip(self.real_rect[0], canvas_size)]),\
-                            tuple([x*y for x,y in zip(self.real_rect[1], canvas_size)]))'''
-
     def set_canvas_size(self, canvas_size):
-        """Set an internal resolution (NOT SIZE). Updates self.real_rect and self.resolution.
+        """Set a new resolution for the container element (Can be the screen itself). 
+        Updates self.real_rect and self.resolution.
         Args:
-            canvas_size (:tuple: int,int): Resolution to set.
+            canvas_size (Tuple-> int,int): Resolution to set.
         """
         self.resolution = canvas_size
         try:
@@ -311,26 +309,46 @@ class Sprite(pygame.sprite.Sprite):
                         overlay=True, overlay_color=WHITE, border=True, border_color=WHITE, border_width=2, **unexpected_kwargs):
         """Generates a pygame surface according to input arguments.
         Args:
-            size (:obj: pygame.Rect||:tuple: int,int):  Dimensions of the surface (width, height)
+
+
+            size (:obj: pygame.Rect | Tuple-> int,int):  Dimensions of the surface (width, height)
+            surface (:obj: pygame.Surface, default=None): 
             texture (string):   Path of the image to be loaded as a texture 
-            keep_aspect_ratio (boolean):    True to keep the aspect ratio of the image when loading it
-            shape (string): Shape of the surface. Options are circle and rectangle.
-            ----
+            overlap_texture (:obj: pygame.Surface, default=None): 
+            active_texture (:obj: pygame.Surface, default=None): 
+            keep_aspect_ratio (boolean, default=False): True if we want the original aspect ratio to be kept when loaded and resized. 
+                                                        False otherwise (False can output severely distorted images, depending on settings).
+            resize_mode (String, default='fit'): Mode used when changing the input texture size. It can be two modes:
+                                'fit':  The image will adjust itself to the closer size to the input size as possible, without
+                                        exceeding it.
+                                'fill': The image will adjust itself to the closer size to the input size as possible, without 
+                                        any axis being lower than it, effectively 'filling' all the image. If the aspect ratio is to 
+                                        be kept, the results may vary.
+            resize_smooth (boolean, default=True):  If this flag is true, the resizing will be done smoothing the borders. 
+                                                    If its false, the resizing will keep the image 'as-is', and as pixelated as 
+                                                    the result could be.
             only_text (boolean):    True if we want the surface to only contains a text with a transparent background.
             text (string):  The text to draw. Used if only_text is True. 
-            text_color (:tuple: int, int, int): RGB Color of the text. Used if only_text is True.
+            text_color (Tuple-> int, int, int): RGB Color of the text. Used if only_text is True.
             text_font (pygame.font):    Font used when rendering the text. Used if only_text is True.
-            ----
-            fill_color (:tuple: int, int, int): RGB color of the surface background. Used if fill_gradient is False. 
+            text_outline (int, default=1):
+            text_outline_color (Tuple-> int, int, int):
+            text_shadow_dir (Tuple-> float, float):
+            text_lines (int):
+            shape (String): Shape of the surface. Options are circle and rectangle.
+            transparent (boolean):
+            fill_color (Tuple-> int, int, int): RGB color of the surface background. Used if fill_gradient is False. 
             fill_gradient (boolean):    True if we want a gradient instead of a solid color in the .
-            gradient (:tuple of 2 tuples: int, int, int):   Interval of RGB colors of the gradient. (start, end). 
+            gradient (Tuple-> 2 Tuples-> int, int, int):   Interval of RGB colors of the gradient. (start, end). 
             gradient_type (string): direction of the gradient. Options are Horizontal and Vertical. Used if gradient is True.
+            angle (default=None):
             ----
-            overlay_color (:tuple: int, int, int):  RGB color of the overlay.
+            overlay (boolean):
+            overlay_color (Tuple-> int, int, int):  RGB color of the overlay.
             border (boolean):   True if the surface generated has a border.
-            border_color (:tuple: int, int, int):   Color of the border. RGBA/RGB format.
+            border_color (Tuple-> int, int, int):   Color of the border. RGBA/RGB format.
             border_width (int):  Size of the border in pixels.
-            unexpected_kwargs (anything):   Just there to not raise an error if unexpecte keywords are received.
+            **unexpected_kwargs (Dict-> Any:Any):   Just there to not raise an error if unexpecte keywords are received.
         Returns:
             (:obj: pygame.Surface): Surface generated following the keywords"""
         text = str(text)
@@ -573,6 +591,12 @@ class MultiSprite(Sprite):
             self.add_sprite(text)
 
     def set_canvas_size(self, canvas_size):
+        """Set a new resolution for the container element (Can be the screen itself). 
+        Updates self.real_rect and self.resolution. Also sets the canvas_size of the contained sprites
+        to the new size of this element.
+        Args:
+            canvas_size (Tuple-> int,int): Resolution to set.
+        """
         super().set_canvas_size(canvas_size)
         for sprite in self.sprites:
             sprite.set_canvas_size(self.rect.size)

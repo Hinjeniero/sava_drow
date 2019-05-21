@@ -6,12 +6,16 @@ Have the following classes, inheriting represented by tabs:
         ↑ButtonAction
         ↑ButtonValue
         ↑Slider
+        ↑VerticalSlider
         ↑InfoBoard
         ↑Dialog
+        ↑SelectableTable
+        ↑TextBox
+        ↑ScrollingText
 --------------------------------------------"""
 
-__all__ = ["UIElement", "TextSprite", "ButtonAction", "ButtonValue", "Slider", "InfoBoard", "Dialog", "TextBox", "ScrollingText"]
-__version__ = '0.9'
+__all__ = ["UIElement", "ButtonAction", "ButtonValue", "Slider", "VerticalSlider", "InfoBoard", "Dialog", "SelectableTable", "TextBox", "ScrollingText"]
+__version__ = '1.0'
 __author__ = 'David Flaity Pardo'
 
 #Python libraries
@@ -41,13 +45,13 @@ class UIElement(MultiSprite):
     def __init__(self, id_, command, user_event_id, position, size, canvas_size, **params):
         """Constructor of the UiElement class.
         Args:
-            id_ (str):  Identifier of the Sprite.
+            id_ (str):  Identifier of the element.
             command (str):  Command linked with the element. Will be sent in the payload of the event.
             user_event_id (int): Identifier of the event that will be sent.
             position (:tuple: int,int): Position of the Sprite in the screen. In pixels.
             size (:tuple: int,int):     Size of the Sprite in the screen. In pixels.
             canvas_size (:tuple: int,int):  Size of the display. In pixels.
-            params (:dict:):    Dict of keywords and values as parameters to create the self.image attribute.
+            params (Dict-Any:Any):    Dict of keywords and values as parameters to create the self.image attribute.
                                 Variety going from fill_color and use_gradient to text_only.
         """
         params['shape'] = 'rectangle'
@@ -83,7 +87,10 @@ class UIElement(MultiSprite):
         return self.get_event()
     
     def hitbox_action(self, command, value):
-        """Executes the associated action of the element. To be called when a click or key-press happens."""
+        """Executes the associated action of the element. To be called when a click or key-press happens.
+        Args:
+            command (String):   Input command, that describes the action taken when selecting this element.
+            value (Any):    Payload of the command, essential to complete the supplied information."""
         if self.active and self.enabled:
             if self.hover_dialog and 'center' in command and 'mouse' in command:    #MouseWheel click
                 if self.dialog_active:          self.hide_help_dialog()
@@ -102,7 +109,16 @@ class UIElement(MultiSprite):
         self.__event_id = event_id
 
     def get_collisions(self, mouse_sprite, list_sprites=None, first_only=False):
-        """list sprites in case a subclass want to check another implemented list"""
+        """Calculates and gets all the collisions of the mouse with the internal sprites of this element.
+        Can return only the first collision, or all of them.
+        Args:
+            mouse_sprite (:obj: pygame.sprite.Sprite):  A dummy sprite that contains the current cursor position.
+                                                        Done this way because the spritecollide methods require a sprite.
+            list_sprites (List->:obj:pygame.sprite.Sprite, default=None):   Container of sprites to check collisions of the mouse.
+                                                                            If None, the element Sprites will be used here.
+            first_only (boolean, default=False):    Flag to return only the first collisino (True), or all of them (False).
+        Returns:
+            (List->:obj:pygame.sprite.Sprite):  All the sprites that collide with the current mouse position."""
         list_to_check = list_sprites if list_sprites else self.sprites
         old_mouse_position = mouse_sprite.rect.topleft
         mouse_sprite.rect.topleft = tuple(x-y for x, y in zip(old_mouse_position, self.rect.topleft))
@@ -132,18 +148,19 @@ class UIElement(MultiSprite):
         Uses the Factory pattern.
 
         Args:
-            id_ (str):            Identifier/command of the element
+            id_ (String):  Identifier/command of the element
+            command (String):   Command that will be sent when the created element is triggered.
             user_event_id (int):  Id of the user defined event that this element will trigger.
-            position (:tuple: int, int):    Position of the element. In pixels
-            size (:tuple: int, int):        Size of the element. In pixels.
-            default_values (:tuple: any...):    Set of values that the element will use. Can be a number or a tuple of values.
+            position (Tuple-> int, int):    Position of the element. In pixels
+            size (Tuple-> int, int):        Size of the element. In pixels.
+            canvas_size (Tuple-> int, int): Size of the container element (Screen if this is the uppest level). In pixels.
             *elements   (:obj: UI_Element): Subelements to be added, separated by commas.
-            **params (:dict:):    Named parameters that will be passed in the creation of an UiElement subclass.
+            default_values (Tuple-> Any, default=None): Set of values that the element will use. Can be a number or a tuple of values.
+            **params (Dict-> Any:Any):  Named parameters that will be passed in the creation of an UiElement subclass.
         Returns:
-            (UI_Element subclass).  The UI_Element subclass that adapts better to hold the input arguments.
+            (UI_Element->subclass).  The UI_Element subclass that adapts better to hold the input arguments.
         Raises:
             AttributeError: In case of values mismatch. Need to be a set of values, or a numerical one.
-
         """
         if not size or size == 1 or size == canvas_size:
             return ScrollingText(id_, user_event_id, position, canvas_size, *elements, **params)
@@ -175,6 +192,22 @@ class UIElement(MultiSprite):
     @staticmethod
     @run_async
     def threaded_factory(result, id_, command, user_event_id, position, size, canvas_size, *elements, default_values=None, **params):
+        """Calls the factory method in a separate thread, making the creation and generation of the matching element, non blocking and asynchronous.
+        Args:
+            id_ (str):  Identifier/command of the element
+            command (String):   Command that will be sent when the created element is triggered.
+            user_event_id (int):  Id of the user defined event that this element will trigger.
+            position (Tuple-> int, int):    Position of the element. In pixels
+            size (Tuple-> int, int):        Size of the element. In pixels.
+            canvas_size (Tuple-> int, int): Size of the container element (Screen if this is the uppest level). In pixels.
+            *elements   (:obj: UI_Element): Subelements to be added, separated by commas.
+            default_values (Tuple-> Any, default=None): Set of values that the element will use. Can be a number or a tuple of values.
+            **params (Dict-> Any:Any):  Named parameters that will be passed in the creation of an UiElement subclass.
+        Returns:
+            (UI_Element->subclass).  The UI_Element subclass that adapts better to hold the input arguments.
+        Raises:
+            AttributeError: In case of values mismatch. Need to be a set of values, or a numerical one.
+        """
         element = UIElement.factory(id_, command, user_event_id, position, size, canvas_size, *elements, default_values=default_values, **params)
         try:
             result.append(element)
@@ -190,10 +223,10 @@ class ButtonAction(UIElement):
     attributes to modify the way that text look.
     When clicked, will post an event with the a payload containing the command(.command).
     General class attributes:
-        __default_config (:dict:): Contains parameters about the text looks and positioning.
-            text (str): Text that will be drawn
+        __default_config (Dict-> Any:Any): Contains parameters about the text looks and positioning.
+            text (String): Text that will be drawn
             text_proportion (float):    Percentage that the text will occupy in the element
-            text_alignment (str):   Alignment inside the element. Center, Left, Right.
+            text_alignment (String):   Alignment inside the element. Center, Left, Right.
     """
     __default_config = {'text': 'ButtonAction', 
                         'text_proportion': 0.66, 
@@ -202,15 +235,15 @@ class ButtonAction(UIElement):
     def __init__(self, id_, command, user_event_id, position, size, canvas_size, **params):
         """ButtonAction constructor.
         Args:
-            id_ (str):  Identifier of the Sprite.
-            command (str):  Command linked with the element. Will be sent in the payload of the event.
+            id_ (String):  Identifier of the Sprite.
+            command (String):  Command linked with the element. Will be sent in the payload of the event.
             user_event_id (int): Identifier of the event that will be sent.
-            position (:tuple: int,int): Position of the Sprite in the screen. In pixels.
-            size (:tuple: int,int):     Size of the Sprite in the screen. In pixels.
-            canvas_size (:tuple: int,int):  Size of the display. In pixels.
-            params (:dict:):    Dict of keywords and values as parameters to create the self.image attribute.
-                                Variety going from fill_color and use_gradient to text_only.
-            """
+            position (Tuple->  int,int): Position of the Sprite in the screen. In pixels.
+            size (Tuple->  int,int):     Size of the Sprite in the screen. In pixels.
+            canvas_size (Tuple->  int,int):  Size of the display. In pixels.
+            params (Dict-> Any:Any):    Dict of keywords and values as parameters to create the self.image attribute.
+                                        Variety going from fill_color and use_gradient to text_only.
+        """
         super().__init__(id_, command, user_event_id, position, size, canvas_size, **params)
         ButtonAction.generate(self)
     
@@ -234,9 +267,9 @@ class ButtonValue (UIElement):
     When clicked, will post an event with a payload containing the command(.command) and the new set value.
     General class attributes:
         __default_config (:dict:): Contains parameters about the text looks and positioning.
-            text (str): Text that will be drawn
+            text (String): Text that will be drawn
             text_proportion (float):    Percentage that the text will occupy in the element
-            text_alignment (str):   Alignment inside the element. Center, Left, Right.
+            text_alignment (String):   Alignment inside the element. Center, Left, Right.
             shows_value (boolean):  True if the current value is drawn in the MultiSprite.
     Attributes:
         values (:tuple: any...):    Set of values of this button. The active value can (and should) change  
@@ -251,14 +284,14 @@ class ButtonValue (UIElement):
     def __init__(self, id_, command, user_event_id, position, size, canvas_size, set_of_values, **params):
         """ButtonValue constructor.
         Args:
-            id_ (str):  Identifier of the Sprite.
-            command (str):  Command linked with the element. Will be sent in the payload of the event.
+            id_ (String):  Identifier of the Sprite.
+            command (String):  Command linked with the element. Will be sent in the payload of the event.
             user_event_id (int): Identifier of the event that will be sent.
-            position (:tuple: int,int): Position of the Sprite in the screen. In pixels.
-            size (:tuple: int,int):     Size of the Sprite in the screen. In pixels.
-            canvas_size (:tuple: int,int):  Size of the display. In pixels.
-            set_of_values (:tuple: any...): Set of values of the button. The active value can change.
-            params (:dict:):    Dict of keywords and values as parameters to create the self.image attribute.
+            position (Tuple->  int,int):Position of the Sprite in the screen. In pixels.
+            size (Tuple->  int,int):    Size of the Sprite in the screen. In pixels.
+            canvas_size (Tuple->  int,int):  Size of the display. In pixels.
+            set_of_values (Tuple-> Any):Set of values of the button. The active value can change.
+            params (Dict-> Any:Any):    Dict of keywords and values as parameters to create the self.image attribute.
                                 Variety going from fill_color and use_gradient to text_only.
             """
         super().__init__(id_, command, user_event_id, position, size, canvas_size, **params) 
@@ -294,7 +327,7 @@ class ButtonValue (UIElement):
     def get_value(self):
         """Returns the current value of the element.
         Returns:    
-            (any):  Current value."""
+            (Any):  Current value."""
         return self.values[self.current_index]
 
     def hitbox_action(self, command, value):
@@ -425,13 +458,16 @@ class Slider (UIElement):
         self.overlay = self.generate_overlay(dial.image, WHITE)
 
     def regenerate_image(self):
+        """Generates the image and overlay again, following the params when the constructor executed.
+        Also updates the mask. Intended to be used after changing an important attribute in rect or image.
+        Called after an important change in resolution or the sprite params."""""
         self.sprites.remove(self.get_sprite('dial'))    #Have to do this in this way because ellipses.
         #Regenerating from here
         super().regenerate_image()
         #Adding again what is needed for a slider
         _ = self.params
         if _['bar_texture']:
-            bar = self.get_sprite('bar')
+            #bar = self.get_sprite('bar')
             bar = self.generate_bar(_['bar_texture'], _['bar_border'])    #Swapping the bar
         dial = self.generate_dial(_['dial_texture'], _['dial_fill_color'], _['dial_use_gradient'], _['dial_gradient'], _['dial_border'],\
                         _['dial_border_color'], _['dial_border_width'], _['dial_shape'])
@@ -439,9 +475,24 @@ class Slider (UIElement):
         self.overlay = self.generate_overlay(dial.image, WHITE)
         if not self.enabled:
             self.overlay.set_alpha(200)
-        #self.set_dial_position(self.value)
         
     def generate_bar(self, texture, border, resize_mode='fit', resize_smooth=True, keep_aspect_ratio=False):
+        """Generates and return a filling bar for the slider, using the input texture.
+        Args:
+            border (int):   Size of the bar border in pixels.
+            resize_mode (String, default='fit'): Mode used when changing the input texture size. It can be two modes:
+                                'fit':  The image will adjust itself to the closer size to the input size as possible, without
+                                        exceeding it.
+                                'fill': The image will adjust itself to the closer size to the input size as possible, without 
+                                        any axis being lower than it, effectively 'filling' all the image. If the aspect ratio is to 
+                                        be kept, the results may vary.
+            resize_smooth (boolean, default=True):  If this flag is true, the resizing will be done smoothing the borders. 
+                                                    If its false, the resizing will keep the image 'as-is', and as pixelated as 
+                                                    the result could be.
+            keep_aspect_ratio (boolean, default=False): True if we want the original aspect ratio to be kept when resizing. 
+                                                        False otherwise (False can output severely distorted images, depending on settings).
+        Returns:
+            (:obj: pygame.sprite.Sprite):   The sprite of the bar itself."""
         size = tuple(x-border for x in self.rect.size)
         bar = Sprite('bar', (border//2, border//2), size, self.rect.size, texture=texture, resize_mode=resize_mode,\
                     resize_smooth=resize_smooth, keep_aspect_ratio=keep_aspect_ratio)
@@ -495,6 +546,12 @@ class Slider (UIElement):
         return dial
     
     def draw(self, surface, offset=None):
+        """Draws the element over a surface. Draws the overlay too if use_overlay is True.
+        The overlay here matches the form of the slider dial.
+        Args:
+            surface (:obj: pygame.Surface): Surface to draw the Sprite. It's usually the display.
+            offset (Container: int, int, default=None): Offset in pixels to be taken into account when drawing.
+        """
         super().draw(surface, offset=offset)
         if (self.use_overlay and self.active) or not self.enabled:
             self.draw_overlay(surface, offset=offset)   #To draw it on top, otherwise is drawn below the dial and all
@@ -503,6 +560,7 @@ class Slider (UIElement):
         """Draws the overlay over a surface.
         Args:
             surface (:obj: pygame.Surface): Surface to draw the Sprite. It's usually the display
+            offset (Container: int, int, default=None): Offset in pixels to be taken into account when drawing.
         """
         dial = self.get_sprite('dial')
         position = dial.abs_position if dial.abs_position else dial.rect.topleft
@@ -518,7 +576,7 @@ class Slider (UIElement):
         """Changes the dial position to the input parameter. Changes the graphics and the value accordingly.
         Distinguises between values between 0 and 1 (position in value), and values over 1 (position in pixels).
         Args:
-            position (float||int): Position of the dial to set."""
+            position (float | int): Position of the dial to set."""
         bar = self.get_sprite('bar')
         if bar:
             try:
@@ -706,6 +764,10 @@ class InfoBoard (UIElement):
             UtilityBox.draw_grid(self.image, self.params['rows'], self.params['cols'])
     
     def update_element(self, id_, text):
+        """Updates the text of an element of the infoboard. Only works with TextSprites.
+        Args:
+            id_ (String):   Identificator of the text sprite to update.
+            text (String):  Text to set in the TextSprite."""
         for element in self.sprites:
             if element.id == id_:
                 element.set_text(text)
@@ -718,7 +780,9 @@ class InfoBoard (UIElement):
             id_ (str):  Id of the text sprite that will be created.
             text (str): Text to render and blit to the infoboard.
             spaces (int):  Number of spaces occupied by the text. Will determine the size and the position to some extent.
+            color (Tuple-> int, int, int):  Color of the text
             scale (float, default=0.95):    Proportional size of the text (Against the full size (looking purely at spaces).
+            **text_params (Dict-> Any:Any): Parameters of the text element. Used in the constructor of TextSprite
         Raises:
             NotEnoughSpaceException:    If the number of spaces of the element plus the already taken spaces is more than the 
                                         total spaces of the infoboard."""
@@ -818,22 +882,27 @@ class InfoBoard (UIElement):
         return self.params['rows']
 
     def set_rows(self, rows):
+        """Set a new number of rows in the infoboard. The spaces will be changed accordingly.
+        Args:
+            rows (int): The number of rows to set."""
         rows = 1 if rows < 1 else rows
         self.params['rows'] = rows
         self.spaces = self.params['rows']*self.params['cols']
         self.element_size = (int(self.rect.width//self.params['cols']), int(self.rect.height//self.params['rows']))
 
     def set_cols(self, cols):
+        """Set a new number of columns in the infoboard. The spaces will be changed accordingly.
+        Args:
+            columns (int): The number of columns to set."""
         cols = 1 if cols < 1 else cols
         self.params['cols'] = cols
         self.spaces = self.params['rows']*self.params['cols']
         self.element_size = (int(self.rect.width//self.params['cols']), int(self.rect.height//self.params['rows']))
 
     def clear(self):
-        """Deletes all the sprites of the infoboard. Useful when deleting the texts."""
+        """Deletes all the sprites of the infoboard. Useful to delete all the contained texts."""
         self.sprites.empty()
         self.taken_spaces = 0
-        #self.regenerate_image()
         
 class Dialog (InfoBoard):
     """Dialog class. Inherits from InfoBoard.
@@ -911,6 +980,11 @@ class Dialog (InfoBoard):
                     element.draw_overlay(surface, offset=self.rect.topleft)
     
     def set_canvas_size(self, resolution):
+        """Set a new resolution for the container element (Can be the screen itself). 
+        Updates self.real_rect and self.resolution.
+        Args:
+            canvas_size (Tuple-> int,int): Resolution to set.
+        """
         super().set_canvas_size(resolution)
         for element in self.elements:
             element.set_canvas_size(self.rect.size)
@@ -929,7 +1003,6 @@ class Dialog (InfoBoard):
 
     def add_input_box(self, spaces, text, command, scale=1, **textbox_params):
         """Adds a textbox to the dialog, that follows the input parameters.
-        After creating it and adding it to self.buttons, it is blitted onto the dialog image.
         Args:
             spaces (int):   Spaces occupied by the button. Row spaces//2 is recommended.
             text (str): Text of the button.
@@ -941,7 +1014,6 @@ class Dialog (InfoBoard):
 
     def add_ui_element(self, spaces, text, command, scale=1, constructor=None, centering='center', *elements, **params):
         """Adds an ui_element to the dialog, that follows the input parameters.
-        After creating it and adding it to self.buttons, it is blitted onto the dialog image.
         Args:
             spaces (int):   Spaces occupied by the button. Row spaces//2 is recommended.
             text (str): Text of the button.
@@ -968,13 +1040,26 @@ class Dialog (InfoBoard):
         self.taken_spaces += spaces
     
     def adjust_position(self, size, position, element, centering='center'):
+        """Adjusts the position of the x axis of the input element.
+        Args:
+            size (Tuple-> int,int): Size of the element. In pixels.
+            position (Tuple-> int,int): Position of the element in the dialog. In pixels.
+            element (:obj: UiElement subclass): Element whose position to adjust
+            centering (String): Type of centering.
+        """
         position_x = position[0]
         position_x += (size[0]//2-element.rect.width//2) if 'center' in centering\
         else (size[0] - element.rect.width) if 'right' in centering else 0
         element.set_position((position_x, position[1]))
 
     def add_sprite_to_elements(self, spaces, sprite, centering='center', scale=1):
-        """Testing this to add animated chars"""
+        """Adds a sprite of any type to the dialog, that follows the input parameters.
+        Args:
+            spaces (int):   Spaces occupied by the button. Row spaces//2 is recommended.
+            sprite (:obj: pygame.sprite.Sprite):    Sprite to add. Can be any subtype of sprite.
+            centering (String): Type of centering.
+            scale (float):  Scale of the button compared with the spaces taken by it.
+        """
         spaces = self.parse_element_spaces(spaces)
         size = self.get_element_size(spaces, scale)
         position = self.get_element_position(spaces, size)
@@ -984,6 +1069,16 @@ class Dialog (InfoBoard):
         self.taken_spaces += spaces
 
     def get_collisions(self, mouse_sprite, first_only=False):
+        """Calculates and gets all the collisions of the mouse with the elements of this dialog.
+        Can return only the first collision, or all of them.
+        Args:
+            mouse_sprite (:obj: pygame.sprite.Sprite):  A dummy sprite that contains the current cursor position.
+                                                        Done this way because the spritecollide methods require a sprite.
+            list_sprites (List->:obj:pygame.sprite.Sprite, default=None):   Container of sprites to check collisions of the mouse.
+                                                                            If None, the element Sprites will be used here.
+            first_only (boolean, default=False):    Flag to return only the first collisino (True), or all of them (False).
+        Returns:
+            (List->:obj:pygame.sprite.Sprite):  All the sprites that collide with the current mouse position."""
         collisions = super().get_collisions(mouse_sprite, list_sprites=self.elements)
         collisions.extend(super().get_collisions(mouse_sprite))
         if first_only and collisions:
@@ -991,85 +1086,135 @@ class Dialog (InfoBoard):
         return collisions
     
     def full_clear(self):
-        """Deletes all the sprites of the infoboard. Useful when deleting the texts."""
+        """Deletes all the sprites of the infoboard."""
         super().clear()
         self.elements.empty()
 
 class SelectableTable(Dialog):
-    def __init__(self, id_, user_event_id, command, row_size, canvas_size, keys, *data, **params):
-        """Dialog constructor.
+    """SelectableTable class. Inherits from Dialog.
+    Its formed by a grid of rows. It purpose is to be used as a normal table, whose rows can be selected
+    by the user, and triggered to get different actions and commands."""   
+    def __init__(self, id_, user_event_id, command, row_size, canvas_size, headings, *data, **params):
+        """SelectableTable constructor.
         Args:
             id_ (str):  Identifier of the Sprite.
             user_event_id (int): Identifier of the event that will be sent.
-            position (:tuple: int,int): Position of the Sprite in the screen. In pixels.
-            element_size (:tuple: int,int):     Size of the Sprite in the screen. In pixels.
+            command (String):   Command to trigger upon selection of a row.
+            row_size (:tuple: int,int):     Size of each row. In pixels.
             canvas_size (:tuple: int,int):  Size of the display. In pixels.
-            *elements (:tuple: UI_Element, int):    Subelements to be added, separated by commas. Usually TextSprites.
-                                                    The tuple follows the schema (UIElement, infoboard spaces taken).
+            headings (Tuple -> Strings):    Headings of the table.
+            *data (Tuples-> Tuple->String, Any):    Data of the subsequent rows after the top one. Each tuple of Strings will
+                                                form a new row in the table.
+                                                In each tuple, the first value is the heading, and the second the matching value of this row.
             **params (:dict:):  Dict of keywords and values as parameters to create the self.image attribute.
-                                Variety going from fill_color and use_gradient to text_only.
+                                Variety going from fill_color and use_gradient to text_only. This is used for the superclass
+                                Dialog.
             """
         params['cols'] = 1
         params['rows'] = len(data)+1
         super().__init__(id_, user_event_id, (row_size[0], row_size[1]*(len(data)+1)), canvas_size, **params)
-        SelectableTable.generate(self, row_size, command, keys, *data)
+        SelectableTable.generate(self, row_size, command, headings, *data)
     
     @staticmethod
-    def generate(self, row_size, command, keys, *rows): #TODO ROWS FOLLOWIN A SCHEMA (text, value)
+    def generate(self, row_size, command, headings, *rows):
+        """Generation method executed in the constructor of SelectableTable.
+        Args:
+            row_size (Tuple-> int,int):     Size of each row. In pixels.
+            command (String):   Command to trigger upon selection of a row.
+            headings (Tuple-> Strings):    Headings of the table.
+            *rows (Tuples-> Tuple->String, Any):    Data of the subsequent rows after the top one. Each tuple of Strings will
+                                                form a new row in the table.
+                                                In each tuple, the first value is the heading, and the second the matching value of this row.
+        """
         font = None
         scale = 0.95
         try:
             font = self.params['text_font']
         except KeyError:
             pass
-        new_keys, new_rows = self.parse_data(keys, *tuple(row[0] for row in rows))  #Only the first part of the rows
-        self.add_button(1, self.build_row(new_keys), command, scale=scale, only_text=True, text_font=font)
+        new_headings, new_rows = self.parse_data(headings, *tuple(row[0] for row in rows))  #Only the first part of the rows
+        self.add_button(1, self.build_row(new_headings), command, scale=scale, only_text=True, text_font=font)
         new_rows = [(x, y[1]) for x, y in zip(new_rows, rows)]  #Resstructuring it again
-        #print(self.build_row(new_keys))
-        #print("LEN "+str(len(self.build_row(new_keys))))
         for row in new_rows:
-            #print(self.build_row(row))
-            #print("LEN "+str(len(self.build_row(row))))
-            #print(row[1])
-            #print(self.build_row(row[0]))
             self.add_ui_element(1, self.build_row(row[0]), command, scale=scale, default_values=(row[1],), only_text=True, shows_value=False, text_font=font)
-            #print(type(self.elements.sprites()[-1]))
-        self.elements.sprites()[0].set_enabled(False) #We dont want the keys to be clickable
+        self.elements.sprites()[0].set_enabled(False) #We dont want the headings to be clickable
 
     def build_row(self, row):
-        """Returns the entire row sring"""
+        """Gets a tuple of strings and concatenates them.
+        Args:
+            row (Tuple-> Strings):  Strings to concatenate.
+        Returns:
+            (String): Concatenated tuple."""
         row_string = '| '
         for string in row:
             row_string+=string+' | '
         return row_string
 
-    def parse_data(self, keys, *rows):
-        """Parse all the elements of all rows to match the longest string in each column"""
-        new_keys, new_rows = [], []
-        for i in range(0, len(keys)):
+    def parse_data(self, headings, *rows):
+        """Parse all the elements of all the rows, to match the longest string in each column, and adjust the rest of 
+        Strings accordingly (With padding).
+        Args:
+            headings (Tuple-> Strings):    Headings of the table.
+            *rows (Tuples-> Tuple->String, Any):    Data of the subsequent rows after the top one. Each tuple of Strings will
+                                                form a new row in the table.
+                                                In each tuple, the first value is the heading, and the second the matching value of this row.
+        Returns:
+            (Tuple->2 Tuples-> Strings):    Parsed and padded headings and rows (input params)."""
+        new_headings, new_rows = [], []
+        for i in range(0, len(headings)):
             #Get the longest text in the column i
-            longest = len(keys[i])
+            longest = len(headings[i])
             for row in rows:
                 if len(row[i]) > longest:
                     longest = len(row[i])
             #Parse the rest of texts:
-            new_keys.append(self.parse_text(keys[i], longest))
+            new_headings.append(self.parse_text(headings[i], longest))
             for j in range (0, len(rows)):
                 try:
                     new_rows[j].append(self.parse_text(rows[j][i], longest))
                 except IndexError:
                     new_rows.append([self.parse_text(rows[j][i], longest)])
-        return new_keys, new_rows
+        return new_headings, new_rows
 
     def parse_text(self, text, new_length):
-        """Parse a text to match a new length, padding it with spaces"""
+        """Parse a text to match a new length, padding it with spaces. Auxiliar method used in parse_data.
+        Args:
+            text (String):  Text to be parsed.
+            new_length (int):   New length that the text should have.
+        Returns:
+            (String): The new padded and parsed text."""
         start = (new_length-len(text))//2
         end = (new_length-len(text))//2 if (new_length-len(text))%2 == 0 else math.ceil((new_length-len(text))/2)
         return (start*' ')+text+(end*' ')
 
 class TextBox(UIElement):
+    """TextBox class. Inherits from UIElement.
+    This element creates a field looking sprite, with capability to react upon interaction, and to show
+    letters when it receives keyboard keystrokes.
+    General class attributes:
+        CURSOR_CHAR (String):   The character that will be shown as a position cursor in the text box.
+    Attributes:
+        text (String):  Text of this text box. Initially empty.
+        cursor_pos (int):   Current position of the cursor (in the text shown).
+        char_limit (int):   Limit of characters of this text box. 0 means unlimited.
+    """
+    
     CURSOR_CHAR = 'I'
     def __init__(self, id_, command, user_event_id, position, element_size, canvas_size, initial_text='', placeholder='', char_limit=0, **params):
+        """Constructor of the TextBox class.
+        Args:
+            id_ (String):  Identifier of the element.
+            command (String):  Command linked with the element. Will be sent in the payload of the event.
+            user_event_id (int): Identifier of the event that will be sent.
+            position (Tuple-> int,int): Position of the element. In pixels.
+            element_size (Tuple-> int,int): Size of the element. In pixels.
+            canvas_size (Tuple-> int,int):  Size of the container element (can be the full screen). In pixels.
+            initial_text (String, default=''):  The initial string of this textbox. 
+            placeholder (String, default=''):   The text that will be shown until the text box is clicked.
+            char_limit (int, default=0):    Limit of characters of this text box. 0 means unlimited.
+            params (Dict-> Any:Any):    Dict of keywords and values as parameters to create the self.image attribute.
+                                Variety going from fill_color and use_gradient to text_only.
+        """
         params['overlay'] = False
         super().__init__(id_, command, user_event_id, position, element_size, canvas_size, **params)
         self.text = initial_text
@@ -1080,10 +1225,15 @@ class TextBox(UIElement):
 
     @staticmethod
     def generate(self):
+        """Generation method executed in the constructor of TextBox. Just updates the sprite (just in case)."""
         self.update_text()
 
     def hitbox_action(self, command, value):
-        """Executes the associated action of the element. To be called when a click or key-press happens."""
+        """Executes the associated action of the element. To be called when a click or key-press happens.
+        In here the keys are received and shown as text.
+        Args:
+            command (str):  Command received. Usually a mouse click o keyboard stroke.
+            value (Any):    Payload of the command. Usually the key stroke of the keyboard"""
         if ('mouse' in command and ('click' in command or 'button' in command)):
             x_mouse = value[0]-self.rect.x
             text_sprite = self.sprites.sprites()[0]
@@ -1116,35 +1266,41 @@ class TextBox(UIElement):
                     self.add_char(str(value))
 
     def change_cursor_position(self, position):
+        """Changes the cursor position in the text box. It also updates the sprite to reflect this change.
+        Args:
+            position (int): New position of the cursor."""
         self.cursor_pos = int(position)
         self.cursor_pos = len(self.text) if self.cursor_pos>len(self.text)\
         else 0 if self.cursor_pos < 0 else self.cursor_pos
         self.update_text()
 
     def add_char(self, char):
+        """Adds a character to the text box. Checks limits and acts accordingly.
+        Args:
+            char (String):  Character to add at the cursor position."""
         if self.char_limit == 0 or len(self.text) < self.char_limit:
             self.text = self.text[:self.cursor_pos]+char+self.text[self.cursor_pos:]
             self.cursor_pos = self.cursor_pos+1 
             self.update_text()
 
     def delete_char(self):
+        """Deletes a character at the cursor position."""
         if len(self.text) > 0:
             self.text = self.text[:self.cursor_pos-1]+self.text[self.cursor_pos:]
             self.cursor_pos = self.cursor_pos-1 
             self.update_text()
 
     def clear_text(self):
+        """Clears the text of this text box."""
         self.text = ''
         self.update_text()
 
     def update_text(self):
+        """Updates the sprite to show the changes made beforehand."""
         self.sprites.empty()    #Deleting the text inside
         text = self.text[:self.cursor_pos]+TextBox.CURSOR_CHAR+self.text[self.cursor_pos:] if self.active else self.text
         self.add_text_sprite('text', text, text_size=tuple(0.95*x for x in self.rect.size))
         self.regenerate_image()
-
-    def set_active(self, state):
-        super().set_active(state)
 
     def send_event(self):
         """Post the event associated with this element, along with the current value and the command.
@@ -1153,8 +1309,25 @@ class TextBox(UIElement):
         pygame.event.post(my_event)
 
 class ScrollingText(UIElement):
-    #Half transparent background with text on it.
+    """ScrollingText class. Inherits from UIElement.
+    Formed by a half transparent background, and messages that have been added to it.
+    Usually, this elements has the same size as the screen.
+    Args:
+        transparency (int): Transparency of the background.
+        changed (boolean):  Flag that activates if there has been a change in this element
+                            since the last call of the method has_changed.
+    """
     def __init__(self, id_, user_event_id, canvas_size, size=None, transparency=128, **params):
+        """Constructor of the ScrollingText class.
+        Args:
+            id_ (String):  Identifier of the element.
+            user_event_id (int): Identifier of the event that will be sent.
+            canvas_size (Tuple-> int,int):  Size of the container element (can be the full screen). In pixels.
+            size (Tuple-> int,int, default=None):   Size of the element. In pixels. If its None, it will be the canvas size.
+            transparency (int): Transparency of the background.
+            params (Dict->Any:Any):    Dict of keywords and values as parameters to create the self.image attribute.
+                                        Variety going from fill_color and use_gradient to text_only.
+        """
         if not size:
             super().__init__(id_, None, user_event_id, (0, 0), canvas_size, canvas_size, **params)
         else:
@@ -1165,12 +1338,23 @@ class ScrollingText(UIElement):
         self.changed = True
 
     def has_changed(self):  #Kinda like an once checkable flag
+        """Method that checks if this element has changed since the lsat call.
+        A change means that either a message was added, or them all were cleared out.
+        Also sets the changed flag to False.
+        Returns:
+            (boolean):  True if this element has suffered any change since the last call of this method."""
         changed = self.changed
         self.changed = False
         return changed
 
     @synchronized
     def add_msg(self, text, msg_size=(0.85, 0.10), **params):
+        """Adds a message to the element.
+        Args:
+            text (String):  Message to create and add.
+            msg_size (Tuple-> float, float):    Message proportional size, compared to the parent element (This one).
+            params (Dict->Any:Any):    Dict of keywords and values as parameters to create the self.image attribute.
+                                    They are used in the creation of the message sprite."""
         self.changed = True
         self.add_text_sprite('screen_msg_'+str(len(self.sprites.sprites())), text,\
                             text_size=tuple(x*y for x,y in zip(self.rect.size, msg_size)), **params)
@@ -1178,14 +1362,17 @@ class ScrollingText(UIElement):
         text_sprite.set_position((text_sprite.rect.x, self.resolution[1]))
         for sprite in self.sprites:
             sprite.set_position((sprite.rect.x, sprite.rect.y-text_sprite.rect.height))
-        #self.regenerate_image()
 
     @synchronized
     def clear_msgs(self):
+        """Deletes all the messages of this element, and sets the changed flag to True."""
         self.changed = True
         self.sprites.empty()
 
     def regenerate_image(self):
+        """Generates the image and overlay again, following the params when the constructor executed.
+        Also updates the mask. Intended to be used after changing an important attribute in rect or image.
+        Called after an important change in resolution or the sprite params."""""
         super().regenerate_image()
         self.image = self.image.convert()
         self.image.set_alpha(self.transparency)

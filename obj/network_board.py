@@ -5,7 +5,7 @@ Have the following classes.
     NetworkBoard
 --------------------------------------------"""
 
-#Python full fledged libraries
+#Python libraries
 import threading
 import time
 import random
@@ -13,6 +13,7 @@ import pygame
 import uuid
 import datetime
 import requests #Only used to get the servers when getting all of them from the table of servers
+
 #External libraries
 #from external.Mastermind import MastermindServerTCP, MastermindClientTCP
 #from external.Mastermind._mm_errors import *   #This one doesnt catch the exception for some fuckin reasoni
@@ -42,12 +43,18 @@ class NetworkBoard(Board):
         uuid (int): Identifier of this NetworkBoard/Client.
         ip (str):   IP address of the server to connect to.
         port (int): PORT of the server to connect to.
+        ready (boolean)
+        overlay_text (:obj:pygame.Surface)
         connected (:obj: threading.Event):  Flag to block the threads in the case of a disconnection, and unblock them later.
-        client (:obj:niodsaidsa):   Our connection object that will be used to communicate with the server. 
+        change_turn (:obj: threading.Event):
+        next_turn_event (:obj: pygame.Event):
+        connection_error_event (:obj: pygame.Event):
+        client (:obj:omethingfohisfdhhidffsdsfhidoso):   Our connection object that will be used to communicate with the server. 
         client_lock (:obj: threading.Lock): Lock to make the access to the client thread-safe.
         server (:obj: BoardServer): Server object. Only the host contains it to start it, otherwise is None.
         my_player (int):Uuid of the player that we will be controlling on the board.
         my_turn(boolean):   True if is the turn of my player, False otherwise.
+        player_names (Dict->somefshfoisofdhithing:obj:pygame.Surface):
         flags (dict):   Dict of threading.Event objects that block threads when they try to make an action that needs a not ready yet asset.
         reconnect (boolean):    True if to reconnect after losing connection, False otherwise.
     """
@@ -85,7 +92,7 @@ class NetworkBoard(Board):
         self.my_player = None
         self.my_turn = False
         self.players_names = {}
-        self.flags = {}     #Used if client and not host.
+        self.flags = {}     #Used only if client and not host.
         self.reconnect = True
         NetworkBoard.generate(self, host, direct_connection)
 
@@ -122,6 +129,12 @@ class NetworkBoard(Board):
 
     @run_async_not_pooled
     def generate_connect_dialog(self, direct_connection):
+        """Generates the matching essential dialog to get the board started. The dialog depends on if we are doing a direct connection, 
+        or checking the public list of servers and picking one. 
+        First case, a dialog with the connection ip and port input fields will be generated.
+        In the second case, a table showing the current running servers will be made.
+        Args:
+            direct_connection (boolean):    Flag that mark if we are connecting directly (True), or by choosing one of the public options (False)"""
         #TODO To update this just destroy it and rebuild it or whatever. Take into edxample the update_scoreboard in Board.
         if direct_connection:
             dialog = DialogGenerator.create_input_dialog('ip_port', tuple(x//3 for x in self.resolution), self.resolution,\
@@ -148,12 +161,19 @@ class NetworkBoard(Board):
 
     @run_async_not_pooled
     def generate_players_names(self):
+        """Creates and adds the texts surfaces that match the different players names. This is done to show in the local client the 
+        name of the other clients at the position at where their mouse is. Kind of a gimmick, but it's cool"""
         for player in self.players:
             if player.uuid != self.my_player:   #We dont want our player name over our cursor.
                 player_text = TextSprite('sprite_'+player.name, (0, 0), tuple(int(x*0.05) for x in self.resolution), self.resolution, player.name)
                 self.players_names[player.uuid] = player_text
 
     def exception_handler(self, exception):
+        """Handles the most common exception of this object methods. Since this is done in a lot of methods, we can save code in this way.
+        Does so by getting an input exception, catching it in the method, and checking which type of exception is. 
+        Afterwards, it will send an event to the pygame event queue, matching the exception .
+        Raise:
+            exception (Exception):  Its risen to catch the exception in this method itself, so we can control the exception here."""
         try:
             raise exception
         except (MastermindErrorSocket, MastermindError):   #If there was an error connecting
@@ -169,6 +189,8 @@ class NetworkBoard(Board):
 
     @run_async_not_pooled
     def start(self, host):
+        """Starts the connection with the server, and initiates the threads that take care of the keep_alive packets, and the
+        receiving socket end. The second thread is respondible for the received responses from the server (Usually redirected from other players)."""
         try:
             if not host:
                 self.flags["ip_port_done"].wait()
@@ -181,7 +203,12 @@ class NetworkBoard(Board):
             self.exception_handler(exc)
 
     def set_ip_port(self, ip=None, port=None):
-        """Done in this way so it's possible to set only one to set the other one later."""
+        """Sets the ip attribute and/or the port attribute, according to the input received.
+        If both are received, the flag that signals that we have the essential information to finally connect to the server,
+        is set to True.
+        Args:
+            ip (String, default=None):  Ip of the server to connect to.
+            port (Int, default=None):   Port of the server to connect to."""
         if ip:
             self.ip = ip
         if port:
@@ -193,17 +220,19 @@ class NetworkBoard(Board):
                 pass
 
     def send_handshake(self, host):
-        """"Sends the first request to the server, with our ID and a host boolean.
-        If this is the host, will send the parameters for the board creation.
-        Otherwise, will ask for those parameters, along with other essential data like
-        the generated players data, the ammount of players, or the generated characters data (like dropping cell).
-        Args:"""
+        """"Sends the first request to the server, with our user UUID, and a host boolean.
+        If this is the host, the method will send the parameters for the board creation.
+        Otherwise, will ask for those parameters, along with other essential data, like
+        the generated players data, the ammount of players, or the generated characters data (like the dropping cell and such).
+        Also, sends the a random throw of a dice to decide the order of the players.
+        Args:
+            host (boolean): Flag saying if we are the host or not (Just a lowly client)."""
         self.send_data({"host": host, "id": self.uuid})
         if host:
             self.send_data_async({"params": self.get_board_params()})
             self.LOG_ON_SCREEN("sent board creation settings to server")
         else:
-            self.request_data_async("params")
+            self.request_data_async("params")           #To get the board creation params
             self.request_data_async("players")          #To get the number of players
             self.request_data_async("players_data")     #To get the data of the players
             self.request_data_async("characters_data")  #To get the data of the characters
@@ -211,9 +240,8 @@ class NetworkBoard(Board):
         self.send_data_async({"start_dice": dice, "id":self.uuid})    #Sending dice result for the player assignments
         self.LOG_ON_SCREEN("rolled a "+str(dice))
 
-
-    def connect(self):   #TODO SEND ID IN CONNECT?
-        """Connects the client to the server if the ip and port are available."""
+    def connect(self):
+        """Manages the connection of the client to the server, if the ip and port are available."""
         if self.ip and self.port:
             self.client_lock.acquire()
             self.LOG_ON_SCREEN('Connecting to '+str(self.ip)+' in port '+str(self.port))
@@ -227,7 +255,7 @@ class NetworkBoard(Board):
     @run_async_not_pooled
     def keep_alive(self):
         """SubThread that sends 'keep-alive' requests to the server in an infinite loop, to keep the connection, well, alive.
-        Sends a request per second. It's a busy loop, using sleep. Not the best approach, but it works"""
+        Sends a request per second. It's a busy loop, using sleep. Not the best approach, but well, it works."""
         while True:
             try:
                 self.request_data_async("keep-alive")   #Response will be handled in the receiving thread
@@ -377,12 +405,14 @@ class NetworkBoard(Board):
             LOG.log('info', 'Unexpected response: ', response)
 
     def shuffle(self):
-        """Only want the dice to shuffle if it's our turn, otherwise do nothing."""
+        """Method that shuffles the dice. It overloads the superclass method because we 
+        only want the dice to shuffle if it's our turn, otherwise do nothing."""
         if self.my_turn:
            super().shuffle() 
 
     def activate_my_characters(self):
-        """Called each turn."""
+        """Called each turn. Sets the characters that belong to the player of this client to active=True.
+        This is done so we can move them around, even if it's not our turn. We still cannot change them of cell if its not, of course."""
         if self.my_player:
             for char in self.characters:
                 char.set_state('idle')
@@ -405,10 +435,10 @@ class NetworkBoard(Board):
     def send_data(self, data_to_send, compression=None):
         """Sends data to the server with a blocking call that waits for a reply.
         Args:
-            data_to_send (dict):    Data to send to the server (in a JSON schema).
+            data_to_send (Dict->Any:Any):   Data to send to the server (in a JSON schema).
             compression (int, default=None):    Level of compression of the data when sending it.
         Returns:
-            (dict): Reply of the server. Usually a Success=True, or an ACK=True."""
+            (Dict->Any:Any):    Reply of the server. Usually a Success=True, or an ACK=True."""
         while True:
             try:
                 self.client.send(data_to_send, compression=compression)
@@ -421,17 +451,17 @@ class NetworkBoard(Board):
     def send_data_async(self, data_to_send, compression=None):
         """Sends data to the server with a non-blocking call and exits without waiting for a reply.
         Args:
-            data_to_send (dict):    Data to send to the server (in a JSON schema).
+            data_to_send (Dict->Any:Any):   Data to send to the server (in a JSON schema).
             compression (int, default=None):    Level of compression of the data when sending it."""
         self.client.send(data_to_send, compression=compression)
 
     def request_data(self, command, compression=None):
         """Requests data to the server with a blocking call that waits for a reply.
         Args:
-            command (str):  Data requested of the server.
+            command (String):   Data requested of the server.
             compression (int, default=None):    Level of compression of the request petition.
         Returns:
-            (dict): Reply of the server. Success=True if the data couldn't be provided now, or the data itself."""
+            (Dict->Any:Any):    Reply of the server. Success=True if the data couldn't be provided now, or the data itself."""
         while True:
             try:
                 self.client.send({command: True}, compression=compression)
@@ -444,7 +474,7 @@ class NetworkBoard(Board):
     def request_data_async(self, command, compression=None):
         """Requests data to the server with a non-blocking call and exits without waiting for a reply.
         Args:
-            command (str):  Data requested of the server.
+            command (String):   Data requested of the server.
             compression (int, default=None):    Level of compression of the request petition."""
         self.client.send({command: True}, compression=compression)
 
@@ -496,8 +526,8 @@ class NetworkBoard(Board):
         the clients.
         Args:
             event (:obj: pygame.event): Event received from the pygame queue.
-            mouse_movement( boolean, default=False):    True if there was mouse movement since the last call.
-            mouse_position (:tuple: int, int, default=(0,0)):   Current mouse position. In pixels."""
+            mouse_movement(boolean, default=False):    True if there was mouse movement since the last call.
+            mouse_position (Tuple->int, int, default=(0,0)):   Current mouse position. In pixels."""
         if self.dialog:
             super().mouse_handler(event, mouse_buttons, mouse_movement, mouse_position)
             return

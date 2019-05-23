@@ -1198,7 +1198,7 @@ class Board(Screen):
         self.dice.sprite.add_turn(self.current_player.uuid)
         self.update_scoreboard()
         self.update_infoboard()
-        #print("CURRENT PLAYER IS "+self.current_player.name+', uuid '+str(self.current_player.uuid)+", with turn "+str(self.current_player.turn))
+        print("CURRENT PLAYER IS "+self.current_player.name+', uuid '+str(self.current_player.uuid))
         #print("NEW INDEX IS "+str(self.player_index))
         #print("New turn of baord is "+str(self.turn))
         if not self.current_player.human:

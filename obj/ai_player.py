@@ -109,8 +109,8 @@ class ComputerPlayer(Player):
             if char.owner_uuid == current_player:
                 destinations = [path[-1] for path in char.get_paths(paths_graph, distances, current_map, start_index, level_size)]
                 fitnesses = PathAppraiser.rate_movements(start_index, destinations, paths_graph, distances, current_map, all_cells, level_size)
-            for destiny, score in fitnesses.items():
-                all_fitnesses.append(((start_index, destiny), score))   #Append a tuple ((start, destiny), fitness_eval_of_movm)
+                for destiny, score in fitnesses.items():
+                    all_fitnesses.append(((start_index, destiny), score))   #Append a tuple ((start, destiny), fitness_eval_of_movm)
         return all_fitnesses
 
     #TODO FOR NOW USING -1 AS BOARD HASH, CHANGE THAT. SAME WITH STATE HASH
@@ -158,8 +158,6 @@ class ComputerPlayer(Player):
         Returns:
             (Tuple->int, int):  A movement calculated by the underlying algorithm. (source, destiny).
         """
-        print("HERE IN GENERATE RANDOM MOVEMENT")
-        print(fitnesses)
         if totally_random:
             return random.choice(fitnesses)[0]
         fitnesses.sort(key=lambda tup: tup[1], reverse=True)

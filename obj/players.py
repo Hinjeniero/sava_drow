@@ -551,7 +551,6 @@ class Character(AnimatedSprite):
         Character.parse_json_char_params(character_settings)
         characters  = []
         threads     = []
-
         for key in character_settings.keys():
             #Character.generate_char()
             char_init = Character.get_constructor_by_key(key)

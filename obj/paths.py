@@ -319,11 +319,11 @@ class PathAppraiser(object):
         pass
 
     @staticmethod
-    @time_it
+    #@time_it
     def rate_movements_lite(start_pos, possible_destinies, paths_graph, current_map, all_board_cells, level_size):
         """Returns a tuple with indexes of the destinies, and a fitness going from 0 to 1. Faster method than the complete one by avoiding the bait ratio and the danger multiplier.
         Also uses a less complete danger detection (But way faster)"""
-        print("LITE FACTOR, CHECKIN HOW LONGS IT TAKES to get fitnesses FOR "+str(len(possible_destinies)))
+        #print("LITE FACTOR, CHECKIN HOW LONGS IT TAKES to get fitnesses FOR "+str(len(possible_destinies)))
         fitnesses = {}
         all_cells = {cell.get_real_index(): cell.get_char() for cell in all_board_cells if cell.has_char()} if isinstance(all_board_cells, list) else all_board_cells 
         character = all_cells[start_pos]

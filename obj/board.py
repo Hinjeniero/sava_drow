@@ -733,13 +733,14 @@ class Board(Screen):
             self.show_dialog('dice', send_event=False)  #Won't show if the flag initial_dice_screen is False
             self.generate_dialogs()
             thread = self.update_scoreboard()
-            thread.join()
+            thread.join()   #Waiting for the structures to be created
             #Now ordering players and starting the first screen of the game
             self.players.sort(key=lambda player:player.order)   #This won't be the final order, its just an order to throw the dices
             self.player_index = len(self.players)-1  #To make the next player turn be the self.players[0]
             self.current_player = self.players[-1]  #To make the next player turn be the self.players[0]
             self.turn -= 1
             self.current_player.turn -= 1  #To make the next player turn be the self.players[0]
+            #End of that gibberish
             self.started = True
             self.next_player_turn()
 
@@ -820,7 +821,7 @@ class Board(Screen):
         for player in players:  self.__add_player(player)
 
     @run_async
-    def __create_player(self, player_name, player_number, chars_size, cpu, empty, ia_mode, **player_params):
+    def __create_player(self, player_name, player_number, chars_size, cpu, empty, ai_mode, **player_params):
         """Asynchronous method (@run_async decorator). Creates a player with the the arguments and adds him to the board.
         Args:
             player_name (str):  Identifier of the player
@@ -832,7 +833,7 @@ class Board(Screen):
             (:obj:Threading.thread):    The thread doing the work. It is returned by the decorator."""
         if cpu:
             player = ComputerPlayer(self.enabled_paths, self.distances, self.params['circles_per_lvl'], player_name,\
-                                    player_number, chars_size, self.resolution, ia_mode=ia_mode, **player_params)
+                                    player_number, chars_size, self.resolution, ai_mode=ai_mode, **player_params)
         else:
             player = Player(player_name, player_number, chars_size, self.resolution, empty=empty, **player_params)
         self.__add_player(player)
@@ -1082,10 +1083,10 @@ class Board(Screen):
     def shuffling_frame(self):
         self.current_dice.sprite.increase_animation_delay()
 
-    def assing_current_dice(self, dice_id):
-        print("ID OF DICE "+str(dice_id))
+    def assign_current_dice(self, dice_id):
         if self.dialog and 'dice' in self.dialog.id:    #This is a throw in the starting dices
-            self.current_dice.add(next((dice for dice in self.dialog.elements if dice.id == dice_id), None))
+            if not self.current_dice.sprite or not self.current_dice.sprite.currently_shuffling:    #If there is no dice of is not shuffling
+                self.current_dice.add(next((dice for dice in self.dialog.elements if dice.id == dice_id), None))
 
     def dice_value_result(self, event):
         value = int(event.value)

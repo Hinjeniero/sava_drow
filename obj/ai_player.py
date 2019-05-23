@@ -41,7 +41,7 @@ class ComputerPlayer(Player):
     The possibilities vary between simple algorithms, like random or half-random movements, to full heuristics to get a more
     'intelligent' like behaviour.
     Attributes:
-        ia_mode (String):   Algorithm or method used to return the next movement of this player.
+        ai_mode (String):   Algorithm or method used to return the next movement of this player.
         distances (:obj: numpy.Matrix): Distances matrix of the current board.
         graph (:obj: numpy.Matrix): Matrix of enabled/directly connected paths of the current board.
         circum_size (int):  Length of each circumference of the current board.
@@ -51,7 +51,7 @@ class ComputerPlayer(Player):
         max_depth (int):    Current maximum depth to search in the tree algorithms.
         timeout_count (int):    Counter of the times that the timeout has been exceeded.
     """
-    def __init__(self, graph, distances, level_size, name, order, sprite_size, canvas_size, ia_mode='random', infoboard=None, obj_uuid=None,\
+    def __init__(self, graph, distances, level_size, name, order, sprite_size, canvas_size, ai_mode='random', infoboard=None, obj_uuid=None,\
                 avatar=None, max_depth=5, adaptative_max_depth=True,  **character_params):
         """ComputerPlayer constructor.
         Args:
@@ -62,7 +62,7 @@ class ComputerPlayer(Player):
             order (int):    Order of turn. A numerical identifier, if you prefer.
             sprite_size (:tuple: int, int): Size of the image of the characters. In pixels.
             canvas_size (:tuple: int, int): Resolution of the screen. In pixels.
-            ia_mode(String):    Algorithm or method that will be used in each movement of this player.
+            ai_mode (String):    Algorithm or method that will be used in each movement of this player.
             infoboard (:obj: Infoboard, default=None):  Infoboard of the player. It's shown through the game.
             obj_uuid (int, default=None):   Unique id of this player. If it's not supplied, it will be generated later.
             avatar (String):    Path of the folder with the desired avatars images. One will be picked at random for this player.
@@ -74,7 +74,7 @@ class ComputerPlayer(Player):
         name = name+'(CPU)'
         super().__init__(name, order, sprite_size, canvas_size, infoboard=infoboard, obj_uuid=obj_uuid, empty=False, avatar=avatar, **character_params)
         self.human = False
-        self.ia_mode = ia_mode #alpha-beta-pruning | null-move | full blown IA with keras
+        self.ai_mode = ai_mode #alpha-beta-pruning | null-move | full blown IA with keras
         self.distances = distances 
         self.graph = graph
         self.circum_size = level_size
@@ -130,18 +130,18 @@ class ComputerPlayer(Player):
         """
         all_cells = {cell.get_real_index(): cell.get_char() for cell in board_cells if cell.has_char()}
         fitnesses = self.generate_fitnesses(all_cells, my_player, self.graph, self.distances, current_map, self.circum_size)
-        if 'random' in self.ia_mode:
-            if 'half' in self.ia_mode:
+        if 'random' in self.ai_mode:
+            if 'half' in self.ai_mode:
                 return self.generate_random_movement(fitnesses, somewhat_random=True)
             return self.generate_random_movement(fitnesses, totally_random=True)
-        if 'fitness' in self.ia_mode:
+        if 'fitness' in self.ai_mode:
             return self.generate_random_movement(fitnesses)
         #The other methods need the all_cells structure  
-        if 'alpha' in self.ia_mode:
-            if 'order' in self.ia_mode:
-                return self.generate_alpha_beta(fitnesses, max_nodes, all_cells, current_map, my_player, all_players, ordering=True)    
+        if 'alpha' in self.ai_mode:
+            if 'order' in self.ai_mode:
+                return self.generate_alpha_beta(max_nodes, all_cells, current_map, my_player, all_players, ordering=True)    
             return self.generate_alpha_beta(max_nodes, all_cells, current_map, my_player, all_players)
-        if 'monte' in self.ia_mode:
+        if 'monte' in self.ai_mode:
             return MonteCarloSearch.monte_carlo_tree_search(self.graph, self.distances, self.circum_size, -1, all_cells, current_map, my_player, all_players)
             
     def generate_random_movement(self, fitnesses, totally_random=False, somewhat_random=False):
@@ -196,7 +196,6 @@ class ComputerPlayer(Player):
         print("The number of pruned branches is "+str(pruned.number))
         rated_movements = [((dest[0], dest[1]), score) for dest, score in all_paths.items()]
         rated_movements.sort(key=lambda dest:dest[1], reverse=True)
-        print ("RATES MOVEMETNS ARE "+str(rated_movements))
         return rated_movements[0][0]    #Returning only the movement, we have no use for the score
 
     @staticmethod
@@ -223,15 +222,14 @@ class ComputerPlayer(Player):
             if char_inside_cell.owner_uuid == current_player and my_turn\
             or char_inside_cell.owner_uuid != current_player and not my_turn:
                 paths = char_inside_cell.get_paths(paths_graph, all_distances, current_map, cell_index, circum_size)
-                if ordering:
-                    this_index_destinations = [path[-1] for path in paths]  #All destinies
-                    fitnesses = PathAppraiser.rate_movements_lite(cell_index, this_index_destinations, paths_graph, current_map, all_cells, circum_size)
-                    destinies = [((cell_index, dest[0], dest[1]) for dest in fitnesses.values())]   #(source_cell, dest_cell, score_movement)
-                    destinies.sort(key=lambda movement:movement[-1], reverse=True)  #Order by decrecient fitnesses
-                    print("ORDERING DONE")
-                    print(destinies)
-                else:
-                    destinies = [(cell_index, path[-1]) for path in paths]                          #(source_cell, dest_cell)
+                if paths:
+                    if ordering:  #If there are paths
+                        this_index_destinations = [path[-1] for path in paths]  #All destinies
+                        fitnesses = PathAppraiser.rate_movements_lite(cell_index, this_index_destinations, paths_graph, current_map, all_cells, circum_size)
+                        destinies.extend([(cell_index, dest, score) for dest, score in fitnesses.items()])   #(source_cell, dest_cell, score_movement)
+                        destinies.sort(key=lambda movement: movement[-1], reverse=True)  #Order by decrecient fitnesses
+                    else:
+                        destinies.extend([(cell_index, path[-1]) for path in paths])                          #(source_cell, dest_cell)
         return tuple(destinies) 
 
     def minimax(self, my_player_index, current_player_index, all_players, all_cells, current_map, all_paths, path, depth, isMaximizingPlayer, alpha, beta, start_time, timeout, pruned, ordering):
@@ -262,19 +260,17 @@ class ComputerPlayer(Player):
             value = sum(char.value for char in all_cells.values() if char.owner_uuid == all_players[my_player_index])\
                     /sum(char.value for char in all_cells.values() if char.owner_uuid != all_players[my_player_index])   #My chars left minus his chars left
             all_paths[tuple(path)] = value  #This could also do it using only the first movm as key,since its the only one we are interested in. THe rest are garbage, who did those mvnmsnts? no idea
-            print("---------- PATH FOUND "+str(path))
-            del path[0] #Lets get that index out of here
+            #del path[0] #Lets get that index out of here
             return value
-
         if isMaximizingPlayer:
             bestVal = -math.inf 
             #generate_movements returns a dict with the scheme: {cell_index_source: (all destinies)}
             #for source_index, destinies in ComputerPlayer.generate_movements(self.graph, self.distances, self.circum_size, all_cells, current_map, all_players[current_player_index], ordering=ordering).items():
-            for movements in ComputerPlayer.generate_movements(self.graph, self.distances, self.circum_size, all_cells, current_map, all_players[current_player_index], ordering=ordering):
-                source_index = movements[0]
+            for movement in ComputerPlayer.generate_movements(self.graph, self.distances, self.circum_size, all_cells, current_map, all_players[current_player_index], ordering=ordering):
+                source_index = movement[0]
                 if not path:    #First movement, this, we are interested in
                     path.append(source_index)
-                dest_index = movements[1]
+                dest_index = movement[1]
                 #for dest_index in movements[1]:
                 #SIMULATE MOVEMENT
                 char_moving = all_cells[source_index]   #Starting to save variables to restore later
@@ -294,6 +290,7 @@ class ComputerPlayer(Player):
                 current_player_index = current_player_index+1 if current_player_index < (len(all_players)-1) else 0
                 ComputerPlayer.change_map(current_map, all_cells, all_players[current_player_index])
                 #RECURSIVE EXECUTION
+                        #minimax(self, my_player_index, current_player_index, all_players, all_cells, current_map, all_paths, path, depth, isMaximizingPlayer, alpha, beta, start_time, timeout, pruned, ordering):
                 value = self.minimax(my_player_index, current_player_index, all_players, all_cells, current_map, all_paths, path, depth+1, False, alpha, beta, start_time, timeout, pruned, ordering)
                 #UNDO SIMULATION
                 current_map[source_index].ally = True
@@ -305,21 +302,21 @@ class ComputerPlayer(Player):
                 if not char_ded:    del all_cells[dest_index]           #If the cell we moved to didn't had an enemy
                 else:               all_cells[dest_index] = char_ded
                 del path[-1]
+                if len(path) is 1:  #If we have another source here
+                    del path[0]
                 #end of restoration
                 bestVal = max(bestVal, value) 
                 alpha = max(alpha, value)
                 if beta <= value:   #Pruning
                     pruned.number += 1
                     return bestVal
-                if len(path) is 1:
-                    del path[-1]
             return bestVal
         else:   #Minimizing player
             bestVal = math.inf  
             #for source_index, destinies in ComputerPlayer.generate_movements(self.graph, self.distances, self.circum_size, all_cells, current_map, all_players[current_player_index], False, ordering=ordering).items():
-            for movements in ComputerPlayer.generate_movements(self.graph, self.distances, self.circum_size, all_cells, current_map, all_players[current_player_index], ordering=ordering):
-                source_index = movements[0]
-                dest_index = movements[1]
+            for movement in ComputerPlayer.generate_movements(self.graph, self.distances, self.circum_size, all_cells, current_map, all_players[current_player_index], ordering=ordering):
+                source_index = movement[0]
+                dest_index = movement[1]
                 #SIMULATE MOVEMENT
                 char_moving = all_cells[source_index]   #Starting to save variables to restore later
                 char_ded = all_cells[dest_index] if dest_index in all_cells else None

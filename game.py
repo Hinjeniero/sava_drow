@@ -336,7 +336,7 @@ class Game(object):
         if 'turn' in command:
             self.show_popup('turn')
         elif 'shuf' in command: #The current player shuffled the dice
-            self.get_screen('main', 'board').assing_current_dice(event.id)
+            self.get_screen('main', 'board').assign_current_dice(event.id)
         elif 'dice' in command: #The current player shuffled the dice
             self.get_screen('main', 'board').dice_value_result(event)
         elif 'conn' in command and 'error' in command:

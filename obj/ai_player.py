@@ -14,6 +14,7 @@ __author__ = 'David Flaity Pardo'
 import math
 import time
 import random
+import collections
 
 #Selfmade libraries
 from obj.players import Player
@@ -137,7 +138,7 @@ class ComputerPlayer(Player):
         #The other methods need the all_cells structure  
         if 'alpha' in self.ia_mode:
             if 'order' in self.ia_mode:
-                return self.generate_alpha_beta_ordered(fitnesses, max_nodes, all_cells, current_map, my_player, all_players)    
+                return self.generate_alpha_beta(fitnesses, max_nodes, all_cells, current_map, my_player, all_players, ordering=True)    
             return self.generate_alpha_beta(max_nodes, all_cells, current_map, my_player, all_players)
         if 'monte' in self.ia_mode:
             return MonteCarloSearch.monte_carlo_tree_search(self.graph, self.distances, self.circum_size, -1, all_cells, current_map, my_player, all_players)
@@ -165,39 +166,8 @@ class ComputerPlayer(Player):
             only_best_movements = list(score[0] for score in fitnesses if score[1] == fitnesses[0][1])  #IF the score is the same as the best elements inn the ordered list
             return random.choice(only_best_movements)
 
-    #TODO ADD ORDERING OF DESTINIES BY FITNESSES
     @time_it
-    def generate_alpha_beta_ordered(self, fitnesses, max_nodes, all_cells, current_map, my_player_uuid, all_players, timeout=10):
-        """Heuristic that uses the alpha-beta pruning to explore the game tree, reaching until the self.max_depth attribute, and
-        returning the evaluation of the board at that point. Then uses that value to cut off game tree branches that, obviously, would have
-        never ocurred in a normal gameplay.
-        This one is different because uses ordering (based in fitnesses), in each iteration of the heuristic, achieving a lot more pruning in exchange for a little bit
-        of lost time scoring the movements.
-        Args:
-            max_nodes (int):    Limit to the expansion of the tree searchs. Unused right now.
-            all_cells (Dict->int:Character):    Structure that have all the cells that currently have a char in them. The key of each element 
-                                                if the index of the cell, and the value is the Character that resides in that cell.
-            current_map (Dict->int:Path):   Path objects that describe each current cell for a specific player.
-                                            (Says if there is a char, if it's an enemy or an ally...)
-            my_player_uuid (int):   Unique identifier of the current player.
-            all_players (List->int):    List with all the players unique identifiers(uuid).
-            timeout (float):    Limit of time, in seconds, that this method has to explore the game tree before forcibly returning.
-        Returns:
-            (Tuple->int, int):  The best movement calculated in the execution until the end (source, destiny).
-        """       
-        my_player_index = next((i for i in range(0, len(all_players)) if all_players[i] == my_player_uuid))
-        all_paths = {}
-        start = time.time()
-        pruned = PersistantNumber()
-        self.minimax(my_player_index, my_player_index, all_players, all_cells, current_map, all_paths, [], 0, True, -math.inf, math.inf, start, timeout, pruned)
-        print("The number of paths tested by alpha beta is "+str(len(all_paths.keys())), " with a max depth setting of "+str(self.max_depth)+", in a time of "+str(time.time()-start)+" seconds.")
-        print("The number of pruned branches is "+str(pruned.number))
-        rated_movements = [((dest[0], dest[1]), score) for dest, score in all_paths.items()]
-        rated_movements.sort(key=lambda dest:dest[1], reverse=True)
-        return rated_movements[0][0]    #Returning only the movement, we have no use for the score
-
-    @time_it
-    def generate_alpha_beta(self, max_nodes, all_cells, current_map, my_player_uuid, all_players, timeout=10.0):
+    def generate_alpha_beta(self, max_nodes, all_cells, current_map, my_player_uuid, all_players, timeout=10.0, ordering=False):
         """Heuristic that uses the alpha-beta pruning to explore the game tree, reaching until the self.max_depth attribute, and
         returning the evaluation of the board at that point. Then uses that value to cut off game tree branches that, obviously, would have
         never ocurred in a normal gameplay.
@@ -210,6 +180,7 @@ class ComputerPlayer(Player):
             my_player_uuid (int):   Unique identifier of the current player.
             all_players (List->int):    List with all the players unique identifiers(uuid).
             timeout (float):    Limit of time, in seconds, that this method has to explore the game tree before forcibly returning.
+            ordering (boolean): True if we want to order the possible destinies in each iteration. More pruning, but less iterations.
         Returns:
             (Tuple->int, int):  The best movement calculated in the execution until the end (source, destiny).
         """
@@ -217,17 +188,18 @@ class ComputerPlayer(Player):
         all_paths = {}
         start = time.time()
         pruned = PersistantNumber()
-        self.minimax(my_player_index, my_player_index, all_players, all_cells, current_map, all_paths, [], 0, True, -math.inf, math.inf, start, timeout, pruned)
+        self.minimax(my_player_index, my_player_index, all_players, all_cells, current_map, all_paths, [], 0, True, -math.inf, math.inf, start, timeout, pruned, ordering)
         if time.time()-start > timeout: #If we reached the timeout...
             self.increate_timeout_count()
         print("The number of paths tested by alpha beta is "+str(len(all_paths.keys())), " with a max depth setting of "+str(self.max_depth)+", in a time of "+str(time.time()-start)+" seconds.")
         print("The number of pruned branches is "+str(pruned.number))
         rated_movements = [((dest[0], dest[1]), score) for dest, score in all_paths.items()]
         rated_movements.sort(key=lambda dest:dest[1], reverse=True)
+        # print ("RATES MO;VEEMTNS ARE "+str(rated_movements))
         return rated_movements[0][0]    #Returning only the movement, we have no use for the score
 
     @staticmethod
-    def generate_movements(paths_graph, all_distances, circum_size, all_cells, current_map, current_player, my_turn=True, order_by_fitness=False):
+    def generate_movements(paths_graph, all_distances, circum_size, all_cells, current_map, current_player, my_turn=True, ordering=False):
         """Generates and returns all the possible movements in a board state for a specific player and his characters.
         Args:
             paths_graph (:obj: numpy.Matrix):   Matrix of enabled/directly connected paths of the current board.
@@ -238,20 +210,30 @@ class ComputerPlayer(Player):
             current_map (Dict->int:Path):   Path objects that describe each current cell for a specific player.
                                             (Says if there is a char, if it's an enemy or an ally...)
             current_player (int):   Unique identifier of the current player.
-            my_turn (boolean):  Flag that says if its the turn of the current player or not. Useless right now, most likely a vestige.
+            my_turn (boolean, default=True):  Flag that says if its the turn of the current player or not. Useless right now, most likely a vestige.
+            ordering (boolean, default=False): True if we want to order the possible destinies in each iteration, using the fitnesses.
         Returns:
             (Dict->int, Tuple->ints):   Each key of the dict, is the index of the source cell, and each value, is a tuple containing all
                                         the possible destiny cells from that source cell.
         """
-        destinies = {}
+        destinies = []
         for cell_index, char_inside_cell in all_cells.items():
+            this_index_destinations = []
             if char_inside_cell.owner_uuid == current_player and my_turn\
             or char_inside_cell.owner_uuid != current_player and not my_turn:
                 paths = char_inside_cell.get_paths(paths_graph, all_distances, current_map, cell_index, circum_size)
-                destinies[cell_index] = tuple(path[-1] for path in paths)
-        return destinies    #Return {char: (dest1,  dest2...), char2:...}
+                if ordering:
+                    this_index_destinations = [path[-1] for path in paths]  #All destinies
+                    fitnesses = PathAppraiser.rate_movements_lite(cell_index, this_index_destinations, paths_graph, current_map, all_cells, circum_size)
+                    destinies = [((cell_index, dest[0], dest[1]) for dest in fitnesses.values())]   #(source_cell, dest_cell, score_movement)
+                    destinies.sort(key=lambda movement:movement[-1], reverse=True)  #Order by decrecient fitnesses
+                    print("ORDERING DONE")
+                    print(destinies)
+                else:
+                    destinies = [(cell_index, path[-1]) for path in paths]                          #(source_cell, dest_cell)
+        return tuple(destinies) 
 
-    def minimax(self, my_player_index, current_player_index, all_players, all_cells, current_map, all_paths, path, depth, isMaximizingPlayer, alpha, beta, start_time, timeout, pruned):
+    def minimax(self, my_player_index, current_player_index, all_players, all_cells, current_map, all_paths, path, depth, isMaximizingPlayer, alpha, beta, start_time, timeout, pruned, ordering):
         """Recursive algorithm. It's the core of the alpha-beta pruning AI, Exploring, expanding and cutting off branchs of the game tree. It is based in the MiniMax algorithm.
         In a 2 player game, the algorithm goes switching right between maximizinf and minimizing mode. In a 4 player game, stays in minimazing for a bit more before returning to 
         maximizing.
@@ -272,99 +254,107 @@ class ComputerPlayer(Player):
             beta (float):   Current beta value. Used for pruning.
             start_time (float): Timestamp of the moment at which the method started. Used to check if we are out of time already.
             timeout (float):    Limit of time, in seconds, that this method has to explore the game tree before forcibly returning.
-            pruned (:obj:PersistantNumber): Number of branches that have been cut off in the execution.
+            pruned (:obj: PersistantNumber): Number of branches that have been cut off in the execution.
+            ordering (boolean): True if we want to order the possible destinies in each iteration. More pruning, but less iterations.
         """
         if depth is self.max_depth or (time.time()-start_time > timeout):   #TODO or board.end_game is true!
             value = sum(char.value for char in all_cells.values() if char.owner_uuid == all_players[my_player_index])\
                     /sum(char.value for char in all_cells.values() if char.owner_uuid != all_players[my_player_index])   #My chars left minus his chars left
             all_paths[tuple(path)] = value  #This could also do it using only the first movm as key,since its the only one we are interested in. THe rest are garbage, who did those mvnmsnts? no idea
+            print("---------- PATH FOUND "+str(path))
+            del path[0] #Lets get that index out of here
             return value
 
         if isMaximizingPlayer:
             bestVal = -math.inf 
-            #generat4e-movemtns returns a dict weith the scheme: {cell_index_source: (all destinies)}
-            for source_index, destinies in ComputerPlayer.generate_movements(self.graph, self.distances, self.circum_size, all_cells, current_map, all_players[current_player_index]).items():
+            #generate_movements returns a dict with the scheme: {cell_index_source: (all destinies)}
+            #for source_index, destinies in ComputerPlayer.generate_movements(self.graph, self.distances, self.circum_size, all_cells, current_map, all_players[current_player_index], ordering=ordering).items():
+            for movements in ComputerPlayer.generate_movements(self.graph, self.distances, self.circum_size, all_cells, current_map, all_players[current_player_index], ordering=ordering):
+                source_index = movements[0]
                 if not path:    #First movement, this, we are interested in
                     path.append(source_index)
-                for dest_index in destinies:
-                    #SIMULATE MOVEMENT
-                    char_moving = all_cells[source_index]   #Starting to save variables to restore later
-                    char_ded = all_cells[dest_index] if dest_index in all_cells else None
-                    had_enemy = current_map[source_index].enemy
-                    #Start simulating
-                    current_map[source_index].ally = False
-                    current_map[source_index].access = True
-                    current_map[dest_index].ally = True
-                    current_map[dest_index].enemy = False   #Simulation in current_map correct
-                    current_map[source_index].access = False
-                    del all_cells[source_index]
-                    all_cells[dest_index] = char_moving     #Simulation in all_cells correct
-                    path.append(dest_index)
-                    #Going deeper
-                    #NEW CURRENT PLAYER
-                    current_player_index = current_player_index+1 if current_player_index < (len(all_players)-1) else 0
-                    ComputerPlayer.change_map(current_map, all_cells, all_players[current_player_index])
-                    #RECURSIVE EXECUTION
-                    value = self.minimax(my_player_index, current_player_index, all_players, all_cells, current_map, all_paths, path, depth+1, False, alpha, beta, start_time, timeout, pruned)
-                    #UNDO SIMULATION
-                    current_map[source_index].ally = True
-                    current_map[source_index].access = False
-                    current_map[dest_index].ally = False
-                    current_map[dest_index].enemy = had_enemy               #Restoration in current_map correct
-                    current_map[dest_index].update_accessibility(char_moving)
-                    all_cells[source_index] = char_moving                   #Restoration in all_cells correct
-                    if not char_ded:    del all_cells[dest_index]           #If the cell we moved to didn't had an enemy
-                    else:               all_cells[dest_index] = char_ded
-                    del path[-1]
-                    #end of restoration
-                    bestVal = max(bestVal, value) 
-                    alpha = max(alpha, value)
-                    if beta <= value:   #Pruning
-                        pruned.number += 1
-                        return bestVal
+                dest_index = movements[1]
+                #for dest_index in movements[1]:
+                #SIMULATE MOVEMENT
+                char_moving = all_cells[source_index]   #Starting to save variables to restore later
+                char_ded = all_cells[dest_index] if dest_index in all_cells else None
+                had_enemy = current_map[source_index].enemy
+                #Start simulating
+                current_map[source_index].ally = False
+                current_map[source_index].access = True
+                current_map[dest_index].ally = True
+                current_map[dest_index].enemy = False   #Simulation in current_map correct
+                current_map[source_index].access = False
+                del all_cells[source_index]
+                all_cells[dest_index] = char_moving     #Simulation in all_cells correct
+                path.append(dest_index)
+                #Going deeper
+                #NEW CURRENT PLAYER
+                current_player_index = current_player_index+1 if current_player_index < (len(all_players)-1) else 0
+                ComputerPlayer.change_map(current_map, all_cells, all_players[current_player_index])
+                #RECURSIVE EXECUTION
+                value = self.minimax(my_player_index, current_player_index, all_players, all_cells, current_map, all_paths, path, depth+1, False, alpha, beta, start_time, timeout, pruned, ordering)
+                #UNDO SIMULATION
+                current_map[source_index].ally = True
+                current_map[source_index].access = False
+                current_map[dest_index].ally = False
+                current_map[dest_index].enemy = had_enemy               #Restoration in current_map correct
+                current_map[dest_index].update_accessibility(char_moving)
+                all_cells[source_index] = char_moving                   #Restoration in all_cells correct
+                if not char_ded:    del all_cells[dest_index]           #If the cell we moved to didn't had an enemy
+                else:               all_cells[dest_index] = char_ded
+                del path[-1]
+                #end of restoration
+                bestVal = max(bestVal, value) 
+                alpha = max(alpha, value)
+                if beta <= value:   #Pruning
+                    pruned.number += 1
+                    return bestVal
                 if len(path) is 1:
                     del path[-1]
             return bestVal
         else:   #Minimizing player
             bestVal = math.inf  
-            for source_index, destinies in ComputerPlayer.generate_movements(self.graph, self.distances, self.circum_size, all_cells, current_map, all_players[current_player_index], False).items():
-                for dest_index in destinies:
-                    #SIMULATE MOVEMENT
-                    char_moving = all_cells[source_index]   #Starting to save variables to restore later
-                    char_ded = all_cells[dest_index] if dest_index in all_cells else None
-                    had_enemy = current_map[source_index].enemy
-                    #Start simulating
-                    current_map[source_index].ally = False
-                    current_map[source_index].access = True
-                    current_map[dest_index].ally = True
-                    current_map[dest_index].enemy = False   #Simulation in current_map correct
-                    current_map[source_index].access = False
-                    del all_cells[source_index]
-                    all_cells[dest_index] = char_moving     #Simulation in all_cells correct
-                    path.append(dest_index)
-                    #Going deeper     
-                    #NEW CURRENT PLAYER
-                    current_player_index = current_player_index+1 if current_player_index < (len(all_players)-1) else 0
-                    ComputerPlayer.change_map(current_map, all_cells, all_players[current_player_index])
-                    if current_player_index == my_player_index: #Checking this cuz it could have more than 2 players
-                        isMaximizingPlayer = not isMaximizingPlayer
-                    value = self.minimax(my_player_index, current_player_index, all_players, all_cells, current_map, all_paths, path, depth+1, isMaximizingPlayer, alpha, beta, start_time, timeout, pruned)
-                    #UNDO SIMULATION
-                    current_map[source_index].ally = True
-                    current_map[source_index].access = False
-                    current_map[dest_index].ally = False
-                    current_map[dest_index].enemy = had_enemy               #Restoration in current_map correct
-                    current_map[dest_index].update_accessibility(char_moving)
-                    all_cells[source_index] = char_moving                   #Restoration in all_cells correct
-                    if not char_ded:    del all_cells[dest_index]           #If the cell we moved to didn't had an enemy
-                    else:               all_cells[dest_index] = char_ded
-                    del path[-1]
-                    #end of restoration
-                    bestVal = min(bestVal, value) 
-                    beta = min(beta, value)
-                    if beta <= alpha:   #Pruning
-                        pruned.number += 1
-                        return bestVal
+            #for source_index, destinies in ComputerPlayer.generate_movements(self.graph, self.distances, self.circum_size, all_cells, current_map, all_players[current_player_index], False, ordering=ordering).items():
+            for movements in ComputerPlayer.generate_movements(self.graph, self.distances, self.circum_size, all_cells, current_map, all_players[current_player_index], ordering=ordering):
+                source_index = movements[0]
+                dest_index = movements[1]
+                #SIMULATE MOVEMENT
+                char_moving = all_cells[source_index]   #Starting to save variables to restore later
+                char_ded = all_cells[dest_index] if dest_index in all_cells else None
+                had_enemy = current_map[source_index].enemy
+                #Start simulating
+                current_map[source_index].ally = False
+                current_map[source_index].access = True
+                current_map[dest_index].ally = True
+                current_map[dest_index].enemy = False   #Simulation in current_map correct
+                current_map[source_index].access = False
+                del all_cells[source_index]
+                all_cells[dest_index] = char_moving     #Simulation in all_cells correct
+                path.append(dest_index)
+                #Going deeper     
+                #NEW CURRENT PLAYER
+                current_player_index = current_player_index+1 if current_player_index < (len(all_players)-1) else 0
+                ComputerPlayer.change_map(current_map, all_cells, all_players[current_player_index])
+                if current_player_index == my_player_index: #Checking this cuz it could have more than 2 players
+                    isMaximizingPlayer = not isMaximizingPlayer
+                value = self.minimax(my_player_index, current_player_index, all_players, all_cells, current_map, all_paths, path, depth+1, isMaximizingPlayer, alpha, beta, start_time, timeout, pruned, ordering)
+                #UNDO SIMULATION
+                current_map[source_index].ally = True
+                current_map[source_index].access = False
+                current_map[dest_index].ally = False
+                current_map[dest_index].enemy = had_enemy               #Restoration in current_map correct
+                current_map[dest_index].update_accessibility(char_moving)
+                all_cells[source_index] = char_moving                   #Restoration in all_cells correct
+                if not char_ded:    del all_cells[dest_index]           #If the cell we moved to didn't had an enemy
+                else:               all_cells[dest_index] = char_ded
+                del path[-1]
+                #end of restoration
+                bestVal = min(bestVal, value) 
+                beta = min(beta, value)
+                if beta <= alpha:   #Pruning
+                    pruned.number += 1
+                    return bestVal
             return bestVal
 
     @staticmethod
@@ -469,21 +459,23 @@ class Node(object):
         Args:
             current_player (int):   UUID of the player that holds the turn in this node."""
         if not self.children:   #If it's empty, we expand it. (Add the result boards to the children)
-            for source_index, destinies in ComputerPlayer.generate_movements(self.paths_graph, self.distances, self.circum_size, self.board_state, self.map_state, current_player).items():
-                for dest_index in destinies:
-                    all_cells_node = self.board_state.copy()
-                    current_map = {cell_index: path_obj.copy() for cell_index, path_obj in self.map_state.items()}
-                    #Start simulating, all_cells
-                    all_cells_node[dest_index] = all_cells_node[source_index]
-                    del all_cells_node[source_index]
-                    #simulating in current_map
-                    current_map[source_index].ally = False
-                    current_map[source_index].access = True
-                    current_map[dest_index].ally = True
-                    current_map[dest_index].enemy = False
-                    current_map[dest_index].access = False  
-                    #CREATES THE CHILDREN
-                    self.children.append(Node(self, self.paths_graph, self.distances, self.circum_size, -1, all_cells_node, current_map, (source_index, dest_index)))    #God knows how much this will occupy in memory...
+            #for source_index, destinies in ComputerPlayer.generate_movements(self.paths_graph, self.distances, self.circum_size, self.board_state, self.map_state, current_player).items():
+            for movements in ComputerPlayer.generate_movements(self.paths_graph, self.distances, self.circum_size, self.board_state, self.map_state, current_player):
+                source_index = movements[0]
+                dest_index = movements[1]
+                all_cells_node = self.board_state.copy()
+                current_map = {cell_index: path_obj.copy() for cell_index, path_obj in self.map_state.items()}
+                #Start simulating, all_cells
+                all_cells_node[dest_index] = all_cells_node[source_index]
+                del all_cells_node[source_index]
+                #simulating in current_map
+                current_map[source_index].ally = False
+                current_map[source_index].access = True
+                current_map[dest_index].ally = True
+                current_map[dest_index].enemy = False
+                current_map[dest_index].access = False  
+                #CREATES THE CHILDREN
+                self.children.append(Node(self, self.paths_graph, self.distances, self.circum_size, -1, all_cells_node, current_map, (source_index, dest_index)))    #God knows how much this will occupy in memory...
             self.map_state = None   #Have no more need for this data after expanding and getting all the possible movements from this board.
     
     def get_uct_value(self, exploration_const=1):

@@ -204,12 +204,12 @@ class Game(object):
                 self.config_handler(event.command.lower(), event.value)
             elif event.type is USEREVENTS.BOARD_USEREVENT:
                 try:
-                    self.board_handler(event.command.lower(), value=event.value)
+                    self.board_handler(event, event.command.lower(), value=event.value)
                 except AttributeError:
                     try:
-                        self.board_handler(event.command.lower())
+                        self.board_handler(event, event.command.lower())
                     except AttributeError:
-                        self.get_screen('main', 'board').dice.sprite.increase_animation_delay()
+                        self.get_screen('main', 'board').shuffling_frame()
             elif event.type is USEREVENTS.DIALOG_USEREVENT:
                 if 'scroll' in event.command:
                     self.current_screen.set_scroll(event.value)
@@ -329,14 +329,16 @@ class Game(object):
             else:
                 self.board_generator.set_board_params(random_filling=False)
 
-    def board_handler(self, command, value=None):
+    def board_handler(self, event, command, value=None):
         """Board events and NetworkBoard events method. 
             command (String):   Specific command that the event holds, describes the action to trigger.
             value (Any, default=None):  Sometimes an action will require a value. This one fills that necessity."""
         if 'turn' in command:
             self.show_popup('turn')
+        elif 'shuf' in command: #The current player shuffled the dice
+            self.get_screen('main', 'board').assing_current_dice(event.id)
         elif 'dice' in command: #The current player shuffled the dice
-            self.get_screen('main', 'board').dice_value_result(int(value))
+            self.get_screen('main', 'board').dice_value_result(event)
         elif 'conn' in command and 'error' in command:
             self.show_popup('connection_error')
             self.current_screen.destroy()
@@ -358,6 +360,8 @@ class Game(object):
             self.current_screen.destroy()
             self.__add_timed_execution(3, self.restart_main_menu)
             self.__add_timed_execution(3, self.hide_popups)
+        elif 'hide' in command and 'dialog' in command:
+            self.__add_timed_execution(value, self.call_screens_method, 'board', Screen.hide_dialog)
 
     def graphic_handler(self, command, value):
         """Graphic options related method. Those events will come to here.

@@ -726,7 +726,8 @@ class AnimatedSprite(MultiSprite):
             hover_surfaces = ResizedSurface.load_surfaces(_['sprite_folder'], _['hover_size'], _['resize_mode'], _['resize_smooth'],\
                                                         _['keep_aspect_ratio'], *_['keywords'], strict=_['keywords_strict'])
         for path in surfaces.keys():
-            self.names.append(path)
+            if path not in self.names:
+                self.names.append(path)
             if self.params['hover_surfaces']:
                 self.add_surface(surfaces[path], hover_surfaces[path])
             else:

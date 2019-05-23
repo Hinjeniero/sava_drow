@@ -142,6 +142,7 @@ class Board(Screen):
         self.fitnesses      = {}
         self.inter_paths    = pygame.sprite.GroupSingle()
         self.dice           = pygame.sprite.GroupSingle()
+        self.current_dice   = pygame.sprite.GroupSingle()   #Dice that we are shuffling currently
         self.fitness_button = pygame.sprite.GroupSingle()
         self.help_button    = pygame.sprite.GroupSingle()
         self.thinking_sprite= pygame.sprite.GroupSingle()
@@ -228,6 +229,7 @@ class Board(Screen):
         self.events['admin_on'] = pygame.event.Event(self.event_id, command='admin', value = True)
         self.events['admin_off'] = pygame.event.Event(self.event_id, command='admin', value = False)
         self.events['turncoat'] = pygame.event.Event(self.event_id, command='turncoat')
+        self.events['hide_dialog_temp'] = pygame.event.Event(self.event_id, command='hide_dialog_temp', value=3)
 
     @no_size_limit
     def generate_platform(self):
@@ -299,10 +301,10 @@ class Board(Screen):
             for player in player_list:
                 self.starting_dices[player.uuid] = threading.Event()
                 self.dices_values[player.uuid] = None
-                dice_screen.add_text_element(str(player.uuid), player.name, 4//len(player_list))
+                dice_screen.add_text_element(str(player.uuid), player.name, 4//len(player_list), scale=0.60)
             for player in player_list:
-                dice = Dice('dice_'+str(player.uuid), (0, 0), tuple(0.20*x for x in self.resolution), self.resolution, shuffle_time=1500,\
-                            sprite_folder=self.params['dice_textures_folder'], animation_delay=2, limit_throws=1, overlay=False)
+                dice = Dice(str(player.uuid), (0, 0), tuple(0.15*x for x in self.resolution), self.resolution, shuffle_time=1500,\
+                            sprite_folder=self.params['dice_textures_folder'], animation_delay=3, limit_throws=1, overlay=False)
                 dice.add_turn(player.uuid)
                 dice.reactivating_dice()
                 dice_screen.add_sprite_to_elements(4//len(player_list), dice)
@@ -498,7 +500,8 @@ class Board(Screen):
         self.infoboard.update_element('turn', str(self.turn+1))
         self.infoboard.update_element('turn_char', str(self.char_turns+1))
         self.infoboard.update_element('player_name', self.current_player.name)
-        self.infoboard.update_element('last_movement', 'From '+self.last_movement[0]+' to '+self.last_movement[1])
+        if self.last_movement:
+            self.infoboard.update_element('last_movement', 'From '+self.last_movement[0]+' to '+self.last_movement[1])
 
     @run_async
     def generate_dice(self):
@@ -724,16 +727,16 @@ class Board(Screen):
             self.add_dices_to_screen(self.players)  #Won't do anything if the flag initial_dice_screen is False
             self.players.sort(key=lambda player:player.order)
             self.play_sound('success')
-            if not self.current_player: #If this is the first player added
-                self.current_player = self.players[0]
-                self.infoboard.update_element('player_name', self.current_player.name)
-                self.update_map()       #This goes according to current_player
-                if not self.current_player.human:
-                    self.post_event('cpu')
-                    self.do_ai_player_turn()
-                else:
-                    self.current_player.unpause_characters()
-            self.dice.sprite.add_turn(self.current_player.uuid)
+            # if not self.current_player: #If this is the first player added
+            self.current_player = self.players[0]
+            #     self.infoboard.update_element('player_name', self.current_player.name)
+            #     self.update_map()       #This goes according to current_player
+            #     if not self.current_player.human:
+            #         self.post_event('cpu')
+            #         self.do_ai_player_turn()
+            #     else:
+            #         self.current_player.unpause_characters()
+            # self.dice.sprite.add_turn(self.current_player.uuid)
             self.started = True
             self.generate_dialogs()
             self.update_scoreboard()
@@ -1028,7 +1031,7 @@ class Board(Screen):
 
     @run_async_not_pooled
     def generate_fitnesses(self, source_cell, destinations, lite=False):
-        try: 
+        try:
             self.fitnesses[source_cell]
         except KeyError:
             self.fitnesses[source_cell] =   PathAppraiser.rate_movements(self.active_cell.sprite.get_real_index(), tuple(x[-1] for x in destinations), self.enabled_paths,\
@@ -1077,22 +1080,32 @@ class Board(Screen):
         self.possible_dests.empty()
         return moved
 
-    def dice_value_result(self, value):
-        if self.dialog and 'dice' in self.dialog.id:
-            self.starting_dices[self.current_player.uuid].set()
-            self.dices_values[self.current_player.uuid] = value
-            #Adding teh value sprite to the dialog itself
-            dice_screen = self.get_dialog('dice', 'init')
-            if dice_screen: #If the dialog was found (SHOULD BE IN THIS FIRST IF, but whatever, lets check again)
-                dice_value = TextSprite('value', (0, 0), tuple(0.10*x for x in self.resolution), self.resolution, str(value))
-                dice_screen.add_sprite_to_elements(4//len(self.players), dice_value)
-            if all(flag.is_set() for flag in self.starting_dices.values()):
+    def shuffling_frame(self):
+        self.current_dice.sprite.increase_animation_delay()
+
+    def assing_current_dice(self, dice_id):
+        print("ID OF DICE "+str(dice_id))
+        if self.dialog and 'dice' in self.dialog.id:    #This is a throw in the starting dices
+            self.current_dice.add(next((dice for dice in self.dialog.elements if dice.id == dice_id), None))
+
+    def dice_value_result(self, event):
+        value = int(event.value)
+        received_dice_id = event.id #The received dice id is the same uuid as the matching player uuid
+        if self.dialog and 'dice' in self.dialog.id:    #This is a throw in the starting dices
+            self.starting_dices[int(received_dice_id)].set()
+            self.dices_values[int(received_dice_id)] = value
+            next(dice for dice in self.dialog.elements if dice.id == received_dice_id).deactivating_dice(value=value) #We disable the received dice.
+            if all(flag.is_set() for flag in self.starting_dices.values()): #CHECKING IF ALL THE DICES IN THE STARTING SCREEN HAVE BEEN THROWN
                 all_values = [(player_uuid, value) for player_uuid, value in self.dices_values.items()]
                 all_values.sort(key=lambda player_value: player_value[-1])
                 ordered_players = [next(player for player in self.players if player.uuid == value[0]) for value in all_values]
                 self.players = ordered_players
                 self.current_player = self.players[-1]  #To make the next player turn be the self.players[0]
-                self.hide_dialog()
+                self.current_dice.add(self.dice.sprite) #From now on, the only current sprite is the infoboard one
+                
+                self.post_event('hide_dialog_temp')
+                #self.hide_dialog()
+            
             value = -1  #To jump to the next player turn line.
         if value == Dice.GOLD_VALUE:
             self.activate_turncoat_mode()
@@ -1180,7 +1193,7 @@ class Board(Screen):
         self.update_scoreboard()
         self.update_infoboard()
         if not self.current_player.human:
-            print("Next player is computer controlled!")
+            self.post_event('cpu_turn')
             self.current_player.pause_characters()  #We don't want the human players fiddling with the chars
             self.do_ai_player_turn()
 

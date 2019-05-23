@@ -344,7 +344,7 @@ class PathAppraiser(object):
     @time_it
     def rate_movements(start_pos, possible_destinies, paths_graph, distances, current_map, all_board_cells, level_size):
         """Returns a tuple with indexes of the destinies, and a fitness going from 0 to 1."""
-        print("CHECKIN HOW LONGS IT TAKES to get fitnesses FOR "+str(len(possible_destinies)))
+        # print("CHECKIN HOW LONGS IT TAKES to get fitnesses FOR "+str(len(possible_destinies)))
         fitnesses = {}
         all_cells = {cell.get_real_index(): cell.get_char() for cell in all_board_cells if cell.has_char()} if isinstance(all_board_cells, list) else all_board_cells
         print(type(all_cells))

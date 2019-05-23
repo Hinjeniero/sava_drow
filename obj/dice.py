@@ -17,15 +17,17 @@ class Dice(AnimatedSprite):
         super().__init__(id_, position, size, canvas_size, **params)
         self.currently_shuffling = False
         self.shuffle_time = shuffle_time
-        self.event = pygame.event.Event(USEREVENTS.BOARD_USEREVENT, command='dice', value=None)
+        self.event = pygame.event.Event(USEREVENTS.BOARD_USEREVENT, command='dice', value=None, id=id_)
+        self.shuffling_event = pygame.event.Event(USEREVENTS.BOARD_USEREVENT, command='shuffling', value=None, id=id_)
         self.throws = {}    #Here are all the players and their throws
         self.current_player = None
         self.turns = 0
         self.max_throws = limit_throws+1
         self.rotate_kw = rotate_kw
         self.result_kw = result_kw
-        self.current_result = -1
+        self.current_result = 1
         self.overlay = None
+        #print("HELLO DICE "+str(self.id)+", len of self.names "+str(len(self.names))+", len of surfaces "+str(len(self.surfaces)))
 
     @run_async_not_pooled
     def shuffle(self):
@@ -40,22 +42,28 @@ class Dice(AnimatedSprite):
             LOG.log('info', 'You spent your ammount of throws, you rolled enough already, dont you think?')
 
     def hitbox_action(self, *pr, **kw): #This is only used for the initial dices
+        pygame.event.post(self.shuffling_event)
         self.shuffle()
 
     def add_turn(self, next_player):
         self.turns += 1
         self.current_player = next_player
-        try:                
+        try:
             self.throws[self.current_player]
-        except KeyError:    
+        except KeyError:
             self.throws[self.current_player] = 1
-        self.deactivating_dice()
+        self.deactivating_dice(value=self.current_result)
 
     def reactivating_dice(self):
         self.locked = False
         self.set_enabled(True)
 
-    def deactivating_dice(self):
+    def deactivating_dice(self, value=1):
+        for i in range(0, len(self.names)):
+            if self.result_kw in self.names[i] and str(value) in self.names[i]:
+                self.animation_index = i
+                self.image = self.surfaces[i]
+                break
         self.overlay = Sprite.generate_overlay(self.surfaces[self.animation_index], LIGHTGRAY)
         self.locked = True
         self.set_enabled(False)
@@ -89,13 +97,8 @@ class Dice(AnimatedSprite):
         self.event.value = self.current_result
         pygame.event.post(self.event)
         LOG.log('info', "You rolled a ", self.current_result)
-        for i in range(0, len(self.names)):
-            if self.result_kw in self.names[i] and str(self.event.value) in self.names[i]:
-                self.animation_index = i
-                self.image = self.surfaces[i]
-                self.currently_shuffling = False
-                self.deactivating_dice()
-                return
+        self.currently_shuffling = False
+        self.deactivating_dice(value=self.current_result)
     
     def add_throw(self, player_uuid):
         self.throws[player_uuid] += 1

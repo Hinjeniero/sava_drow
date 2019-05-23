@@ -71,6 +71,7 @@ class ComputerPlayer(Player):
             **character_params (:dict:):    Contains the more specific parameters to create the characters.
                                             Ammount of each type of char, name of their actions, and their folder paths.
         """
+        name = name+'(CPU)'
         super().__init__(name, order, sprite_size, canvas_size, infoboard=infoboard, obj_uuid=obj_uuid, empty=False, avatar=avatar, **character_params)
         self.human = False
         self.ia_mode = ia_mode #alpha-beta-pruning | null-move | full blown IA with keras
@@ -157,6 +158,8 @@ class ComputerPlayer(Player):
         Returns:
             (Tuple->int, int):  A movement calculated by the underlying algorithm. (source, destiny).
         """
+        print("HERE IN GENERATE RANDOM MOVEMENT")
+        print(fitnesses)
         if totally_random:
             return random.choice(fitnesses)[0]
         fitnesses.sort(key=lambda tup: tup[1], reverse=True)
@@ -195,7 +198,7 @@ class ComputerPlayer(Player):
         print("The number of pruned branches is "+str(pruned.number))
         rated_movements = [((dest[0], dest[1]), score) for dest, score in all_paths.items()]
         rated_movements.sort(key=lambda dest:dest[1], reverse=True)
-        # print ("RATES MO;VEEMTNS ARE "+str(rated_movements))
+        print ("RATES MOVEMETNS ARE "+str(rated_movements))
         return rated_movements[0][0]    #Returning only the movement, we have no use for the score
 
     @staticmethod

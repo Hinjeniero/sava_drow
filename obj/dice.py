@@ -27,7 +27,6 @@ class Dice(AnimatedSprite):
         self.result_kw = result_kw
         self.current_result = 1
         self.overlay = None
-        #print("HELLO DICE "+str(self.id)+", len of self.names "+str(len(self.names))+", len of surfaces "+str(len(self.surfaces)))
 
     @run_async_not_pooled
     def shuffle(self):

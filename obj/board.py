@@ -229,7 +229,7 @@ class Board(Screen):
         self.events['admin_on'] = pygame.event.Event(self.event_id, command='admin', value = True)
         self.events['admin_off'] = pygame.event.Event(self.event_id, command='admin', value = False)
         self.events['turncoat'] = pygame.event.Event(self.event_id, command='turncoat')
-        self.events['hide_dialog_temp'] = pygame.event.Event(self.event_id, command='hide_dialog_temp', value=3)
+        self.events['hide_dialog_temp'] = pygame.event.Event(self.event_id, command='hide_dialog_temp', value=3)    #Will hide whatever dialog in 3 seconds
 
     @no_size_limit
     def generate_platform(self):
@@ -306,8 +306,11 @@ class Board(Screen):
                 dice = Dice(str(player.uuid), (0, 0), tuple(0.15*x for x in self.resolution), self.resolution, shuffle_time=1500,\
                             sprite_folder=self.params['dice_textures_folder'], animation_delay=3, limit_throws=1, overlay=False)
                 dice.add_turn(player.uuid)
-                dice.reactivating_dice()
                 dice_screen.add_sprite_to_elements(4//len(player_list), dice)
+                if player.human:
+                    dice.reactivating_dice()
+                else:
+                    dice.deactivating_dice()
 
     @run_async
     def generate_all_cells(self, custom_cell_radius=None, growing_cells=True, growing_ratio=8/7):
@@ -725,24 +728,20 @@ class Board(Screen):
             (boolean): True if all the requested players have been loaded already."""
         if not self.started and (self.loaded_players is self.total_players) and self.generated:
             self.add_dices_to_screen(self.players)  #Won't do anything if the flag initial_dice_screen is False
-            self.players.sort(key=lambda player:player.order)
-            self.play_sound('success')
-            # if not self.current_player: #If this is the first player added
-            self.current_player = self.players[0]
-            #     self.infoboard.update_element('player_name', self.current_player.name)
-            #     self.update_map()       #This goes according to current_player
-            #     if not self.current_player.human:
-            #         self.post_event('cpu')
-            #         self.do_ai_player_turn()
-            #     else:
-            #         self.current_player.unpause_characters()
-            # self.dice.sprite.add_turn(self.current_player.uuid)
-            self.started = True
-            self.generate_dialogs()
-            self.update_scoreboard()
             self.console_active = False
+            self.play_sound('success')
             self.show_dialog('dice', send_event=False)  #Won't show if the flag initial_dice_screen is False
-            #TODO CONTINUE THIS! And when dices are thrown show the nuymber and add it to the screen! And turns after that!
+            self.generate_dialogs()
+            thread = self.update_scoreboard()
+            thread.join()
+            #Now ordering players and starting the first screen of the game
+            self.players.sort(key=lambda player:player.order)   #This won't be the final order, its just an order to throw the dices
+            self.player_index = len(self.players)-1  #To make the next player turn be the self.players[0]
+            self.current_player = self.players[-1]  #To make the next player turn be the self.players[0]
+            self.turn -= 1
+            self.current_player.turn -= 1  #To make the next player turn be the self.players[0]
+            self.started = True
+            self.next_player_turn()
 
     def get_event(self, id):
         """Gets the first event whose identificator contains or matches the id input argument.
@@ -1097,15 +1096,19 @@ class Board(Screen):
             next(dice for dice in self.dialog.elements if dice.id == received_dice_id).deactivating_dice(value=value) #We disable the received dice.
             if all(flag.is_set() for flag in self.starting_dices.values()): #CHECKING IF ALL THE DICES IN THE STARTING SCREEN HAVE BEEN THROWN
                 all_values = [(player_uuid, value) for player_uuid, value in self.dices_values.items()]
-                all_values.sort(key=lambda player_value: player_value[-1])
-                ordered_players = [next(player for player in self.players if player.uuid == value[0]) for value in all_values]
+                all_values.sort(key=lambda player_value: player_value[-1], reverse=True)
+                ordered_players = [next(player for player in self.players if player.uuid == player_throwvalue[0]) for player_throwvalue in all_values]
                 self.players = ordered_players
+                #Synchronizing turns again
+                self.turn=-1    #WIll start after the last line of this method, in the self.turn 0
+                for player in self.players:    
+                    player.turn=0
+                #And now settings everything so the next turn is the player with the highest throw
                 self.current_player = self.players[-1]  #To make the next player turn be the self.players[0]
+                self.current_player.turn -= 1  #To compensate for this turn addition
+                self.player_index = len(self.players)-1  #To make the next player turn be the self.players[0]
                 self.current_dice.add(self.dice.sprite) #From now on, the only current sprite is the infoboard one
-                
-                self.post_event('hide_dialog_temp')
-                #self.hide_dialog()
-            
+                self.post_event('hide_dialog_temp') #So we have time to check the results
             value = -1  #To jump to the next player turn line.
         if value == Dice.GOLD_VALUE:
             self.activate_turncoat_mode()
@@ -1174,13 +1177,16 @@ class Board(Screen):
 
     def next_player_turn(self, use_stop_state=True):
         self.current_player.turn += 1
-        del self.locked_cells[:]    #Clearing it just in case
+        del self.locked_cells[:]    #Clearing it just in caseç
+        #print("OLD INDEX IS "+str(self.player_index))
         old_index = self.player_index
         while True:
             self.player_index += 1
             if self.player_index >= len(self.players):
                 self.player_index = 0
                 self.turn += 1
+            #print("MIDDLE INDEX IS "+str(self.player_index))
+            #print("board turn is "+str(self.turn)+", player turn is "+str(self.players[self.player_index].turn))
             if not self.players[self.player_index].dead\
             and (self.players[self.player_index].turn is self.turn or self.player_index is old_index):
                 self.current_player = self.players[self.player_index] 
@@ -1192,13 +1198,24 @@ class Board(Screen):
         self.dice.sprite.add_turn(self.current_player.uuid)
         self.update_scoreboard()
         self.update_infoboard()
+        #print("CURRENT PLAYER IS "+self.current_player.name+', uuid '+str(self.current_player.uuid)+", with turn "+str(self.current_player.turn))
+        #print("NEW INDEX IS "+str(self.player_index))
+        #print("New turn of baord is "+str(self.turn))
         if not self.current_player.human:
-            self.post_event('cpu_turn')
+            #print('cpu_turn for '+self.current_player.name+', uuid '+str(self.current_player.uuid))
             self.current_player.pause_characters()  #We don't want the human players fiddling with the chars
             self.do_ai_player_turn()
+        #else:
+            #print("SHIEEEET ITS HUMAAAN "+self.current_player.name+', uuid '+str(self.current_player.uuid))
 
     @run_async_not_pooled
     def do_ai_player_turn(self, result=None):
+        #print("AIII TUUURNNN BROOOO")
+        if not all(flag.is_set() for flag in self.starting_dices.values()): #IF this structure is empty, due to not having starting dices, it also returns True.
+            computer_dice = next(dice for dice in self.dialog.elements if str(dice.id) == str(self.current_player.uuid))
+            computer_dice.reactivating_dice()
+            computer_dice.hitbox_action()
+            return
         self.ai_turn = True
         self.thinking_sprite.sprite.set_visible(True)
         movement = self.current_player.get_movement(self.current_map, self.cells, self.current_player.uuid, [player.uuid for player in self.players])
@@ -1216,6 +1233,7 @@ class Board(Screen):
         self.ai_turn = False
         if result:  #We return the movement performed. Useful for network board. 
             result = movement
+        print("EEEEEEEEND OF AIII TUUURNNN BROOOO")
 
     def kill_character(self, cell, killer):
         #TODO Badass Animation

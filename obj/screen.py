@@ -308,7 +308,7 @@ class Screen(object):
 
     def set_hit_sprite(self, sprite):
         """Called to set the hitten sprite. Can be overloaded"""
-        if sprite != self.hit_sprite:
+        if sprite != self.hit_sprite and sprite.enabled:
             if self.hit_sprite: 
                 self.hit_sprite.set_hover(False) #Change the active back to the original state
                 self.hit_sprite.set_active(False)

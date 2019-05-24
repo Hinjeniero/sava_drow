@@ -216,7 +216,7 @@ class ComputerPlayer(Player):
             (Dict->int, Tuple->ints):   Each key of the dict, is the index of the source cell, and each value, is a tuple containing all
                                         the possible destiny cells from that source cell.
         """
-        destinies = []
+        destinies = []  #TODO Add if any char is in more than turn 0, only get the destinies of that char.
         for cell_index, char_inside_cell in all_cells.items():
             this_index_destinations = []
             if char_inside_cell.owner_uuid == current_player and my_turn\

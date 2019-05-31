@@ -227,6 +227,7 @@ class NetworkBoard(Board):
         Also, sends the a random throw of a dice to decide the order of the players.
         Args:
             host (boolean): Flag saying if we are the host or not (Just a lowly client)."""
+        print("SENDF HANDSHAKE")
         self.send_data({"host": host, "id": self.uuid})
         if host:
             self.send_data_async({"params": self.get_board_params()})
@@ -246,7 +247,9 @@ class NetworkBoard(Board):
             self.client_lock.acquire()
             self.LOG_ON_SCREEN('Connecting to '+str(self.ip)+' in port '+str(self.port))
             self.client.disconnect()
+            print("IP "+str(self.ip)+" PORT "+str(self.port))
             self.client.connect(self.ip, self.port)
+            print("---------------------")
             self.connected.set()
             self.client_lock.release()
             LOG.log('info', 'Client ', self.uuid, ' connected to the server in the address ',\
@@ -591,7 +594,7 @@ class NetworkBoard(Board):
         #good shit here
         movement_executed = []  #This is written like this so pylint doesn't show an error, actually it doesn't matter, it will be assigned inside thje super method
         thread_doing_the_work = super().do_ai_player_turn(result=movement_executed)
-        thread_doing_the_work.wait()
+        thread_doing_the_work.join()
         character = self.get_cell_by_real_index(movement_executed[0]).get_char()
         self.send_data_async({'drop_character': character.uuid, 'cell': movement_executed[-1]})
 

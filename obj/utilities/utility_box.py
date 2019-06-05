@@ -14,7 +14,6 @@ import numpy
 import math
 import time
 import pygame
-import external.gradients
 import random
 import requests
 from requests.exceptions import ConnectionError

@@ -682,7 +682,7 @@ class Wizard(Character):
         super().__init__(player_uuid, id_, position, size, canvas_size, sprites_path, aliases=CHARACTERS.WIZARD_ALIASES, obj_uuid=obj_uuid, **params)
         self.rank   = 1
         self.order  = 2
-        self.value  = 6
+        self.value  = 8
 
     def get_paths(self, graph, distances, current_map, index, level_size):
         """Gets all the possible paths for each cell for a Wizard type with his Restriction in movement.
@@ -882,7 +882,7 @@ class MatronMother(Character):
         self.essential  = True
         self.rank       = 2
         self.order      = 5
-        self.value      = 10
+        self.value      = 50
 
     def get_paths(self, graph, distances, current_map, index, level_size):
         """Gets all the possible paths for each cell for a MatronMother type with her Restriction in movement.

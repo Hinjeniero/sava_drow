@@ -1155,10 +1155,10 @@ class Board(Screen):
                 #return
         self.next_char_turn(self.drag_char.sprite)
 
-    def update_character(self, char):
+    def update_character(self, char):   #TODO this in a method in character?
         char.can_kill = True
         char.can_die = True
-        char.value = 8
+        char.value = 15
 
     def next_char_turn(self, char):
         self.fitnesses = {} #Cleaning the history of fitnesses

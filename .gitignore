@@ -3,6 +3,7 @@
 **/node_modules/
 **/myid.*
 **/botetor
+**/.idea
 /old/
 /old_img/
 .vscode

@@ -16,7 +16,8 @@ class USEREVENTS:
 class INIT_PARAMS:
     """Global variables that will hold each parameter of the game's configuration.
     The names are pretty self-explanatory, so no problem there."""
-    INITIAL_RESOLUTION = (1280, 720)
+    #INITIAL_RESOLUTION = (1280, 720)
+    INITIAL_RESOLUTION = (1600, 900)
     RESOLUTIONS = (INITIAL_RESOLUTION, (1366, 768), (1600, 900), (1920, 1080), (256, 144), (640, 360), (848, 480), (1024, 576))
     INITIAL_FPS = 60
     ALL_FPS     = (INITIAL_FPS, 120, 20, 30)

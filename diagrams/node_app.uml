@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>JavaScript-modules-diagram</ID>
+  <OriginalElement>C:/Users/Hinjeniero/sava_drow/node/app.js</OriginalElement>
+  <nodes>
+    <node x="205.5" y="99.0">C:/Users/Hinjeniero/sava_drow/node/app.js#bodyParser#42;C:/Users/Hinjeniero/sava_drow/node/app.js#config#163;C:/Users/Hinjeniero/sava_drow/node/app.js#express#6;</node>
+    <node x="0.0" y="11.0">C:/Users/Hinjeniero/sava_drow/node/node_modules/body-parser/index.js</node>
+    <node x="190.0" y="11.0">C:/Users/Hinjeniero/sava_drow/node/node_modules/express/index.js</node>
+    <node x="352.0" y="0.0">C:/Users/Hinjeniero/sava_drow/node/node_modules/dotenv/lib/main.js#config#2875;</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="C:/Users/Hinjeniero/sava_drow/node/app.js#bodyParser#42;C:/Users/Hinjeniero/sava_drow/node/app.js#config#163;C:/Users/Hinjeniero/sava_drow/node/app.js#express#6;" target="C:/Users/Hinjeniero/sava_drow/node/node_modules/express/index.js">
+      <point x="0.0" y="-46.5" />
+      <point x="0.0" y="13.5" />
+    </edge>
+    <edge source="C:/Users/Hinjeniero/sava_drow/node/app.js#bodyParser#42;C:/Users/Hinjeniero/sava_drow/node/app.js#config#163;C:/Users/Hinjeniero/sava_drow/node/app.js#express#6;" target="C:/Users/Hinjeniero/sava_drow/node/node_modules/dotenv/lib/main.js#config#2875;">
+      <point x="37.0" y="-46.5" />
+      <point x="298.0" y="74.0" />
+      <point x="430.0" y="74.0" />
+      <point x="0.0" y="24.5" />
+    </edge>
+    <edge source="C:/Users/Hinjeniero/sava_drow/node/app.js#bodyParser#42;C:/Users/Hinjeniero/sava_drow/node/app.js#config#163;C:/Users/Hinjeniero/sava_drow/node/app.js#express#6;" target="C:/Users/Hinjeniero/sava_drow/node/node_modules/body-parser/index.js">
+      <point x="-37.0" y="-46.5" />
+      <point x="224.0" y="74.0" />
+      <point x="85.0" y="74.0" />
+      <point x="0.0" y="13.5" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic Group" zoom="1.0" x="210.0" y="151.0" />
+  <SelectedNodes>
+    <node>C:/Users/Hinjeniero/sava_drow/node/app.js#bodyParser#42;C:/Users/Hinjeniero/sava_drow/node/app.js#config#163;C:/Users/Hinjeniero/sava_drow/node/app.js#express#6;</node>
+  </SelectedNodes>
+  <Categories>
+    <Category>All</Category>
+  </Categories>
+  <VISIBILITY>Details</VISIBILITY>
+</Diagram>
+

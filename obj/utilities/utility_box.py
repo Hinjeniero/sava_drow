@@ -13,6 +13,7 @@ __author__ = 'David Flaity Pardo'
 import numpy
 import math
 import time
+import timeit
 import pygame
 import random
 import requests
@@ -47,7 +48,15 @@ def euclidean_generator(size=300): #100 will be plenty in our case
             euclidean = math.sqrt(x*x + y*y)
             matrix[x][y] = euclidean
             matrix[y][x] = euclidean
+    #yes = [2]  #Test of access times
+    #timeit.timeit('"-".join(math.sqrt(240*240 + 255*255))', number=1)
+    #print(timeit.timeit(lambda: math.sqrt(240*240 + 255*255), number=1))
+    #print(timeit.timeit(lambda: yes[0], number=1))
     return matrix
+
+def test():
+    euclidean = math.sqrt(240*240 + 255*255)
+    return euclidean
 
 def generate_mouse_sprite(size=(2, 2)):
     """Generates a decoy sprite with a very small size, to simulate collisions with the mouse itself.

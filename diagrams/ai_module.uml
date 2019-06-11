@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>Python</ID>
+  <OriginalElement>#C:/Users/Hinjeniero/sava_drow/obj/ai_player.py</OriginalElement>
+  <nodes>
+    <node x="229.0" y="284.0">obj.paths.PathAppraiser</node>
+    <node x="169.0" y="162.0">obj.players.Player</node>
+    <node x="385.0" y="216.0">obj.ai_player.Node</node>
+    <node x="0.0" y="94.0">obj.ai_player.ComputerPlayer</node>
+    <node x="366.0" y="144.0">object</node>
+    <node x="396.0" y="76.0">obj.ai_player.MonteCarloSearch</node>
+    <node x="242.0" y="0.0">obj.ai_player.PersistantNumber</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="obj.paths.PathAppraiser" target="object">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="obj.ai_player.ComputerPlayer" target="obj.players.Player">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="obj.players.Player" target="object">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="obj.ai_player.Node" target="object">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="obj.ai_player.PersistantNumber" target="object">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="obj.ai_player.MonteCarloSearch" target="object">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic Group" zoom="1.0" x="443.5" y="90.5" />
+  <SelectedNodes />
+  <Categories />
+</Diagram>
+

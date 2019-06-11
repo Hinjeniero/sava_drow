@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>Python</ID>
+  <OriginalElement>#C:/Users/Hinjeniero/sava_drow - copia/obj/board_server.py</OriginalElement>
+  <nodes>
+    <node x="0.0" y="226.0">obj.board_server.Server</node>
+    <node x="237.0" y="0.0">obj.board.Board</node>
+    <node x="86.5" y="77.0">obj.network_board.NetworkBoard</node>
+    <node x="14.0" y="149.0">MastermindServerTCP</node>
+  </nodes>
+  <notes>
+    <note x="8.0" y="26.0">
+      <node>obj.network_board.NetworkBoard</node>
+      <value>Includes MastermindClientTCP</value>
+      <edge>
+        <point x="-60.0" y="-13.5" />
+        <point x="146.5" y="52.0" />
+        <point x="108.5" y="52.0" />
+        <point x="0.0" y="13.5" />
+      </edge>
+    </note>
+  </notes>
+  <edges>
+    <edge source="obj.board_server.Server" target="MastermindServerTCP">
+      <point x="0.0" y="-13.5" />
+      <point x="0.0" y="13.5" />
+    </edge>
+    <edge source="obj.network_board.NetworkBoard" target="obj.board.Board">
+      <point x="60.0" y="-13.5" />
+      <point x="266.5" y="52.0" />
+      <point x="304.5" y="52.0" />
+      <point x="0.0" y="13.5" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic Group" zoom="1.0" x="95.5" y="52.0" />
+  <SelectedNodes />
+  <Categories />
+</Diagram>
+

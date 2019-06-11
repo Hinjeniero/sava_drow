@@ -481,7 +481,7 @@ class Node(object):
         Args:
             exploration_const (float, default=1):   Constant that makes the exploration part of the algorithm higher or lower.
         Returns:
-            (float):    Current UBCTV of this node."""
+            (float):    Current UBCT of this node."""
         if self.total_n == 0: 
             return math.inf
         return (self.total_value/self.total_n)+(exploration_const*(math.sqrt(math.log(self.parent.total_n)/self.total_n))) #Upper Confidence bound applied to trees

@@ -1052,7 +1052,7 @@ class Dialog (InfoBoard):
         else (size[0] - element.rect.width) if 'right' in centering else 0
         element.set_position((position_x, position[1]))
 
-    def add_sprite_to_elements(self, spaces, sprite, centering='center', scale=1):
+    def add_sprite_to_elements(self, spaces, sprite, centering='center', resize_sprite=True, scale=1):
         """Adds a sprite of any type to the dialog, that follows the input parameters.
         Args:
             spaces (int):   Spaces occupied by the button. Row spaces//2 is recommended.
@@ -1061,9 +1061,11 @@ class Dialog (InfoBoard):
             scale (float):  Scale of the button compared with the spaces taken by it.
         """
         spaces = self.parse_element_spaces(spaces)
-        size = self.get_element_size(spaces, scale)
+        size = sprite.rect.size
+        if resize_sprite:
+            size = self.get_element_size(spaces, scale)
+            sprite.set_size(size)
         position = self.get_element_position(spaces, size)
-        sprite.set_size(size)
         self.adjust_position(size, position, sprite, centering=centering)
         self.elements.add(sprite)
         self.taken_spaces += spaces

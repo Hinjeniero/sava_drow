@@ -361,6 +361,9 @@ class Character(AnimatedSprite):
         self.state = self.aliases['idle']
         self.update_info_sprites()
 
+    def draw_overlay(self, surface, offset=None):
+        pass    #We dont want overlays being drawn in normal animated sprites     
+
     def set_size(self, size, update_rects=True):
         super().set_size(size, update_rects=update_rects)
         self.update_info_sprites()

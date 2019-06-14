@@ -38,7 +38,7 @@ from obj.utilities.logger import Logger as LOG
 from obj.utilities.logger import Parser
 from obj.utilities.surface_loader import ResizedSurface, no_size_limit
 #numpy.set_printoptions(threshold=numpy.nan)
-
+SHIT = 0
 class Board(Screen):
     """Board class. Inherits from Screen.
     Have all the methods and attributes to make the execution of a turn-based board game possible.
@@ -153,6 +153,7 @@ class Board(Screen):
         self.scoreboard_flag= False
         self.show_score     = False
         self.promotion_table= None  #Created in Board.generate
+        self.promotion_flag = threading.Event()
         self.gray_overlay   = None  #Created in Board.generate
         self.show_promotion = False
 
@@ -182,11 +183,13 @@ class Board(Screen):
         self.starting_dices = {}    #Flags to know which dices have been casted. A bit redundant, but its done this way
         self.dices_values   = {}
         self.ai_turn        = False
+        self.ai_turn_flag   = threading.Event()
         self.started        = False
         self.finished       = False
         self.generated      = False
         self.admin_mode     = False
         self.swapper        = None
+        self.end            = False
         Board.generate(self, empty, initial_dice_screen, *players)
     
     ###SIMULATES ON_SCREEN CONSOLEEEE
@@ -200,6 +203,7 @@ class Board(Screen):
     def generate(self, empty, initial_dice_screen, *players):
         UtilityBox.join_dicts(self.params, Board.__default_config)
         #INIT
+        self.ai_turn_flag.set()
         self.generate_events()
         self.generate_onscreen_console()
         if self.params['loading_screen']:
@@ -592,7 +596,9 @@ class Board(Screen):
         self.promotion_table.set_cols(len(chars))
         for char in chars:
             if not char.upgradable: #Upgradable ones cannot be upgraded to
-                self.promotion_table.add_sprite_to_elements(1, char)
+                char.use_overlay = False
+                self.promotion_table.add_sprite_to_elements(1, char, resize_sprite=False)   #It takes too much time if we wait for the resizing
+        self.promotion_flag.set()
         LOG.log('info', 'The promotion table has been successfully updated.')
 
     def adjust_cells(self):
@@ -761,7 +767,7 @@ class Board(Screen):
         if event_to_send:
             pygame.event.post(event_to_send)
 
-    def create_player(self, name, number, chars_size, cpu=False, cpu_mode=None, empty=False, **player_settings):
+    def create_player(self, name, number, chars_size, cpu=False, cpu_mode=None, cpu_time=None, empty=False, **player_settings):
         """Queues the creation of a player on the async method.
         Args:
             name (str): Identifier of the player
@@ -776,7 +782,7 @@ class Board(Screen):
                 raise PlayerNameExistsException("The player name "+name+" already exists")
         if not empty and sum(x['ammount'] for x in player_settings.values()) > len(self.quadrants[0].cells):
             raise TooManyCharactersException('There are too many characters in player for a quadrant.')
-        self.__create_player(name, number, chars_size, cpu, empty, cpu_mode, **player_settings)
+        self.__create_player(name, number, chars_size, cpu, empty, cpu_mode, cpu_time, **player_settings)
         LOG.log('DEBUG', "Queue'd player to load, total players ", self.total_players, " already loaded ", self.loaded_players)
 
     def __add_player(self, player):
@@ -821,7 +827,7 @@ class Board(Screen):
         for player in players:  self.__add_player(player)
 
     @run_async
-    def __create_player(self, player_name, player_number, chars_size, cpu, empty, ai_mode, **player_params):
+    def __create_player(self, player_name, player_number, chars_size, cpu, empty, ai_mode, ai_time, **player_params):
         """Asynchronous method (@run_async decorator). Creates a player with the the arguments and adds him to the board.
         Args:
             player_name (str):  Identifier of the player
@@ -833,7 +839,7 @@ class Board(Screen):
             (:obj:Threading.thread):    The thread doing the work. It is returned by the decorator."""
         if cpu:
             player = ComputerPlayer(self.enabled_paths, self.distances, self.params['circles_per_lvl'], player_name,\
-                                    player_number, chars_size, self.resolution, ai_mode=ai_mode, **player_params)
+                                    player_number, chars_size, self.resolution, ai_mode=ai_mode, timeout=ai_time, **player_params)
         else:
             player = Player(player_name, player_number, chars_size, self.resolution, empty=empty, **player_params)
         self.__add_player(player)
@@ -914,7 +920,8 @@ class Board(Screen):
             #Thats why we call the super method here instead of doing in the overloaded method.
             super().mouse_handler(event, mouse_buttons, mouse_movement, mouse_position)
             return
-        
+        if not self.ai_turn_flag.is_set():  #We don't want the majority of mouse interactions to work in the CPU turn
+            return
         #CHECKING BUTTONS FIRST. CLICK DOWN
         if event.type == pygame.MOUSEBUTTONDOWN:  #On top of the char and clicking on it
             self.play_sound('key')
@@ -1149,6 +1156,7 @@ class Board(Screen):
                 #return #TODO CHECk THIS
             elif self.drag_char.sprite.upgradable\
             and any(not char.upgradable for char in self.current_player.fallen):
+                self.promotion_flag.clear()
                 self.update_promotion_table(*tuple(char for char in self.current_player.fallen if not char.upgradable))
                 self.show_promotion = True
                 self.swapper.send(self.drag_char.sprite)
@@ -1158,7 +1166,7 @@ class Board(Screen):
     def update_character(self, char):   #TODO this in a method in character?
         char.can_kill = True
         char.can_die = True
-        char.value = 15
+        char.value *= 3
 
     def next_char_turn(self, char):
         self.fitnesses = {} #Cleaning the history of fitnesses
@@ -1199,7 +1207,7 @@ class Board(Screen):
         self.dice.sprite.add_turn(self.current_player.uuid)
         self.update_scoreboard()
         self.update_infoboard()
-        print("CURRENT PLAYER IS "+self.current_player.name+', uuid '+str(self.current_player.uuid))
+        #print("CURRENT PLAYER IS "+self.current_player.name+', uuid '+str(self.current_player.uuid))
         #print("NEW INDEX IS "+str(self.player_index))
         #print("New turn of baord is "+str(self.turn))
         if not self.current_player.human:
@@ -1211,30 +1219,41 @@ class Board(Screen):
 
     @run_async_not_pooled
     def do_ai_player_turn(self, result=None):
-        #print("AIII TUUURNNN BROOOO")
+        if self.end:    #We make here the only check since this is one of the methods that can call itself and go on until the end of the game
+            return
+        self.ai_turn_flag.wait()
+        self.ai_turn_flag.clear()
+        # print("RIGHT NOW; "+str(SHIT))
         if not all(flag.is_set() for flag in self.starting_dices.values()): #IF this structure is empty, due to not having starting dices, it also returns True.
             computer_dice = next(dice for dice in self.dialog.elements if str(dice.id) == str(self.current_player.uuid))
             computer_dice.reactivating_dice()
             computer_dice.hitbox_action()
+            self.ai_turn_flag.set()
             return
+        start = time.time()
         self.ai_turn = True
         self.thinking_sprite.sprite.set_visible(True)
         movement = self.current_player.get_movement(self.current_map, self.cells, self.current_player.uuid, [player.uuid for player in self.players])
         print("MOVEMENT CHOSEN WAS "+str(movement))
         character = self.get_cell_by_real_index(movement[0]).get_char()
+        #print("CHOSEN CHAR "+character.get_type()+"MOVEMENT CHOSEN WAS "+str(movement)+", in turn "+str(self.turn))
         self.drag_char.add(character)
         self.last_cell.add(self.get_cell_by_real_index(movement[0]))
         self.active_cell.add(self.get_cell_by_real_index(movement[-1]))
         self.move_character(character)  #In here the turn is incremebted one (next_char_turn its executed)
         if self.show_promotion: #If the update table was triggered
+            self.promotion_flag.wait()
+            #Should get the highest valued char. And wait until it is full. Also do this for usual players (human ones), but whatever
             char_revived = random.choice(self.promotion_table.elements)
             self.swapper.send(char_revived)
+        # print("EMPTYING DRAG CHAR")
         self.drag_char.empty()
         self.thinking_sprite.sprite.set_visible(False)
         self.ai_turn = False
         if result:  #We return the movement performed. Useful for network board. 
             result = movement
-        print("EEEEEEEEND OF AIII TUUURNNN BROOOO")
+        print("THE DO AI TURN TIME WAS "+str(time.time()-start)+" seconds.")
+        self.ai_turn_flag.set()
 
     def kill_character(self, cell, killer):
         #TODO Badass Animation
@@ -1264,6 +1283,7 @@ class Board(Screen):
         self.post_event('win')
         self.finished = True    #To disregard events except esc and things like that
         self.show_score = True  #To show the infoboard.
+        self.end = True
 
     def set_active_cell(self, cell):
         if self.active_cell.sprite: #If there is already an sprite in active_cell
@@ -1302,5 +1322,5 @@ class Board(Screen):
             self.active_path.add(path)
         
     def destroy(self):
-        pass
+        self.end = True
         #TODO KILL THREADS IF STILL LOADING OR DECREASE PLAYER COUNT TO END FASTER, I DUNNO, WHATEVER

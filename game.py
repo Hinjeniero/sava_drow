@@ -31,7 +31,8 @@ from obj.utilities.utility_box import UtilityBox
 from obj.utilities.decorators import END_ALL_THREADS
 from board_generator import BoardGenerator
 from obj.utilities.exceptions import  NoScreensException, InvalidGameElementException, GameEndException,\
-                        EmptyCommandException, ScreenNotFoundException, TooManyCharactersException
+                        EmptyCommandException, ScreenNotFoundException, TooManyCharactersException, TooManyPlayersException,\
+                        ZeroPlayersException
 from obj.utilities.surface_loader import ResizedSurface
 from settings import PATHS, USEREVENTS, SCREEN_FLAGS, INIT_PARAMS, PARAMS
 from animation_generator import AnimationGenerator
@@ -170,6 +171,10 @@ class Game(object):
                 return False
             elif event.type is USEREVENTS.MAINMENU_USEREVENT:
                 if 'start' in event.command.lower():
+                    if self.board_generator.get_actual_total_players() is 0:
+                        self.show_popup('zero_players')
+                    elif self.board_generator.get_actual_total_players() is 1:
+                        self.show_popup('alone_player')
                     if 'tutorial' in event.command.lower():
                         self.board_generator.tutorial = True
                     elif 'online' in event.command.lower() or 'network' in event.command.lower():
@@ -186,14 +191,6 @@ class Game(object):
                             self.board_generator.direct_connect = True
                     else:
                         self.board_generator.online = False
-                    #After we decided on the board type
-                    if all(kw in event.command.lower() for kw in ('human', 'cpu')):
-                        self.board_generator.only_cpu = False
-                        self.board_generator.only_human = False
-                    elif 'human' in event.command.lower():
-                        self.board_generator.only_human = True
-                    else:   #CPU players only
-                        self.board_generator.only_cpu = True
                     self.initiate()
                 self.change_screen(*event.command.lower().split('_'))
             elif event.type is USEREVENTS.SOUND_USEREVENT:
@@ -241,7 +238,6 @@ class Game(object):
             self.show_popup('win')
         else:
             self.show_popup('lose')
-        self.__add_timed_execution(3, self.hide_popups)
         self.__add_timed_execution(7, self.restart_main_menu)
 
     def restart_main_menu(self):
@@ -294,11 +290,18 @@ class Game(object):
             command (String):   Specific command that the event holds, describes the action to trigger.
             value (Any):  Value to set/change in the specific option or parameter""" 
         characters = ('pawn', 'warrior', 'wizard', 'priestess', 'matron')
-        if 'computer' in command:
-            if 'player' in command:
-                self.board_generator.computer_players = value
-            elif 'mode' in command:
+        if 'player' in command:
+            if 'human' in command:
+                self.board_generator.human_players = value
+            if 'cpu' in command or 'computer' in command:
+                self.board_generator.cpu_players = value
+            if 'total' in command:
+                self.board_generator.set_players(value)
+        elif 'computer' in command or 'cpu' in command:
+            if 'mode' in command:
                 self.board_generator.computer_players_mode = value.lower()
+            if 'time' in command or 'timeout' in command:
+                self.board_generator.cpu_timeout = float(value)
         elif 'game' in command or 'mode' in command:
             self.board_generator.set_game_mode(value)
             if not 'custom' in value.lower() or 'free' in value.lower():
@@ -309,8 +312,6 @@ class Game(object):
             self.board_generator.set_cell_texture(value)
         elif 'size' in command:
             self.board_generator.set_board_size(value)
-        elif 'player' in command and 'total' in command:
-            self.board_generator.set_players(value)
         elif any(char in command for char in characters):
             self.board_generator.set_character_ammount(command, value)
         elif 'loading' in command:
@@ -343,7 +344,6 @@ class Game(object):
             self.show_popup('connection_error')
             self.current_screen.destroy()
             self.__add_timed_execution(3, self.restart_main_menu)
-            self.__add_timed_execution(3, self.hide_popups)
         elif 'admin' in command:
             if value:
                 self.show_popup('enemy_admin_on')
@@ -359,7 +359,6 @@ class Game(object):
             self.show_popup('servers_table_off')
             self.current_screen.destroy()
             self.__add_timed_execution(3, self.restart_main_menu)
-            self.__add_timed_execution(3, self.hide_popups)
         elif 'hide' in command and 'dialog' in command:
             self.__add_timed_execution(value, self.call_screens_method, 'board', Screen.hide_dialog)
 
@@ -486,6 +485,7 @@ class Game(object):
     def set_popups(self):
         """Create the popups (Dialog instances), and adds them to the game itself."""
         self.add_popups(*DialogGenerator.generate_popups(self.resolution,\
+                        ('default', 'default warning, I am become error'),\
                         ('secret_acho', 'Gz, you found a secret! all your SFXs will be achos now.'),\
                         ('secret_admin', 'Admin mode activated! You can move your character to any cell.'),\
                         ('secret_running90s', 'Gz, you found a secret! The background music is now Running in the 90s.'),\
@@ -501,7 +501,10 @@ class Game(object):
                         ('connection_error', 'There was a connection error, check the console for details.'),\
                         ('player_disconnected', 'One of the players disconnected, the game will pause now.'),\
                         ('enemy_admin_on', 'Other player activated the admin mode! Be careful!'),\
-                        ('enemy_admin_off', 'The admin mode was deactivated in another board.')))
+                        ('enemy_admin_off', 'The admin mode was deactivated in another board.'),\
+                        ('too_many_players', 'The number of cpu and human players surpass the total'),
+                        ('zero_players', 'You can`t start a game with no players!'),\
+                        ('alone_players', 'The board being generated only has one player in it')))
 
     def add_popups(self, *popups):
         """Add the input popups to the game.
@@ -512,7 +515,7 @@ class Game(object):
             popup.set_visible(False)
             self.popups.add(popup)
 
-    def show_popup(self, id_):
+    def show_popup(self, id_, show_time=3):
         """Makes visible and active the popup that matches with the input id. If it's not found, a warning is shown in console.
         Args:
             id_ (String):   Id or substring of that id to search for in the popup list."""
@@ -520,8 +523,10 @@ class Game(object):
             if id_ in popup.id or popup.id in id_:
                 popup.set_visible(True)
                 popup.set_active(True)
+                self.__add_timed_execution(show_time, self.hide_popups)
                 return
         LOG.log('warning', 'Popup ', id_,'not found')
+        self.show_popup('default')
 
     def get_popup(self, id_):
         """Returns the popup that matches with the input id.
@@ -716,6 +721,12 @@ class Game(object):
                 self.screens.append(self.board_generator.generate_board(self.resolution))
         except TooManyCharactersException:
             self.show_popup('chars')
+            return
+        except TooManyPlayersException:
+            self.show_popup('too_many_players')
+            return
+        except ZeroPlayersException:
+            self.show_popup('zero_players')
             return
         #self.get_screen('params', 'menu', 'config').enable_all_sprites(False)
         self.get_screen('music', 'menu', 'sound').enable_all_sprites(True)

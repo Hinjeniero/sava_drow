@@ -13,6 +13,7 @@ import pygame
 
 #Selfmade libraries
 from settings import USEREVENTS, STRINGS, PARAMS, CHARACTERS, PATHS
+from obj.utilities.exceptions import TooManyPlayersException, ZeroPlayersException
 from obj.board import Board
 from obj.tutorial_board import TutorialBoard
 from obj.network_board import NetworkBoard
@@ -51,10 +52,10 @@ class BoardGenerator(object):
         self.server = False
         self.private = False
         self.direct_connect = True
-        self.only_cpu = False
-        self.only_human = True
         self.players = 2
-        self.computer_players = 1
+        self.cpu_players = 0
+        self.cpu_timeout = 10
+        self.human_players = 2
         self.computer_players_mode = 'random'
         self.game_mode = 'custom'
         self.prefab_size = 'default'
@@ -121,23 +122,20 @@ class BoardGenerator(object):
         """
         if self.online and not self.server:
             return
+        human_players_added, cpu_players_added = 0, 0
         for i in range (0, 4, 4//self.players):     #Im the host or an online game or a local game.
-            if self.only_cpu:
-                cpu_player = True
-                cpu_mode = self.computer_players_mode
-            elif self.only_human:
-                cpu_player = False
-                cpu_mode = None
-            else:   #Mix of human players and machine controlled players
-                if i < self.computer_players:   #This works for 2 and 4 players.
-                    cpu_player = True
-                    cpu_mode = self.computer_players_mode
-                else:
-                    cpu_player = False
-                    cpu_mode = None
-            board.create_player(random.choice(STRINGS.PLAYER_NAMES), i, (200, 200), cpu=cpu_player, cpu_mode=cpu_mode, **char_settings)
+            if human_players_added < self.human_players:    #First we add all the human players, the cpu players will come after those
+                board.create_player(random.choice(STRINGS.PLAYER_NAMES), i, (200, 200), cpu=False, **char_settings)
+                human_players_added += 1
+                continue
+            if cpu_players_added < self.cpu_players:
+                board.create_player(random.choice(STRINGS.PLAYER_NAMES), i, (200, 200), cpu=True, cpu_mode=self.computer_players_mode, cpu_time=self.cpu_timeout, **char_settings)
+                cpu_players_added += 1
         if self.online:
             board.server.set_chars(sum(x['ammount'] for x in char_settings.values()))
+
+    def get_actual_total_players(self):
+        return self.cpu_players+self.human_players
 
     @time_it
     def generate_board(self, resolution):
@@ -159,9 +157,14 @@ class BoardGenerator(object):
             pass
         if self.tutorial:
             return self.generate_tutorial(resolution)
-        elif 'classic' in self.game_mode:
+        #From here on, we have to check the total numbe4r of playersç
+        elif self.get_actual_total_players() > self.players:
+            raise TooManyPlayersException("The number of cpu and human players doesn't match with the total")
+        elif self.get_actual_total_players() is 0:
+            raise ZeroPlayersException("You can't create a board with no players")
+        if 'classic' in self.game_mode:
             return self.generate_classic(resolution)
-        elif 'great' in self.game_mode:
+        if 'great' in self.game_mode:
             return self.generate_great_wheel(resolution)
         #else gamemode is custom or unrecognized
         elif any(kw in self.prefab_size for kw in ('default', 'normal', 'medium')):

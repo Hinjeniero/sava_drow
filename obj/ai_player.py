@@ -52,7 +52,7 @@ class ComputerPlayer(Player):
         timeout_count (int):    Counter of the times that the timeout has been exceeded.
     """
     def __init__(self, graph, distances, level_size, name, order, sprite_size, canvas_size, ai_mode='random', infoboard=None, obj_uuid=None,\
-                avatar=None, max_depth=5, adaptative_max_depth=True,  **character_params):
+                avatar=None, max_depth=5, adaptative_max_depth=True, timeout=10, **character_params):
         """ComputerPlayer constructor.
         Args:
             distances (:obj: numpy.Matrix): Distances matrix of the current board.
@@ -75,6 +75,7 @@ class ComputerPlayer(Player):
         super().__init__(name, order, sprite_size, canvas_size, infoboard=infoboard, obj_uuid=obj_uuid, empty=False, avatar=avatar, **character_params)
         self.human = False
         self.ai_mode = ai_mode #alpha-beta-pruning | null-move | full blown IA with keras
+        self.round_timeout = timeout 
         self.distances = distances 
         self.graph = graph
         self.circum_size = level_size
@@ -82,7 +83,7 @@ class ComputerPlayer(Player):
         self.max_depth = max_depth
         self.timeout_count = 0
 
-    def increate_timeout_count(self):
+    def increase_timeout_count(self):
         """Increases the counter of timeouts breached. Restarts it (and does whatever action) if the limit has been hit."""
         self.timeout_count += 1
         if self.adaptative_max_depth and self.timeout_count is 5:
@@ -142,7 +143,7 @@ class ComputerPlayer(Player):
                 return self.generate_alpha_beta(max_nodes, all_cells, current_map, my_player, all_players, ordering=True)    
             return self.generate_alpha_beta(max_nodes, all_cells, current_map, my_player, all_players)
         if 'monte' in self.ai_mode:
-            return MonteCarloSearch.monte_carlo_tree_search(self.graph, self.distances, self.circum_size, -1, all_cells, current_map, my_player, all_players)
+            return MonteCarloSearch.monte_carlo_tree_search(self.graph, self.distances, self.circum_size, -1, all_cells, current_map, my_player, all_players, self.round_timeout)
             
     def generate_random_movement(self, fitnesses, totally_random=False, somewhat_random=False):
         """Algorithm to return a next movement based in randomness and the score at which are rated the different possible moves.
@@ -162,13 +163,15 @@ class ComputerPlayer(Player):
             return random.choice(fitnesses)[0]
         fitnesses.sort(key=lambda tup: tup[1], reverse=True)
         if somewhat_random:
-            return random.choices(fitnesses, weights=list(score[1] for score in fitnesses))[0]
+            # print("FITNESSES ARE "+str(fitnesses))
+            # print("CHOICE IS "+str(random.choices(fitnesses, weights=list(score[1] for score in fitnesses))))
+            return random.choices(fitnesses, weights=list(score[1] for score in fitnesses))[0][0]
         else:
             only_best_movements = list(score[0] for score in fitnesses if score[1] == fitnesses[0][1])  #IF the score is the same as the best elements inn the ordered list
             return random.choice(only_best_movements)
 
     @time_it
-    def generate_alpha_beta(self, max_nodes, all_cells, current_map, my_player_uuid, all_players, timeout=10.0, ordering=False):
+    def generate_alpha_beta(self, max_nodes, all_cells, current_map, my_player_uuid, all_players, ordering=False):
         """Heuristic that uses the alpha-beta pruning to explore the game tree, reaching until the self.max_depth attribute, and
         returning the evaluation of the board at that point. Then uses that value to cut off game tree branches that, obviously, would have
         never ocurred in a normal gameplay.
@@ -189,9 +192,9 @@ class ComputerPlayer(Player):
         all_paths = {}
         start = time.time()
         pruned = PersistantNumber()
-        self.minimax(my_player_index, my_player_index, all_players, all_cells, current_map, all_paths, [], 0, True, -math.inf, math.inf, start, timeout, pruned, ordering)
-        if time.time()-start > timeout: #If we reached the timeout...
-            self.increate_timeout_count()
+        self.minimax(my_player_index, my_player_index, all_players, all_cells, current_map, all_paths, [], 0, True, -math.inf, math.inf, start, self.round_timeout, pruned, ordering)
+        if time.time()-start > self.round_timeout: #If we reached the timeout...
+            self.increase_timeout_count()
         print("The number of paths tested by alpha beta is "+str(len(all_paths.keys())), " with a max depth setting of "+str(self.max_depth)+", in a time of "+str(time.time()-start)+" seconds.")
         print("The number of pruned branches is "+str(pruned.number))
         rated_movements = [((dest[0], dest[1]), score) for dest, score in all_paths.items()]
@@ -522,14 +525,14 @@ class MonteCarloSearch(object):
     """
     EXPLORATION_CONSTANT = 1.5
     @staticmethod
-    def monte_carlo_tree_search(paths_graph, distances, circum_size, board_hash, all_cells, current_map, my_player, all_players, timeout=10): #10 seconds of computational power
+    def monte_carlo_tree_search(paths_graph, distances, circum_size, board_hash, all_cells, current_map, my_player, all_players, round_timeout): #10 seconds of computational power
         my_player_index = next((i for i in range(0, len(all_players)) if all_players[i] == my_player))
         current_player_index = my_player_index
         root_node = Node(None, paths_graph, distances, circum_size, -1, all_cells, current_map, (-1, -1))
         root_node.expand(all_players[current_player_index])
         start = time.time()
         iters = 0
-        while (time.time()-start) < timeout:
+        while (time.time()-start) < round_timeout:
             leaf = MonteCarloSearch.traverse(root_node, all_players[current_player_index])                          #leaf = unvisited node, EXPANSION
             simulation_result = MonteCarloSearch.rollout(leaf, all_players, my_player_index, current_player_index)  #ROLLOUT
             MonteCarloSearch.backpropagate(leaf, simulation_result)                                                 #BACKPROPAGATION

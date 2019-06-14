@@ -16,8 +16,8 @@ class USEREVENTS:
 class INIT_PARAMS:
     """Global variables that will hold each parameter of the game's configuration.
     The names are pretty self-explanatory, so no problem there."""
-    #INITIAL_RESOLUTION = (1280, 720)
-    INITIAL_RESOLUTION = (1920, 1080)
+    INITIAL_RESOLUTION = (1280, 720)
+    # INITIAL_RESOLUTION = (1920, 1080)
     RESOLUTIONS = (INITIAL_RESOLUTION, (1366, 768), (1600, 900), (1920, 1080), (640, 360), (848, 480), (1024, 576))
     INITIAL_FPS = 60
     ALL_FPS     = (INITIAL_FPS, 120, 20, 30)
@@ -29,8 +29,10 @@ class PARAMS:
     """Hold some of the options for configurations and some default parameters. Further comments in the not so clear ones."""
     BOARD_ID = 'main_board' 
     AI_MODES = ('Totally random', 'Half random-fitness', 'Fitness best move', 'Alpha-beta', 'Alpha-beta w/ ordering', 'Monte Carlo Search')   #All possible IA modes strings. 
-    PLAYERS_AMMOUNT = (2, 4, 1)     #ALl possible ammounts of total players in a game. 1 is for testing
-    AI_PLAYERS = (1, 2, 3)          #ALl possible ammounts of computer controlled players in a game. If we want 4, choose 4 playeres and computer vs computer.
+    PLAYERS_AMMOUNT = (2, 3, 4)     #ALl possible ammounts of total players in a game. 1 is for testing
+    HUMAN_PLAYERS = (2, 3, 4, 0, 1)
+    AI_PLAYERS = (0, 1, 2, 3, 4)          #ALl possible ammounts of computer controlled players in a game. If we want 4, choose 4 playeres and computer vs computer.
+    CPU_TIMEOUTS = (10, 30, 1, 2, 5)
     ANIMATION_TIME = 25     #TODO Being honest, I dont remember what this was for. Will have to come back later.
     NUM_THREADS = 32    #Max number of concurrent active threads when drawing threads from the threading pool (Normal run_async decorator).
 

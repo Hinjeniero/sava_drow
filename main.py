@@ -173,7 +173,7 @@ def create_game_menu(result, animated_background=None):
         firstTime = True
     #Create elements, main menu buttons (POSITIONS AND SIZES ARE IN PERCENTAGES OF THE CANVAS_SIZE, can use absolute integers too)
     #elements_ammount = 6 if firstTime else 5
-    positions       = UtilityBox.size_position_generator(7, 0.40, 0.05, 0.20, 0)
+    positions       = UtilityBox.size_position_generator(8, 0.40, 0.05, 0.20, 0)
     button_size     = next(positions)
     #Creation of elements
     elements, threads = [], []
@@ -182,12 +182,12 @@ def create_game_menu(result, animated_background=None):
     #Starts generating #TODO THIS SHIT
     if firstTime:
         element_generator.send(('button_start_tutorial', "start_tutorial_go_main_board", next(positions), {'text': "Start tutorial"}))
-    element_generator.send(('button_start_human_cpu', "start_go_main_board_human_vs_cpu", next(positions), {'text': "Player vs Computer"}))
-    element_generator.send(('button_start_cpu_cpu', "start_go_main_board_cpu_vs_cpu", next(positions), {'text': "Computer vs Computer"}))
-    element_generator.send(('button_start_human_human', "start_go_main_board_human_vs_human", next(positions), {'text': "Player vs player"}))
+    element_generator.send(('button_start_normal_local_game', "start_go_main_board", next(positions), {'text': "Start local game"}))
     element_generator.send(('button_players', "set_total_players", next(positions), {'default_values': PARAMS.PLAYERS_AMMOUNT, 'texture': PATHS.LONG_RED_BAR, 'text': 'Number of players'}))
-    element_generator.send(('button_AI', "change_computer_mode", next(positions), {'default_values': PARAMS.AI_MODES, 'text': 'AI mode'}))
-    element_generator.send(('button_AI_players', "change_computer_players", next(positions), {'default_values': PARAMS.AI_PLAYERS, 'text': 'AI players'}))
+    element_generator.send(('button_human_players', "change_human_players", next(positions), {'default_values': PARAMS.HUMAN_PLAYERS, 'text': 'Human players'}))
+    element_generator.send(('button_AI_players', "change_computer_players", next(positions), {'default_values': PARAMS.AI_PLAYERS, 'text': 'CPU players'}))
+    element_generator.send(('button_AI_mode', "change_computer_mode", next(positions), {'default_values': PARAMS.AI_MODES, 'text': 'CPU algorithm'})) 
+    element_generator.send(('button_AI_time', "change_time_cpu_timeout", next(positions), {'default_values': PARAMS.CPU_TIMEOUTS, 'text': 'Max round time (CPU)'})) 
     if not firstTime:
         element_generator.send(('button_start_tutorial', "start_tutorial_go_main_board", next(positions), {'default_values':None, 'texture': PATHS.DARK_LONG_BUTTON, 'text': "Replay tutorial"}))
     for end_event in threads:   end_event.wait()    #Waiting for all the buttons to be created
@@ -213,7 +213,7 @@ def create_online_menu(result, animated_background=None):
         (obj: threading.Thread):    Thread working in the creating of the menu.
     """
     #Create elements, main menu buttons (POSITIONS AND SIZES ARE IN PERCENTAGES OF THE CANVAS_SIZE, can use absolute integers too)
-    positions       = UtilityBox.size_position_generator(7, 0.40, 0.05, 0.20, 0)
+    positions       = UtilityBox.size_position_generator(9, 0.40, 0.05, 0.20, 0)
     button_size     = next(positions)
     #Creation of elements
     elements, threads = [], []
@@ -224,8 +224,10 @@ def create_online_menu(result, animated_background=None):
     element_generator.send(('button_explorer_client', "client_start_online_game_get_servers_go_main_board", next(positions), {'text': "Connect to community server"}))
     element_generator.send(('button_online_client', "client_start_online_game_go_main_board", next(positions), {'text': "Connect to private server"}))
     element_generator.send(('button_players', "set_total_players", next(positions), {'default_values': PARAMS.PLAYERS_AMMOUNT, 'texture': PATHS.LONG_RED_BAR, 'text': 'Number of players'}))
-    element_generator.send(('button_AI', "change_computer_mode", next(positions), {'default_values': PARAMS.AI_MODES, 'text': 'AI mode'})) 
-    element_generator.send(('button_AI_players', "change_computer_players", next(positions), {'default_values': PARAMS.AI_PLAYERS, 'text': 'AI players'}))
+    element_generator.send(('button_human_players', "change_human_players", next(positions), {'default_values': PARAMS.HUMAN_PLAYERS, 'text': 'Human players'}))
+    element_generator.send(('button_AI_players', "change_computer_players", next(positions), {'default_values': PARAMS.AI_PLAYERS, 'text': 'CPU players'}))
+    element_generator.send(('button_AI_mode', "change_computer_mode", next(positions), {'default_values': PARAMS.AI_MODES, 'text': 'CPU algorithm'}))
+    element_generator.send(('button_AI_time', "change_time_cpu_timeout", next(positions), {'default_values': PARAMS.CPU_TIMEOUTS, 'text': 'Max round time (CPU)'})) 
     for end_event in threads:   end_event.wait()    #Waiting for all the buttons to be created
     #Change elements userevent
     for element in elements:

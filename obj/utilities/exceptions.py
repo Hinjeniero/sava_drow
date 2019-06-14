@@ -72,3 +72,8 @@ class SwapFailedException(Exception):
 
 class ServiceNotAvailableException(Exception):
     pass
+class TooManyPlayersException(Exception):
+    pass
+
+class ZeroPlayersException(Exception):
+    pass

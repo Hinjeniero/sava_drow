@@ -17,6 +17,7 @@ import random
 import collections
 
 #Selfmade libraries
+from obj.counter import CounterSprite
 from obj.players import Player
 from obj.utilities.decorators import time_it
 from obj.paths import PathAppraiser
@@ -115,7 +116,7 @@ class ComputerPlayer(Player):
         return all_fitnesses
 
     #TODO FOR NOW USING -1 AS BOARD HASH, CHANGE THAT. SAME WITH STATE HASH
-    def get_movement(self, current_map, board_cells, my_player, all_players, max_nodes=100):
+    def get_movement(self, current_map, board_cells, my_player, all_players, char_turn_restriction=0, max_nodes=100):
         """Gets as an input the current state of the board, and based on the current ai mode, returns what it undestands to be
         the best course of action (The best next movement).
         Args:
@@ -129,7 +130,7 @@ class ComputerPlayer(Player):
         Returns:
             (Tuple->int, int):  The best movement calculated by the underlying algorithm. (source, destiny).
         """
-        all_cells = {cell.get_real_index(): cell.get_char() for cell in board_cells if cell.has_char()}
+        all_cells = {cell.get_real_index(): cell.get_char() for cell in board_cells if cell.has_char() and cell.get_char().turns>char_turn_restriction}
         fitnesses = self.generate_fitnesses(all_cells, my_player, self.graph, self.distances, current_map, self.circum_size)
         if 'random' in self.ai_mode:
             if 'half' in self.ai_mode:

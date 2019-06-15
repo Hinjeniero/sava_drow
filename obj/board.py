@@ -26,11 +26,12 @@ from obj.cell import Cell, Quadrant
 from obj.paths import Path, PathAppraiser
 from obj.ai_player import ComputerPlayer
 from obj.players import Player, Character, Restriction
-from obj.sprite import Sprite, AnimatedSprite
+from obj.sprite import Sprite, AnimatedSprite, OnceAnimatedSprite
 from obj.ui_element import ButtonAction, TextSprite, InfoBoard, Dialog, ScrollingText
 from obj.polygons import Circle, Rectangle, Circumference
+from obj.counter import CounterSprite
 from obj.utilities.utility_box import UtilityBox
-from obj.utilities.colors import RED, WHITE, DARKGRAY, LIGHTGRAY, TRANSPARENT_GRAY
+from obj.utilities.colors import RED, WHITE, BLACK, DARKGRAY, LIGHTGRAY, TRANSPARENT_GRAY
 from obj.utilities.exceptions import BadPlayersParameter, BadPlayerTypeException,\
                                     PlayerNameExistsException, TooManyCharactersException, NotEnoughSpaceException
 from obj.utilities.decorators import run_async, run_async_not_pooled, time_it
@@ -113,7 +114,9 @@ class Board(Screen):
                         'infoboard_texture'     : None,
                         'dice_textures_folder'  : None,
                         'fitness_button_texture': None,
-                        'help_button_texture'   : None
+                        'help_button_texture'   : None,
+                        'counter_round_time'    : None,
+                        'show_last_mov_line'    : True
     }
     #CHANGE MAYBE THE THREADS OF CHARACTER TO JOIN INSTEAD OF NUM PLAYERS AND SHIT
     def __init__(self, id_, event_id, end_event_id, resolution, *players, empty=False, initial_dice_screen=True, **params):
@@ -146,7 +149,9 @@ class Board(Screen):
         self.fitness_button = pygame.sprite.GroupSingle()
         self.help_button    = pygame.sprite.GroupSingle()
         self.thinking_sprite= pygame.sprite.GroupSingle()
+        self.counter_sprite = pygame.sprite.GroupSingle()
         self.paths          = pygame.sprite.Group()
+        self.effects        = pygame.sprite.Group()
         self.characters     = pygame.sprite.OrderedUpdates()
         self.current_player = None  #Created in add_player
         self.scoreboard     = None  #Created in Board.generate
@@ -165,7 +170,8 @@ class Board(Screen):
         self.drag_char      = pygame.sprite.GroupSingle()
         self.platform       = None  #Created in Board.generate
         self.last_movement  = None  #Updated in each move_character method
-        
+        self.last_real_movm = None  #Updated in each move_character method
+        self.last_char      = None  #Updated in each move_character method
         #Paths and maping
         self.distances      = None  #Created in Board.generate
         self.enabled_paths  = None  #Created in Board.generate
@@ -233,7 +239,7 @@ class Board(Screen):
         self.events['admin_on'] = pygame.event.Event(self.event_id, command='admin', value = True)
         self.events['admin_off'] = pygame.event.Event(self.event_id, command='admin', value = False)
         self.events['turncoat'] = pygame.event.Event(self.event_id, command='turncoat')
-        self.events['hide_dialog_temp'] = pygame.event.Event(self.event_id, command='hide_dialog_temp', value=3)    #Will hide whatever dialog in 3 seconds
+        self.events['hide_dialog_temp'] = pygame.event.Event(self.event_id, command='hide_dialog_temp', value=2)    #Will hide whatever dialog in 3 seconds
 
     @no_size_limit
     def generate_platform(self):
@@ -258,9 +264,10 @@ class Board(Screen):
 
     @time_it
     def generate_environment(self, initial_dice_screen=False):
-        threads = [self.generate_all_cells(), self.generate_paths(offset=True), self.generate_map_board(), self.generate_infoboard()]
+        threads = [self.generate_all_cells(), self.generate_paths(offset=True), self.generate_map_board(), self.generate_infoboard(), self.generate_effects()]
         if initial_dice_screen:
             threads.append(self.generate_dice_screen())
+        #Waiting for threads
         for end_event in threads:   end_event.wait()
         self.adjust_cells()
         threads = [self.generate_inter_paths(), self.generate_dice()]
@@ -277,12 +284,19 @@ class Board(Screen):
         help_pos_y = self.dice.sprite.rect.centery-((help_button.rect.height//2+self.dice.sprite.rect.height//2)//0.9)
         help_button.set_center((self.dice.sprite.rect.x+self.dice.sprite.rect.width, help_pos_y))
         #thinking_sprite
-        thinking_sprite = AnimatedSprite('ia_thinking_sprite', (0, 0), self.dice.sprite.rect.size, self.resolution, sprite_folder=PATHS.WIZARD, resize_mode='fill', animation_delay=3)
+        thinking_sprite = AnimatedSprite('ia_thinking_sprite', (0, 0), self.dice.sprite.rect.size, self.resolution, sprite_folder=PATHS.HOURGLASS_FOLDER, resize_mode='fill', animation_delay=3)
         thinking_pos_y = self.dice.sprite.rect.y -max(help_button.rect.height, fitness_button.rect.height) -(thinking_sprite.rect.height//1.5)  #1.5 instead of 2 to get some separation/margin
         thinking_sprite.set_center((self.dice.sprite.rect.centerx, thinking_pos_y)) #Could also use self.infoboard.rect.centerx instead of the dice. But its the same.
         thinking_sprite.set_visible(False)
         #Adding buttons to matching groupsingles
         self.fitness_button.add(fitness_button), self.help_button.add(help_button), self.thinking_sprite.add(thinking_sprite)
+        #Checking the counter
+        if self.params['counter_round_time']:
+            counter_sprite = CounterSprite('board_round_timer', (0, 0), self.dice.sprite.rect.size, self.resolution, 1, time)
+            counter_sprite_pos_x = self.thinking_sprite.sprite.rect.centerx - (thinking_sprite.rect.width) - counter_sprite.rect.width  #1 width instead of 0.5 to get some separation/margin
+            counter_sprite.set_center((counter_sprite_pos_x, self.thinking_sprite.sprite.rect.centery)) #Could also use self.infoboard.rect.centerx instead of the dice. But its the same.
+            counter_sprite.set_visible(False)
+            self.counter_sprite.add(counter_sprite)
         #End, saving
         self.save_sprites()
         self.generated = True
@@ -495,12 +509,24 @@ class Board(Screen):
         infoboard.add_text_element('turn', str(self.turn+1), 1, scale=0.6)
         infoboard.add_text_element('turn_char_label', 'Char turn', 1, scale=1.4)
         infoboard.add_text_element('turn_char', str(self.char_turns+1), 1, scale=0.6)
-        infoboard.add_text_element('player_name_label', 'Playing: ', 1)
-        infoboard.add_text_element('player_name', '------------', 1)                        #Dummy text
-        infoboard.add_text_element('last_movement_label', 'LAST MOVE ', 2, scale = 0.8)
-        infoboard.add_text_element('last_movement', 'From A-99 to A-99', 2, scale = 0.8)    #Dummy text
+        infoboard.add_text_element('player_name_label', 'Playing: ', 1, scale=1.2)
+        infoboard.add_text_element('player_name', '------------', 1, scale=0.9)                        #Dummy text
+        infoboard.add_text_element('last_movement_label', 'LAST MOVE: ', 2, scale = 0.8)
+        infoboard.add_text_element('last_character', 'Typeofchar', 1, scale=1.2)
+        infoboard.add_text_element('last_movement', ' A-99 to A-99 ', 1)    #Dummy text
         self.infoboard = infoboard
         self.LOG_ON_SCREEN("The game infoboard has been generated")
+
+    @run_async
+    def generate_effects(self):
+        explosion_effect = OnceAnimatedSprite('explosion_effect', (0, 0), tuple(x*0.15 for x in self.resolution), self.resolution,\
+                                            sprite_folder=PATHS.EXPLOSIONS, keywords=('normal',))   #Position will change later anyway
+        start_teleport_effect = OnceAnimatedSprite('start_teleport', (0, 0), tuple(x*0.15 for x in self.resolution), self.resolution,\
+                                            sprite_folder=PATHS.EXPLOSIONS, keywords=('normal',))   #Position will change later anyway
+        end_teleport_effect = OnceAnimatedSprite('end_teleport', (0, 0), tuple(x*0.15 for x in self.resolution), self.resolution,\
+                                            sprite_folder=PATHS.EXPLOSIONS, keywords=('normal',))   #Position will change later anyway                                                                                        
+        explosion_effect.set_enabled(False)
+        self.effects.add(explosion_effect)
 
     @run_async_not_pooled
     def update_infoboard(self):
@@ -508,7 +534,8 @@ class Board(Screen):
         self.infoboard.update_element('turn_char', str(self.char_turns+1))
         self.infoboard.update_element('player_name', self.current_player.name)
         if self.last_movement:
-            self.infoboard.update_element('last_movement', 'From '+self.last_movement[0]+' to '+self.last_movement[1])
+            self.infoboard.update_element('last_movement', ' '+self.last_movement[0]+' to '+self.last_movement[1]+' ')
+            self.infoboard.update_element('last_character', self.last_char.get_type())
 
     @run_async
     def generate_dice(self):
@@ -617,7 +644,8 @@ class Board(Screen):
         Also because the super().draw method only draws the self.sprites.
         Only adds the graphics regarding the board, the characters and player addons will be drawn later."""
         self.sprites.add(self.platform, self.inter_paths.sprite, *self.paths.sprites(), *self.cells.sprites(),\
-                        self.infoboard, self.dice, self.fitness_button, self.help_button, self.thinking_sprite)
+                        self.infoboard, self.dice, self.fitness_button, self.help_button, self.thinking_sprite,\
+                        self.counter_sprite, self.effects)
 
     def __adjust_number_of_paths(self):
         """Checks the inter path frequency. If the circles are not divisible by that frequency,
@@ -844,6 +872,12 @@ class Board(Screen):
             player = Player(player_name, player_number, chars_size, self.resolution, empty=empty, **player_params)
         self.__add_player(player)
 
+    def play_effect(self, id_, center_position):
+        effect = next((sprite for sprite in self.effects if id_.lower() in sprite.id.lower() or sprite.id.lower() in id_.lower()), None)
+        if effect:
+            effect.rect.center = center_position
+            effect.set_enabled(True)
+
     def draw(self, surface):
         """Draws the board and all of its elements on the surface.
         Blits them all and then updates the display.
@@ -857,7 +891,11 @@ class Board(Screen):
                     if self.console_active and not (self.dialog and self.dialog.visible):
                         self.overlay_console.draw(surface)
                 return
-            super().draw(surface)                   #Draws background
+            super().draw(surface)   #Draws background and sprites
+            if self.params['show_last_mov_line'] and self.last_real_movm:
+                start_pos, end_pos = self.get_cell_by_real_index(self.last_real_movm[0]).rect.center, self.get_cell_by_real_index(self.last_real_movm[1]).rect.center
+                pygame.draw.lines(surface, BLACK, False, (start_pos, end_pos), (self.resolution[0]//300)+2)
+                pygame.draw.lines(surface, WHITE, False, (start_pos, end_pos), self.resolution[0]//300)
             for char in self.characters:
                 char.draw(surface)
             if self.current_player:
@@ -1148,19 +1186,24 @@ class Board(Screen):
         self.current_player.register_movement(character)
         self.update_cells(self.last_cell.sprite, active_cell)
         self.last_movement = (self.last_cell.sprite.text_pos, active_cell.text_pos)
+        self.last_real_movm = (self.last_cell.sprite.index, active_cell.index)
+        self.last_char = character
+
+        self.play_effect('start_teleport', self.last_cell.sprite.rect.center)
+        self.play_effect('end_teleport', active_cell.rect.center)
+
         self.last_cell.empty()  #Not last cell anymore, char was dropped succesfully
         #THIS CONDITION TO SHOW THE UPGRADE TABLE STARTS HERE
         if active_cell.promotion and (None != active_cell.owner != character.owner_uuid):
             if 'champion' in self.drag_char.sprite.get_type().lower():
                 self.update_character(self.drag_char.sprite)
-                #return #TODO CHECk THIS
             elif self.drag_char.sprite.upgradable\
             and any(not char.upgradable for char in self.current_player.fallen):
                 self.promotion_flag.clear()
                 self.update_promotion_table(*tuple(char for char in self.current_player.fallen if not char.upgradable))
                 self.show_promotion = True
                 self.swapper.send(self.drag_char.sprite)
-                #return
+                return
         self.next_char_turn(self.drag_char.sprite)
 
     def update_character(self, char):   #TODO this in a method in character?
@@ -1207,7 +1250,7 @@ class Board(Screen):
         self.dice.sprite.add_turn(self.current_player.uuid)
         self.update_scoreboard()
         self.update_infoboard()
-        #print("CURRENT PLAYER IS "+self.current_player.name+', uuid '+str(self.current_player.uuid))
+        # print("NEW CURRENT PLAYER IS "+self.current_player.name+', uuid '+str(self.current_player.uuid))
         #print("NEW INDEX IS "+str(self.player_index))
         #print("New turn of baord is "+str(self.turn))
         if not self.current_player.human:
@@ -1233,7 +1276,7 @@ class Board(Screen):
         start = time.time()
         self.ai_turn = True
         self.thinking_sprite.sprite.set_visible(True)
-        movement = self.current_player.get_movement(self.current_map, self.cells, self.current_player.uuid, [player.uuid for player in self.players])
+        movement = self.current_player.get_movement(self.current_map, self.cells, self.current_player.uuid, [player.uuid for player in self.players], char_turn_restriction=self.char_turns)
         print("MOVEMENT CHOSEN WAS "+str(movement))
         character = self.get_cell_by_real_index(movement[0]).get_char()
         #print("CHOSEN CHAR "+character.get_type()+"MOVEMENT CHOSEN WAS "+str(movement)+", in turn "+str(self.turn))
@@ -1252,11 +1295,11 @@ class Board(Screen):
         self.ai_turn = False
         if result:  #We return the movement performed. Useful for network board. 
             result = movement
-        print("THE DO AI TURN TIME WAS "+str(time.time()-start)+" seconds.")
+        print("The CPU turn took "+str(time.time()-start)+" seconds.")
         self.ai_turn_flag.set()
 
     def kill_character(self, cell, killer):
-        #TODO Badass Animation
+        self.play_effect('explosion', cell.rect.center)
         corpse = cell.kill_char()
         self.update_cells(cell)
         self.characters.remove(corpse)  #To delete it from the char list in board. It's dead.

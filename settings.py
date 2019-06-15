@@ -238,7 +238,8 @@ class PATHS:
     SHIELD_ICON = IMAGE_FOLDER+'shield_icon.png'
     DIAMOND_SPEAR = IMAGE_FOLDER+'diamond_spear.png'
     DICE_FOLDER = IMAGE_FOLDER+'dice\\'
-    
+    HOURGLASS_FOLDER = IMAGE_FOLDER+'sandclock\\'
+        
     #Icons
     HELP_ICON = IMAGE_FOLDER+'help_icon.png'
     WARNING_ICON = IMAGE_FOLDER+'warning_icon.png'

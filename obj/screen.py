@@ -445,7 +445,7 @@ class Screen(object):
 
     def delete_sprites(self, *keywords):
         for sprite in self.sprites:
-            if all(kw in sprite.id for kw in keywords):
+            if all(kw.lower() in sprite.id.lower() for kw in keywords):
                 self.sprites.remove(sprite)
 
     def enable_sprite(self, *keywords, state=True):
@@ -468,7 +468,7 @@ class Screen(object):
 
     def enable_sprites(self, state=True, *keywords):
         for sprite in self.sprites:
-            if all(kw in sprite.get_id() for kw in keywords):
+            if all(kw.lower() in sprite.get_id().lower() for kw in keywords):
                 sprite.set_enabled(state)
     
     def get_colliding_sprite(self):

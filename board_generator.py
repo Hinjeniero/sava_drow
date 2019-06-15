@@ -13,7 +13,8 @@ import pygame
 
 #Selfmade libraries
 from settings import USEREVENTS, STRINGS, PARAMS, CHARACTERS, PATHS
-from obj.utilities.exceptions import TooManyPlayersException, ZeroPlayersException
+from obj.utilities.exceptions import TooManyPlayersException, ZeroPlayersException,\
+                                    NotEnoughHumansException
 from obj.board import Board
 from obj.tutorial_board import TutorialBoard
 from obj.network_board import NetworkBoard
@@ -162,6 +163,8 @@ class BoardGenerator(object):
             raise TooManyPlayersException("The number of cpu and human players doesn't match with the total")
         elif self.get_actual_total_players() is 0:
             raise ZeroPlayersException("You can't create a board with no players")
+        elif self.online and self.server and self.human_players < 2:  #If you are the host
+            raise NotEnoughHumansException("You can't start an online game with less than 2 human players. Create a local one instead.")
         if 'classic' in self.game_mode:
             return self.generate_classic(resolution)
         if 'great' in self.game_mode:

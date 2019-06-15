@@ -32,7 +32,7 @@ from obj.utilities.decorators import END_ALL_THREADS
 from board_generator import BoardGenerator
 from obj.utilities.exceptions import  NoScreensException, InvalidGameElementException, GameEndException,\
                         EmptyCommandException, ScreenNotFoundException, TooManyCharactersException, TooManyPlayersException,\
-                        ZeroPlayersException
+                        ZeroPlayersException, NotEnoughHumansException
 from obj.utilities.surface_loader import ResizedSurface
 from settings import PATHS, USEREVENTS, SCREEN_FLAGS, INIT_PARAMS, PARAMS
 from animation_generator import AnimationGenerator
@@ -295,6 +295,12 @@ class Game(object):
                 self.board_generator.human_players = value
             if 'cpu' in command or 'computer' in command:
                 self.board_generator.cpu_players = value
+                if value == 0:
+                    print("ITS 0 NROOOO")
+                    self.get_screen('main', 'menu').enable_sprites(False, 'ai')
+                    self.get_screen('main', 'menu').enable_sprites(True, 'ai', 'player')
+                else:
+                    self.get_screen('main', 'menu').enable_sprites(True, 'ai')
             if 'total' in command:
                 self.board_generator.set_players(value)
         elif 'computer' in command or 'cpu' in command:
@@ -360,7 +366,9 @@ class Game(object):
             self.current_screen.destroy()
             self.__add_timed_execution(3, self.restart_main_menu)
         elif 'hide' in command and 'dialog' in command:
+            self.show_popup('dice_turns')
             self.__add_timed_execution(value, self.call_screens_method, 'board', Screen.hide_dialog)
+
 
     def graphic_handler(self, command, value):
         """Graphic options related method. Those events will come to here.
@@ -504,7 +512,9 @@ class Game(object):
                         ('enemy_admin_off', 'The admin mode was deactivated in another board.'),\
                         ('too_many_players', 'The number of cpu and human players surpass the total'),
                         ('zero_players', 'You can`t start a game with no players!'),\
-                        ('alone_players', 'The board being generated only has one player in it')))
+                        ('alone_players', 'The board being generated only has one player in it'),\
+                        ('not_enough_players', 'You can`t start an online game with less than 2 human players. Create a local one instead.'),\
+                        ('dice_turns', 'Your turns will be ordered following the value that you got in the dice throw')))
 
     def add_popups(self, *popups):
         """Add the input popups to the game.
@@ -689,7 +699,7 @@ class Game(object):
         if (len(self.screens) > 0) and any(isinstance(screen, Menu) and 'main' in screen.id for screen in self.screens):
             return True
         raise NoScreensException('A game needs at least a main menu to start.')
-
+    
     def init_log(self):
         """Shows the initial LOG messages that prove that the game has started."""
         LOG.log('INFO', "GAME STARTING!")
@@ -727,6 +737,9 @@ class Game(object):
             return
         except ZeroPlayersException:
             self.show_popup('zero_players')
+            return
+        except NotEnoughHumansException:
+            self.show_popup('not_enough_players')
             return
         #self.get_screen('params', 'menu', 'config').enable_all_sprites(False)
         self.get_screen('music', 'menu', 'sound').enable_all_sprites(True)

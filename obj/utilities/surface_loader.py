@@ -263,14 +263,20 @@ class SurfaceLoader(object):
     SURFACES_LOADED = Dictionary()
     MAX_SIZE = 256
     MAX_SIZE_ENABLED = True
-    
+    MAX_SIZE_DISABLE_COUNT = 0
+
+    @synchronized
     @staticmethod
     def disable_max_size():
+        SurfaceLoader.MAX_SIZE_DISABLE_COUNT += 1
         SurfaceLoader.MAX_SIZE_ENABLED = False
 
+    @synchronized
     @staticmethod
     def enable_max_size():
-        SurfaceLoader.MAX_SIZE_ENABLED = True
+        SurfaceLoader.MAX_SIZE_DISABLE_COUNT -= 1
+        if SurfaceLoader.MAX_SIZE_DISABLE_COUNT is 0:
+            SurfaceLoader.MAX_SIZE_ENABLED = True
 
     @staticmethod
     def change_max_size(value):

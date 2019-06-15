@@ -28,6 +28,7 @@ from obj.ui_element import ScrollingText
 from obj.board import Board
 from obj.players import Character
 from obj.utilities.utility_box import UtilityBox
+from obj.utilities.ip_parser import IpGetter
 from obj.utilities.decorators import run_async_not_pooled
 from obj.utilities.logger import Logger as LOG
 from obj.utilities.exceptions import ServiceNotAvailableException
@@ -149,11 +150,15 @@ class NetworkBoard(Board):
 
     def get_all_servers(self):
         try:
+            my_public_ip = self.server.public_ip if self.server else IpGetter.get_public_ip()
             result = UtilityBox.do_request(NETWORK.TABLE_SERVERS_GET_ALL_ENDPOINT)
             servers = []
             for server in result['data']:
                 date = datetime.datetime.fromtimestamp(float(server['timestamp'])).strftime('%m-%d %H:%M')
                 data = (server['alias'], server['ip'], server['port'], server['players']+'/'+server['total_players'], date)
+                if my_public_ip and my_public_ip == server['ip']:   #If we are in the same local network, lets show the local ip
+                    servers.append((data, server['local_ip']+':'+server['port']))
+                    continue
                 servers.append((data, server['ip']+':'+server['port']))
             return servers
         except Exception:   #The endpoint of table servers couldn't be reached

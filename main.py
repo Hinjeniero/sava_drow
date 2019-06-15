@@ -126,7 +126,7 @@ def create_main_menu(result, test=False, animated_background=None):
     """
     #Create elements, main menu buttons (POSITIONS AND SIZES ARE IN PERCENTAGES OF THE CANVAS_SIZE, can use absolute integers too)
     elements_ammount = 3 if test else 6
-    positions       = UtilityBox.size_position_generator(elements_ammount, 0.40, 0.05, 0.20, 0)
+    positions       = UtilityBox.size_position_generator(elements_ammount, 0.40, 0.03, 0.25, 0)
     button_size     = next(positions)
     #Creation of elements
     elements, threads = [], []
@@ -146,7 +146,7 @@ def create_main_menu(result, test=False, animated_background=None):
     main_menu   = Menu('main_menu', USEREVENTS.MAINMENU_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, *elements, animated_background=animated_background, background_path=PATHS.DEFAULT_BG,\
                 songs_paths=MENU_SONGS, do_align=False)
     main_menu.add_dialogs(DialogGenerator.create_exit_dialog('game', tuple(x//2 for x in INIT_PARAMS.INITIAL_RESOLUTION), INIT_PARAMS.INITIAL_RESOLUTION))
-    main_menu.add_animation(AnimationGenerator.floating_sprite(INIT_PARAMS.INITIAL_RESOLUTION, (0.5, 0.075), (0.5, 0.125), tuple(0.15*x for x in INIT_PARAMS.INITIAL_RESOLUTION),\
+    main_menu.add_animation(AnimationGenerator.floating_sprite(INIT_PARAMS.INITIAL_RESOLUTION, (0.5, 0.075), (0.5, 0.125), tuple(0.20*x for x in INIT_PARAMS.INITIAL_RESOLUTION),\
                                                                 4, INIT_PARAMS.ALL_FPS, PATHS.IMAGE_FOLDER, keywords=('spider',), text="SAVA DROW"))
     main_menu.enable_sprite('continue', state=False)
     result.append(main_menu) 
@@ -173,7 +173,7 @@ def create_game_menu(result, animated_background=None):
         firstTime = True
     #Create elements, main menu buttons (POSITIONS AND SIZES ARE IN PERCENTAGES OF THE CANVAS_SIZE, can use absolute integers too)
     #elements_ammount = 6 if firstTime else 5
-    positions       = UtilityBox.size_position_generator(8, 0.40, 0.05, 0.20, 0)
+    positions       = UtilityBox.size_position_generator(7, 0.40, 0.05, 0.20, 0.05)
     button_size     = next(positions)
     #Creation of elements
     elements, threads = [], []
@@ -198,6 +198,8 @@ def create_game_menu(result, animated_background=None):
     #Create Menu
     start_menu   = Menu('game_menu', USEREVENTS.MAINMENU_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, *elements, animated_background=animated_background, background_path=PATHS.DEFAULT_BG,\
                 songs_paths=MENU_SONGS, do_align=False)
+    start_menu.add_animation(AnimationGenerator.floating_sprite(INIT_PARAMS.INITIAL_RESOLUTION, (0.5, 0.075), (0.5, 0.125), tuple(0.15*x for x in INIT_PARAMS.INITIAL_RESOLUTION),\
+                                                                4, INIT_PARAMS.ALL_FPS, PATHS.IMAGE_FOLDER, keywords=('spider',), text="LOCAL GAMES"))
     result.append(start_menu)
 
 @run_async
@@ -213,7 +215,7 @@ def create_online_menu(result, animated_background=None):
         (obj: threading.Thread):    Thread working in the creating of the menu.
     """
     #Create elements, main menu buttons (POSITIONS AND SIZES ARE IN PERCENTAGES OF THE CANVAS_SIZE, can use absolute integers too)
-    positions       = UtilityBox.size_position_generator(9, 0.40, 0.05, 0.20, 0)
+    positions       = UtilityBox.size_position_generator(9, 0.40, 0.05, 0.20, 0.05)
     button_size     = next(positions)
     #Creation of elements
     elements, threads = [], []
@@ -236,6 +238,8 @@ def create_online_menu(result, animated_background=None):
     #Create Menu
     start_menu = Menu('online_menu', USEREVENTS.MAINMENU_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, *elements, animated_background=animated_background, background_path=PATHS.DEFAULT_BG,\
                     songs_paths=MENU_SONGS, do_align=False)
+    start_menu.add_animation(AnimationGenerator.floating_sprite(INIT_PARAMS.INITIAL_RESOLUTION, (0.5, 0.075), (0.5, 0.125), tuple(0.15*x for x in INIT_PARAMS.INITIAL_RESOLUTION),\
+                                                                4, INIT_PARAMS.ALL_FPS, PATHS.IMAGE_FOLDER, keywords=('spider',), text="MULTIPLAYER GAMES"))
     result.append(start_menu)
 
 @run_async
@@ -250,7 +254,7 @@ def create_config_menu(result, animated_background=None):
         (obj: threading.Thread):    Thread working in the creating of the menu.
     """    
     button_size = (0.60, 0.15)
-    positions   = UtilityBox.size_position_generator_no_adjustment(*button_size, 0.05, 0.15)
+    positions   = UtilityBox.size_position_generator_no_adjustment(*button_size, 0.05)
     gradients   = UtilityBox.looped_rainbow_gradient_generator(((255, 0, 0), (0, 0, 0)), 3)
     
     #Creation of elements

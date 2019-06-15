@@ -26,7 +26,8 @@ const addHostMiddleware = () => {
             {
                 uuid: false,
                 alias: false,
-                ip: false, 
+                ip: false,
+                local_ip: false,
                 port: false,
                 timestamp: false,
                 players: false,
@@ -58,7 +59,7 @@ const updateHostMiddleware = () => {
 app.post('/host/add/', addHostMiddleware(), (req, res) => {
     index = serverExists(req.body.uuid)
     if (index === false){
-        data = {uuid: req.body.uuid, alias: req.body.alias, ip: req.body.ip, port: req.body.port, players: req.body.players, total_players: req.body.total_players, timestamp: req.body.timestamp}
+        data = {uuid: req.body.uuid, alias: req.body.alias, ip: req.body.ip, local_ip:req.body.local_ip, port: req.body.port, players: req.body.players, total_players: req.body.total_players, timestamp: req.body.timestamp}
         serversHosting.push(data);
         console.log(serversHosting)
         res.json(200, {success: true, message: 'Your server with uuid '+data['uuid']+' was added succesfully'})

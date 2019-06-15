@@ -77,3 +77,9 @@ class TooManyPlayersException(Exception):
 
 class ZeroPlayersException(Exception):
     pass
+
+class NotEnoughHumansException(Exception):
+    pass
+
+class TooManySurfaces(Exception):
+    pass

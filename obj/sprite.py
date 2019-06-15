@@ -855,8 +855,15 @@ class OnceAnimatedSprite(AnimatedSprite):
         if self.animated:   #If more than 1 sprites in the list
             self.animation_index += self.animation_step
             if self.animation_index >= len(self.surfaces):
-                self.animation_index = len(self.surfaces)-2
-    
-    def set_enable(self, state):
-        super().set_enable(state)
+                if self.params['boomerang_loop']:
+                    self.animation_index = len(self.surfaces)-2
+                    self.animation_step = -self.animation_step
+                else:
+                    self.set_enabled(False)
+            elif self.animation_index == 0:
+                self.set_enabled(False)
+
+    def set_enabled(self, state):
+        super().set_enabled(state)
+        self.set_visible(state)
         self.animation_index = 0

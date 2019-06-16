@@ -394,7 +394,8 @@ class UtilityBox (object):
 
     @staticmethod
     def do_request(url, method='GET', params={}, data={}, headers={}, timeout=10.0, sleep_between_petitions=0, return_success_only=False, json_response=True):
-        url = 'http:\\'+url if url[0] != 'h' else url
+        url = 'http://'+url if url[0] != 'h' else url
+        LOG.log('INFO', 'Trying to connect to ', url)
         start = time.time()
         try:
             while True:
@@ -407,9 +408,11 @@ class UtilityBox (object):
                     return response.json()
                 return response
         except ReadTimeout:
+            LOG.log('INFO', 'Timeout while trying to connect to ', url)
             return False
         except ConnectionError:
-            raise ConnectionError
+            LOG.log('INFO', 'ConnectionError while trying to connect to ', url)
+            return False
 
     @staticmethod
     def normalize_values(*values, start=0, end=255):

@@ -7,6 +7,7 @@ require("dotenv").config();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+JSON_ONLINE_REPLY = {success: true, message: 'The service is online'}
 JSON_MISSING_PARAMS = {success: false, message: 'Missing fields'}
 JSON_SERVER_NOT_FOUND = {success: false, message: 'The server with that uuid was not found'}
 JSON_SERVER_ALREADY_EXISTS = {success: false, message: 'That server already exists'}
@@ -37,7 +38,7 @@ const addHostMiddleware = () => {
             requiredFields[el] = true;
         }
         for (const el of Object.keys(requiredFields)) {
-            if (!requiredFields[el]){ return res.json(400, JSON_MISSING_PARAMS)}
+            if (!requiredFields[el]){ return res.json(200, JSON_MISSING_PARAMS)}
         }
         next();
     }
@@ -55,6 +56,10 @@ const updateHostMiddleware = () => {
         next();
     }
 }
+
+app.all('/', (req, res) => {
+    res.json(200, JSON_ONLINE_REPLY);
+});
 
 app.post('/host/add/', addHostMiddleware(), (req, res) => {
     index = serverExists(req.body.uuid)

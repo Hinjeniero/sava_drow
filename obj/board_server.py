@@ -18,6 +18,7 @@ from obj.utilities.utility_box import UtilityBox
 from obj.utilities.decorators import run_async_not_pooled
 from obj.utilities.synch_dict import Dictionary
 from obj.utilities.logger import Logger as LOG
+from obj.utilities.exceptions import ServiceNotAvailableException
 
 class Server(MastermindServerTCP):
     """"Class Server. Inherits from MastermindServerTCP.
@@ -92,8 +93,8 @@ class Server(MastermindServerTCP):
             return {"success": True, "msg": "The client "+str(id_)+" connection object was updated successfully."}
         elif len(self.clients.values()) < self.total_players:
             self.clients.add_item(id_, conn_client)
-            if not self.private_server:
-                self.update_server()
+            # if not self.private_server:
+            #     self.update_server()
             return {"success": True, "msg": "The client "+str(id_)+" was added successfully."}
         else:
             return {"success": False, "error": "The server is full."}
@@ -127,23 +128,26 @@ class Server(MastermindServerTCP):
         return response
 
     def register_server(self):
+        register_server_endpoint = IpGetter.get_servers_table_dir()+NETWORK.TABLE_SERVERS_ADD_ENDPOINT
         json_petition = {'uuid': self.uuid, 'ip': self.public_ip, 'local_ip': self.private_ip, 'port': str(NETWORK.SERVER_PORT), 'players': 1,\
                         'total_players': self.total_players, 'alias': NETWORK.SERVER_ALIAS, 'timestamp': time.time()}
-        response = UtilityBox.do_request(NETWORK.TABLE_SERVERS_ADD_ENDPOINT, method='POST', data=json_petition, return_success_only=True)
+        response = UtilityBox.do_request(register_server_endpoint, method='POST', data=json_petition, return_success_only=True)
         if not response or not response['success']:
             LOG.log('warning', 'no success when adding the server to the table of servers.')
             raise Exception("no success when adding the server to the table of servers.")
 
     def update_server(self, **params):
+        update_server_endpoint = IpGetter.get_servers_table_dir()+NETWORK.TABLE_SERVERS_UPDATE_ENDPOINT
         json_petition = {'uuid': self.uuid, 'players': len(self.clients.values())}
         json_petition.update(params)
-        response = UtilityBox.do_request(NETWORK.TABLE_SERVERS_UPDATE_ENDPOINT, method='POST', data=json_petition, return_success_only=True)
+        response = UtilityBox.do_request(update_server_endpoint, method='POST', data=json_petition, return_success_only=True)
         if not response or not response['success']:
             LOG.log('warning', 'no success when updating the server.')
             raise Exception("no success when updating the server.")
 
     def delete_server(self):
-        response = UtilityBox.do_request(NETWORK.TABLE_SERVERS_DELETE_ENDPOINT, method='POST', data={'uuid': self.uuid}, return_success_only=True)
+        delete_server_endpoint = IpGetter.get_servers_table_dir()+NETWORK.TABLE_SERVERS_DELETE_ENDPOINT
+        response = UtilityBox.do_request(delete_server_endpoint, method='POST', data={'uuid': self.uuid}, return_success_only=True)
         if not response or not response['success']:
             LOG.log('warning', 'no success when deleting the server.')
             raise Exception("no success when deleting the server.")

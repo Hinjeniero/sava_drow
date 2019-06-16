@@ -121,6 +121,8 @@ class STATES:
 class NETWORK:
     """Network settings, used when connecting to other players, be it in LAN or through the internet"""
     #Settings if yo are the server
+    LOCAL_LOOPBACK_IP = '127.0.0.1'
+    LOCAL_IP = None                 #This can be modified once at the beginning! It's the only variable that is modified in execution!
     SERVER_ALIAS = 'TEST_SERVER'    #The name that your server will have in the community list if you set it to public
     SERVER_REFRESH_TIME = 1         #Refresh time of the server
     SERVER_CONNECTION_REFRESH = 1   #Refrest time of the server connection
@@ -128,19 +130,19 @@ class NETWORK:
     SERVER_IP = '0.0.0.0'
     SERVER_PORT = 6397
     #Settings to connect to
-    CLIENT_IP = '192.168.1.254'      #USED TO CONNECT TO AN EXTERNAL COMPUTER AS A SERVER
-    CLIENT_LOCAL_IP = '127.0.0.1'    #USED IF IM THE SERVER
+    # CLIENT_IP = '192.168.1.254'      #USED TO CONNECT TO AN EXTERNAL COMPUTER AS A SERVER
+    # CLIENT_LOCAL_IP = '127.0.0.1'    #USED IF IM THE SERVER
     CLIENT_TIMEOUT_CONNECT = 30
     CLIENT_TIMEOUT_RECEIVE = 30
     #URLS
     GET_IP = 'http://jsonip.com'
-    #TABLE_SERVERS_URL = 'http://savadrow.servegame.com'
-    TABLE_SERVERS_URL = 'http://192.168.1.254'  #Direction of the host of the node service returning the public servers
+    TABLE_SERVERS_URL = 'http://savadrow.servegame.com'
+    # TABLE_SERVERS_LOCAL_URL = 'http://192.168.1.254'  #Direction of the host of the node service returning the public servers
     TABLE_SERVERS_PORT = 9001
-    TABLE_SERVERS_ADD_ENDPOINT = TABLE_SERVERS_URL+':'+str(TABLE_SERVERS_PORT)+'/host/add'
-    TABLE_SERVERS_UPDATE_ENDPOINT = TABLE_SERVERS_URL+':'+str(TABLE_SERVERS_PORT)+'/host/update'
-    TABLE_SERVERS_DELETE_ENDPOINT = TABLE_SERVERS_URL+':'+str(TABLE_SERVERS_PORT)+'/host/delete'
-    TABLE_SERVERS_GET_ALL_ENDPOINT = TABLE_SERVERS_URL+':'+str(TABLE_SERVERS_PORT)+'/host/get/all'
+    TABLE_SERVERS_ADD_ENDPOINT = '/host/add'
+    TABLE_SERVERS_UPDATE_ENDPOINT = '/host/update'
+    TABLE_SERVERS_DELETE_ENDPOINT = '/host/delete'
+    TABLE_SERVERS_GET_ALL_ENDPOINT = '/host/get/all'
     
 class MESSAGES:
     """Messages used in recurrent errors with the pygame library."""

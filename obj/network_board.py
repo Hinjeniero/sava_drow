@@ -111,7 +111,7 @@ class NetworkBoard(Board):
         try:
             if host:
                 self.server.start(NETWORK.SERVER_IP, NETWORK.SERVER_PORT)
-                self.set_ip_port(NETWORK.CLIENT_LOCAL_IP, NETWORK.SERVER_PORT)
+                self.set_ip_port(NETWORK.LOCAL_LOOPBACK_IP, NETWORK.SERVER_PORT)
             else:
                 self.generate_connect_dialog(direct_connection)
                 self.flags["ip_port_done"] = threading.Event()
@@ -139,7 +139,7 @@ class NetworkBoard(Board):
         #TODO To update this just destroy it and rebuild it or whatever. Take into edxample the update_scoreboard in Board.
         if direct_connection:
             dialog = DialogGenerator.create_input_dialog('ip_port', tuple(x//3 for x in self.resolution), self.resolution,\
-                                                        ('ip', 'send_ip', str(NETWORK.CLIENT_IP)), ('port', 'send_port', str(NETWORK.SERVER_PORT)))
+                                                        ('ip', 'send_ip', str(NETWORK.LOCAL_LOOPBACK_IP)), ('port', 'send_port', str(NETWORK.SERVER_PORT)))
         else:
             rows = self.get_all_servers()
             dialog = DialogGenerator.create_table_dialog('server_explorer', 'set_ip_port', (self.resolution[0]//1.3, self.resolution[1]//10),\
@@ -151,14 +151,15 @@ class NetworkBoard(Board):
     def get_all_servers(self):
         try:
             my_public_ip = self.server.public_ip if self.server else IpGetter.get_public_ip()
-            result = UtilityBox.do_request(NETWORK.TABLE_SERVERS_GET_ALL_ENDPOINT)
+            result = UtilityBox.do_request(IpGetter.get_servers_table_dir()+NETWORK.TABLE_SERVERS_GET_ALL_ENDPOINT)
             servers = []
-            for server in result['data']:
+            for server in result['data']:   #TOODO PRINT THIS
                 date = datetime.datetime.fromtimestamp(float(server['timestamp'])).strftime('%m-%d %H:%M')
-                data = (server['alias'], server['ip'], server['port'], server['players']+'/'+server['total_players'], date)
                 if my_public_ip and my_public_ip == server['ip']:   #If we are in the same local network, lets show the local ip
+                    data = (server['alias'], server['local_ip'], server['port'], server['players']+'/'+server['total_players'], date)
                     servers.append((data, server['local_ip']+':'+server['port']))
                     continue
+                data = (server['alias'], server['ip'], server['port'], server['players']+'/'+server['total_players'], date)
                 servers.append((data, server['ip']+':'+server['port']))
             return servers
         except Exception:   #The endpoint of table servers couldn't be reached
@@ -251,7 +252,7 @@ class NetworkBoard(Board):
         if self.ip and self.port:
             self.client_lock.acquire()
             self.LOG_ON_SCREEN('Connecting to '+str(self.ip)+' in port '+str(self.port))
-            self.client.disconnect()
+            self.client.disconnect()    #Just in case
             print("IP "+str(self.ip)+" PORT "+str(self.port))
             self.client.connect(self.ip, self.port)
             print("---------------------")
@@ -643,6 +644,7 @@ class NetworkBoard(Board):
     def destroy(self):
         """Sets the flags to signal the end of the threads and disconnects 
         clients, and the server if this networkboard is the host."""
+        super().destroy()
         try:
             self.send_data_async({"disconnect": True, "client": self.uuid})
         except Exception:

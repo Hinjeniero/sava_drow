@@ -20,7 +20,7 @@ from obj.screen import Screen
 
 #Selfmade Libraries
 from settings import USEREVENTS, INIT_PARAMS, PATHS, CHARACTERS, PARAMS,\
-                    STRINGS, EXTENSIONS, SCREEN_FLAGS, SOUND_PARAMS
+                    STRINGS, EXTENSIONS, SCREEN_FLAGS, SOUND_PARAMS, NETWORK
 from game import Game
 from animation_generator import AnimationGenerator
 from dialog_generator import DialogGenerator
@@ -29,6 +29,7 @@ from obj.board import Board
 from obj.menu import Menu
 from obj.sprite import AnimatedSprite
 from obj.ui_element import UIElement, TextSprite, InfoBoard, Dialog, TextBox
+from obj.utilities.ip_parser import IpGetter
 from obj.utilities.colors import RED, BLACK, WHITE, GREEN
 from obj.utilities.logger import Logger as LOG
 from obj.utilities.surface_loader import ResizedSurface, no_size_limit
@@ -396,9 +397,13 @@ def draw_start_bg():
     pygame.display.flip()
 
 if __name__ == "__main__":
+    try:    #This is not the best way to set a variable whose scope is the entire application
+        NETWORK.LOCAL_IP = IpGetter.get_local_ip()
+    except:
+        pass
     arguments = tuple(arg[1:] for arg in sys.argv if arg[0]=='-')
-    print("All arguments are: "+str(sys.argv))
-    print("Valid arguments are: "+str(arguments))
+    # print("All arguments are: "+str(sys.argv))
+    print("Recognized arguments: "+str(arguments))
     test = True if any('test' in arg for arg in arguments) else False
     game = pre_start(test=test) 
     game.start('main', 'menu')

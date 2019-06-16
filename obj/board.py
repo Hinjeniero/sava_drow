@@ -526,7 +526,7 @@ class Board(Screen):
         end_teleport_effect = OnceAnimatedSprite('end_teleport', (0, 0), tuple(x*0.15 for x in self.resolution), self.resolution,\
                                             sprite_folder=PATHS.EXPLOSIONS, keywords=('normal',))   #Position will change later anyway                                                                                        
         explosion_effect.set_enabled(False)
-        self.effects.add(explosion_effect)
+        self.effects.add(explosion_effect, start_teleport_effect, end_teleport_effect)
 
     @run_async_not_pooled
     def update_infoboard(self):
@@ -1188,11 +1188,11 @@ class Board(Screen):
         self.last_movement = (self.last_cell.sprite.text_pos, active_cell.text_pos)
         self.last_real_movm = (self.last_cell.sprite.index, active_cell.index)
         self.last_char = character
-
+        #Showing effects
         self.play_effect('start_teleport', self.last_cell.sprite.rect.center)
         self.play_effect('end_teleport', active_cell.rect.center)
-
-        self.last_cell.empty()  #Not last cell anymore, char was dropped succesfully
+        #Not last cell anymore, char was dropped succesfully
+        self.last_cell.empty()
         #THIS CONDITION TO SHOW THE UPGRADE TABLE STARTS HERE
         if active_cell.promotion and (None != active_cell.owner != character.owner_uuid):
             if 'champion' in self.drag_char.sprite.get_type().lower():

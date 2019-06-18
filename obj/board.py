@@ -32,8 +32,8 @@ from obj.polygons import Circle, Rectangle, Circumference
 from obj.counter import CounterSprite
 from obj.utilities.utility_box import UtilityBox
 from obj.utilities.colors import RED, WHITE, BLACK, DARKGRAY, LIGHTGRAY, TRANSPARENT_GRAY
-from obj.utilities.exceptions import BadPlayersParameter, BadPlayerTypeException,\
-                                    PlayerNameExistsException, TooManyCharactersException, NotEnoughSpaceException
+from obj.utilities.exceptions import BadPlayersParameter, BadPlayerTypeException, NotEnoughSpaceException,\
+                                    PlayerNameExistsException, TooManyCharactersException
 from obj.utilities.decorators import run_async, run_async_not_pooled, time_it
 from obj.utilities.logger import Logger as LOG
 from obj.utilities.logger import Parser
@@ -285,17 +285,17 @@ class Board(Screen):
         help_button.set_center((self.dice.sprite.rect.x+self.dice.sprite.rect.width, help_pos_y))
         #thinking_sprite
         thinking_sprite = AnimatedSprite('ia_thinking_sprite', (0, 0), self.dice.sprite.rect.size, self.resolution, sprite_folder=PATHS.HOURGLASS_FOLDER, resize_mode='fill', animation_delay=3)
-        thinking_pos_y = self.dice.sprite.rect.y -max(help_button.rect.height, fitness_button.rect.height) -(thinking_sprite.rect.height//1.5)  #1.5 instead of 2 to get some separation/margin
-        thinking_sprite.set_center((self.dice.sprite.rect.centerx, thinking_pos_y)) #Could also use self.infoboard.rect.centerx instead of the dice. But its the same.
+        thinking_pos_y = help_button.rect.centery - help_button.rect.height//1.9 - thinking_sprite.rect.height//1.9  #1.5 instead of 2 to get some separation/margin
+        thinking_sprite.set_center((help_button.rect.centerx, thinking_pos_y)) #Could also use self.infoboard.rect.centerx instead of the dice. But its the same.
         thinking_sprite.set_visible(False)
         #Adding buttons to matching groupsingles
         self.fitness_button.add(fitness_button), self.help_button.add(help_button), self.thinking_sprite.add(thinking_sprite)
         #Checking the counter
         if self.params['counter_round_time']:
-            counter_sprite = CounterSprite('board_round_timer', (0, 0), self.dice.sprite.rect.size, self.resolution, 1, time)
-            counter_sprite_pos_x = self.thinking_sprite.sprite.rect.centerx - (thinking_sprite.rect.width) - counter_sprite.rect.width  #1 width instead of 0.5 to get some separation/margin
-            counter_sprite.set_center((counter_sprite_pos_x, self.thinking_sprite.sprite.rect.centery)) #Could also use self.infoboard.rect.centerx instead of the dice. But its the same.
-            counter_sprite.set_visible(False)
+            counter_sprite = CounterSprite('board_round_timer', (0, 0), self.dice.sprite.rect.size, self.resolution, 0.1, self.params['counter_round_time'])
+            counter_sprite_center_x = self.thinking_sprite.sprite.rect.centerx - thinking_sprite.rect.width//1.9 -counter_sprite.rect.width//1.9  #1.9 width instead of 2 to get some separation/margin
+            counter_sprite.set_center((counter_sprite_center_x, self.thinking_sprite.sprite.rect.centery)) #Could also use self.infoboard.rect.centerx instead of the dice. But its the same.
+            counter_sprite.set_enabled(False)
             self.counter_sprite.add(counter_sprite)
         #End, saving
         self.save_sprites()
@@ -520,13 +520,15 @@ class Board(Screen):
     @run_async
     def generate_effects(self):
         explosion_effect = OnceAnimatedSprite('explosion_effect', (0, 0), tuple(x*0.15 for x in self.resolution), self.resolution,\
-                                            sprite_folder=PATHS.EXPLOSIONS, keywords=('normal',))   #Position will change later anyway
+                                            sprite_folder=PATHS.FIRE_RING, animation_delay=2)   #Position will change later anyway
+        selection_effect = OnceAnimatedSprite('selection_effect', (0, 0), tuple(x*0.15 for x in self.resolution), self.resolution,\
+                                            sprite_folder=PATHS.GOLDEN_RING, animation_delay=2)   #Position will change later anyway
         start_teleport_effect = OnceAnimatedSprite('start_teleport', (0, 0), tuple(x*0.15 for x in self.resolution), self.resolution,\
-                                            sprite_folder=PATHS.EXPLOSIONS, keywords=('normal',))   #Position will change later anyway
+                                            sprite_folder=PATHS.SMOKE_RING, animation_delay=2)   #Position will change later anyway
         end_teleport_effect = OnceAnimatedSprite('end_teleport', (0, 0), tuple(x*0.15 for x in self.resolution), self.resolution,\
-                                            sprite_folder=PATHS.EXPLOSIONS, keywords=('normal',))   #Position will change later anyway                                                                                        
+                                            sprite_folder=PATHS.BLUE_RING, animation_delay=2)   #Position will change later anyway                                                                                        
         explosion_effect.set_enabled(False)
-        self.effects.add(explosion_effect, start_teleport_effect, end_teleport_effect)
+        self.effects.add(explosion_effect, selection_effect, start_teleport_effect, end_teleport_effect)
 
     @run_async_not_pooled
     def update_infoboard(self):
@@ -600,21 +602,26 @@ class Board(Screen):
     @run_async_not_pooled
     def update_scoreboard(self):
         if not self.scoreboard_flag:    #THis is to not overlap turns updates.
-            self.scoreboard_flag = True
-            if self.scoreboard.taken_spaces is 0:   #If the infoboard is empty (First time filling it up)
-                for key in self.players[0].get_stats().keys():
-                    self.scoreboard.add_text_element(str(hash(key)), key, 1)
-            for player in self.players:
-                player_stats = player.get_stats()
-                for key, value in player_stats.items():
-                    text_sprite = self.scoreboard.get_sprite(str(hash((player.uuid, key))))
-                    if not text_sprite: #If this sprite wasnt created yet
-                        text_color = WHITE if not player.dead else DARKGRAY
-                        self.scoreboard.add_text_element(str(hash((player.uuid, key))), value, 1, color=text_color)
-                    elif text_sprite.text != str(value):
-                        text_sprite.set_text(value)
-            self.scoreboard_flag = False
-            LOG.log('info', 'The scoreboard has been successfully updated.')
+            try:
+                self.scoreboard_flag = True
+                if self.scoreboard.taken_spaces is 0:   #If the infoboard is empty (First time filling it up)
+                    for key in self.players[0].get_stats().keys():
+                        self.scoreboard.add_text_element(str(hash(key)), key, 1)
+                for player in self.players:
+                    player_stats = player.get_stats()
+                    for key, value in player_stats.items():
+                        text_sprite = self.scoreboard.get_sprite(str(hash((player.uuid, key))))
+                        if not text_sprite: #If this sprite wasnt created yet
+                            text_color = WHITE if not player.dead else DARKGRAY
+                            self.scoreboard.add_text_element(str(hash((player.uuid, key))), value, 1, color=text_color)
+                        elif text_sprite.text != str(value):
+                            text_sprite.set_text(value)
+                self.scoreboard_flag = False
+                LOG.log('info', 'The scoreboard has been successfully updated.')
+            except NotEnoughSpaceException: #Lets clear it and try again
+                self.scoreboard.clear()
+                self.scoreboard_flag = False
+                self.update_scoreboard()
 
     @run_async_not_pooled
     def update_promotion_table(self, *chars):
@@ -1266,13 +1273,15 @@ class Board(Screen):
             return
         self.ai_turn_flag.wait()
         self.ai_turn_flag.clear()
-        # print("RIGHT NOW; "+str(SHIT))
         if not all(flag.is_set() for flag in self.starting_dices.values()): #IF this structure is empty, due to not having starting dices, it also returns True.
             computer_dice = next(dice for dice in self.dialog.elements if str(dice.id) == str(self.current_player.uuid))
             computer_dice.reactivating_dice()
             computer_dice.hitbox_action()
             self.ai_turn_flag.set()
             return
+        #Counter of round time
+        self.counter_sprite.sprite.start_counter()
+        self.counter_sprite.sprite.set_enabled(True)
         start = time.time()
         self.ai_turn = True
         self.thinking_sprite.sprite.set_visible(True)
@@ -1295,6 +1304,7 @@ class Board(Screen):
         self.ai_turn = False
         if result:  #We return the movement performed. Useful for network board. 
             result = movement
+        self.counter_sprite.sprite.set_enabled(False)
         print("The CPU turn took "+str(time.time()-start)+" seconds.")
         self.ai_turn_flag.set()
 
@@ -1366,4 +1376,3 @@ class Board(Screen):
         
     def destroy(self):
         self.end = True
-        #TODO KILL THREADS IF STILL LOADING OR DECREASE PLAYER COUNT TO END FASTER, I DUNNO, WHATEVER

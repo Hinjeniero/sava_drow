@@ -20,7 +20,7 @@ import time
 2.- We establish the default logging out to be a file. In the format the hour is included.
 3.- A new handler is created and configured in the same fashion. 
     This is needed to also show the log on screen (stdout), and not only in the file."""
-LOGGING_LVL = logging.ERROR
+LOGGING_LVL = logging.WARNING
 logging.basicConfig(filename='history.log', level=LOGGING_LVL, format='[%(asctime)s]: %(message)s \n')
 std_handler = logging.StreamHandler()
 std_handler.level       = LOGGING_LVL

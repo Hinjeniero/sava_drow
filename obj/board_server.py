@@ -137,6 +137,7 @@ class Server(MastermindServerTCP):
             raise Exception("no success when adding the server to the table of servers.")
 
     def update_server(self, **params):
+        LOG.log('info', 'Updating the server player ammount in the table of servers')
         update_server_endpoint = IpGetter.get_servers_table_dir()+NETWORK.TABLE_SERVERS_UPDATE_ENDPOINT
         json_petition = {'uuid': self.uuid, 'players': len(self.clients.values())}
         json_petition.update(params)
@@ -146,6 +147,7 @@ class Server(MastermindServerTCP):
             raise Exception("no success when updating the server.")
 
     def delete_server(self):
+        LOG.log('info', 'Deleting the server form the public table of servers, max ammount of players reached')
         delete_server_endpoint = IpGetter.get_servers_table_dir()+NETWORK.TABLE_SERVERS_DELETE_ENDPOINT
         response = UtilityBox.do_request(delete_server_endpoint, method='POST', data={'uuid': self.uuid}, return_success_only=True)
         if not response or not response['success']:
@@ -171,7 +173,7 @@ class Server(MastermindServerTCP):
     def group_responses_handler(self):  #ALready got the lock to barrier
         if 'start_dice' in self.barrier[0][1].keys():
             #Tuples - (conn, data(json)), 'dice' in saved json
-            self.barrier.sort(key=lambda tuple_: tuple_[1]['dice'], reverse=True)
+            self.barrier.sort(key=lambda tuple_: tuple_[1]['start_dice'], reverse=True)
             self.all_players_received.wait()
             players = list(self.players_data.values())
             players.sort(key=lambda player: player['order'])
@@ -224,6 +226,9 @@ class Server(MastermindServerTCP):
                     else:
                         reply = {"success": False, "error": "There is already an host."}
                 reply = self.add_client(data["id"], connection_object)
+            elif "start_dice" in data:
+                LOG.log('error', 'Client ', data['id'], ' rolled a ', data['start_dice'])
+                self.add_to_barrier(connection_object, data)
             elif "params" in data:
                 if connection_object is self.host:
                     self.add_data("params", data["params"])
@@ -253,9 +258,6 @@ class Server(MastermindServerTCP):
                     if len(self.chars_data.keys()) < self.total_chars:
                         raise KeyError
                     reply = {"characters_data": self.chars_data.values_list()}
-            elif "start_dice" in data:
-                LOG.log('info', 'Client ', data['id'], ' rolled a ', data['dice'])
-                self.add_to_barrier(connection_object, data)
             elif "keepalive" in data or "keep_alive" in data or "keep-alive" in data or "update" in data:
                 pass
             elif "disconnect" in data:
@@ -265,6 +267,7 @@ class Server(MastermindServerTCP):
                 #elif "move_character" in data or "drop_character" in data or "end_turn" in data or "admin" in data or "swap" in data:
                 #or "dice_value" in data or "turncoat" in data or "lock_characters" in data
         except (KeyError, IndexError):    #Can't attend this petition right now, most likely due to lack of data.
+            # print("EXCEPT DATA; CHECK IT "+str(data))
             self.hold_petition(connection_object, data)
         if not reply:
             reply = {"success": True}
@@ -280,7 +283,7 @@ class Server(MastermindServerTCP):
         self.private_ip = IpGetter.get_local_ip(raise_exception=True)
         self.public_ip = IpGetter.get_public_ip(raise_exception=True)
         self.connect(ip, port) #This connect is way more like a bind to the socket.
-        LOG.log('INFO', 'Deploying server in the public ip ', self.public_ip, ':', NETWORK.SERVER_PORT)
+        LOG.log('error', 'Deploying server in the public ip ', self.public_ip, ':', NETWORK.SERVER_PORT)
         try:
             if not self.private_server:
                 self.register_server()

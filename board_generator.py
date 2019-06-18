@@ -85,6 +85,17 @@ class BoardGenerator(object):
         else:
             self.board_params['quadrants_overlap'] = False
 
+    def set_round_time_cpu(self, round_time):
+        self.cpu_timeout = round_time
+        self.board_params['counter_round_time'] = self.cpu_timeout
+
+    def set_cpu_players(self, cpu_players):
+        self.cpu_players = cpu_players
+        if cpu_players is 0:
+            self.board_params['counter_round_time'] = None
+            return
+        self.board_params['counter_round_time'] = self.cpu_timeout
+
     def set_game_mode(self, gamemode):
         """Changes the current gamemode.
         Args:
@@ -159,8 +170,8 @@ class BoardGenerator(object):
         if self.tutorial:
             return self.generate_tutorial(resolution)
         #From here on, we have to check the total numbe4r of playersç
-        elif self.get_actual_total_players() > self.players:
-            raise TooManyPlayersException("The number of cpu and human players doesn't match with the total")
+        if self.get_actual_total_players() > self.players:
+            raise TooManyPlayersException("The sum of cpu and human players it's more than the total players ammount")
         elif self.get_actual_total_players() is 0:
             raise ZeroPlayersException("You can't create a board with no players")
         elif self.online and self.server and self.human_players < 2:  #If you are the host

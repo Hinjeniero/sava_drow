@@ -186,16 +186,18 @@ def create_game_menu(result, animated_background=None):
     element_generator.send(('button_start_normal_local_game', "start_go_main_board", next(positions), {'text': "Start local game"}))
     element_generator.send(('button_players', "set_total_players", next(positions), {'default_values': PARAMS.PLAYERS_AMMOUNT, 'texture': PATHS.LONG_RED_BAR, 'text': 'Number of players'}))
     element_generator.send(('button_human_players', "change_human_players", next(positions), {'default_values': PARAMS.HUMAN_PLAYERS, 'text': 'Human players'}))
-    element_generator.send(('button_AI_players', "change_computer_players", next(positions), {'default_values': PARAMS.AI_PLAYERS, 'text': 'CPU players'}))
-    element_generator.send(('button_AI_mode', "change_computer_mode", next(positions), {'default_values': PARAMS.AI_MODES, 'text': 'CPU algorithm'})) 
-    element_generator.send(('button_AI_time', "change_time_cpu_timeout", next(positions), {'default_values': PARAMS.CPU_TIMEOUTS, 'text': 'Max round time (CPU)'})) 
+    element_generator.send(('button_CPU_players', "change_computer_players", next(positions), {'default_values': PARAMS.AI_PLAYERS, 'text': 'CPU players'}))
+    element_generator.send(('button_CPU_mode', "change_computer_mode", next(positions), {'default_values': PARAMS.AI_MODES, 'text': 'CPU algorithm'})) 
+    element_generator.send(('button_CPU_time', "change_time_cpu_timeout", next(positions), {'default_values': PARAMS.CPU_TIMEOUTS, 'text': 'Max round time (CPU)'})) 
     if not firstTime:
         element_generator.send(('button_start_tutorial', "start_tutorial_go_main_board", next(positions), {'default_values':None, 'texture': PATHS.DARK_LONG_BUTTON, 'text': "Replay tutorial"}))
     for end_event in threads:   end_event.wait()    #Waiting for all the buttons to be created
     #Change elements userevent
     for element in elements:
-        if 'player' in element.id or 'AI' in element.id:
+        if 'player' in element.id or 'CPU' in element.id:
             element.event_id = USEREVENTS.CONFIG_USEREVENT
+            if not 'player' in element.id:
+                element.set_enabled(False)
     #Create Menu
     start_menu   = Menu('game_menu', USEREVENTS.MAINMENU_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, *elements, animated_background=animated_background, background_path=PATHS.DEFAULT_BG,\
                 songs_paths=MENU_SONGS, do_align=False)
@@ -228,14 +230,16 @@ def create_online_menu(result, animated_background=None):
     element_generator.send(('button_online_client', "client_start_online_game_go_main_board", next(positions), {'text': "Connect to private server"}))
     element_generator.send(('button_players', "set_total_players", next(positions), {'default_values': PARAMS.PLAYERS_AMMOUNT, 'texture': PATHS.LONG_RED_BAR, 'text': 'Number of players'}))
     element_generator.send(('button_human_players', "change_human_players", next(positions), {'default_values': PARAMS.HUMAN_PLAYERS, 'text': 'Human players'}))
-    element_generator.send(('button_AI_players', "change_computer_players", next(positions), {'default_values': PARAMS.AI_PLAYERS, 'text': 'CPU players'}))
-    element_generator.send(('button_AI_mode', "change_computer_mode", next(positions), {'default_values': PARAMS.AI_MODES, 'text': 'CPU algorithm'}))
-    element_generator.send(('button_AI_time', "change_time_cpu_timeout", next(positions), {'default_values': PARAMS.CPU_TIMEOUTS, 'text': 'Max round time (CPU)'})) 
+    element_generator.send(('button_CPU_players', "change_computer_players_online", next(positions), {'default_values': PARAMS.AI_PLAYERS, 'text': 'CPU players'}))
+    element_generator.send(('button_CPU_mode', "change_computer_mode", next(positions), {'default_values': PARAMS.AI_MODES, 'text': 'CPU algorithm'}))
+    element_generator.send(('button_CPU_time', "change_time_cpu_timeout", next(positions), {'default_values': PARAMS.CPU_TIMEOUTS, 'text': 'Max round time (CPU)'})) 
     for end_event in threads:   end_event.wait()    #Waiting for all the buttons to be created
     #Change elements userevent
     for element in elements:
-        if 'player' in element.id or 'AI' in element.id:
+        if 'player' in element.id or 'CPU' in element.id:
             element.event_id = USEREVENTS.CONFIG_USEREVENT
+            if not 'player' in element.id:
+                element.set_enabled(False)
     #Create Menu
     start_menu = Menu('online_menu', USEREVENTS.MAINMENU_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, *elements, animated_background=animated_background, background_path=PATHS.DEFAULT_BG,\
                     songs_paths=MENU_SONGS, do_align=False)
@@ -405,5 +409,9 @@ if __name__ == "__main__":
     # print("All arguments are: "+str(sys.argv))
     print("Recognized arguments: "+str(arguments))
     test = True if any('test' in arg for arg in arguments) else False
+    low = True if any('low' in arg for arg in arguments) else False
+    if low:
+        test = True
+        INIT_PARAMS.INITIAL_RESOLUTION = min(INIT_PARAMS.RESOLUTIONS)
     game = pre_start(test=test) 
     game.start('main', 'menu')

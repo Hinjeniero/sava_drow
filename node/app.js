@@ -10,7 +10,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 JSON_ONLINE_REPLY = {success: true, message: 'The service is online'}
 JSON_MISSING_PARAMS = {success: false, message: 'Missing fields'}
 JSON_SERVER_NOT_FOUND = {success: false, message: 'The server with that uuid was not found'}
-JSON_SERVER_ALREADY_EXISTS = {success: false, message: 'That server already exists'}
+JSON_SERVER_ALREADY_EXISTS = {success: true, message: 'That server already exists'}
 
 serverExists = function(uuid) {
     for (var i = 0; i < serversHosting.length; i++){

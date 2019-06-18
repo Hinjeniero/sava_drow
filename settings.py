@@ -159,7 +159,7 @@ class PATHS:
     SOUNDS_FOLDER = AUDIO_FOLDER+'common\\'
     SECRET_FOLDER = AUDIO_FOLDER+'secret\\'
     AVATAR_FOLDER = IMAGE_FOLDER+'avatars\\'
-    
+    EFFECTS_FOLDER = IMAGE_FOLDER+'effects\\'
     UUID_FILE = ASSETS_FOLDER+'myid.sav'    #Your user UUID file, generated only once. Will serve as your session ID too.
     
     #Characters
@@ -245,3 +245,9 @@ class PATHS:
     #Icons
     HELP_ICON = IMAGE_FOLDER+'help_icon.png'
     WARNING_ICON = IMAGE_FOLDER+'warning_icon.png'
+
+    #Effects
+    BLUE_RING = EFFECTS_FOLDER+'blue_ring\\'
+    SMOKE_RING = EFFECTS_FOLDER+'smoke_ring\\'
+    FIRE_RING = EFFECTS_FOLDER+'fire_ring\\'
+    GOLDEN_RING = EFFECTS_FOLDER+'gold_ring\\'

@@ -34,6 +34,9 @@ class PersistantNumber(object): #To avoid the copying of classes
             initial_number (int, default=0):    The number itself."""
         self.number = initial_number
 
+    def __str__(self):
+        return str(self.number)
+
 class ComputerPlayer(Player):
     """ComputerPlayer class. Inherits from Player.
     Its purpose is #to_pass_butter. Just kidding, its to simulate the movements of a player
@@ -192,12 +195,12 @@ class ComputerPlayer(Player):
         my_player_index = next((i for i in range(0, len(all_players)) if all_players[i] == my_player_uuid))
         all_paths = {}
         start = time.time()
-        pruned = PersistantNumber()
+        pruned = {x: PersistantNumber() for x in range (1, self.max_depth)}
         self.minimax(my_player_index, my_player_index, all_players, all_cells, current_map, all_paths, [], 0, True, -math.inf, math.inf, start, self.round_timeout, pruned, ordering)
         if time.time()-start > self.round_timeout: #If we reached the timeout...
             self.increase_timeout_count()
         print("The number of paths tested by alpha beta is "+str(len(all_paths.keys())), " with a max depth setting of "+str(self.max_depth)+", in a time of "+str(time.time()-start)+" seconds.")
-        print("The number of pruned branches is "+str(pruned.number))
+        print("The number of pruned branches at different depths was "+str({str(key): str(value) for key, value in pruned.items()}))
         rated_movements = [((dest[0], dest[1]), score) for dest, score in all_paths.items()]
         rated_movements.sort(key=lambda dest:dest[1], reverse=True)
         return rated_movements[0][0]    #Returning only the movement, we have no use for the score
@@ -261,8 +264,12 @@ class ComputerPlayer(Player):
             ordering (boolean): True if we want to order the possible destinies in each iteration. More pruning, but less iterations.
         """
         if depth is self.max_depth or (time.time()-start_time > timeout):   #TODO or board.end_game is true!
-            value = sum(char.value for char in all_cells.values() if char.owner_uuid == all_players[my_player_index])\
+            value = None
+            try:
+                value = sum(char.value for char in all_cells.values() if char.owner_uuid == all_players[my_player_index])\
                     /sum(char.value for char in all_cells.values() if char.owner_uuid != all_players[my_player_index])   #My chars left minus his chars left
+            except ZeroDivisionError:
+                value = sum(char.value for char in all_cells.values() if char.owner_uuid == all_players[my_player_index])
             all_paths[tuple(path)] = value  #This could also do it using only the first movm as key,since its the only one we are interested in. THe rest are garbage, who did those mvnmsnts? no idea
             #del path[0] #Lets get that index out of here
             return value
@@ -312,7 +319,7 @@ class ComputerPlayer(Player):
                 bestVal = max(bestVal, value) 
                 alpha = max(alpha, value)
                 if beta <= value:   #Pruning
-                    pruned.number += 1
+                    pruned[depth].number += 1
                     return bestVal
             return bestVal
         else:   #Minimizing player
@@ -355,7 +362,7 @@ class ComputerPlayer(Player):
                 bestVal = min(bestVal, value) 
                 beta = min(beta, value)
                 if beta <= alpha:   #Pruning
-                    pruned.number += 1
+                    pruned[depth].number += 1
                     return bestVal
             return bestVal
 

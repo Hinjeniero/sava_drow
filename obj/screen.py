@@ -468,7 +468,9 @@ class Screen(object):
 
     def enable_sprites(self, state=True, *keywords):
         for sprite in self.sprites:
-            if all(kw.lower() in sprite.get_id().lower() for kw in keywords):
+            #get_id() returns the command of the element
+            if all(kw.lower() in sprite.get_id().lower() for kw in keywords)\
+            or all(kw.lower() in sprite.id.lower() for kw in keywords):
                 sprite.set_enabled(state)
     
     def get_colliding_sprite(self):

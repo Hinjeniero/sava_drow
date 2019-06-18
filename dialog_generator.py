@@ -58,7 +58,7 @@ class DialogGenerator(object):
         return dialog
 
     @staticmethod
-    def create_table_dialog(id_, command, row_size, resolution, keys, *rows):
+    def create_table_dialog(id_, command, row_size, resolution, keys, *rows, **params):
         """Creates a default SelectableTable. It is supposed to be added when we need some the user to choose from a lot of rows.
         Args:
             id_ (String):   Id of this dialog.
@@ -70,7 +70,8 @@ class DialogGenerator(object):
         Returns:
             (:obj: SelectableTable): SelectableTable created following the input arguments.
         """
-        table = SelectableTable(id_+'_table_dialog', USEREVENTS.DIALOG_USEREVENT, command, row_size, resolution, keys, *rows, text_font=MONOSPACED_FONT)
+        params['text_font'] = MONOSPACED_FONT
+        table = SelectableTable(id_+'_table_dialog', USEREVENTS.DIALOG_USEREVENT, command, row_size, resolution, keys, *rows, **params)
         return table
 
     @staticmethod

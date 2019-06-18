@@ -20,7 +20,7 @@ import requests #Only used to get the servers when getting all of them from the 
 from external.Mastermind import *   #I dont like this one a bit, since it has to import everything
 #Selfmade libraries
 from strings import CONFIG_BOARD_DIALOGS
-from settings import NETWORK, MESSAGES
+from settings import NETWORK, MESSAGES, PATHS
 from dialog_generator import DialogGenerator
 from obj.sprite import TextSprite
 from obj.board_server import Server
@@ -143,7 +143,8 @@ class NetworkBoard(Board):
         else:
             rows = self.get_all_servers()
             dialog = DialogGenerator.create_table_dialog('server_explorer', 'set_ip_port', (self.resolution[0]//1.3, self.resolution[1]//10),\
-                                                        self.resolution, CONFIG_BOARD_DIALOGS.SERVER_TABLE_KEYS, *rows)
+                                                        self.resolution, CONFIG_BOARD_DIALOGS.SERVER_TABLE_KEYS, *rows,\
+                                                        texture=PATHS.BASIC_TEXTURIZED_BG, keep_aspect_ratio=False)
         self.dialogs.add(dialog)
         if direct_connection:   self.show_dialog('input')
         else:                   self.show_dialog('table')
@@ -233,7 +234,7 @@ class NetworkBoard(Board):
         Also, sends the a random throw of a dice to decide the order of the players.
         Args:
             host (boolean): Flag saying if we are the host or not (Just a lowly client)."""
-        print("SENDF HANDSHAKE")
+        print("SEND HANDSHAKE")
         self.send_data({"host": host, "id": self.uuid})
         if host:
             self.send_data_async({"params": self.get_board_params()})
@@ -244,7 +245,7 @@ class NetworkBoard(Board):
             self.request_data_async("players_data")     #To get the data of the players
             self.request_data_async("characters_data")  #To get the data of the characters
         dice = random.randint(1, 6)
-        self.send_data_async({"start_dice": dice, "id":self.uuid})    #Sending dice result for the player assignments
+        self.send_data_async({"start_dice": dice, "id": self.uuid})    #Sending dice result for the player assignments
         self.LOG_ON_SCREEN("rolled a "+str(dice))
 
     def connect(self):
@@ -335,8 +336,10 @@ class NetworkBoard(Board):
                         size = self.cells.sprites()[0].rect.size
                         constructor = Character.get_constructor_by_key(character['type'])
                         sprite_folder = Character.get_sprite_folder_by_key(character['type'])
-                        char = constructor(player.name, player.uuid, character['id'], (0, 0), size,\
-                                            self.resolution, sprite_folder, uuid=character['uuid'])
+                        # print("name "+player.name+", uuid "+str(player.uuid)+", charid "+str(character['id']))
+                        char = constructor(player.uuid, character['id'], (0, 0), size,\
+                                            self.resolution, sprite_folder, obj_uuid=character['uuid'])
+                                        #    player_uuid, id_, position, size, canvas_size, sprites_path, obj_uuid=None, **params):
                         if player.uuid == self.my_player:
                             char.set_active(True)
                         player.characters.add(char)
@@ -351,6 +354,7 @@ class NetworkBoard(Board):
                 player.update()
             self.send_ready()
         elif "start" in response:
+            self.LOG_ON_SCREEN("All players have connected, starting game...")
             self.ready = True
             self.console_active = False
             self.activate_my_characters()
@@ -359,6 +363,7 @@ class NetworkBoard(Board):
                 self.post_event('my_turn')  #This makes the popup saying that is my turn, show.
                 self.my_turn = True
         elif "player_id" in response:   #TODO THIS IS POORLY DONE, THE ID SENT IS THE BOARD ONE!!!
+            print("PLAYER ID IS "+str(response['player_id'])+"-----------------------------------------------")
             self.my_player = response['player_id']
             LOG.log('info', 'My player is ', self.my_player)
         elif "success" in response: #This one needs no action
@@ -441,7 +446,7 @@ class NetworkBoard(Board):
                 "quadrants_overlap" : self.params["quadrants_overlap"]}
         return params
 
-    def send_data(self, data_to_send, compression=None):
+    def send_data(self, data_to_send, compression=None, max_tries=10):
         """Sends data to the server with a blocking call that waits for a reply.
         Args:
             data_to_send (Dict->Any:Any):   Data to send to the server (in a JSON schema).
@@ -449,6 +454,7 @@ class NetworkBoard(Board):
         Returns:
             (Dict->Any:Any):    Reply of the server. Usually a Success=True, or an ACK=True."""
         while True:
+            tries = 0
             try:
                 self.client.send(data_to_send, compression=compression)
                 reply = self.client.receive(True)
@@ -456,6 +462,12 @@ class NetworkBoard(Board):
             except ValueError:
                 LOG.log('warning', 'SEND_DATA: There was a problem receiving the packet in the sockets, retrying...')
                 LOG.log('warning', 'Mockingly: iNvAliD litERaL for iNt() with BASe 10: b\"{\"')
+            except MastermindErrorClient as err:
+                tries += 1
+                LOG.log('warning', 'SEND_DATA: There was a problem sending/receiving the packet in the sockets in the try ', tries,', trying again...')
+                LOG.log('warning', err)
+                if tries > max_tries:
+                    raise MastermindErrorClient("Max tries reached, aborting")
 
     def send_data_async(self, data_to_send, compression=None):
         """Sends data to the server with a non-blocking call and exits without waiting for a reply.

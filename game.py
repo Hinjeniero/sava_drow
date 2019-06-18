@@ -294,20 +294,26 @@ class Game(object):
             if 'human' in command:
                 self.board_generator.human_players = value
             if 'cpu' in command or 'computer' in command:
-                self.board_generator.cpu_players = value
+                self.board_generator.set_cpu_players(value)
                 if value == 0:
-                    print("ITS 0 NROOOO")
-                    self.get_screen('main', 'menu').enable_sprites(False, 'ai')
-                    self.get_screen('main', 'menu').enable_sprites(True, 'ai', 'player')
+                    if 'online' in command:
+                        self.get_screen('online', 'menu').enable_sprites(False, 'cpu')
+                        self.get_screen('online', 'menu').enable_sprites(True, 'cpu', 'player')
+                    else:
+                        self.get_screen('game', 'menu').enable_sprites(False, 'cpu')
+                        self.get_screen('game', 'menu').enable_sprites(True, 'cpu', 'player')
                 else:
-                    self.get_screen('main', 'menu').enable_sprites(True, 'ai')
+                    if 'online' in command:
+                        self.get_screen('online', 'menu').enable_sprites(True, 'cpu')
+                    else:
+                        self.get_screen('game', 'menu').enable_sprites(True, 'cpu')
             if 'total' in command:
                 self.board_generator.set_players(value)
         elif 'computer' in command or 'cpu' in command:
             if 'mode' in command:
                 self.board_generator.computer_players_mode = value.lower()
             if 'time' in command or 'timeout' in command:
-                self.board_generator.cpu_timeout = float(value)
+                self.board_generator.set_round_time_cpu(float(value))
         elif 'game' in command or 'mode' in command:
             self.board_generator.set_game_mode(value)
             if not 'custom' in value.lower() or 'free' in value.lower():

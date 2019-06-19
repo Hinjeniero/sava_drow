@@ -30,6 +30,7 @@ from obj.sprite import Sprite, AnimatedSprite, OnceAnimatedSprite
 from obj.ui_element import ButtonAction, TextSprite, InfoBoard, Dialog, ScrollingText
 from obj.polygons import Circle, Rectangle, Circumference
 from obj.counter import CounterSprite
+from obj.help_dialogs import HelpDialogs
 from obj.utilities.utility_box import UtilityBox
 from obj.utilities.colors import RED, WHITE, BLACK, DARKGRAY, LIGHTGRAY, TRANSPARENT_GRAY
 from obj.utilities.exceptions import BadPlayersParameter, BadPlayerTypeException, NotEnoughSpaceException,\
@@ -297,6 +298,7 @@ class Board(Screen):
             counter_sprite.set_center((counter_sprite_center_x, self.thinking_sprite.sprite.rect.centery)) #Could also use self.infoboard.rect.centerx instead of the dice. But its the same.
             counter_sprite.set_enabled(False)
             self.counter_sprite.add(counter_sprite)
+        HelpDialogs.add_help_dialogs(self.id, (fitness_button, help_button), self.resolution)
         #End, saving
         self.save_sprites()
         self.generated = True
@@ -832,6 +834,7 @@ class Board(Screen):
             if len(player.characters.sprites()) > 0:
                 current_level = self.quadrants[player.order].max_border_lvl()
                 rank = player.characters.sprites()[0].rank
+                HelpDialogs.add_characters_dialogs(player.characters, self.resolution)   #Adding the help 
                 for character in player.characters:
                     if character.rank < rank:
                         current_level -= 1
@@ -970,13 +973,25 @@ class Board(Screen):
         #CHECKING BUTTONS FIRST. CLICK DOWN
         if event.type == pygame.MOUSEBUTTONDOWN:  #On top of the char and clicking on it
             self.play_sound('key')
-            if mouse_buttons[1] and self.help_button.enabled:
-                if self.active_char.sprite:
-                    self.active_char.sprite.set_help_dialog_state(not self.active_char.sprite.dialog_active)
-                    char_w_active_dialog = next((char for char in self.characters if (char.dialog_active and char is not self.active_char.sprite)), None)
-                    if char_w_active_dialog:
-                        char_w_active_dialog.hide_help_dialog()
-                        return
+            #Help dialogs showing
+            if mouse_buttons[1] and self.help_button.sprite.enabled:
+                #First lets check if there is any dialog left
+                # element = next((char for char in self.characters if char.dialog_active), None)
+                # new_element = None
+                # if not element:
+                #     element = next((element for element in self.sprites if element.dialog_active), None)
+                # if self.active_char.sprite:
+                #     self.active_char.sprite.set_help_dialog_state(not self.active_char.sprite.dialog_active)
+                #     new_element = self.active_char.sprite
+                # elif self.fitness_button.sprite.hover:
+                #     self.fitness_button.sprite.set_help_dialog_state(not self.active_char.sprite.dialog_active)
+                #     new_element = self.fitness_button.sprite
+                # elif self.help_button.sprite.hover:
+                #     self.help_button.sprite.set_help_dialog_state(not self.active_char.sprite.dialog_active)
+                #     new_element = self.help_button.sprite
+                # if element and new_element is not element:
+                #     element.hide_help_dialog()
+                return
             if self.show_promotion:
                 try:
                     element = next(element for element in self.promotion_table.elements if element.hover)
@@ -1040,6 +1055,7 @@ class Board(Screen):
     def shuffle(self):
         """Shuffles and throws the board's infoboard's dice. Upon returning a value, the method
         dice_result_value is called. A result can yield you a turncoat method or the losing of your turn."""
+        self.play_sound('die_shuffle')
         self.dice.sprite.shuffle()
 
     def character_swapper(self):
@@ -1137,6 +1153,7 @@ class Board(Screen):
 
     def assign_current_dice(self, dice_id):
         if self.dialog and 'dice' in self.dialog.id:    #This is a throw in the starting dices
+            self.play_sound("die_shuffle")
             if not self.current_dice.sprite or not self.current_dice.sprite.currently_shuffling:    #If there is no dice of is not shuffling
                 self.current_dice.add(next((dice for dice in self.dialog.elements if dice.id == dice_id), None))
 
@@ -1144,6 +1161,7 @@ class Board(Screen):
         value = int(event.value)
         received_dice_id = event.id #The received dice id is the same uuid as the matching player uuid
         if self.dialog and 'dice' in self.dialog.id:    #This is a throw in the starting dices
+            self.play_sound("die_throw")
             self.starting_dices[int(received_dice_id)].set()
             self.dices_values[int(received_dice_id)] = value
             next(dice for dice in self.dialog.elements if dice.id == received_dice_id).deactivating_dice(value=value) #We disable the received dice.
@@ -1198,6 +1216,7 @@ class Board(Screen):
         #Showing effects
         self.play_effect('start_teleport', self.last_cell.sprite.rect.center)
         self.play_effect('end_teleport', active_cell.rect.center)
+        self.play_sound('success')
         #Not last cell anymore, char was dropped succesfully
         self.last_cell.empty()
         #THIS CONDITION TO SHOW THE UPGRADE TABLE STARTS HERE
@@ -1285,8 +1304,11 @@ class Board(Screen):
         start = time.time()
         self.ai_turn = True
         self.thinking_sprite.sprite.set_visible(True)
-        movement = self.current_player.get_movement(self.current_map, self.cells, self.current_player.uuid, [player.uuid for player in self.players], char_turn_restriction=self.char_turns)
-        print("MOVEMENT CHOSEN WAS "+str(movement))
+        char_that_must_move = []
+        if self.char_turns is not 0:    #If we moved a character that can move more than once
+            char_that_must_move.append(self.get_cell_by_real_index(self.last_real_movm[-1]).get_char())
+        movement = self.current_player.get_movement(self.__hash__(), self.current_map, self.cells, self.current_player.uuid, [player.uuid for player in self.players], chars_allowed=char_that_must_move)
+        LOG.log('info', "Movement chosen was ", movement)
         character = self.get_cell_by_real_index(movement[0]).get_char()
         #print("CHOSEN CHAR "+character.get_type()+"MOVEMENT CHOSEN WAS "+str(movement)+", in turn "+str(self.turn))
         self.drag_char.add(character)
@@ -1376,3 +1398,8 @@ class Board(Screen):
         
     def destroy(self):
         self.end = True
+
+    def __hash__(self):
+        _ = self.params
+        return hash((_['quadrants_overlap'], _['inter_path_frequency'], _['circles_per_lvl'], _['max_levels'],\
+                    _['center_cell']))

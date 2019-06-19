@@ -114,6 +114,7 @@ class Sprite(pygame.sprite.Sprite):
         self.enabled        = True
         self.use_overlay    = True
         self.visible        = True
+        self.dialog_active  = False #This has the function of adding information to an otherwise element with a not-so-clear purpose
         #Generation
         Sprite.generate(self)   #TO AVOID CALLING THE SUBCLASSES GENERATE WHEN THEIR ATTRIBUTES ARENT INITIALIZED YET.
 
@@ -497,7 +498,6 @@ class MultiSprite(Sprite):
         self.in_animation   = False
         self.hover_dialog   = None
         self.dialog_animated= False
-        self.dialog_active  = False #This has the function of adding information to an otherwise element with a not-so-clear purpose
 
     def add_hover_dialog(self, dialog_text, animated=False, dialog_texture=None, dialog_size=None, text_color=WHITE, dialog_lines=1, text_outline=1,\
                         text_outline_color=BLACK, text_shadow_dir=(0.0, 0.0), text_font=FONT, **dialog_kwargs):

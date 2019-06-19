@@ -1,20 +1,12 @@
 #### TODO CURRENT:
-- [ ] Complete network_board (update character)
-- [ ] Keep and drop servers based in a keep/alive fashion
-- [ ] Test changes on network board
-- [ ] Add dialogs to chars.
-- [ ] Test trenchcoat mode.
-- [ ] Internal documentation.
-- [ ] Add more choices in IA settings, like time timeout and stuff
-
+- [ ] Clean prints.
 #### TODO WHENEVER:
-- [ ] Parse text to have decents numbers and letters instead of shitty indexes
 - [ ] Effect when chars colliding with each other.
 - [ ] Bar of taunts below, the cursor turns into whatever and sends the position to the rest of the clients.
 - [ ] Add some animations and shit to promotion of a char, like stars or particles or something
 - [ ] Change the tutorial following a step-process. Altho its pretty good for now. 
 
-#### DONE:
+#### DONE LATEST:
 - [X] Implement spider dice + sprite. Needs to randomize the game a little bit.
 - [X] MAKE SELECTABLE Table
 - [X] Test Selectable Table
@@ -59,4 +51,10 @@
 - [X] Test IA based in MonteCarlo algorithm
 - [X] Set dices in local games to have some sort of ordering.
 - [X] Add avatars to players.
-
+- [X] Complete network_board (update character)
+- [X] Test changes on network board
+- [X] Add dialogs to chars.
+- [X] Test trenchcoat mode.
+- [X] Internal documentation.
+- [X] Add more choices in IA settings, like time timeout and stuff
+- [X] Parse text to have decents numbers and letters instead of shitty indexes

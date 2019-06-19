@@ -282,6 +282,10 @@ def create_config_menu(result, animated_background=None):
     for end_event in threads:   end_event.wait()    #Waiting for all the buttons to be created
     HelpDialogs.add_help_dialogs("menu_params_config", elements, INIT_PARAMS.INITIAL_RESOLUTION)
     #Create Menu
+    for element in elements:
+        if 'set' in element.id and 'board' in element.id\
+        or 'set' in element.get_id() and 'board' in element.get_id():    #Getid returns the command instead of the real id
+            element.set_enabled(False)
     params_menu = Menu("menu_params_config", USEREVENTS.CONFIG_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, *elements, animated_background=animated_background,\
                         background_path=PATHS.DEFAULT_BG, gradient = (RED, BLACK), do_align=False, songs_paths=None, scroll_texture=PATHS.DESERT_TEXTURE)
     result.append(params_menu)
@@ -343,6 +347,7 @@ def create_video_menu(result, animated_background=None):
     element_generator.send(('button_menu_bgs', "set_animated_background_menu", next(positions), {'text': 'Set menu background', 'default_values': STRINGS.ANIMATED_BGS, 'angle':180, 'text_proportion': 0.33}))
     element_generator.send(('button_board_bgs', "set_animated_background_board", next(positions), {'text': 'Set board background', 'angle':0}))
     for end_event in threads:   end_event.wait()    #Waiting for all the buttons to be created
+    HelpDialogs.add_help_dialogs("video_graphic_settings_menu", elements, INIT_PARAMS.INITIAL_RESOLUTION)
     #Menu creation
     graphics_menu = Menu("menu_graphics_display", USEREVENTS.GRAPHIC_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, *elements, animated_background=animated_background, background_path=PATHS.DEFAULT_BG,\
                     do_align=False, songs_paths=None)

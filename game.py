@@ -191,7 +191,8 @@ class Game(object):
                             self.board_generator.direct_connect = True
                     else:
                         self.board_generator.online = False
-                    self.initiate()
+                    if not self.initiate(): #IF its not a success, we don't want to continue changing screen
+                        return
                 self.change_screen(*event.command.lower().split('_'))
             elif event.type is USEREVENTS.SOUND_USEREVENT:
                 self.sound_handler(event.command.lower(), event.value)
@@ -469,9 +470,9 @@ class Game(object):
         all_mouse_buttons   = pygame.mouse.get_pressed()        #Get all the pressed mouse buttons
         mouse_pos           = pygame.mouse.get_pos()            #Get the current mouse position
         mouse_mvnt          = pygame.mouse.get_rel()!=(0,0)     #True if get_rel returns non zero vaalues 
-        if any(all_mouse_buttons):
-            self.hide_popups()
         for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                self.hide_popups()
             #For every event we will call this
             self.current_screen.event_handler(event, all_keys, all_mouse_buttons, mouse_movement=mouse_mvnt, mouse_pos=mouse_pos)
             if event.type == pygame.QUIT:               
@@ -737,20 +738,21 @@ class Game(object):
                 self.screens.append(self.board_generator.generate_board(self.resolution))
         except TooManyCharactersException:
             self.show_popup('chars')
-            return
+            return False
         except TooManyPlayersException:
             self.show_popup('too_many_players')
-            return
+            return False
         except ZeroPlayersException:
             self.show_popup('zero_players')
-            return
+            return False
         except NotEnoughHumansException:
             self.show_popup('not_enough_players')
-            return
+            return False
         #self.get_screen('params', 'menu', 'config').enable_all_sprites(False)
         self.get_screen('music', 'menu', 'sound').enable_all_sprites(True)
         self.get_screen('main', 'menu').enable_all_sprites(True)
-        self.started = True
+        self.started = True 
+        return True
 
     def start(self, *first_screen_keywords):
         """Starts the game instance. Perform checks and start all the methods needed. 

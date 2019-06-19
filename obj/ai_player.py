@@ -118,8 +118,8 @@ class ComputerPlayer(Player):
                     all_fitnesses.append(((start_index, destiny), score))   #Append a tuple ((start, destiny), fitness_eval_of_movm)
         return all_fitnesses
 
-    #TODO FOR NOW USING -1 AS BOARD HASH, CHANGE THAT. SAME WITH STATE HASH
-    def get_movement(self, current_map, board_cells, my_player, all_players, char_turn_restriction=0, max_nodes=100):
+    #TODO FOR NOW USING -1 AS STATE HASH, CHANGE THAT.
+    def get_movement(self, board_hash, current_map, board_cells, my_player, all_players, chars_allowed=(), max_nodes=100):
         """Gets as an input the current state of the board, and based on the current ai mode, returns what it undestands to be
         the best course of action (The best next movement).
         Args:
@@ -133,7 +133,10 @@ class ComputerPlayer(Player):
         Returns:
             (Tuple->int, int):  The best movement calculated by the underlying algorithm. (source, destiny).
         """
-        all_cells = {cell.get_real_index(): cell.get_char() for cell in board_cells if cell.has_char() and cell.get_char().turns>char_turn_restriction}
+        if len(chars_allowed)>0:
+            all_cells = {cell.get_real_index(): cell.get_char() for cell in board_cells if cell.has_char() and cell.get_char() in chars_allowed}
+        else:
+            all_cells = {cell.get_real_index(): cell.get_char() for cell in board_cells if cell.has_char()}
         fitnesses = self.generate_fitnesses(all_cells, my_player, self.graph, self.distances, current_map, self.circum_size)
         if 'random' in self.ai_mode:
             if 'half' in self.ai_mode:
@@ -147,7 +150,7 @@ class ComputerPlayer(Player):
                 return self.generate_alpha_beta(max_nodes, all_cells, current_map, my_player, all_players, ordering=True)    
             return self.generate_alpha_beta(max_nodes, all_cells, current_map, my_player, all_players)
         if 'monte' in self.ai_mode:
-            return MonteCarloSearch.monte_carlo_tree_search(self.graph, self.distances, self.circum_size, -1, all_cells, current_map, my_player, all_players, self.round_timeout)
+            return MonteCarloSearch.monte_carlo_tree_search(self.graph, self.distances, self.circum_size, board_hash, all_cells, current_map, my_player, all_players, self.round_timeout)
             
     def generate_random_movement(self, fitnesses, totally_random=False, somewhat_random=False):
         """Algorithm to return a next movement based in randomness and the score at which are rated the different possible moves.
@@ -452,7 +455,7 @@ class Node(object):
         self.circum_size = circum_size
         self.board_hash = board_hash
         #Those 4 settings up there are inherited by the lower nodes
-        self.state_hash = None
+        self.state_hash = None  #Not used right now
         self.board_state = board_state#{cell_index: character}
         self.map_state = map_state    #{cell_index: path object}
         self.children = []
@@ -484,7 +487,7 @@ class Node(object):
                 current_map[dest_index].enemy = False
                 current_map[dest_index].access = False  
                 #CREATES THE CHILDREN
-                self.children.append(Node(self, self.paths_graph, self.distances, self.circum_size, -1, all_cells_node, current_map, (source_index, dest_index)))    #God knows how much this will occupy in memory...
+                self.children.append(Node(self, self.paths_graph, self.distances, self.circum_size, self.board_hash, all_cells_node, current_map, (source_index, dest_index)))    #God knows how much this will occupy in memory...
             self.map_state = None   #Have no more need for this data after expanding and getting all the possible movements from this board.
     
     def get_uct_value(self, exploration_const=1):
@@ -536,7 +539,7 @@ class MonteCarloSearch(object):
     def monte_carlo_tree_search(paths_graph, distances, circum_size, board_hash, all_cells, current_map, my_player, all_players, round_timeout): #10 seconds of computational power
         my_player_index = next((i for i in range(0, len(all_players)) if all_players[i] == my_player))
         current_player_index = my_player_index
-        root_node = Node(None, paths_graph, distances, circum_size, -1, all_cells, current_map, (-1, -1))
+        root_node = Node(None, paths_graph, distances, circum_size, board_hash, all_cells, current_map, (-1, -1))
         root_node.expand(all_players[current_player_index])
         start = time.time()
         iters = 0
@@ -614,7 +617,7 @@ class MonteCarloSearch(object):
             map_state[destiny].ally = True
             map_state[destiny].enemy = False
             map_state[destiny].access = False       #An ally here
-            child_node = Node(node, node.paths_graph, node.distances, node.circum_size, -1, all_cells_node, map_state, (source_index, destiny))
+            child_node = Node(node, node.paths_graph, node.distances, node.circum_size, node.board_hash, all_cells_node, map_state, (source_index, destiny))
         return child_node
 
     @staticmethod

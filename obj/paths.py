@@ -344,20 +344,19 @@ class PathAppraiser(object):
     #@time_it
     def rate_movements(start_pos, possible_destinies, paths_graph, distances, current_map, all_board_cells, level_size):
         """Returns a tuple with indexes of the destinies, and a fitness going from 0 to 1."""
-        # print("CHECKIN HOW LONGS IT TAKES to get fitnesses FOR "+str(len(possible_destinies)))
         fitnesses = {}
         all_cells = {cell.get_real_index(): cell.get_char() for cell in all_board_cells if cell.has_char()} if isinstance(all_board_cells, list) else all_board_cells
         character = all_cells[start_pos]
         #Algorihtm starts
         danger_multiplier = PathAppraiser.get_danger_multiplier(character, all_cells)
-        start_danger = PathAppraiser.get_danger_in_position(start_pos, character.owner_uuid, paths_graph, distances, current_map, all_cells, level_size)*danger_multiplier
+        start_danger = PathAppraiser.get_danger_in_position(start_pos, character, paths_graph, distances, current_map, all_cells, level_size)*danger_multiplier
         bait_ratios = {}
         destinies_danger = {}
         kill_values = {}
         for index in possible_destinies:
             destiny_char = all_cells[index] if index in all_cells else None
             kill_values[index] = PathAppraiser.get_kill_value(destiny_char, character) if destiny_char else 0
-            destinies_danger[index] = PathAppraiser.get_danger_in_position(index, character.owner_uuid, paths_graph, distances, current_map, all_cells, level_size)
+            destinies_danger[index] = PathAppraiser.get_danger_in_position(index, character, paths_graph, distances, current_map, all_cells, level_size)
             destinies_danger[index] *= danger_multiplier    # if kill_values[index] != 0 else (danger_multiplier*2)
             current_map[start_pos].ally = False             #This to get proper paths to this method to get a useful bait result
             current_map[start_pos].access = True            #This to get proper paths to this method to get a useful bait result
@@ -365,7 +364,6 @@ class PathAppraiser(object):
             current_map[start_pos].ally = True
             current_map[start_pos].access = False
             fitness = PathAppraiser.calculate_fitness(index, danger_multiplier, start_danger, destinies_danger[index], bait_ratios[index], kill_values[index], print_complete=False)
-            #print("fitness for "+str(index)+" is "+str(fitness))
             fitnesses[index] = max(min(fitness, 1), 0)  #Has to be between 0 and 1
         return fitnesses
 
@@ -439,16 +437,21 @@ class PathAppraiser(object):
         return ratio
 
     @staticmethod
-    def get_danger_in_position(cell_index, player, graph, distances, current_map, all_cells, level_size):
+    def get_danger_in_position(cell_index, my_char, graph, distances, current_map, all_cells, level_size):
         """From 0 to 1. 0 worst case, 1 no danger whatsoever"""
+        my_player = my_char.owner_uuid
         danger_value = 1
         enemies_ready = 0
         for index, char in all_cells.items():
-            if char.owner_uuid != player:
+            if char.owner_uuid != my_player:
                 enemy_map = PathAppraiser.generate_player_map(current_map, all_cells, char.owner_uuid)
                 enemy_destinies = tuple(path[-1] for path in char.get_paths(graph, distances, enemy_map, index, level_size))
                 if cell_index in enemy_destinies:   #If there is another char of another player that can move here
                     enemies_ready += 1
+                    if char.value < my_char.value:
+                        enemies_ready += 1
+                        if my_char.value-char.value > 3:
+                            enemies_ready += 1
         return danger_value/(enemies_ready+1)
 
     @staticmethod

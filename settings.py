@@ -100,7 +100,7 @@ class STRINGS:
     """Strings that make up all the configuration options on the different menus. There is also some list/tuples with other purposes tho.
     Also contain parameters related to texts."""
     CHARS_PER_LINE = 36 #When using the return_lines_number method in utility_box.py, it will calculate the result according to this.
-    GAMEMODES = ('Custom', 'Classic', 'Great Wheel')
+    GAMEMODES = ('Classic', 'Great Wheel', 'Custom')
     PLAYER_NAMES = ['Mitches', 'Hayesshine', 'Rolbo Gordonggins', 'Spencerpop', 'Palka', 'Rainrobinson', 'Kingolas', 'Zippotudo',
                     'Zimrcia', 'Coxobby Ohmswilson', 'Uwotm8', 'Orangeman', 'npc', 'Totallynot Arobot', 'Bigba Lshanging']
     BOARD_SIZES = ('Normal', 'Lite', 'Small', 'Extra', 'Huge', 'Insane', 'MemoryError')

@@ -154,7 +154,7 @@ class NetworkBoard(Board):
             my_public_ip = self.server.public_ip if self.server else IpGetter.get_public_ip()
             result = UtilityBox.do_request(IpGetter.get_servers_table_dir()+NETWORK.TABLE_SERVERS_GET_ALL_ENDPOINT)
             servers = []
-            for server in result['data']:   #TOODO PRINT THIS
+            for server in result['data']:
                 date = datetime.datetime.fromtimestamp(float(server['timestamp'])).strftime('%m-%d %H:%M')
                 if my_public_ip and my_public_ip == server['ip']:   #If we are in the same local network, lets show the local ip
                     data = (server['alias'], server['local_ip'], server['port'], server['players']+'/'+server['total_players'], date)
@@ -234,7 +234,7 @@ class NetworkBoard(Board):
         Also, sends the a random throw of a dice to decide the order of the players.
         Args:
             host (boolean): Flag saying if we are the host or not (Just a lowly client)."""
-        print("SEND HANDSHAKE")
+        # print("SEND HANDSHAKE")
         self.send_data({"host": host, "id": self.uuid})
         if host:
             self.send_data_async({"params": self.get_board_params()})
@@ -339,7 +339,6 @@ class NetworkBoard(Board):
                         # print("name "+player.name+", uuid "+str(player.uuid)+", charid "+str(character['id']))
                         char = constructor(player.uuid, character['id'], (0, 0), size,\
                                             self.resolution, sprite_folder, obj_uuid=character['uuid'])
-                                        #    player_uuid, id_, position, size, canvas_size, sprites_path, obj_uuid=None, **params):
                         if player.uuid == self.my_player:
                             char.set_active(True)
                         player.characters.add(char)
@@ -387,6 +386,17 @@ class NetworkBoard(Board):
             last_cell.kill_char()                       #Not really killing, just want to empty the last cell
             self.update_cells(last_cell, dest_cell)
             self.change_turn.set()
+            #Graphic effects and such
+            try:
+                self.last_movement = (last_cell.text_pos, dest_cell.text_pos)
+                self.last_real_movm = (last_cell.index, dest_cell.index)
+                self.last_char = char
+                #Showing effects
+                self.play_effect('start_teleport', last_cell.rect.center)
+                self.play_effect('end_teleport', dest_cell.rect.center)
+                self.play_sound('success')
+            except:
+                pass
         elif "end_turn" in response:    #Next turn with the player that should play it
             self.thinking_sprite.sprite.set_visible(False)
             self.change_turn.wait()
@@ -453,8 +463,8 @@ class NetworkBoard(Board):
             compression (int, default=None):    Level of compression of the data when sending it.
         Returns:
             (Dict->Any:Any):    Reply of the server. Usually a Success=True, or an ACK=True."""
+        tries = 0
         while True:
-            tries = 0
             try:
                 self.client.send(data_to_send, compression=compression)
                 reply = self.client.receive(True)
@@ -465,6 +475,7 @@ class NetworkBoard(Board):
             except MastermindErrorClient as err:
                 tries += 1
                 LOG.log('warning', 'SEND_DATA: There was a problem sending/receiving the packet in the sockets in the try ', tries,', trying again...')
+                LOG.log('warning', 'Data is ', data_to_send)
                 LOG.log('warning', err)
                 if tries > max_tries:
                     raise MastermindErrorClient("Max tries reached, aborting")

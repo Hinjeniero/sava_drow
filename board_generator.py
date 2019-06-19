@@ -58,7 +58,7 @@ class BoardGenerator(object):
         self.cpu_timeout = 10
         self.human_players = 2
         self.computer_players_mode = 'random'
-        self.game_mode = 'custom'
+        self.game_mode = 'classic'
         self.prefab_size = 'default'
         self.characters_params = CHARACTERS.CHARACTER_SETTINGS.copy()
         self.board_params = {'quadrants_overlap': True, 'cell_texture': PATHS.CELL_BASIC}

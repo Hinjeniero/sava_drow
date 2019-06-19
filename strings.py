@@ -44,12 +44,25 @@ class CONFIG_MENU_DIALOGS:
 
     HOLY_CHAMPIONS_NUMBER_DIALOG="Number of holy champions per player. If the total number of characters surpass the free cell zones for each player, the board won't be spawned."
 
+class GRAPHIC_MENU_DIALOGS:
+    """Help dialogs that appear in the graphics menu. They appear when middle-clicking each option, explaining what this one changes."""
+    RESOLUTION_DIALOG= "Changes the size of this window and its elements. Higher values will result in a negative impact in the performance of the game."
+    FPS_DIALOG="The upper limit of the frames that are renderized in each second. Higher values will result in a more smooth but demanding experience."
+    FULLSCREEN_DIALOG="The ON value changes this window to fullscreen mode."
+    MENU_BG_DIALOG="Prefabricated animations that will play in the background of the menus."
+    BOARD_BG_DIALOG="Prefabricated animations that will play in the background of the board. Only sets the change after generating it."
+
+class BOARD_DIALOGS:
+    FITNESS_BUTTON = "When this button is activated, the fitness values will be shown when picking up a character."
+    HELP_BUTTON = "When this button is activated, the middle click will show a help dialog in each character, explaining its movement."
+    ROUND_TIMER = "Shows in the IA turns. Its a counter showing the time of the round that is left."
+
 class TUTORIAL:
     """Help dialogs that appear in the tutorial. Some of them appear in order, and some when interacting with some element for the first time."""
     MESSAGE_BOARD = "This is the board. It's composed of the cells themselves, placed in a circular shape. We will call the circles 'circumferences', and the paths that connect between them rank or interpath."
     MESSAGE_MOVE_PAWN = "The pawn can move one space along any circumferences or rank, as long as the movement brings them closer to an enemy piece."
     MESSAGE_DESTINIES_BLINKING = "The possible destinies appear when you pick up any character."
-    MESSAGE_FITNESS_NUMBERS = ""
+    MESSAGE_FITNESS_NUMBERS = "The value of a movement to a destiny depends on 3 things: If the danger the piece is in is reduced, the value of the enemy piece captured in that location, and if you can bait enemies by moving there."
     MESSAGE_MOVE_WARRIOR = "Due to their superior stamina, the warriors can move for two turns instead of one, capturing in each one. But because the heavy armor that they wear, each turn will only yield an one space movement"
     MESSAGE_MOVE_WIZARD = "A wizard can travel to positions that are three linked spaces away, regardless of intervening pieces."
     MESSAGE_MOVE_PRIESTESS = "Priestess can move along any rank or circumference if there are not intervening pieces in the middle of the path."
@@ -64,6 +77,7 @@ class TUTORIAL:
             MESSAGE_MOVE_MATRONMOTHER, MESSAGE_MOVE_HOLYCHAMPION, MESSAGE_DICE, MESSAGE_HOVER_CELL]
 
 class CHARACTERS_DIALOGS:
+    """Help dialogs that appear in each character."""
     MOVEMENT_PAWN = "The pawn can move one space along any connected path if the movement brings him closer to an enemy piece in that direct path."
     MOVEMENT_WARRIOR = "Warriors can move for two turns with no restrictions. In each turn moves one space in any direction."
     MOVEMENT_WIZARD = "A wizard can travel three linked spaces away. Intervening pieces don't matter."

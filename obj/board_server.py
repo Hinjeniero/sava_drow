@@ -93,8 +93,8 @@ class Server(MastermindServerTCP):
             return {"success": True, "msg": "The client "+str(id_)+" connection object was updated successfully."}
         elif len(self.clients.values()) < self.total_players:
             self.clients.add_item(id_, conn_client)
-            # if not self.private_server:
-            #     self.update_server()
+            if not self.private_server:
+                self.update_server()
             return {"success": True, "msg": "The client "+str(id_)+" was added successfully."}
         else:
             return {"success": False, "error": "The server is full."}

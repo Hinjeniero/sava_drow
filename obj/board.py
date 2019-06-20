@@ -40,7 +40,6 @@ from obj.utilities.logger import Logger as LOG
 from obj.utilities.logger import Parser
 from obj.utilities.surface_loader import ResizedSurface, no_size_limit
 #numpy.set_printoptions(threshold=numpy.nan)
-SHIT = 0
 class Board(Screen):
     """Board class. Inherits from Screen.
     Have all the methods and attributes to make the execution of a turn-based board game possible.
@@ -133,6 +132,7 @@ class Board(Screen):
                                 max_levels, path_color, path_width.
         """
         super().__init__(id_, event_id, resolution, **params)
+        self.start_timestamp = 0
         self.turn           = 0
         self.char_turns     = 0
         #Graphic elements
@@ -208,6 +208,7 @@ class Board(Screen):
     #ALL THE GENERATION OF ELEMENTS AND PLAYERS NEEDED
     @staticmethod
     def generate(self, empty, initial_dice_screen, *players):
+        self.start_timestamp = time.time()
         UtilityBox.join_dicts(self.params, Board.__default_config)
         #INIT
         self.ai_turn_flag.set()
@@ -785,6 +786,8 @@ class Board(Screen):
             self.current_player.turn -= 1  #To make the next player turn be the self.players[0]
             #End of that gibberish
             self.started = True
+            LOG.log('ERROR', 'Generating the board and all of its players took ', time.time()-self.start_timestamp," seconds.")
+            self.start_timestamp = time.time()
             self.next_player_turn()
 
     def get_event(self, id):

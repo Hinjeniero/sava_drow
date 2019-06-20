@@ -114,7 +114,7 @@ def generate_ui_elements_different_sizes(results, thread_list, user_event_id, **
         thread_list.append(UIElement.threaded_factory(results, id_, command, user_event_id, position, size, INIT_PARAMS.INITIAL_RESOLUTION, **params))
 
 @run_async
-def create_main_menu(result, test=False, animated_background=None):
+def create_main_menu(result, test=False, animated_background=None, animations=True):
     """Creates the main menu, with all its elements. 
     Buttons contains: Start game, Start new online game, Continue last game (Grayed out at the start), Game, sound, and graphic settings.
     This method is threaded, that meants that it will return the thread working on it, and the final result will be contained in an input structure.
@@ -153,7 +153,7 @@ def create_main_menu(result, test=False, animated_background=None):
     result.append(main_menu) 
 
 @run_async
-def create_game_menu(result, animated_background=None):
+def create_game_menu(result, animated_background=None, animations=True):
     """Creates the game  menu, with all its elements. 
     Buttons contains: Player vs Computer, Computer vs computer, Player vs Player, the IA settings used in the case of a computer player, and
         a top button Play tutorial (If its the first time that you initiated the game), or a bottom button Replay tutorial.
@@ -201,12 +201,13 @@ def create_game_menu(result, animated_background=None):
     #Create Menu
     start_menu   = Menu('game_menu', USEREVENTS.MAINMENU_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, *elements, animated_background=animated_background, background_path=PATHS.DEFAULT_BG,\
                 songs_paths=MENU_SONGS, do_align=False)
-    start_menu.add_animation(AnimationGenerator.floating_sprite(INIT_PARAMS.INITIAL_RESOLUTION, (0.5, 0.075), (0.5, 0.125), tuple(0.15*x for x in INIT_PARAMS.INITIAL_RESOLUTION),\
-                                                                4, INIT_PARAMS.ALL_FPS, PATHS.IMAGE_FOLDER, keywords=('spider',), text="LOCAL GAMES"))
+    if animations:
+        start_menu.add_animation(AnimationGenerator.floating_sprite(INIT_PARAMS.INITIAL_RESOLUTION, (0.5, 0.075), (0.5, 0.125), tuple(0.15*x for x in INIT_PARAMS.INITIAL_RESOLUTION),\
+                                                                    4, INIT_PARAMS.ALL_FPS, PATHS.IMAGE_FOLDER, keywords=('spider',), text="LOCAL GAMES"))
     result.append(start_menu)
 
 @run_async
-def create_online_menu(result, animated_background=None):
+def create_online_menu(result, animated_background=None, animations=True):
     """Creates the online menu, with all its elements. 
     Buttons contains: Host public game, host private game, connect to public server, and to private server.
     The IA settings used in the case of a computer player, and
@@ -243,12 +244,13 @@ def create_online_menu(result, animated_background=None):
     #Create Menu
     start_menu = Menu('online_menu', USEREVENTS.MAINMENU_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, *elements, animated_background=animated_background, background_path=PATHS.DEFAULT_BG,\
                     songs_paths=MENU_SONGS, do_align=False)
-    start_menu.add_animation(AnimationGenerator.floating_sprite(INIT_PARAMS.INITIAL_RESOLUTION, (0.5, 0.075), (0.5, 0.125), tuple(0.15*x for x in INIT_PARAMS.INITIAL_RESOLUTION),\
-                                                                4, INIT_PARAMS.ALL_FPS, PATHS.IMAGE_FOLDER, keywords=('spider',), text="MULTIPLAYER GAMES"))
+    if animations:
+        start_menu.add_animation(AnimationGenerator.floating_sprite(INIT_PARAMS.INITIAL_RESOLUTION, (0.5, 0.075), (0.5, 0.125), tuple(0.15*x for x in INIT_PARAMS.INITIAL_RESOLUTION),\
+                                                                    4, INIT_PARAMS.ALL_FPS, PATHS.IMAGE_FOLDER, keywords=('spider',), text="MULTIPLAYER GAMES"))
     result.append(start_menu)
 
 @run_async
-def create_config_menu(result, animated_background=None):
+def create_config_menu(result, animated_background=None, animations=True):
     """Creates the configuration menu of the game, with all its elements. 
     Each button has a explicative dialog that is shown when the middle mouse button is presesd.
 
@@ -291,7 +293,7 @@ def create_config_menu(result, animated_background=None):
     result.append(params_menu)
 
 @run_async
-def create_sound_menu(result, animated_background=None):
+def create_sound_menu(result, animated_background=None, animations=True):
     """Creates the configuration menu of the game sound and music, with all its elements. 
     Each button has a explicative dialog that is shown when the middle mouse button is presesd.
 
@@ -319,12 +321,13 @@ def create_sound_menu(result, animated_background=None):
     #Menu creation
     sound_menu = Menu("menu_volume_music", USEREVENTS.SOUND_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, *elements, animated_background=animated_background, background_path=PATHS.DEFAULT_BG,\
                         do_align=False, songs_paths=None)
-    sound_menu.add_animation(AnimationGenerator.characters_crossing_screen(INIT_PARAMS.INITIAL_RESOLUTION, *INIT_PARAMS.ALL_FPS))
+    if animations:
+        sound_menu.add_animation(AnimationGenerator.characters_crossing_screen(INIT_PARAMS.INITIAL_RESOLUTION, *INIT_PARAMS.ALL_FPS))
     sound_menu.enable_sprite('board', 'sound', state=False), sound_menu.enable_sprite('board', 'music', state=False), sound_menu.enable_sprite('board', 'song', state=False)
     result.append(sound_menu)
 
 @run_async
-def create_video_menu(result, animated_background=None):
+def create_video_menu(result, animated_background=None, animations=True):
     """Creates the configuration menu of the game graphics, with all its elements. 
     Each button has a explicative dialog that is shown when the middle mouse button is presesd.
 
@@ -351,7 +354,8 @@ def create_video_menu(result, animated_background=None):
     #Menu creation
     graphics_menu = Menu("menu_graphics_display", USEREVENTS.GRAPHIC_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, *elements, animated_background=animated_background, background_path=PATHS.DEFAULT_BG,\
                     do_align=False, songs_paths=None)
-    graphics_menu.add_animation(AnimationGenerator.character_teleporting_screen(INIT_PARAMS.INITIAL_RESOLUTION, *INIT_PARAMS.ALL_FPS))
+    if animations:
+        graphics_menu.add_animation(AnimationGenerator.character_teleporting_screen(INIT_PARAMS.INITIAL_RESOLUTION, *INIT_PARAMS.ALL_FPS))
     result.append(graphics_menu)
 
 def create_board_params():
@@ -377,7 +381,7 @@ def create_board_params():
 
 @time_it
 @no_size_limit
-def pre_start(test=False):
+def pre_start(test=False, animations=True):
     """First method called. Start the pygame params and does the first drawing while everything loads.
     This loading includes creating the menus, the game instance, adding those menus, and returning the resulting game instance.
     Returns:
@@ -389,9 +393,11 @@ def pre_start(test=False):
     menus = []
 
     animated_bg = AnimationGenerator.factory(STRINGS.INITIAL_ANIMATED_BG, INIT_PARAMS.INITIAL_RESOLUTION, PARAMS.ANIMATION_TIME, INIT_PARAMS.ALL_FPS, INIT_PARAMS.INITIAL_FPS)
-    threads = [create_main_menu(menus, test=test, animated_background=animated_bg), create_game_menu(menus, animated_background=animated_bg), create_online_menu(menus, animated_background=animated_bg)]
+    threads = [create_main_menu(menus, test=test, animated_background=animated_bg, animations=animations), create_game_menu(menus, animated_background=animated_bg, animations=animations),\
+            create_online_menu(menus, animated_background=animated_bg, animations=animations)]
     if not test:
-        threads.extend([create_sound_menu(menus, animated_background=animated_bg), create_config_menu(menus, animated_background=animated_bg), create_video_menu(menus, animated_background=animated_bg)])
+        threads.extend([create_sound_menu(menus, animated_background=animated_bg, animations=animations), create_config_menu(menus, animated_background=animated_bg, animations=animations),\
+            create_video_menu(menus, animated_background=animated_bg, animations=animations)])
     for menu_end_event in threads: menu_end_event.wait()
     game.add_screens(*menus)
     game.update_board_params(**create_board_params())
@@ -410,13 +416,22 @@ if __name__ == "__main__":
         NETWORK.LOCAL_IP = IpGetter.get_local_ip()
     except:
         pass
-    arguments = tuple(arg[1:] for arg in sys.argv if arg[0]=='-')
+    arguments = tuple(arg[1:].lower() for arg in sys.argv if arg[0]=='-')
     # print("All arguments are: "+str(sys.argv))
     print("Recognized arguments: "+str(arguments))
     test = True if any('test' in arg for arg in arguments) else False
     low = True if any('low' in arg for arg in arguments) else False
     if low:
-        test = True
-        INIT_PARAMS.INITIAL_RESOLUTION = min(INIT_PARAMS.RESOLUTIONS)
-    game = pre_start(test=test) 
+        new_initial_resolution =  min(INIT_PARAMS.RESOLUTIONS)
+        INIT_PARAMS.RESOLUTIONS = tuple(res if res != new_initial_resolution and res != INIT_PARAMS.INITIAL_RESOLUTION else INIT_PARAMS.INITIAL_RESOLUTION if res == new_initial_resolution\
+                                        else new_initial_resolution for res in INIT_PARAMS.RESOLUTIONS) #S
+        INIT_PARAMS.INITIAL_RESOLUTION = new_initial_resolution
+    high = True if any('high' in arg for arg in arguments) else False
+    if high:
+        new_initial_resolution = max(INIT_PARAMS.RESOLUTIONS)
+        INIT_PARAMS.RESOLUTIONS = tuple(res if res != new_initial_resolution and res != INIT_PARAMS.INITIAL_RESOLUTION else INIT_PARAMS.INITIAL_RESOLUTION if res == new_initial_resolution\
+                                        else new_initial_resolution for res in INIT_PARAMS.RESOLUTIONS) #Swapping places of the resolutions
+        INIT_PARAMS.INITIAL_RESOLUTION = new_initial_resolution
+    animations = False if any('no_anim' in arg for arg in arguments) else True
+    game = pre_start(test=test, animations=animations) 
     game.start('main', 'menu')

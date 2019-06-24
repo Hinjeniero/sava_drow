@@ -119,7 +119,7 @@ class ComputerPlayer(Player):
         return all_fitnesses
 
     #TODO FOR NOW USING -1 AS STATE HASH, CHANGE THAT.
-    def get_movement(self, board_hash, current_map, board_cells, my_player, all_players, chars_allowed=(), max_nodes=100):
+    def get_movement(self, board_hash, current_map, board_cells, my_player, all_players, chars_allowed=(), restricted_movements=(), max_nodes=100):
         """Gets as an input the current state of the board, and based on the current ai mode, returns what it undestands to be
         the best course of action (The best next movement).
         Args:
@@ -133,11 +133,17 @@ class ComputerPlayer(Player):
         Returns:
             (Tuple->int, int):  The best movement calculated by the underlying algorithm. (source, destiny).
         """
-        if len(chars_allowed)>0:
-            all_cells = {cell.get_real_index(): cell.get_char() for cell in board_cells if cell.has_char() and cell.get_char() in chars_allowed}
-        else:
-            all_cells = {cell.get_real_index(): cell.get_char() for cell in board_cells if cell.has_char()}
+        all_cells = {cell.get_real_index(): cell.get_char() for cell in board_cells if cell.has_char()}
+        allowed_movements = []
+        for char in chars_allowed:  #If its empty, it wont enter in the loop
+            allowed_movements.extend(char.get_paths(self.graph, self.distances, current_map, char.current_pos, self.circum_size))
+            # allowed_movements.append()
+            # all_cells = {cell.get_real_index(): cell.get_char() for cell in board_cells if cell.has_char() and cell.get_char() in chars_allowed}
+            # print("Allowed movements "+str(allowed_movements))
+        #FORMAT: [(movements, score), ...] -- [((23, 22), 0.4332432), ((0, 17), 0.123412)] 
         fitnesses = self.generate_fitnesses(all_cells, my_player, self.graph, self.distances, current_map, self.circum_size)
+        #Filtering the fitnesses for the first three modes
+        fitnesses = [fitness for fitness in fitnesses if fitness[0] not in restricted_movements and (not allowed_movements or fitness[0] in allowed_movements)]
         if 'random' in self.ai_mode:
             if 'half' in self.ai_mode:
                 return self.generate_random_movement(fitnesses, somewhat_random=True)
@@ -147,12 +153,15 @@ class ComputerPlayer(Player):
         #The other methods need the all_cells structure  
         if 'alpha' in self.ai_mode:
             if 'order' in self.ai_mode:
-                return self.generate_alpha_beta(max_nodes, all_cells, current_map, my_player, all_players, ordering=True)    
-            return self.generate_alpha_beta(max_nodes, all_cells, current_map, my_player, all_players)
+                return self.generate_alpha_beta(max_nodes, all_cells, current_map, my_player, all_players, allowed_movs=allowed_movements,\
+                                                restricted_movs=restricted_movements, ordering=True)    
+            return self.generate_alpha_beta(max_nodes, all_cells, current_map, my_player, all_players, allowed_movs=allowed_movements,\
+                                                restricted_movs=restricted_movements)
         if 'monte' in self.ai_mode:
-            return MonteCarloSearch.monte_carlo_tree_search(self.graph, self.distances, self.circum_size, board_hash, all_cells, current_map, my_player, all_players, self.round_timeout)
+            return MonteCarloSearch.monte_carlo_tree_search(self.graph, self.distances, self.circum_size, board_hash, all_cells, current_map, my_player, all_players,\
+                                                            self.round_timeout, allowed_movs=allowed_movements, restricted_movs=restricted_movements)
             
-    def generate_random_movement(self, fitnesses, totally_random=False, somewhat_random=False):
+    def generate_random_movement(self, fitnesses, totally_random=False, somewhat_random=False, allowed_movements=(), restricted_movements=()):
         """Algorithm to return a next movement based in randomness and the score at which are rated the different possible moves.
         Have 3 modes:
             Totally random: A movement will be chosen from the possible ones at random.
@@ -178,7 +187,7 @@ class ComputerPlayer(Player):
             return random.choice(only_best_movements)
 
     @time_it
-    def generate_alpha_beta(self, max_nodes, all_cells, current_map, my_player_uuid, all_players, ordering=False):
+    def generate_alpha_beta(self, max_nodes, all_cells, current_map, my_player_uuid, all_players, allowed_movs=(), restricted_movs=(), ordering=False):
         """Heuristic that uses the alpha-beta pruning to explore the game tree, reaching until the self.max_depth attribute, and
         returning the evaluation of the board at that point. Then uses that value to cut off game tree branches that, obviously, would have
         never ocurred in a normal gameplay.
@@ -198,13 +207,14 @@ class ComputerPlayer(Player):
         my_player_index = next((i for i in range(0, len(all_players)) if all_players[i] == my_player_uuid))
         all_paths = {}
         start = time.time()
-        pruned = {x: PersistantNumber() for x in range (1, self.max_depth)}
+        pruned = {x: PersistantNumber() for x in range (0, self.max_depth)}
         self.minimax(my_player_index, my_player_index, all_players, all_cells, current_map, all_paths, [], 0, True, -math.inf, math.inf, start, self.round_timeout, pruned, ordering)
         if time.time()-start > self.round_timeout: #If we reached the timeout...
             self.increase_timeout_count()
         print("The number of paths tested by alpha beta is "+str(len(all_paths.keys())), " with a max depth setting of "+str(self.max_depth)+", in a time of "+str(time.time()-start)+" seconds.")
         print("The number of pruned branches at different depths was "+str({str(key): str(value) for key, value in pruned.items()}))
-        rated_movements = [((dest[0], dest[1]), score) for dest, score in all_paths.items()]
+        rated_movements = [((dest[0], dest[1]), score) for dest, score in all_paths.items()\
+                            if (dest[0], dest[1]) not in restricted_movs and (not allowed_movs or (dest[0], dest[1]) in allowed_movs)]
         rated_movements.sort(key=lambda dest:dest[1], reverse=True)
         return rated_movements[0][0]    #Returning only the movement, we have no use for the score
 
@@ -226,7 +236,7 @@ class ComputerPlayer(Player):
             (Dict->int, Tuple->ints):   Each key of the dict, is the index of the source cell, and each value, is a tuple containing all
                                         the possible destiny cells from that source cell.
         """
-        destinies = []  #TODO Add if any char is in more than turn 0, only get the destinies of that char.
+        destinies = []
         for cell_index, char_inside_cell in all_cells.items():
             this_index_destinations = []
             if char_inside_cell.owner_uuid == current_player and my_turn\
@@ -266,14 +276,14 @@ class ComputerPlayer(Player):
             pruned (:obj: PersistantNumber): Number of branches that have been cut off in the execution.
             ordering (boolean): True if we want to order the possible destinies in each iteration. More pruning, but less iterations.
         """
-        if depth is self.max_depth or (time.time()-start_time > timeout):   #TODO or board.end_game is true!
+        if depth is self.max_depth or (time.time()-start_time > timeout) or ComputerPlayer.at_end_game(all_cells):
             value = None
             try:
                 value = sum(char.value for char in all_cells.values() if char.owner_uuid == all_players[my_player_index])\
                     /sum(char.value for char in all_cells.values() if char.owner_uuid != all_players[my_player_index])   #My chars left minus his chars left
             except ZeroDivisionError:
                 value = sum(char.value for char in all_cells.values() if char.owner_uuid == all_players[my_player_index])
-            all_paths[tuple(path)] = value  #This could also do it using only the first movm as key,since its the only one we are interested in. THe rest are garbage, who did those mvnmsnts? no idea
+            all_paths[tuple(path)] = value  #This could also do it using only the first movm as key,since its the only one we are interested in. THe rest are garbage, who did those movements? no info about it
             #del path[0] #Lets get that index out of here
             return value
         if isMaximizingPlayer:
@@ -322,8 +332,10 @@ class ComputerPlayer(Player):
                 bestVal = max(bestVal, value) 
                 alpha = max(alpha, value)
                 if beta <= value:   #Pruning
+                    # print("SHIEEEEET ,beta "+str(beta)+", value "+str(value))
                     pruned[depth].number += 1
                     return bestVal
+            # print("MOVEMENTS MAX ARE "+str(ComputerPlayer.generate_movements(self.graph, self.distances, self.circum_size, all_cells, current_map, all_players[current_player_index], ordering=ordering)))
             return bestVal
         else:   #Minimizing player
             bestVal = math.inf  
@@ -367,6 +379,7 @@ class ComputerPlayer(Player):
                 if beta <= alpha:   #Pruning
                     pruned[depth].number += 1
                     return bestVal
+            # print("MOVEMENTS MIN ARE "+str(ComputerPlayer.generate_movements(self.graph, self.distances, self.circum_size, all_cells, current_map, all_players[current_player_index], ordering=ordering)))
             return bestVal
 
     @staticmethod
@@ -411,6 +424,20 @@ class ComputerPlayer(Player):
                 current_map[cell_index].ally = False
                 current_map[cell_index].enemy = True
             current_map[cell_index].update_accessibility(char)
+
+    @staticmethod
+    def at_end_game(all_cells):
+        """Checks if the board game has reached and end. Does this by checking all the essential pieces left, and checking if they belong to more
+        than one player. (If there are only essential pieces from a player left)
+        Args:
+            all_cells (Dict -- cell_index:char in there):   All the cells with chars in the board
+        Returns:
+            (boolean):  True if the board state is final, this means, the game is over. False otherwise."""
+        all_essential_pieces = []
+        for char in all_cells.values():
+            if char.essential:
+                all_essential_pieces.append(char)
+        return False if any(char.owner_uuid != all_essential_pieces[0].owner_uuid for char in all_essential_pieces) else True
 
 #Monte carlo tree search from here on
 class Node(object):
@@ -500,17 +527,6 @@ class Node(object):
             return math.inf
         return (self.total_value/self.total_n)+(exploration_const*(math.sqrt(math.log(self.parent.total_n)/self.total_n))) #Upper Confidence bound applied to trees
 
-    def at_end_game(self):
-        """Checks if the board game has reached and end. Does this by checking all the essential pieces left, and checking if they belong to more
-        than one player. (If there are only essential pieces from a player left)
-        Returns:
-            (boolean):  True if the board state is final, this means, the game is over. False otherwise."""
-        all_essential_pieces = []
-        for char in self.board_state.values():
-            if char.essential:
-                all_essential_pieces.append(char)
-        return False if any(char.owner_uuid != all_essential_pieces[0].owner_uuid for char in all_essential_pieces) else True
-
     def board_evaluation(self, player):
         """Calculates a score for the current board, taking into account the input player.
         The higher the total value char of the input player is, the higher the score.
@@ -536,7 +552,7 @@ class MonteCarloSearch(object):
     """
     EXPLORATION_CONSTANT = 1.5
     @staticmethod
-    def monte_carlo_tree_search(paths_graph, distances, circum_size, board_hash, all_cells, current_map, my_player, all_players, round_timeout): #10 seconds of computational power
+    def monte_carlo_tree_search(paths_graph, distances, circum_size, board_hash, all_cells, current_map, my_player, all_players, round_timeout, allowed_movs=(), restricted_movs=()): #10 seconds of computational power
         my_player_index = next((i for i in range(0, len(all_players)) if all_players[i] == my_player))
         current_player_index = my_player_index
         root_node = Node(None, paths_graph, distances, circum_size, board_hash, all_cells, current_map, (-1, -1))
@@ -552,7 +568,8 @@ class MonteCarloSearch(object):
             ComputerPlayer.change_map(current_map, all_cells, all_players[current_player_index])    #Change current map to be of the next player
             iters += 1
         print("MonteCarlo method completed "+str(iters)+" iterations of the complete algorithm in "+str(time.time()-start)+" seconds")
-        return max((node for node in root_node.children), key=lambda node:node.total_n).previous_movement
+        nodes = (node for node in root_node.children if node.previous_movement not in restricted_movs and (not allowed_movs or node.previous_movement in allowed_movs))
+        return max(nodes, key=lambda node:node.total_n).previous_movement
 
     @staticmethod
     def traverse(node, current_player):
@@ -582,7 +599,7 @@ class MonteCarloSearch(object):
         Returns:
             (float):    The value of the end board that we have reached through simulation (value for my player)."""            
         current_player = current_player_index   #We copy this (basic type) so we don't modify it for the calling method
-        while not node.at_end_game():
+        while not ComputerPlayer.at_end_game(node.board_state):
             node = MonteCarloSearch.rollout_policy(node, all_players[current_player])
             current_player = current_player+1 if current_player < (len(all_players)-1) else 0
         return node.board_evaluation(all_players[my_player_index])

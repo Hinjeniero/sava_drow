@@ -1308,9 +1308,12 @@ class Board(Screen):
         self.ai_turn = True
         self.thinking_sprite.sprite.set_visible(True)
         char_that_must_move = []
+        restricted_movements = []
         if self.char_turns is not 0:    #If we moved a character that can move more than once
             char_that_must_move.append(self.get_cell_by_real_index(self.last_real_movm[-1]).get_char())
-        movement = self.current_player.get_movement(self.__hash__(), self.current_map, self.cells, self.current_player.uuid, [player.uuid for player in self.players], chars_allowed=char_that_must_move)
+            restricted_movements = self.last_real_movm
+        movement = self.current_player.get_movement(self.__hash__(), self.current_map, self.cells, self.current_player.uuid, [player.uuid for player in self.players],\
+                                                    chars_allowed=char_that_must_move, restricted_movements=restricted_movements)
         LOG.log('info', "Movement chosen was ", movement)
         character = self.get_cell_by_real_index(movement[0]).get_char()
         #print("CHOSEN CHAR "+character.get_type()+"MOVEMENT CHOSEN WAS "+str(movement)+", in turn "+str(self.turn))

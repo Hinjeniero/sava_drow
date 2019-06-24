@@ -607,6 +607,9 @@ class Character(AnimatedSprite):
     def __hash__(self):
         return hash((self.uuid, self.owner_uuid, self.id))
 
+    def __str__(self):
+        return super().__str__()+', '+str(self.id)+', '+str(self.uuid)
+
 class Warrior(Character):
     """Warrior class. Inherits from Character.
     Warrior can move in 2 turns in 2 linked spaces (1 per turn). 

@@ -237,28 +237,31 @@ class Screen(object):
                                                 Said booleans will be True if that specific key was pressed.
         """
         self.play_sound('key')
-        if keys_pressed[pygame.K_DOWN]:
-            if self.dialog:
-                pass
-            elif self.hit_sprite == self.scroll_sprite != None:
-                self.send_to_active_sprite('right_arrow', -1)
-        if keys_pressed[pygame.K_UP]:
-            if self.dialog:
-                pass
-            elif self.hit_sprite == self.scroll_sprite != None:
-                self.send_to_active_sprite('left_arrow', -1)
-        if keys_pressed[pygame.K_KP_ENTER] or keys_pressed[pygame.K_SPACE]:
-            if self.dialog:
-                self.dialog.trigger_all_elements()
-        if keys_pressed[pygame.K_LEFT]:
-            if self.active_sprite_in_dialog() and self.hit_sprite.has_input:
-                self.send_to_active_sprite('left_arrow', -1)
-        if keys_pressed[pygame.K_RIGHT]:
-            if self.active_sprite_in_dialog() and self.hit_sprite.has_input:
-                self.send_to_active_sprite('right_arrow', -1)
-        else:
-            if self.dialog and self.dialog.elements.has(self.hit_sprite) and self.hit_sprite.has_input:
-                self.send_to_active_sprite('add_input_character', pygame.key.name(event.key))
+        try:
+            if keys_pressed[pygame.K_DOWN]:
+                if self.dialog:
+                    pass
+                elif self.hit_sprite == self.scroll_sprite != None:
+                    self.send_to_active_sprite('right_arrow', -1)
+            if keys_pressed[pygame.K_UP]:
+                if self.dialog:
+                    pass
+                elif self.hit_sprite == self.scroll_sprite != None:
+                    self.send_to_active_sprite('left_arrow', -1)
+            if keys_pressed[pygame.K_KP_ENTER] or keys_pressed[pygame.K_SPACE]:
+                if self.dialog:
+                    self.dialog.trigger_all_elements()
+            if keys_pressed[pygame.K_LEFT]:
+                if self.active_sprite_in_dialog() and self.hit_sprite.has_input:
+                    self.send_to_active_sprite('left_arrow', -1)
+            if keys_pressed[pygame.K_RIGHT]:
+                if self.active_sprite_in_dialog() and self.hit_sprite.has_input:
+                    self.send_to_active_sprite('right_arrow', -1)
+            else:
+                if self.dialog and self.dialog.elements.has(self.hit_sprite) and self.hit_sprite.has_input:
+                    self.send_to_active_sprite('add_input_character', pygame.key.name(event.key))
+        except AttributeError:  #In the case some of the objects don't have the attribute that we are asking for
+            LOG.error_traceback()
 
     def mouse_handler(self, event, mouse_buttons, mouse_movement, mouse_position):
         """Handles any mouse related pygame event. This allows for user interaction with the object.

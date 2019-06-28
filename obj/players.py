@@ -30,7 +30,7 @@ from obj.paths import Restriction, Movements
 from obj.utilities.exceptions import BadCharacterInitException, StateNotFoundException, SwapFailedException
 from obj.utilities.resizer import Resizer
 from obj.utilities.logger import Logger as LOG
-from obj.utilities.decorators import run_async
+from obj.utilities.decorators import run_async, time_it
 from obj.utilities.utility_box import UtilityBox
 from obj.utilities.surface_loader import no_size_limit, ResizedSurface
 
@@ -443,6 +443,7 @@ class Character(AnimatedSprite):
     def demote(self):
         self.essential = False
 
+    @time_it
     def set_paths(self, graph, distances, level_size, movement_restriction):
         """Sets all the possible paths for each cell (of a specific subclass) with this overloaded method.
         Args:
@@ -450,6 +451,7 @@ class Character(AnimatedSprite):
             distances (:obj: numpy:int):    Graph of distances between cells connected (without changing direction).
             level_size (int):  Number of cell in one circumference.
             movement_restriction (:obj: Restriction):   The movement restriction to which to set the possible destinies."""
+        print(self.id)
         Movements.set_movements(graph, distances, movement_restriction, level_size)
 
     def get_master(self):

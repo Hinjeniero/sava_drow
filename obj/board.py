@@ -755,10 +755,13 @@ class Board(Screen):
         """Changes the resolution of the Screen. It also resizes all the Screen elements.
         Args:
             resolution (:tuple: int, int):  Resolution to set. In pixels."""
+        print("hello")
         super().set_resolution(resolution)
+        print("screen done right")
         self.loading_screen.set_resolution(resolution)
         for player in self.players:
             player.set_resolution(resolution)
+        print("Here we are")
         #Othewise the bezier curves just get fucked up when resizing back and forth.
         self.generate_inter_paths()
         self.sprites.empty()

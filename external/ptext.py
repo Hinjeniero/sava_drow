@@ -467,7 +467,6 @@ def getsurf(text, **kwargs):
 	global _tick, _surf_size_total
 	options = _GetsurfOptions(**kwargs)
 	key = text, options.key()
-
 	if key in _surf_cache:
 		_surf_tick_usage[key] = _tick
 		_tick += 1

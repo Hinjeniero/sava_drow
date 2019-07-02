@@ -10,6 +10,7 @@ __author__ = 'David Flaity Pardo'
 from os import listdir
 from os.path import isfile, join, dirname
 import pygame
+import time
 from obj.utilities.utility_box import UtilityBox
 from obj.ui_element import TextSprite
 from obj.sprite import Sprite, AnimatedSprite
@@ -398,6 +399,8 @@ class Screen(object):
         Reloads the graphical elements (Only the background in this case).
         Args:
             resolution (:tuple: int, int):  Resolution to set on the Screen."""
+        LOG.log('error', 'Starting the resizing of the screen ', self.id)
+        start = time.time()
         if resolution != self.resolution:
             self.resolution = resolution
             if self.animated_background:
@@ -413,7 +416,8 @@ class Screen(object):
                 self.set_scroll(0)
             for animation in self.animations:
                 animation.set_resolution(resolution)
-                
+        LOG.log('error', 'The resizing of the screen ', self.id, ' took ', time.time()-start, ' seconds.')
+
     def set_scroll(self, value):
         if self.scroll_sprite:
             self.scroll_sprite.set_value(value)

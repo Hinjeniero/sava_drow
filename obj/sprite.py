@@ -13,6 +13,7 @@ __author__ = 'David Flaity Pardo'
 
 #Python libraries
 import pygame
+import time
 from os import listdir
 from os.path import isfile, join, dirname
 #External libraries
@@ -471,6 +472,15 @@ class TextSprite(Sprite):
             self.params['text'] = text
             self.regenerate_image()
 
+    def regenerate_image(self):
+        """Generates the image and overlay again, following the params when the constructor executed.
+        Also updates the mask. Intended to be used after changing an important attribute in rect or image.
+        Called after an important change in resolution or the sprite params."""
+        self.image, self.overlay = Sprite.generate_surface(self.rect, **self.params)
+        self.update_mask()
+        if not self.enabled and self.use_overlay:
+            self.overlay.set_alpha(200)
+
 class MultiSprite(Sprite):
     """MultiSprite class. It inherits from Sprite. It is a Sprite formed by a lot of Sprites.
     This allows for more complex shapes and Sprites, like buttons and the such.
@@ -504,13 +514,11 @@ class MultiSprite(Sprite):
         if dialog_text:
             size = dialog_size if dialog_size else self.rect.size
             self.dialog_animated = animated
-            text_sprite = self.add_text_sprite(self.id+'_hover_dialog_text', dialog_text, text_size=size, text_font=text_font, text_lines=dialog_lines, return_result=True,\
-                                                text_outline=text_outline, text_color=text_color, text_outline_color=text_outline_color, text_shadow_dir=text_shadow_dir)
-            self.hover_dialog = MultiSprite(self.id+'_hover_dialog', (0, 0), text_sprite.rect.size, self.rect.size, texture=dialog_texture, resize_mode='fill', **dialog_kwargs)
-            text_sprite.set_center(tuple(x//2 for x in self.hover_dialog.rect.size))
-            self.hover_dialog.add_sprite(text_sprite)
-            self.add_sprite(self.hover_dialog)
+            self.hover_dialog = MultiSprite(self.id+'_hover_dialog', (0, 0), size, self.rect.size, texture=dialog_texture, resize_mode='fill', **dialog_kwargs)
             self.hover_dialog.set_position(tuple(x//2 - y//2 for x,y in zip(self.rect.size, self.hover_dialog.rect.size)))
+            self.add_sprite(self.hover_dialog)
+            self.hover_dialog.add_text_sprite(self.id+'_hover_dialog_text', dialog_text, text_size=self.hover_dialog.rect.size, text_font=text_font, text_lines=dialog_lines,\
+                                            text_outline=text_outline, text_color=text_color, text_outline_color=text_outline_color, text_shadow_dir=text_shadow_dir)
             self.hover_dialog.set_alpha(0)
             self.hover_dialog.visible = False
 

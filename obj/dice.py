@@ -27,6 +27,7 @@ class Dice(AnimatedSprite):
         self.result_kw = result_kw
         self.current_result = 1
         self.overlay = None
+        self.has_input = False
 
     @run_async_not_pooled
     def shuffle(self):
@@ -101,3 +102,9 @@ class Dice(AnimatedSprite):
     
     def add_throw(self, player_uuid):
         self.throws[player_uuid] += 1
+
+    def set_canvas_size(self, canvas_size):
+        print("EO "+self.id)
+        old_state = self.enabled
+        super().set_canvas_size(canvas_size)
+        self.deactivating_dice() if old_state else self.reactivating_dice()

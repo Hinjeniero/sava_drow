@@ -855,7 +855,8 @@ class InfoBoard (UIElement):
             #element[0].image = pygame.transform.smoothscale(element[0].image, element_size) #This was just to test how it looks like
             Resizer.resize(element[0], tuple([x*scale for x in element_size]))
             current_center      = [x+y//2 for x,y in zip(current_pos, element_size)]
-            element[0].rect.center   = tuple(x for x in current_center)
+            # element[0].rect.center   = tuple(x for x in current_center)
+            element[0].set_center(tuple(x for x in current_center))
             self.add_sprite(element[0])
             self.taken_spaces   += spaces 
             if self.taken_spaces > self.spaces: 

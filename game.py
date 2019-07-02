@@ -206,7 +206,7 @@ class Game(object):
                 except AttributeError:
                     try:
                         self.board_handler(event, event.command.lower())
-                    except AttributeError:
+                    except AttributeError:  #The suffling command is the only one with no command
                         self.get_screen('main', 'board').shuffling_frame()
             elif event.type is USEREVENTS.DIALOG_USEREVENT:
                 if 'scroll' in event.command:
@@ -253,7 +253,6 @@ class Game(object):
         Args:
             command (String):   Specific command that the event holds, describes the action to trigger.
             value (Any, default=None):  Sometimes an action will require a value. This one fills that necessity."""
-        print("COMMAND IN DIALOG "+command+" WITH VALUE "+str(value))
         if 'ip' in command and 'port' in command:   #From table of servers
             try:
                 self.current_screen.set_ip_port(ip=value.split(':')[0], port=int(value.split(':')[1]))
@@ -269,14 +268,12 @@ class Game(object):
             self.last_command = command
             return
         elif 'cancel' in command or 'no' in command or 'false' in command:
-            #print("CANCEL BUTTON WAS PRESSED")
             self.current_screen.hide_dialog()
             if 'ip' in command or 'port' in self.last_command:
                 self.current_screen.destroy()
                 self.restart_main_menu()
             self.last_command = None
         elif 'ok' in command or 'yes' in command or 'agree' in command:   #The OK button was pressed
-            #print("OK BUTTON WAS PRESSED")
             if 'exit' in command:
                 raise GameEndException("Byebye!")
             elif 'input' in command:
@@ -375,7 +372,6 @@ class Game(object):
         elif 'hide' in command and 'dialog' in command:
             self.show_popup('dice_turns')
             self.__add_timed_execution(value, self.call_screens_method, 'board', Screen.hide_dialog)
-
 
     def graphic_handler(self, command, value):
         """Graphic options related method. Those events will come to here.

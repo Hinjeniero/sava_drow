@@ -755,16 +755,14 @@ class Board(Screen):
         """Changes the resolution of the Screen. It also resizes all the Screen elements.
         Args:
             resolution (:tuple: int, int):  Resolution to set. In pixels."""
-        print("hello")
         super().set_resolution(resolution)
-        print("screen done right")
+        threads = [self.generate_inter_paths()]
         self.loading_screen.set_resolution(resolution)
         for player in self.players:
             player.set_resolution(resolution)
-        print("Here we are")
         #Othewise the bezier curves just get fucked up when resizing back and forth.
-        self.generate_inter_paths()
         self.sprites.empty()
+        for end_event in threads:   end_event.wait() #When those are done
         self.save_sprites()
 
     def ALL_PLAYERS_LOADED(self):
@@ -789,7 +787,7 @@ class Board(Screen):
             self.current_player.turn -= 1  #To make the next player turn be the self.players[0]
             #End of that gibberish
             self.started = True
-            LOG.log('ERROR', 'Generating the board and all of its players took ', time.time()-self.start_timestamp," seconds.")
+            LOG.log('Info', 'Generating the board and all of its players took ', time.time()-self.start_timestamp," seconds.")
             self.start_timestamp = time.time()
             self.next_player_turn()
 
@@ -1022,6 +1020,7 @@ class Board(Screen):
         if mouse_movement and not self.dice.sprite.currently_shuffling:
             mouse_sprite = UtilityBox.get_mouse_sprite()
             if self.show_promotion:
+                print("SHIAT10")
                 for element in self.promotion_table.elements:                           element.set_hover(False)
                 for colliding in self.promotion_table.get_collisions(mouse_sprite):     colliding.set_hover(True)
                 return
@@ -1034,7 +1033,6 @@ class Board(Screen):
                 #Checking collision with cells (Using this instead of hit_sprite because the hit method is different)
                 collided_cell = pygame.sprite.spritecollideany(mouse_sprite, self.cells, collided=pygame.sprite.collide_circle)
                 self.set_active_cell(collided_cell)
-
             #Checking collision with paths (Using this instead of hit_sprite because the hit method is different)
             path = pygame.sprite.spritecollideany(mouse_sprite, self.paths, collided=pygame.sprite.collide_mask)
             self.set_active_path(path)
@@ -1155,10 +1153,12 @@ class Board(Screen):
         return moved
 
     def shuffling_frame(self):
+        # print("THE FUCKL")
+        # print(self.current_dice.sprite.id)
         self.current_dice.sprite.increase_animation_delay()
 
     def assign_current_dice(self, dice_id):
-        if self.dialog and 'dice' in self.dialog.id:    #This is a throw in the starting dices
+        if self.dialog and 'dice' in self.dialog.id and not all(flag.is_set() for flag in self.starting_dices.values()):    #This is a throw in the starting dices
             self.play_sound("die_shuffle")
             if not self.current_dice.sprite or not self.current_dice.sprite.currently_shuffling:    #If there is no dice of is not shuffling
                 self.current_dice.add(next((dice for dice in self.dialog.elements if dice.id == dice_id), None))
@@ -1184,8 +1184,9 @@ class Board(Screen):
                 self.current_player = self.players[-1]  #To make the next player turn be the self.players[0]
                 self.current_player.turn -= 1  #To compensate for this turn addition
                 self.player_index = len(self.players)-1  #To make the next player turn be the self.players[0]
-                self.current_dice.add(self.dice.sprite) #From now on, the only current sprite is the infoboard one
                 self.post_event('hide_dialog_temp') #So we have time to check the results
+                self.current_dice.empty()
+                self.current_dice.add(self.dice.sprite)
             value = -1  #To jump to the next player turn line.
         if value == Dice.GOLD_VALUE:
             self.activate_turncoat_mode()
@@ -1262,15 +1263,12 @@ class Board(Screen):
     def next_player_turn(self, use_stop_state=True):
         self.current_player.turn += 1
         del self.locked_cells[:]    #Clearing it just in caseç
-        #print("OLD INDEX IS "+str(self.player_index))
         old_index = self.player_index
         while True:
             self.player_index += 1
             if self.player_index >= len(self.players):
                 self.player_index = 0
                 self.turn += 1
-            #print("MIDDLE INDEX IS "+str(self.player_index))
-            #print("board turn is "+str(self.turn)+", player turn is "+str(self.players[self.player_index].turn))
             if not self.players[self.player_index].dead\
             and (self.players[self.player_index].turn is self.turn or self.player_index is old_index):
                 self.current_player = self.players[self.player_index] 
@@ -1282,15 +1280,9 @@ class Board(Screen):
         self.dice.sprite.add_turn(self.current_player.uuid)
         self.update_scoreboard()
         self.update_infoboard()
-        # print("NEW CURRENT PLAYER IS "+self.current_player.name+', uuid '+str(self.current_player.uuid))
-        #print("NEW INDEX IS "+str(self.player_index))
-        #print("New turn of baord is "+str(self.turn))
         if not self.current_player.human:
-            #print('cpu_turn for '+self.current_player.name+', uuid '+str(self.current_player.uuid))
             self.current_player.pause_characters()  #We don't want the human players fiddling with the chars
             self.do_ai_player_turn()
-        #else:
-            #print("SHIEEEET ITS HUMAAAN "+self.current_player.name+', uuid '+str(self.current_player.uuid))
 
     @run_async_not_pooled
     def do_ai_player_turn(self, result=None):
@@ -1319,7 +1311,6 @@ class Board(Screen):
                                                     chars_allowed=char_that_must_move, restricted_movements=restricted_movements)
         LOG.log('info', "Movement chosen was ", movement)
         character = self.get_cell_by_real_index(movement[0]).get_char()
-        #print("CHOSEN CHAR "+character.get_type()+"MOVEMENT CHOSEN WAS "+str(movement)+", in turn "+str(self.turn))
         self.drag_char.add(character)
         self.last_cell.add(self.get_cell_by_real_index(movement[0]))
         self.active_cell.add(self.get_cell_by_real_index(movement[-1]))
@@ -1329,14 +1320,13 @@ class Board(Screen):
             #Should get the highest valued char. And wait until it is full. Also do this for usual players (human ones), but whatever
             char_revived = random.choice(self.promotion_table.elements)
             self.swapper.send(char_revived)
-        # print("EMPTYING DRAG CHAR")
         self.drag_char.empty()
         self.thinking_sprite.sprite.set_visible(False)
         self.ai_turn = False
         if result:  #We return the movement performed. Useful for network board. 
             result = movement
         self.counter_sprite.sprite.set_enabled(False)
-        print("The CPU turn took "+str(time.time()-start)+" seconds.")
+        LOG.log('info', "The CPU turn took ", (time.time()-start), " seconds.")
         self.ai_turn_flag.set()
 
     def kill_character(self, cell, killer):

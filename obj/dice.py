@@ -104,7 +104,9 @@ class Dice(AnimatedSprite):
         self.throws[player_uuid] += 1
 
     def set_canvas_size(self, canvas_size):
-        print("EO "+self.id)
-        old_state = self.enabled
         super().set_canvas_size(canvas_size)
-        self.deactivating_dice() if old_state else self.reactivating_dice()
+        if self.locked:
+            self.deactivating_dice()
+        else:
+            self.overlay = None
+            self.reactivating_dice()

@@ -663,7 +663,7 @@ class Game(object):
                 if all(kw in screen.id for kw in keywords):
                     method(screen, *method_args, **method_kwargs)
         except AttributeError:
-            LOG.log('error', 'The method ', str(method), ' is not found in the class Screen')
+            LOG.log('Warning', 'The method ', str(method), ' is not found in the class Screen')
 
     def change_screen(self, *keywords):
         """Changes the current screen to the one with most matches with the input keywords.

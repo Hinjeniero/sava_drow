@@ -916,7 +916,10 @@ class Board(Screen):
                 self.current_player.draw(surface)   #This draws the player's infoboard
             if self.promotion_table and self.show_promotion:
                 self.gray_overlay.draw(surface)
-                self.promotion_table.draw(surface)
+                try:
+                    self.promotion_table.draw(surface)
+                except IndexError:  #Sometimes happens here after chosing a char
+                    pass
             if self.show_score and self.scoreboard:
                 self.scoreboard.draw(surface)
             elif self.console_active:
@@ -1020,7 +1023,6 @@ class Board(Screen):
         if mouse_movement and not self.dice.sprite.currently_shuffling:
             mouse_sprite = UtilityBox.get_mouse_sprite()
             if self.show_promotion:
-                print("SHIAT10")
                 for element in self.promotion_table.elements:                           element.set_hover(False)
                 for colliding in self.promotion_table.get_collisions(mouse_sprite):     colliding.set_hover(True)
                 return
@@ -1239,7 +1241,7 @@ class Board(Screen):
                 return
         self.next_char_turn(self.drag_char.sprite)
 
-    def update_character(self, char):   #TODO this in a method in character?
+    def update_character(self, char):
         char.can_kill = True
         char.can_die = True
         char.value *= 3
@@ -1315,11 +1317,13 @@ class Board(Screen):
         self.last_cell.add(self.get_cell_by_real_index(movement[0]))
         self.active_cell.add(self.get_cell_by_real_index(movement[-1]))
         self.move_character(character)  #In here the turn is incremebted one (next_char_turn its executed)
+        should_go_next_turn = False
         if self.show_promotion: #If the update table was triggered
             self.promotion_flag.wait()
             #Should get the highest valued char. And wait until it is full. Also do this for usual players (human ones), but whatever
-            char_revived = random.choice(self.promotion_table.elements)
+            char_revived = random.choice(self.promotion_table.elements.sprites())
             self.swapper.send(char_revived)
+            should_go_next_turn = True
         self.drag_char.empty()
         self.thinking_sprite.sprite.set_visible(False)
         self.ai_turn = False
@@ -1328,6 +1332,8 @@ class Board(Screen):
         self.counter_sprite.sprite.set_enabled(False)
         LOG.log('info', "The CPU turn took ", (time.time()-start), " seconds.")
         self.ai_turn_flag.set()
+        if should_go_next_turn:
+            self.next_player_turn()
 
     def kill_character(self, cell, killer):
         self.play_effect('explosion', cell.rect.center)
@@ -1358,6 +1364,10 @@ class Board(Screen):
         self.finished = True    #To disregard events except esc and things like that
         self.show_score = True  #To show the infoboard.
         self.end = True
+        winner = next((player for player in self.players if not player.dead), None)
+        if winner:
+            LOG.log('info', 'The winner was ', winner.name)
+            LOG.log('info', winner) #The rest of the info
 
     def set_active_cell(self, cell):
         if self.active_cell.sprite: #If there is already an sprite in active_cell

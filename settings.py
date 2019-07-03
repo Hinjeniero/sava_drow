@@ -27,7 +27,7 @@ class INIT_PARAMS:
 class PARAMS:
     """Hold some of the options for configurations and some default parameters. Further comments in the not so clear ones."""
     BOARD_ID = 'main_board' 
-    AI_MODES = ('Totally random', 'Half random-fitness', 'Fitness best move', 'Alpha-beta', 'Alpha-beta w/ ordering', 'Monte Carlo Search')   #All possible IA modes strings. 
+    AI_MODES = ('Totally random', 'Half random-fitness', 'Fitness best move', 'Alpha-beta', 'Alpha-beta w/ ordering', 'Monte Carlo Search', 'Alpha-Beta VS MonteCarlo')   #All possible IA modes strings. 
     PLAYERS_AMMOUNT = (2, 3, 4)     #ALl possible ammounts of total players in a game. 1 is for testing
     HUMAN_PLAYERS = (2, 3, 4, 0, 1)
     AI_PLAYERS = (0, 1, 2, 3, 4)          #ALl possible ammounts of computer controlled players in a game. If we want 4, choose 4 playeres and computer vs computer.

@@ -19,8 +19,9 @@ import collections
 #Selfmade libraries
 from obj.counter import CounterSprite
 from obj.players import Player
-from obj.utilities.decorators import time_it
 from obj.paths import PathAppraiser
+from obj.utilities.decorators import time_it
+from obj.utilities.logger import Logger as LOG
 
 class PersistantNumber(object): #To avoid the copying of classes
     """PersistantNumber class. Contains an int that its persistant, that is, that holds the reference
@@ -137,9 +138,6 @@ class ComputerPlayer(Player):
         allowed_movements = []
         for char in chars_allowed:  #If its empty, it wont enter in the loop
             allowed_movements.extend(char.get_paths(self.graph, self.distances, current_map, char.current_pos, self.circum_size))
-            # allowed_movements.append()
-            # all_cells = {cell.get_real_index(): cell.get_char() for cell in board_cells if cell.has_char() and cell.get_char() in chars_allowed}
-            # print("Allowed movements "+str(allowed_movements))
         #FORMAT: [(movements, score), ...] -- [((23, 22), 0.4332432), ((0, 17), 0.123412)] 
         fitnesses = self.generate_fitnesses(all_cells, my_player, self.graph, self.distances, current_map, self.circum_size)
         #Filtering the fitnesses for the first three modes
@@ -151,6 +149,13 @@ class ComputerPlayer(Player):
         if 'fitness' in self.ai_mode:
             return self.generate_random_movement(fitnesses)
         #The other methods need the all_cells structure  
+        if 'alpha' in self.ai_mode and 'monte' in self.ai_mode: #This is the one to compare algorithms
+            if self.order//2 == 0:  #Order can only go from 0 to 3. players 0 and 1 get alpha beta
+                return self.generate_alpha_beta(max_nodes, all_cells, current_map, my_player, all_players, allowed_movs=allowed_movements,\
+                                    restricted_movs=restricted_movements)
+            else:                   #And players 2 and 3 montecarlo
+                return MonteCarloSearch.monte_carlo_tree_search(self.graph, self.distances, self.circum_size, board_hash, all_cells, current_map, my_player, all_players,\
+                                                                self.round_timeout, allowed_movs=allowed_movements, restricted_movs=restricted_movements)
         if 'alpha' in self.ai_mode:
             if 'order' in self.ai_mode:
                 return self.generate_alpha_beta(max_nodes, all_cells, current_map, my_player, all_players, allowed_movs=allowed_movements,\
@@ -179,8 +184,6 @@ class ComputerPlayer(Player):
             return random.choice(fitnesses)[0]
         fitnesses.sort(key=lambda tup: tup[1], reverse=True)
         if somewhat_random:
-            # print("FITNESSES ARE "+str(fitnesses))
-            # print("CHOICE IS "+str(random.choices(fitnesses, weights=list(score[1] for score in fitnesses))))
             return random.choices(fitnesses, weights=list(score[1] for score in fitnesses))[0][0]
         else:
             only_best_movements = list(score[0] for score in fitnesses if score[1] == fitnesses[0][1])  #IF the score is the same as the best elements inn the ordered list
@@ -211,8 +214,8 @@ class ComputerPlayer(Player):
         self.minimax(my_player_index, my_player_index, all_players, all_cells, current_map, all_paths, [], 0, True, -math.inf, math.inf, start, self.round_timeout, pruned, ordering)
         if time.time()-start > self.round_timeout: #If we reached the timeout...
             self.increase_timeout_count()
-        print("The number of paths tested by alpha beta is "+str(len(all_paths.keys())), " with a max depth setting of "+str(self.max_depth)+", in a time of "+str(time.time()-start)+" seconds.")
-        print("The number of pruned branches at different depths was "+str({str(key): str(value) for key, value in pruned.items()}))
+        LOG.log('info', "The number of paths tested by alpha beta is ", len(all_paths.keys()), " with a max depth setting of ", self.max_depth, ", in a time of ", time.time()-start, " seconds.")
+        LOG.log('info', "The number of pruned branches at different depths was ", {str(key): str(value) for key, value in pruned.items()})
         rated_movements = [((dest[0], dest[1]), score) for dest, score in all_paths.items()\
                             if (dest[0], dest[1]) not in restricted_movs and (not allowed_movs or (dest[0], dest[1]) in allowed_movs)]
         rated_movements.sort(key=lambda dest:dest[1], reverse=True)
@@ -332,10 +335,8 @@ class ComputerPlayer(Player):
                 bestVal = max(bestVal, value) 
                 alpha = max(alpha, value)
                 if beta <= value:   #Pruning
-                    # print("SHIEEEEET ,beta "+str(beta)+", value "+str(value))
                     pruned[depth].number += 1
                     return bestVal
-            # print("MOVEMENTS MAX ARE "+str(ComputerPlayer.generate_movements(self.graph, self.distances, self.circum_size, all_cells, current_map, all_players[current_player_index], ordering=ordering)))
             return bestVal
         else:   #Minimizing player
             bestVal = math.inf  
@@ -379,7 +380,6 @@ class ComputerPlayer(Player):
                 if beta <= alpha:   #Pruning
                     pruned[depth].number += 1
                     return bestVal
-            # print("MOVEMENTS MIN ARE "+str(ComputerPlayer.generate_movements(self.graph, self.distances, self.circum_size, all_cells, current_map, all_players[current_player_index], ordering=ordering)))
             return bestVal
 
     @staticmethod
@@ -439,6 +439,12 @@ class ComputerPlayer(Player):
                 all_essential_pieces.append(char)
         return False if any(char.owner_uuid != all_essential_pieces[0].owner_uuid for char in all_essential_pieces) else True
 
+    def __str__(self):
+        final_string = super().__str__().replace('Human player', 'Computer controlled player')
+        return final_string+'.\nThis player is using the AI '+self.ai_mode+' mode.'+\
+                '\nTimeout per movement of '+str(self.round_timeout)+' seconds, the maximum depth of a tree search is '+str(self.max_depth)+\
+                '.\n The adaptative maximum depth is set to '+str(self.adaptative_max_depth)
+                    
 #Monte carlo tree search from here on
 class Node(object):
     """Class Node. Core class that is pretty much essential for the MonteCarlo heuristic to work properly.
@@ -567,7 +573,7 @@ class MonteCarloSearch(object):
             current_player_index = current_player_index+1 if current_player_index < (len(all_players)-1) else 0
             ComputerPlayer.change_map(current_map, all_cells, all_players[current_player_index])    #Change current map to be of the next player
             iters += 1
-        print("MonteCarlo method completed "+str(iters)+" iterations of the complete algorithm in "+str(time.time()-start)+" seconds")
+        LOG.log('info', "MonteCarlo method completed ", iters, " iterations of the complete algorithm in ", time.time()-start, " seconds")
         nodes = (node for node in root_node.children if node.previous_movement not in restricted_movs and (not allowed_movs or node.previous_movement in allowed_movs))
         return max(nodes, key=lambda node:node.total_n).previous_movement
 
@@ -584,8 +590,11 @@ class MonteCarloSearch(object):
         while not leaf:
             leaf = next((child for child in node.children if child.total_n == 0), None)   #Get the first child unexplored, or the best one
             if not leaf: #If unexplored, gets the one with the best UCT value to expand it and get leafs in the next loop
-                node = max((child for child in node.children), key=lambda child:child.get_uct_value(exploration_const=MonteCarloSearch.EXPLORATION_CONSTANT))
-                node.expand(current_player)   #If its already expanded, it will not expand any further, so we can leave this line like this
+                if node.children:
+                    node = max((child for child in node.children), key=lambda child:child.get_uct_value(exploration_const=MonteCarloSearch.EXPLORATION_CONSTANT))
+                    node.expand(current_player)   #If its already expanded, it will not expand any further, so we can leave this line like this
+                else:
+                    leaf=node
         return leaf
 
     @staticmethod

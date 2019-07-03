@@ -827,14 +827,22 @@ class AnimatedSprite(MultiSprite):
         """Returns the current surface that will be shown if there are no special states in effect.
         Returns:
             (pygame.Surface):   Surface that should be drawn right now."""
-        return self.surfaces[self.animation_index]
+        try:
+            return self.surfaces[self.animation_index]
+        except IndexError:
+            self.animation_index = 0
+            return self.surfaces[self.animation_index]
 
     def current_hover_sprite(self):
         """Returns the current surface that will be shown if the hover state is True.
         Returns:
             (pygame.Surface):   Hover surface that should be drawn right now."""
         if self.params['hover_surfaces']:
-            return self.hover_surfaces[self.animation_index]
+            try:
+                return self.hover_surfaces[self.animation_index]
+            except IndexError:
+                self.animation_index = 0
+                return self.hover_surfaces[self.animation_index]
         else:
             return self.current_sprite()
 
@@ -842,7 +850,11 @@ class AnimatedSprite(MultiSprite):
         """Returns the current surface that will be shown if there are no special states in effect.
         Returns:
             (pygame.Surface):   Surface that should be drawn right now."""
-        return self.masks[self.animation_index]
+        try:
+            return self.masks[self.animation_index]
+        except IndexError:
+            self.animation_index = 0
+            return self.masks[self.animation_index]
 
     def update(self):
         """Makes the image flow between surfaces. Compares counter vs animation frame, and if it's time,

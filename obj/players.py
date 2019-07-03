@@ -305,6 +305,11 @@ class Player(object):
                 'turn': self.turn,
                 'dead': self.dead}
 
+    def __str__(self):
+        return 'Human player '+self.name+', order number '+str(self.order)+', with uuid '+str(self.uuid)+\
+                '.\n It has '+ str(len(self.characters)) +' characters remaining, and is in the turn '+str(self.turn)+\
+                '.\n The complete stats are as follow:\n' + str(self.stats_json())
+
 class Character(AnimatedSprite):
     """Character class. Inherits from AnimatedSprite.
     Each moving character is a subclass or class related to this one.

@@ -26,6 +26,7 @@ from obj.sprite import TextSprite
 from obj.board_server import Server
 from obj.ui_element import ScrollingText
 from obj.board import Board
+from obj.dice import Dice
 from obj.players import Character
 from obj.utilities.utility_box import UtilityBox
 from obj.utilities.ip_parser import IpGetter
@@ -123,6 +124,7 @@ class NetworkBoard(Board):
             self.exception_handler(exc)
 
     def generate_events(self):
+        """Generate all the possible events emitted by the network board, on top of the normal board ones."""
         super().generate_events()
         self.events['connection_error'] = pygame.event.Event(self.event_id, command='connection_error')
         self.events['pause_game'] = pygame.event.Event(self.event_id, command='pause_game')  #Sent when anything happens in this client
@@ -150,6 +152,8 @@ class NetworkBoard(Board):
         else:                   self.show_dialog('table')
 
     def get_all_servers(self):
+        """Fetchs the information about the public server from the device that hosts them.
+        Could be locally, or a remote computer."""
         try:
             my_public_ip = self.server.public_ip if self.server else IpGetter.get_public_ip()
             result = UtilityBox.do_request(IpGetter.get_servers_table_dir()+NETWORK.TABLE_SERVERS_GET_ALL_ENDPOINT)
@@ -354,6 +358,7 @@ class NetworkBoard(Board):
             self.send_ready()
         elif "start" in response:
             self.LOG_ON_SCREEN("All players have connected, starting game...")
+            self.current_dice.add(self.dice.sprite)
             self.ready = True
             self.console_active = False
             self.activate_my_characters()
@@ -399,7 +404,9 @@ class NetworkBoard(Board):
                 pass
         elif "end_turn" in response:    #Next turn with the player that should play it
             self.thinking_sprite.sprite.set_visible(False)
+            print("HERE WE GO")
             self.change_turn.wait()
+            print("ODONE GOING")
             self.next_player_turn()
             self.change_turn.clear()
             self.activate_my_characters()   #Just in case they have been frozen earlier
@@ -409,7 +416,10 @@ class NetworkBoard(Board):
             self.swapper.send(original_char)
             self.swapper.send(next(char for char in player.fallen if char.uuid == response['new']))
         elif "dice_value" in response:  #The dice in this board will be updated
-            #TODO SHOW NOTIFICATION
+            LOG.log('info', 'the player ', response['dice_value'], ' threw the dice and got an ', response['dice_value'])
+            if int(response['dice_value']) != Dice.GOLD_VALUE:
+                self.post_event('bad_dice')
+                self.change_turn.set()
             self.dice.sprite.add_throw(response['player'])
         elif "turncoat" in response:    #All characters will be locked down in this turn.
             #They will all be paused only in our screen (Only graphically), the actions of the user client will still reach here.
@@ -558,6 +568,8 @@ class NetworkBoard(Board):
         the clients.
         Args:
             event (:obj: pygame.event): Event received from the pygame queue.
+            mouse_buttons (List->boolean): List with 3 positions regarding the 3 normal buttons on a mouse.
+                                            Each will be True if that button was pressed.
             mouse_movement(boolean, default=False):    True if there was mouse movement since the last call.
             mouse_position (Tuple->int, int, default=(0,0)):   Current mouse position. In pixels."""
         if self.dialog:
@@ -581,12 +593,21 @@ class NetworkBoard(Board):
             super().pickup_character(get_dests=False)
 
     def after_swap(self, orig_char, new_char):
+        """Sends the necessary information to notify the other clients of the swap of characters.
+        More information in the method of the superclass.
+        Args:
+            orig_char(:Obj:Character):  Character that will be exchanged for the captured one.
+            new_char(:Obj:Character):   Character that has been freed again and placed on the cell of the original one."""
         super().after_swap(orig_char, new_char)
         if orig_char.owner_uuid == self.my_player and new_char.owner_uuid == self.my_player\
         or self.server and not self.current_player.human:    #If this was a local swap and not a received one in response_handler from another player
             self.send_data_async({"swap": True, "original": orig_char.uuid, "new": new_char.uuid})
 
     def update_character(self, char):
+        """"Notifies the rest of the players if a character has been updated locally.
+        More information in the method of the superclass.
+        Args:
+            char(:Obj:Character):   Character to update."""
         super().update_character(char)
         self.send_data_async({"character": char.uuid, "update_character": True})
 
@@ -607,7 +628,7 @@ class NetworkBoard(Board):
             self.send_data_async({"move_character": character.uuid, "center": center})
 
     def next_player_turn(self):
-        """Makes the actions needed to advance a turn, and communicates with the server if my_turn is True."""
+        """Makes the actions needed to advance a turn, and notifies the server if my_turn is True."""
         super().next_player_turn(use_stop_state=False)
         if self.my_turn or (not self.current_player.human and self.server):
             self.my_turn = False    #If the second condition, this doesn't really matter
@@ -619,18 +640,19 @@ class NetworkBoard(Board):
 
     @run_async_not_pooled
     def do_ai_player_turn(self):
-        #do ai turn calls move chjaracter without calling drop character, which is the onw that sends
-        #good shit here
-        movement_executed = []  #This is written like this so pylint doesn't show an error, actually it doesn't matter, it will be assigned inside thje super method
+        """Executes the Ai player turn, and send the information of the movements to the rest of the clients."""
+        movement_executed = [True]  #This is written like this so pylint doesn't show an error, actually it doesn't matter, it will be assigned inside thje super method
         thread_doing_the_work = super().do_ai_player_turn(result=movement_executed)
         thread_doing_the_work.join()
         character = self.get_cell_by_real_index(movement_executed[0]).get_char()
         self.send_data_async({'drop_character': character.uuid, 'cell': movement_executed[-1]})
 
-    def dice_value_result(self, value):
-        """To sync the dices across all the clients"""
-        super().dice_value_result(value)
-        self.send_data_async({"player": self.current_player.uuid, "dice_value": value})
+    def dice_value_result(self, event):
+        """Sends the data of a dice throw across all the clients.
+        Args:
+            event(:obj: pygame.Event):  Event containing the local dice throw result"""
+        super().dice_value_result(event)
+        self.send_data_async({"player": self.current_player.uuid, "dice_value": event.value})
             
     def activate_turncoat_mode(self):
         """This is to avoid conflicts when the other players move their chars around"""
@@ -638,6 +660,7 @@ class NetworkBoard(Board):
         self.send_data_async({"player": self.current_player.uuid, "turncoat": True, "lock_characters": True})   
 
     def draw(self, surface):
+        """Draws the board onto the screen."""
         try:
             super().draw(surface)
             all(name.draw(surface) for name in self.players_names.values())
@@ -648,6 +671,7 @@ class NetworkBoard(Board):
             LOG.log(*MESSAGES.LOCKED_SURFACE_EXCEPTION)
 
     def set_admin_mode(self, admin):
+        """Changes the admin mode flag, and notifies the other players."""
         self.admin_mode = admin
         if self.admin_mode:
             self.send_data_async({"admin": True})
@@ -655,6 +679,8 @@ class NetworkBoard(Board):
             self.send_data_async({"admin": False})
 
     def win(self):
+        """Method to execute when a winner is decided. Shows a popup, play a sound and ends the board.
+        If the winner is not the local client, plays the lose sound and sets the flags."""
         if any(self.my_player == player.uuid for player in self.players if not player.dead):
             super().win()
         else:

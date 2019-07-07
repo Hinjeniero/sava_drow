@@ -6,7 +6,7 @@ Have the following classes.
 --------------------------------------------"""
 
 __all__ = ['Board']
-__version__ = '0.9'
+__version__ = '1.0'
 __author__ = 'David Flaity Pardo'
 
 #Python full fledged libraries
@@ -201,6 +201,10 @@ class Board(Screen):
     
     ###SIMULATES ON_SCREEN CONSOLEEEE
     def LOG_ON_SCREEN(self, *msgs, **text_params):
+        """Adds a message to the overlay console.
+        Args:
+            msgs()
+            text_params()"""
         text = Parser.parse_texts(*msgs)
         LOG.log('info', text)
         self.overlay_console.add_msg(text, **text_params)
@@ -208,6 +212,7 @@ class Board(Screen):
     #ALL THE GENERATION OF ELEMENTS AND PLAYERS NEEDED
     @staticmethod
     def generate(self, empty, initial_dice_screen, *players):
+        """Method called in the constructor. Creates the complex objects (Not basic types)"""
         self.start_timestamp = time.time()
         UtilityBox.join_dicts(self.params, Board.__default_config)
         #INIT
@@ -228,13 +233,16 @@ class Board(Screen):
         self.swapper.send(None) #Needed in the first execution of generator
 
     def generate_onscreen_console(self):
+        """Generates the overlay console (Gray half transparent with white messages)."""
         start = time.time()
         self.overlay_console = ScrollingText('updates', self.event_id, self.resolution, transparency=180)
         LOG.log('info', 'The console have been generated in ', (time.time()-start)*1000, 'ms')
 
     def generate_events(self):
+        """Generate all the possible events emitted by the board."""
         self.events['win'] = pygame.event.Event(self.end_event_id, command='win')
         self.events['lose'] = pygame.event.Event(self.end_event_id, command='lose')
+        self.events['bad_dice'] = pygame.event.Event(self.end_event_id, command='bad_dice')
         self.events['my_turn'] = pygame.event.Event(self.event_id, command='my_turn')
         self.events['cpu_turn'] = pygame.event.Event(self.event_id, command='cpu_turn')
         self.events['next_turn'] = pygame.event.Event(self.event_id, command='next_turn')
@@ -245,6 +253,7 @@ class Board(Screen):
 
     @no_size_limit
     def generate_platform(self):
+        """Creates the platform behind the board itself. Used to make it easier to see the cells and characters."""
         platform_size   = tuple(min(self.resolution)*self.params['platform_proportion'] for _ in self.resolution)
         centered_pos    = tuple(x//2-y//2 for x, y in zip(self.resolution, platform_size))
         platform_pos    = (0, centered_pos[1]) if 'left' in self.params['platform_alignment']\
@@ -257,6 +266,7 @@ class Board(Screen):
         return self.params['platform_sprite']
 
     def generate_mapping(self):
+        """Adds the map related structures, like the enabled paths graph and the distances matrix."""
         axis_size = self.params['circles_per_lvl']*self.params['max_levels']
         if self.params['center_cell']:
             axis_size += 1
@@ -266,6 +276,7 @@ class Board(Screen):
 
     @time_it
     def generate_environment(self, initial_dice_screen=False):
+        """Builds all the graphical elements of the board, and also the mapping related structures."""
         threads = [self.generate_all_cells(), self.generate_paths(offset=True), self.generate_map_board(), self.generate_infoboard(), self.generate_effects()]
         if initial_dice_screen:
             threads.append(self.generate_dice_screen())
@@ -300,7 +311,7 @@ class Board(Screen):
             counter_sprite.set_enabled(False)
             self.counter_sprite.add(counter_sprite)
         HelpDialogs.add_help_dialogs(self.id, (fitness_button, help_button), self.resolution)
-        #End, saving
+        #End, and saving to the sprites attribute of screen so the set_canvas_size resize them when necessary.
         self.save_sprites()
         self.generated = True
 
@@ -385,6 +396,7 @@ class Board(Screen):
         return cells
 
     def __generate_center_cell(self, radius, circle_number, lvl_number, **cell_params):
+        """Creates the center cell if the center_cell flag of **params is true."""
         index = circle_number*lvl_number
         for i in range(0, 4):
             self.enabled_paths[i][index], self.enabled_paths[index][i] = True, True
@@ -505,6 +517,7 @@ class Board(Screen):
     @run_async
     @no_size_limit
     def generate_infoboard(self):
+        """Generates the infoboard of the game, containing the board turn, the current player, the last movement, etc."""
         infoboard = InfoBoard(self.id+'_infoboard', 0, (0, 0), (0.15*self.resolution[0], self.resolution[1]),\
                     self.resolution, texture=self.params['infoboard_texture'], keep_aspect_ratio = False, rows=8, cols=2)
         infoboard.set_position((self.resolution[0]-infoboard.rect.width, 0))
@@ -522,6 +535,7 @@ class Board(Screen):
 
     @run_async
     def generate_effects(self):
+        """Creates the particle effects that show when a character either moves or captures another one"""
         explosion_effect = OnceAnimatedSprite('explosion_effect', (0, 0), tuple(x*0.15 for x in self.resolution), self.resolution,\
                                             sprite_folder=PATHS.FIRE_RING, animation_delay=2)   #Position will change later anyway
         selection_effect = OnceAnimatedSprite('selection_effect', (0, 0), tuple(x*0.15 for x in self.resolution), self.resolution,\
@@ -535,6 +549,7 @@ class Board(Screen):
 
     @run_async_not_pooled
     def update_infoboard(self):
+        """Called after each board turn. Updates the elements of the board infoboard."""
         self.infoboard.update_element('turn', str(self.turn+1))
         self.infoboard.update_element('turn_char', str(self.char_turns+1))
         self.infoboard.update_element('player_name', self.current_player.name)
@@ -544,6 +559,7 @@ class Board(Screen):
 
     @run_async
     def generate_dice(self):
+        """Creates and adds the board dice (NOT the dice screen)."""
         dice = Dice('dice', (0, 0), tuple(0.1*x for x in self.resolution), self.resolution, shuffle_time=1500, sprite_folder=self.params['dice_textures_folder'], animation_delay=2)
         dice.set_position((self.infoboard.rect.centerx-dice.rect.width//2, self.resolution[1]-(dice.rect.height*2)))
         self.dice.add(dice)
@@ -551,6 +567,7 @@ class Board(Screen):
 
     @no_size_limit
     def generate_dialogs(self):
+        """Builds the promotion table and gray overlay."""
         self.scoreboard = self.generate_scoreboard()
         promotion_table = Dialog(self.id+'_promotion', USEREVENTS.DIALOG_USEREVENT, (self.resolution[0]//1.05, self.resolution[1]//8),\
                                 self.resolution, keep_aspect_ratio = False, texture=self.params['promotion_texture'])
@@ -559,6 +576,7 @@ class Board(Screen):
         self.LOG_ON_SCREEN("The board scoreboard and promotion table have been generated.")
 
     def generate_scoreboard(self):
+        """Generates the scoreboard that shows when pressing tab"""
         scoreboard = InfoBoard(self.id+'_scoreboard', USEREVENTS.DIALOG_USEREVENT, (0, 0), (self.resolution[0]//1.1, self.resolution[1]//1.5),\
                                 self.resolution, keep_aspect_ratio = False, rows=len(self.players)+1, cols=len(self.players[0].get_stats().keys()),
                                 texture=self.params['scoreboard_texture'])
@@ -604,6 +622,7 @@ class Board(Screen):
     ###UPDATING OF THE ELEMENTS MID-GAME
     @run_async_not_pooled
     def update_scoreboard(self):
+        """Called after each board turn, updates the scoreboard text elements."""
         if not self.scoreboard_flag:    #THis is to not overlap turns updates.
             try:
                 self.scoreboard_flag = True
@@ -628,6 +647,8 @@ class Board(Screen):
 
     @run_async_not_pooled
     def update_promotion_table(self, *chars):
+        """Called after the show_promotion flag is set to True.
+        Clears the promotion table and adds the character that the current player can upgrade the pawn to."""
         self.promotion_table.full_clear()
         self.promotion_table.set_rows(1)
         self.promotion_table.set_cols(len(chars))
@@ -639,6 +660,7 @@ class Board(Screen):
         LOG.log('info', 'The promotion table has been successfully updated.')
 
     def adjust_cells(self):
+        """Adjust the position of the cells to eliminate the offset that they show after generation."""
         for cell in self.cells:
             if cell.get_index()>=self.params['circles_per_lvl']:
                 continue
@@ -695,6 +717,7 @@ class Board(Screen):
         return (index%self.params['circles_per_lvl'])//ratio if (index+1)%self.params['inter_path_frequency'] is 0 else None
 
     def set_admin_mode(self, admin):
+        """Changes the admin mode flag."""
         self.admin_mode = admin
 
     @run_async
@@ -748,6 +771,7 @@ class Board(Screen):
         LOG.log('DEBUG', "Generated the map of paths for ", self.current_player.name)
     
     def update_cells(self, *cells):
+        """Called after each complete board turn. Updates the current_map structure."""
         for cell in cells:
             self.current_map[cell.get_real_index()]=cell.to_path(self.current_player.uuid)
 
@@ -887,6 +911,7 @@ class Board(Screen):
         self.__add_player(player)
 
     def play_effect(self, id_, center_position):
+        """Shows a particle effect in the input position in the board"""
         effect = next((sprite for sprite in self.effects if id_.lower() in sprite.id.lower() or sprite.id.lower() in id_.lower()), None)
         if effect:
             effect.rect.center = center_position
@@ -968,7 +993,7 @@ class Board(Screen):
             mouse_buttons (List->boolean): List with 3 positions regarding the 3 normal buttons on a mouse.
                                             Each will be True if that button was pressed.
             mouse_movement( boolean, default=False):    True if there was mouse movement since the last call.
-            mouse_position (:tuple: int, int, default=(0,0)):   Current mouse position. In pixels.
+            mouse_position (Tuple-> (int, int), default=(0,0)):   Current mouse position. In pixels.
         """
         #IF THERE IS A DIALOG ON TOP WE MUST NOT INTERACT WITH WHAT IS BELOW IT
         if self.dialog: #Using it here since we wont have ever a scrollbar in a board, and this saves cycles wuen a dialog is not active
@@ -1082,6 +1107,10 @@ class Board(Screen):
             self.after_swap(original_char, new_char)
 
     def after_swap(self, orig_char, new_char):
+        """Args:
+            orig_char(:Obj:Character):  Character that will be exchanged for the captured one.
+            new_char(:Obj:Character):   Character that has been freed again and placed on the cell of the original one.
+        Method that executes after a character swap is done."""
         self.show_promotion = False
 
     def pickup_character(self, get_dests=True):
@@ -1105,6 +1134,9 @@ class Board(Screen):
 
     @run_async_not_pooled
     def generate_fitnesses(self, source_cell, destinations, lite=False):
+        """Gets the fitness for each movement consisting of moving from a source position to a destination.
+        This score will be only processed once in each turn. Afterwards it will be only fetched.
+        the lite flag call a less complex but less reliable algorithm"""
         try:
             self.fitnesses[source_cell]
         except KeyError:
@@ -1120,6 +1152,7 @@ class Board(Screen):
                 break
 
     def hide_fitnesses(self, source_cell):
+        """Hide the graphical string that shows the score of each cell."""
         try:
             cells_to_hide = list(self.fitnesses[source_cell].keys())
             for fitness_key in cells_to_hide:
@@ -1155,17 +1188,21 @@ class Board(Screen):
         return moved
 
     def shuffling_frame(self):
-        # print("THE FUCKL")
-        # print(self.current_dice.sprite.id)
+        """Increases the time between frame change in the dice, thus creating a 'slowing down' animation for the dice."""
         self.current_dice.sprite.increase_animation_delay()
 
     def assign_current_dice(self, dice_id):
+        """Changes the dice that will receive the user interactions."""
         if self.dialog and 'dice' in self.dialog.id and not all(flag.is_set() for flag in self.starting_dices.values()):    #This is a throw in the starting dices
             self.play_sound("die_shuffle")
             if not self.current_dice.sprite or not self.current_dice.sprite.currently_shuffling:    #If there is no dice of is not shuffling
                 self.current_dice.add(next((dice for dice in self.dialog.elements if dice.id == dice_id), None))
 
     def dice_value_result(self, event):
+        """ Gets the value of a local dice throw and registers it in the board dice, or the starting dice screen,
+        whatever it matches to.
+        Args:
+            event(:obj: pygame.Event):  Event containing the local dice throw result"""
         value = int(event.value)
         received_dice_id = event.id #The received dice id is the same uuid as the matching player uuid
         if self.dialog and 'dice' in self.dialog.id:    #This is a throw in the starting dices
@@ -1196,6 +1233,7 @@ class Board(Screen):
         self.next_player_turn()
 
     def activate_turncoat_mode(self):
+        """Allows the current player to choose any of the characters on the board to play, as long as it is not an enemy matron mother."""
         #block the cells with matrons and... the last one of the turncoat. The last one ppersists for the next turn. dunno how to do the later
         for cell in self.cells:
             if cell.has_char() and 'mother' in cell.get_char().get_type():
@@ -1210,6 +1248,11 @@ class Board(Screen):
                 path.access = True
 
     def move_character(self, character):
+        """Moves effectively the input character, cleaning the last cell and adding it to the new one.
+        Also takes care of any additional triggered action, like a capture or the activation of a dialog.
+        Args:
+            character(:obj: Character): Character to move.
+        """
         LOG.log('debug', 'The chosen cell is possible, moving')
         active_cell = self.active_cell.sprite
         self.last_cell.sprite.empty_cell() #Emptying to delete the active char from there
@@ -1242,11 +1285,21 @@ class Board(Screen):
         self.next_char_turn(self.drag_char.sprite)
 
     def update_character(self, char):
+        """Makes a character evolve. This is used with the Holy Champion for now.
+        It is capable of capturing and be killed after this, and his value increases too.
+        To execute when placed on the promotion cell (If the char fills the conditions).
+        Args:
+            char(:Obj:Character):   Character to make changes to."""
         char.can_kill = True
         char.can_die = True
         char.value *= 3
 
     def next_char_turn(self, char):
+        """Advances a character turn. Each movement of a character ends with this method.
+        This could trigger a change of player or not. It all depends on the character moved.
+        Also activates and deactivates characters as it is needed.
+        Args:  
+            char(:obj:Character):   Last character moved that triggered this method."""
         self.fitnesses = {} #Cleaning the history of fitnesses
         self.char_turns += 1
         if self.char_turns >= char.turns:
@@ -1263,6 +1316,14 @@ class Board(Screen):
         char.update_info_sprites()
 
     def next_player_turn(self, use_stop_state=True):
+        """Advances a player turn. Called after each player is done with his actions in a turn.
+        Increases the turn in the player and in the board, and updates the current_map structure, according to
+        the final result of this board turn actions. Also changes the current player.
+        Pauses and unpauses specific characters if needed.
+        Calls the AI player logic if his turn is the next one.
+        Args:
+            use_stop_state(boolean):    Flag, if it is true the characters of the old current player are paused.
+        """
         self.current_player.turn += 1
         del self.locked_cells[:]    #Clearing it just in caseç
         old_index = self.player_index
@@ -1288,6 +1349,12 @@ class Board(Screen):
 
     @run_async_not_pooled
     def do_ai_player_turn(self, result=None):
+        """All the logic executed in a complete computer player controlled turn.
+        Gets the next movement according to the player's settings (IA mode, timeout per round...),
+        picks a character from the promotion table if this one is shown...
+        In short, the IA player turn.
+        Args: 
+            result(Tuple->(int, int), default=None):  The movement executed by the computer player in this turn."""
         if self.end:    #We make here the only check since this is one of the methods that can call itself and go on until the end of the game
             return
         self.ai_turn_flag.wait()
@@ -1336,6 +1403,10 @@ class Board(Screen):
             self.next_player_turn()
 
     def kill_character(self, cell, killer):
+        """Captures or 'kills' a character in a cell.
+        Args:
+            cell(:obj: Cell):   Cell in which resides the character to be captured
+            killer (:obj: Character):   Character that captures the one in the cell."""
         self.play_effect('explosion', cell.rect.center)
         corpse = cell.kill_char()
         self.update_cells(cell)
@@ -1350,6 +1421,11 @@ class Board(Screen):
         self.play_sound('oof')
 
     def check_player(self, player):
+        """Checks if the input player can still play in the game, by checking if his essential piece (matron mother)
+        is still alive.
+        If there is only a player left, it ends the game and shows the winner.
+        Args:
+            player(:obj: Player):   Player to check."""
         if player.has_lost():
             self.characters.remove(player.characters)
             for char in player.characters:
@@ -1358,6 +1434,7 @@ class Board(Screen):
                 self.win()
 
     def win(self):
+        """Method to execute when a winner is decided. Shows a popup, play a sound and ends the board."""
         LOG.log("info", "Winner winner chicken dinner!")
         self.play_sound('win')
         self.post_event('win')
@@ -1370,6 +1447,9 @@ class Board(Screen):
             LOG.log('info', winner) #The rest of the info
 
     def set_active_cell(self, cell):
+        """Changes the current active cell, the last one that the user interacted with. This shows graphically too.
+        Args: 
+            cell (:obj: Cell):  The new active cell."""
         if self.active_cell.sprite: #If there is already an sprite in active_cell
             if cell is not self.active_cell.sprite: #If its not the same cell that is already active, or is None
                 self.active_cell.sprite.set_active(False)
@@ -1393,6 +1473,9 @@ class Board(Screen):
                 self.drag_char.sprite.set_hover(False)
 
     def set_active_path(self, path):
+        """Changes the current active circular path. This shows graphically. Has no impact in the logic or other methods.
+        Args:
+            path (:obj: Circumference):  New active circular path."""
         if self.active_path.sprite: #If there is already an sprite in active_cell
             if path is not self.active_path.sprite: #If its not the same cell that is already active, or is None
                 self.active_path.sprite.set_active(False)
@@ -1406,9 +1489,11 @@ class Board(Screen):
             self.active_path.add(path)
         
     def destroy(self):
+        """Sets the end flag to true. This will end the methods that depends on it."""
         self.end = True
 
     def __hash__(self):
+        """Returns the hash value of this board instance."""
         _ = self.params
         return hash((_['quadrants_overlap'], _['inter_path_frequency'], _['circles_per_lvl'], _['max_levels'],\
                     _['center_cell']))

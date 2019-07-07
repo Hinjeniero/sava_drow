@@ -5,7 +5,7 @@ Have the following classes, inheriting represented by tabs:
         ↑LoadingScreen
 --------------------------------------------"""
 __all__ = ['Screen', 'LoadingScreen']
-__version__ = '0.2'
+__version__ = '1.0'
 __author__ = 'David Flaity Pardo'
 from os import listdir
 from os.path import isfile, join, dirname

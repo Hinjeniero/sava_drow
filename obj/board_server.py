@@ -5,6 +5,10 @@ Have the following classes.
     BoardServer
 --------------------------------------------"""
 
+__all__ = ['BoardServer']
+__version__ = '1.0'
+__author__ = 'David Flaity Pardo'
+
 #Python full fledged libraries
 import threading
 import uuid
@@ -128,6 +132,8 @@ class Server(MastermindServerTCP):
         return response
 
     def register_server(self):
+        """Sends this server information to the endpoint holding all the public servers.
+        Raises an exception if the endpoint cant be reached."""
         register_server_endpoint = IpGetter.get_servers_table_dir()+NETWORK.TABLE_SERVERS_ADD_ENDPOINT
         json_petition = {'uuid': self.uuid, 'ip': self.public_ip, 'local_ip': self.private_ip, 'port': str(NETWORK.SERVER_PORT), 'players': 1,\
                         'total_players': self.total_players, 'alias': NETWORK.SERVER_ALIAS, 'timestamp': time.time()}
@@ -137,6 +143,9 @@ class Server(MastermindServerTCP):
             raise Exception("no success when adding the server to the table of servers.")
 
     def update_server(self, **params):
+        """Sends this server information to the endpoint holding all the public servers, hoping to update it.
+        Called after a new player connects e.g.
+        Raises an exception if the endpoint cant be reached."""
         LOG.log('info', 'Updating the server player ammount in the table of servers')
         update_server_endpoint = IpGetter.get_servers_table_dir()+NETWORK.TABLE_SERVERS_UPDATE_ENDPOINT
         json_petition = {'uuid': self.uuid, 'players': len(self.clients.values())}
@@ -147,6 +156,8 @@ class Server(MastermindServerTCP):
             raise Exception("no success when updating the server.")
 
     def delete_server(self):
+        """Sends a command to delete this server information in the endpoint holding all the public servers.
+        Raises an exception if the endpoint cant be reached."""
         LOG.log('info', 'Deleting the server form the public table of servers, max ammount of players reached')
         delete_server_endpoint = IpGetter.get_servers_table_dir()+NETWORK.TABLE_SERVERS_DELETE_ENDPOINT
         response = UtilityBox.do_request(delete_server_endpoint, method='POST', data={'uuid': self.uuid}, return_success_only=True)
@@ -155,12 +166,15 @@ class Server(MastermindServerTCP):
             raise Exception("no success when deleting the server.")
 
     def broadcast_data(self, list_of_conns, data, *excluded_conns):
+        """Sends the input data to all the input connection, excluding the ones marked as such."""
         for conn in list_of_conns:
             if not any(conn == excluded for excluded in excluded_conns): 
                 self.callback_client_send(conn, data)
 
     @run_async_not_pooled
     def add_to_barrier(self, conn_object, data):
+        """Adds a connection with matching data to a barrier structure.
+        The response to the data will only be delivered when all the active clients submit it."""
         self.barrier_lock.acquire()
         if len(self.barrier) == 0\
         or all(key in data.keys() for key in self.barrier[0][1].keys()):
@@ -170,7 +184,8 @@ class Server(MastermindServerTCP):
             self.barrier.clear()
         self.barrier_lock.release()
 
-    def group_responses_handler(self):  #ALready got the lock to barrier
+    def group_responses_handler(self):  
+        """Handles the responses that require all the client to submit the petition."""
         if 'start_dice' in self.barrier[0][1].keys():
             #Tuples - (conn, data(json)), 'dice' in saved json
             self.barrier.sort(key=lambda tuple_: tuple_[1]['start_dice'], reverse=True)
@@ -182,6 +197,7 @@ class Server(MastermindServerTCP):
                 #The players in there should be ordered by 'order' already. Sending uuid.
     
     def hold_petition(self, conn_obj, data):
+        """Adds the petition to the on hold queue, since it couldn't be satisfied in the moment."""
         self.hold_lock.acquire()
         self.on_hold_resp.append((conn_obj, data))
         self.on_hold_empty.set()

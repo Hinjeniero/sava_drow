@@ -8,7 +8,7 @@ The classes in this module are:
 --------------------------------------------"""
 
 __all__ = ['Movements', 'Restriction', 'Path']
-__version__ = '0.8'
+__version__ = '1.0'
 __author__ = 'David Flaity Pardo'
 
 import os

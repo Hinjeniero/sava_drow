@@ -7,7 +7,7 @@ Have the following classes, inheriting represented by tabs:
 --------------------------------------------"""
 
 __all__ = ['Cell', 'Quadrant']
-__version__ = '0.2'
+__version__ = '1.0'
 __author__ = 'David Flaity Pardo'
 
 import functools
@@ -61,6 +61,7 @@ class Cell(Circle):
 
     @staticmethod
     def generate(self):
+        """Generate method, called in the constructor. Renders the cell text."""
         self.text_pos = str(self.text_parser())
         #self.add_text_sprite(self.id+"_text", str(self.index), text_size=tuple(x*0.75 for x in self.rect.size))    #This line when testing, easier to spot mistakes in paths and shit.
         self.add_text_sprite(self.id+"_text", self.text_pos, text_size=tuple(x*0.75 for x in self.rect.size))
@@ -79,6 +80,8 @@ class Cell(Circle):
 
     @run_async_not_pooled
     def show_fitness_value(self, fitness_value):
+        """Shows with a small dialog the fitness value of this cell in this turn.
+        Non blocking method."""
         try:
             self.set_fitness_value(fitness_value)
             self.fitness_active = True
@@ -87,6 +90,8 @@ class Cell(Circle):
 
     @run_async_not_pooled
     def hide_fitness_value(self):
+        """Hides the small dialog with the fitness value of this cell in this turn.
+        Non blocking method."""
         try:
             self.fitness_active = False
             self.overlay = self.def_overlay   #Value -1 holds the default overlay
@@ -95,6 +100,11 @@ class Cell(Circle):
             LOG.log('warning', 'Couldnt modify the cell ', self.index)
 
     def draw(self, surface, offset=None):
+        """Draws the sprite over a surface. Draws the overlay too if use_overlay is True.
+        Args:
+            surface (:obj: pygame.Surface): Surface to draw the Sprite. It's usually the display.
+            offset (Container: int, int, default=None): Offset in pixels to be taken into account when drawing.
+        """
         super().draw(surface, offset=offset)
         try:
             if self.fitness_active:
@@ -103,6 +113,11 @@ class Cell(Circle):
             pass
 
     def set_canvas_size(self, canvas_size):
+        """Set a new resolution for the container element (Can be the screen itself). 
+        Updates self.real_rect and self.resolution.
+        Args:
+            canvas_size (Tuple-> int,int): Resolution to set.
+        """
         super().set_canvas_size(canvas_size)
         self.fitnesses_sprites = {} #Garbage collector, do your job!
 

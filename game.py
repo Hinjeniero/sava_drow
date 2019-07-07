@@ -5,7 +5,7 @@ Have the following classes:
     Game
 --------------------------------------------"""
 __all__ = ['Game']
-__version__ = '0.9'
+__version__ = '1.0'
 __author__ = 'David Flaity Pardo'
 
 #Python librariess
@@ -348,6 +348,8 @@ class Game(object):
             self.show_popup('turn')
         elif 'shuf' in command: #The current player shuffled the dice
             self.get_screen('main', 'board').assign_current_dice(event.id)
+        elif 'bad' in command and 'dice' in command:
+            self.show_popup('bad_dice_value')
         elif 'dice' in command: #The current player shuffled the dice
             self.get_screen('main', 'board').dice_value_result(event)
         elif 'conn' in command and 'error' in command:
@@ -517,7 +519,8 @@ class Game(object):
                         ('zero_players', 'You can`t start a game with no players!'),\
                         ('alone_players', 'The board being generated only has one player in it'),\
                         ('not_enough_players', 'You can`t start an online game with less than 2 human players. Create a local one instead.'),\
-                        ('dice_turns', 'Your turns will be ordered following the value that you got in the dice throw')))
+                        ('dice_turns', 'Your turns will be ordered following the value that you got in the dice throw'),\
+                        ('bad_dice_value', 'Someone threw the dice but got his turn revoked!')))
 
     def add_popups(self, *popups):
         """Add the input popups to the game.
@@ -689,7 +692,7 @@ class Game(object):
         else:  
             raise ScreenNotFoundException('A screen with any of the keywords'+ str(keywords)+'wasn`t found')
 
-    def enable_board_sliders(self): #TODO Check if used at all
+    def enable_board_sliders(self):
         """Enable the music menus sliders (The board ones)."""
         self.get_screen('music', 'menu').enable_all_sprites()
 

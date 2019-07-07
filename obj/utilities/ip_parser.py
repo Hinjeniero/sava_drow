@@ -1,5 +1,14 @@
-#https://github.com/ftao/python-ifcfg
+"""--------------------------------------------
+IpParser module. Contains the calls regarding ip directions.
+Have the following classes.
+    IpGetter
+--------------------------------------------"""
 
+__all__ = ['IpGetter']
+__version__ = '1.0'
+__author__ = 'David Flaity Pardo'
+
+#https://github.com/ftao/python-ifcfg
 # try:
 #     import ifcfg
 # except ModuleNotFoundError:
@@ -12,21 +21,25 @@ from obj.utilities.exceptions import ServiceNotAvailableException
 
 PUBLIC_IP_URL = 'http://jsonip.com'
 class IpGetter(object):
+    """Class containing the static IP related methods."""
     SERVICE_SERVERS_TABLE_DIRECTION = None
 
     @staticmethod
     def get_public_ip(raise_exception=False):
+        """Gets and returns the public ip of the local computer."""
         public_ip = None
         try:
             public_ip = UtilityBox.do_request(PUBLIC_IP_URL)['ip']
         except NameError:
-            print("Unable to get public IP") 
+            pass
             if raise_exception:
-                raise AssertionError("Unable to get public IP")
+                raise ServiceNotAvailableException("Unable to get public IP from "+PUBLIC_IP_URL)
         return public_ip
 
     @staticmethod
     def get_local_ip(raise_exception=False):
+        """Gets and returns the IP assigned by the local network to this computer.
+        Schema: 192.X.X.X"""
         local_ip = None
         # try:  #Not working that well on windows
         #     #default = ifcfg.default_interface()    #Not working on windows
@@ -48,7 +61,7 @@ class IpGetter(object):
     def get_servers_table_dir():
         """Detects the location of the node service that acts as a middleman for all the public connected users, be it clients or servers.
         First checks if the service is online in the amazon servers, and then 2 times if it is locally.
-        Raises exception if no node script is dertected executing"""
+        Raises exception if no node script is dertected executing."""
         if not IpGetter.SERVICE_SERVERS_TABLE_DIRECTION:
             port_string = ':'+str(NETWORK.TABLE_SERVERS_PORT)
             table_servers_dir = NETWORK.TABLE_SERVERS_URL if UtilityBox.do_request(NETWORK.TABLE_SERVERS_URL+port_string, timeout=3, return_success_only=True)\

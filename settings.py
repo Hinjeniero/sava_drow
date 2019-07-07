@@ -121,12 +121,12 @@ class NETWORK:
     """Network settings, used when connecting to other players, be it in LAN or through the internet"""
     #Settings if yo are the server
     LOCAL_LOOPBACK_IP = '127.0.0.1'
-    LOCAL_IP = None                 #This can be modified once at the beginning! It's the only variable that is modified in execution!
+    LOCAL_IP = '0.0.0.0'            #This can be modified once at the beginning! It's the only variable that is modified in execution!
     SERVER_ALIAS = 'TEST_SERVER'    #The name that your server will have in the community list if you set it to public
     SERVER_REFRESH_TIME = 1         #Refresh time of the server
     SERVER_CONNECTION_REFRESH = 1   #Refrest time of the server connection
     SERVER_CONNECTION_TIMEOUT = 30
-    SERVER_IP = '0.0.0.0'
+    SERVER_IP = LOCAL_IP
     SERVER_PORT = 6397
     #Settings to connect to
     # CLIENT_IP = '192.168.1.254'      #USED TO CONNECT TO AN EXTERNAL COMPUTER AS A SERVER

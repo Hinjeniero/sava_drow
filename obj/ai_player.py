@@ -7,7 +7,7 @@ Have the following classes:
 --------------------------------------------"""
 
 __all__ = ['PersistantNumber', 'ComputerPlayer']
-__version__ = '0.2'
+__version__ = '1.0'
 __author__ = 'David Flaity Pardo'
 
 #Python libraries

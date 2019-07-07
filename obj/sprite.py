@@ -8,7 +8,7 @@ Have the following classes, inheriting represented by tabs:
 --------------------------------------------"""
 
 __all__ = ['Sprite', 'TextSprite', 'AnimatedSprite', 'MultiSprite']
-__version__ = '0.5'
+__version__ = '1.0'
 __author__ = 'David Flaity Pardo'
 
 #Python libraries
@@ -121,6 +121,7 @@ class Sprite(pygame.sprite.Sprite):
 
     @staticmethod
     def generate(self):
+        """Generates the complex attributes of the sprite. The image, overlay and mask are created here."""
         self.image, self.overlay = Sprite.generate_surface(self.rect, **self.params)
         self.mask = pygame.mask.from_surface(self.image)
         self.rect.size = self.image.get_size()  #In the case that the image has changed sizes when resizing
@@ -129,6 +130,7 @@ class Sprite(pygame.sprite.Sprite):
         self.rects[self.resolution] = self.rect.copy() 
 
     def get_id(self):
+        """Returns the id of this sprite."""
         return self.id
         
     def draw(self, surface, offset=None):
@@ -209,6 +211,7 @@ class Sprite(pygame.sprite.Sprite):
         """Changes the position of the Sprite. Updates rect and real_rect.
         Args:
             position (:obj: pygame.Rect||:tuple: int,int): New position of the Sprite. In pixels.
+            update_rects (boolean, default:True):   Flag. If its true, the real rect attributes will be updated after the input position.
         """
         if self.abs_position:
             difference = tuple(x-y for x, y in zip(position, self.rect.topleft))
@@ -228,6 +231,10 @@ class Sprite(pygame.sprite.Sprite):
             self.set_size(rect.size, update_rects)
 
     def set_center(self, center):
+        """Changes the center of the Sprite. Updates rect and real_rect.
+        Args:
+            center (:obj: pygame.Rect||:tuple: int,int):    New position of the Sprite. In pixels.
+        """
         if self.rect.topleft != center:
             new_pos = tuple(x-y//2 for x,y in zip(center, self.rect.size))
             self.set_position(new_pos)    #To update the real rect
@@ -304,15 +311,13 @@ class Sprite(pygame.sprite.Sprite):
         if not self.enabled and self.use_overlay:
             self.overlay.set_alpha(200)
 
-    @staticmethod   #TODO UPDATE DOCUMENTATION
+    @staticmethod
     def generate_surface(size, surface=None, texture=None, overlap_texture=None, active_texture=None, keep_aspect_ratio=True, resize_mode='fit', resize_smooth=True,\
                         only_text=False, text="default_text", text_color=WHITE, text_font=FONT, text_outline=1, text_outline_color=BLACK, text_shadow_dir=(0.0, 0.0), text_lines=1,\
                         shape="Rectangle", transparent=False, fill_color=RED, fill_gradient=True, gradient=(LIGHTGRAY, DARKGRAY), gradient_type="horizontal", angle=None,\
                         overlay=True, overlay_color=WHITE, border=True, border_color=WHITE, border_width=2, **unexpected_kwargs):
         """Generates a pygame surface according to input arguments.
         Args:
-
-
             size (:obj: pygame.Rect | Tuple-> int,int):  Dimensions of the surface (width, height)
             surface (:obj: pygame.Surface, default=None): 
             texture (string):   Path of the image to be loaded as a texture 
@@ -333,24 +338,24 @@ class Sprite(pygame.sprite.Sprite):
             text (string):  The text to draw. Used if only_text is True. 
             text_color (Tuple-> int, int, int): RGB Color of the text. Used if only_text is True.
             text_font (pygame.font):    Font used when rendering the text. Used if only_text is True.
-            text_outline (int, default=1):
-            text_outline_color (Tuple-> int, int, int):
-            text_shadow_dir (Tuple-> float, float):
-            text_lines (int):
+            text_outline (int, default=1):  Width of the outline of the rendered text.
+            text_outline_color (Tuple-> int, int, int): Outline of the rendered text.
+            text_shadow_dir (Tuple-> float, float): Direction of the shadow of the rendered text.
+            text_lines (int):   Text lines that the rendered text will be divided into.
             shape (String): Shape of the surface. Options are circle and rectangle.
-            transparent (boolean):
+            transparent (boolean):  Flag that decides if to add transparency or not. Only works with circles.
             fill_color (Tuple-> int, int, int): RGB color of the surface background. Used if fill_gradient is False. 
             fill_gradient (boolean):    True if we want a gradient instead of a solid color in the .
             gradient (Tuple-> 2 Tuples-> int, int, int):   Interval of RGB colors of the gradient. (start, end). 
             gradient_type (string): direction of the gradient. Options are Horizontal and Vertical. Used if gradient is True.
-            angle (default=None):
+            angle (default=None): Rotation to apply to the result. Only works well with multiples of 90.
             ----
-            overlay (boolean):
+            overlay (boolean):  Flag that says if an overlay will be generated and returned or not.
             overlay_color (Tuple-> int, int, int):  RGB color of the overlay.
             border (boolean):   True if the surface generated has a border.
             border_color (Tuple-> int, int, int):   Color of the border. RGBA/RGB format.
             border_width (int):  Size of the border in pixels.
-            **unexpected_kwargs (Dict-> Any:Any):   Just there to not raise an error if unexpecte keywords are received.
+            **unexpected_kwargs (Dict-> Any:Any):   Just there to not raise an error if unexpected keywords are received.
         Returns:
             (:obj: pygame.Surface): Surface generated following the keywords"""
         text = str(text)
@@ -419,6 +424,7 @@ class Sprite(pygame.sprite.Sprite):
 
     @staticmethod
     def generate_overlay(surf, color):
+        """Generates and returns a matching overlay for the input surface."""
         overlay = surf.copy()
         overlay.fill(color, special_flags=pygame.BLEND_ADD)
         colorkey = UtilityBox.get_alike_colorkey(color)
@@ -459,6 +465,7 @@ class TextSprite(Sprite):
 
     @staticmethod
     def generate(self):
+        """Generate method, executed in each constructor."""
         UtilityBox.join_dicts(self.params, TextSprite.__default_config) 
         self.set_size(self.image.get_size())    #The size can change in texts from the initial one
 
@@ -511,6 +518,7 @@ class MultiSprite(Sprite):
 
     def add_hover_dialog(self, dialog_text, animated=False, dialog_texture=None, dialog_size=None, text_color=WHITE, dialog_lines=1, text_outline=1,\
                         text_outline_color=BLACK, text_shadow_dir=(0.0, 0.0), text_font=FONT, **dialog_kwargs):
+        """Creates and adds a hover dialog to this element, that will show information about this sprite."""
         if dialog_text:
             size = dialog_size if dialog_size else self.rect.size
             self.dialog_animated = animated
@@ -523,6 +531,7 @@ class MultiSprite(Sprite):
             self.hover_dialog.visible = False
 
     def set_alpha(self, alpha):
+        """Changes the alpha of the image of this sprite."""
         self.image.set_alpha(alpha)
         for sprite in self.sprites:
             sprite.image.set_alpha(alpha)
@@ -545,6 +554,11 @@ class MultiSprite(Sprite):
             sprite.set_canvas_size(self.rect.size)
 
     def set_position(self, position, update_rects=True):
+        """Changes the position of the Sprite. Updates rect and real_rect.
+        Args:
+            position (:obj: pygame.Rect||:tuple: int,int): New position of the Sprite. In pixels.
+            update_rects (boolean, default:True):   Flag. If its true, the real rect attributes will be updated after the input position.
+        """
         super().set_position(position, update_rects=update_rects)    #Changing the sprite size and position to the proper place
         for sprite in self.sprites:
             sprite.abs_position = self.get_sprite_abs_position(sprite)
@@ -611,12 +625,14 @@ class MultiSprite(Sprite):
             sprite.abs_position = self.get_sprite_abs_position(sprite)
 
     def draw(self, surface, offset=None):
+        """Draws this instance onto a visible surface."""
         if self.visible:
             super().draw(surface, offset=offset)
             for sprite in self.sprites:
                 sprite.draw(surface, offset=offset)
                 
     def update(self):
+        """Updates the information about the sprite. Called after each drawing onto the screen."""
         if self.hover_dialog:
             dialog_alpha = self.hover_dialog.image.get_alpha()
             if self.dialog_active:
@@ -633,16 +649,15 @@ class MultiSprite(Sprite):
                     self.hover_dialog.image.set_alpha(dialog_alpha)
 
     def show_help_dialog(self):
+        """Shows the hover dialog, if it has been added previously."""
         if self.hover_dialog:
             self.dialog_active = True
             self.hover_dialog.visible = True
             
     def hide_help_dialog(self):
+        """Hides the hover dialog, if it has been added previously."""
         if self.hover_dialog:
             self.dialog_active = False
-
-    def appearing_animation(self):
-        pass
 
 class AnimatedSprite(MultiSprite):
     """Class AnimatedSprite. Inherits from Sprite. Adds all the attributes and methods needed to support
@@ -700,6 +715,9 @@ class AnimatedSprite(MultiSprite):
 
     @staticmethod
     def generate(self):
+        """Generate method, called in the construction of each instance.
+        Initializes the complex attributes, and loads the stream of images and frames that
+        will compose this animated sprite."""
         UtilityBox.join_dicts(self.params, AnimatedSprite.__default_config)
         self.use_overlay = False
         self.next_frame_time = self.params['animation_delay']
@@ -817,6 +835,8 @@ class AnimatedSprite(MultiSprite):
                     self.animation_index = 1        
 
     def set_hover(self, hover):
+        """Sets the hover state of the sprite.
+        Also changes the showing sprite if its needed. (Sprites when hovering are bigger)."""
         super().set_hover(hover)
         if hover:
             self.image = self.current_hover_sprite()
@@ -867,7 +887,11 @@ class AnimatedSprite(MultiSprite):
             self.image = self.current_sprite() if not self.hover else self.current_hover_sprite()
 
 class OnceAnimatedSprite(AnimatedSprite):
+    """Class OnceAnimatedSprite. Inherits from AnimatedSprite. The difference between it and the super class is
+    that this one only play once before stopping. """
+
     def __init__(self, id_, position, size, canvas_size, **params):
+        """OnceAnimatedSprite constructor."""
         super().__init__(id_, position, size, canvas_size, **params)
     
     def animation_frame(self):
@@ -884,6 +908,7 @@ class OnceAnimatedSprite(AnimatedSprite):
                 self.set_enabled(False)
 
     def set_enabled(self, state):
+        """Sets the enabled state of this sprite."""
         super().set_enabled(state)
         self.set_visible(state)
         self.animation_index = 0

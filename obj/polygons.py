@@ -7,7 +7,7 @@ Have the following classes, inheriting represented by tabs:
 --------------------------------------------"""
 
 __all__ = ['Circle', 'Rectangle']
-__version__ = '0.4'
+__version__ = '1.0'
 __author__ = 'David Flaity Pardo'
 
 import pygame

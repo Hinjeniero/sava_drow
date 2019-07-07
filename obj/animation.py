@@ -8,7 +8,7 @@ Have the following classes, inheriting represented by tabs:
 --------------------------------------------"""
 
 __all__ = ['ScriptedSprite', 'Animation']
-__version__ = '0.2'
+__version__ = '1.0'
 __author__ = 'David Flaity Pardo'
 
 #Python libraries
@@ -70,6 +70,7 @@ class ScriptedSprite(AnimatedSprite):
         ScriptedSprite.generate(self)
 
     def copy(self, new_id=None):
+        """Returns a deep copy of this ScriptedSprite."""
         if not new_id:
             copy = ScriptedSprite(self.id+'_copy', self.rect.topleft, self.rect.size, self.resolution, self.fps, self.fps_modes, **self.params)
         else:
@@ -80,6 +81,7 @@ class ScriptedSprite(AnimatedSprite):
 
     @staticmethod
     def generate(self):
+        """Starts the dictionaries (self.frames and self.real_frames)."""
         for fps in self.fps_modes:
             self.frames[fps]        = []
             self.real_frames[fps]   = []
@@ -106,6 +108,11 @@ class ScriptedSprite(AnimatedSprite):
         self.time += time
 
     def set_canvas_size(self, resolution):
+        """Set a new resolution size for this element. 
+        Updates self.real_rect and self.resolution.
+        Args:
+            canvas_size (Tuple-> int,int): Resolution to set.
+        """
         super().set_canvas_size(resolution)
         self.start_pos = tuple(x*y for x,y in zip(self.real_start, self.resolution))
         for fps in self.fps_modes:
@@ -191,13 +198,19 @@ class Animation(object):
         self.playing            = True
 
     def pause_animation(self):
+        """Pauses this animation and updates the flag."""
         self.playing = False
 
     def unpause_animation(self):
+        """Unpauses this animation and updates the flag, and the init time attribute"""
         self.playing = True
         self.init_time = time.time()-self.current_time
         
     def set_resolution(self, resolution):
+        """Set a new resolution size for this animation. 
+        Args:
+            resolution (Tuple-> int,int):   Resolution to set.
+        """
         for sprite in self.all_sprites:
             sprite.set_canvas_size(resolution)
 
@@ -246,7 +259,9 @@ class Animation(object):
         if playing:
             self.playing_sprites.sort(key=lambda sprite: (sprite.layer, sprite.end_time))
 
-    def restart(self):  #TODO CHECK OUT THIS METHOD
+    def restart(self):
+        """Restarts the play state of the scripted sprites that the animation contains.
+        Also restart the local lists and orders again the sprites."""
         for sprite in self.playing_sprites:
             sprite.restart()
             self.idle_sprites.append(sprite)
@@ -256,6 +271,7 @@ class Animation(object):
         self.sort_sprites()
 
     def clear_animation_cache(self):
+        """Deletes the list of playing sprites and done sprites."""
         del self.playing_sprites[:]
         del self.done_sprites[:]
 
@@ -274,7 +290,7 @@ class Animation(object):
                 sprite.draw(surface)
 
     def draw(self, surface):
-        """Acronym"""
+        """Acronym, same as the play method."""
         self.play(surface)
 
     def update_clocks(self):
@@ -285,13 +301,14 @@ class Animation(object):
         self.current_time = time_now-self.init_time
 
     def trigger_sprites(self):
+        """Checks the current time, and starts the sprites that match or are over it, and
+        stop the ones whose end time is over it as well."""
         #Checking sprites that have completed their animation to end them.
         indexes_to_end = []
         for index in range (0, len(self.playing_sprites)):
             if self.current_time > self.playing_sprites[0].end_time:
                 indexes_to_end.append(index)
         self.end_sprites(*indexes_to_end)
-
         #Checking sprites to trigger/start.
         indexes_to_start = []
         for index in range (0, len(self.idle_sprites)):
@@ -300,6 +317,7 @@ class Animation(object):
         self.init_sprites(*indexes_to_start)
 
     def init_sprites(self, *indexes):
+        """Starts the sprites that match the input indexes"""
         offset = 0
         for index in indexes:
             sprite = self.idle_sprites[index-offset]
@@ -309,6 +327,7 @@ class Animation(object):
         self.sort_sprites(idle=True, playing=True)
 
     def end_sprites(self, *indexes):
+        """Stops the sprites that match the input indexes"""
         offset = 0
         for index in indexes:
             sprite = self.playing_sprites[index-offset]
@@ -378,9 +397,12 @@ class LoopedAnimation(Animation):
     with loops set to 0 or a negative number.
     """
     def __init__(self, name, loops=1):
+        """Looped animation constructor"""
         super().__init__(name, -1, -1)
 
     def trigger_sprites(self):
+        """Checks the current time, and starts the sprites that match or are over it.
+        IT DOESNT CHECK THE END TIME, since the sprites of this animation are looped."""
         #Checking sprites to trigger/start. They are sorted, sooo...
         indexes_to_start = []
         for index in range (0, len(self.idle_sprites)):

@@ -6,7 +6,7 @@ Have the following classes:
 --------------------------------------------"""
 
 __all__ = ['AnimationGenerator']
-__version__ = '0.8'
+__version__ = '1.0'
 __author__ = 'David Flaity Pardo'
 
 #Python libraries

@@ -4,7 +4,7 @@ Have the following classes:
     BoardGenerator
 --------------------------------------------"""
 __all__ = ['BoardGenerator']
-__version__ = '0.9'
+__version__ = '1.0'
 __author__ = 'David Flaity Pardo'
 
 #Python libraries
@@ -86,10 +86,12 @@ class BoardGenerator(object):
             self.board_params['quadrants_overlap'] = False
 
     def set_round_time_cpu(self, round_time):
+        """Change the round time for the computer players."""
         self.cpu_timeout = round_time
         self.board_params['counter_round_time'] = self.cpu_timeout
 
     def set_cpu_players(self, cpu_players):
+        """Changes the ammount of cpu players."""
         self.cpu_players = cpu_players
         if cpu_players is 0:
             self.board_params['counter_round_time'] = None
@@ -147,6 +149,7 @@ class BoardGenerator(object):
             board.server.set_chars(sum(x['ammount'] for x in char_settings.values()))
 
     def get_actual_total_players(self):
+        """Gets the sum of the computer players and human players attributes (Not the total players)"""
         return self.cpu_players+self.human_players
 
     @time_it

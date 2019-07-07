@@ -13,7 +13,7 @@ Have the following classes, inheriting represented by tabs:
 --------------------------------------------"""
 
 __all__ = ["Player", "Character", "Warrior", "Wizard", "Priestess", "Pawn", "MatronMother", "HolyChampion"]
-__version__ = '0.9'
+__version__ = '1.0'
 __author__ = 'David Flaity Pardo'
 
 #Python libraries

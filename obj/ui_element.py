@@ -831,7 +831,7 @@ class InfoBoard (UIElement):
         return (x_axis, y_axis)
 
     #Modify to also add elements when there are elements inside already
-    def add_and_adjust_sprites(self, *elements, scale=0.95): #TODO convert to generator
+    def add_and_adjust_sprites(self, *elements, scale=0.95):
         """Adds all the UIElements to the Infoboard, adjusting and placing them.
         The number of spaces taken won't be modified if it's under the row number,
         but will be rounded up otherwise. This is due to the impossibility of showing

@@ -80,7 +80,7 @@ class Sprite(pygame.sprite.Sprite):
             canvas_size (:tuple: int,int):  Size of the display. In pixels.
             image_params (:dict:):  Dict of keywords and values as parameters to create the self.image attribute.
                                     Variety going from fill_color and use_gradient to text_only.
-        Params dict attributes: TODO modify this
+        Params dict attributes:
             position: Position that this surface will have on the destination surface if it's drawed.
             size: Size of the surface containing the polygon, is a tuple (width, height).
             surf_color: Background color of the polygon if gradient and image are false. Default is solid red.
@@ -194,10 +194,12 @@ class Sprite(pygame.sprite.Sprite):
         self.set_rect(rect, update_rects=False)
         #LOG.log('debug', "Succesfully changed sprite ", self.id, " to ", self.rect.size, ", due to the change to resolution ", canvas_size)
 
-    def set_size(self, size, update_rects=True, regenerate_image=True): #TODO update documentation
+    def set_size(self, size, update_rects=True, regenerate_image=True):
         """Changes the size of the Sprite. Updates rect and real_rect, and changes image and mask to match the size.
         Args:
-            size (:obj: pygame.Rect||:tuple: int,int): New size of the Sprite. In pixels.
+            update_rects (boolean, default:True):   Flag. If its true, the real rect attributes will be updated after the input position.
+            size (:obj: pygame.Rect||:tuple: int,int):  New size of the Sprite. In pixels.
+            regenerate_image (boolean, default:True):   Flag. True makes the sprite regenerate its image when this method is called.
         """
         self.rect.size = size
         if update_rects:
@@ -205,7 +207,6 @@ class Sprite(pygame.sprite.Sprite):
             self.rects[self.resolution] = self.rect.copy()
         if regenerate_image:
             self.regenerate_image()
-        #LOG.log('debug', "Succesfully changed sprite ", self.id, " size to ",size)
 
     def set_position(self, position, update_rects=True):
         """Changes the position of the Sprite. Updates rect and real_rect.
@@ -220,7 +221,6 @@ class Sprite(pygame.sprite.Sprite):
         if update_rects:
             self.real_rect  = (tuple(x/y for x,y in zip(position, self.resolution)), self.real_rect[1])
             self.rects[self.resolution] = self.rect.copy()
-        #LOG.log('debug', "Succesfully changed sprite ",self.id, " position to ",position)
 
     def set_rect(self, rect, update_rects=True):
         """Sets a new Rect as the Sprite rect. Uses the rect.size and rect.topleft to change size and position
@@ -625,7 +625,11 @@ class MultiSprite(Sprite):
             sprite.abs_position = self.get_sprite_abs_position(sprite)
 
     def draw(self, surface, offset=None):
-        """Draws this instance onto a visible surface."""
+        """Draws the sprite over a surface. Draws the overlay too if use_overlay is True.
+        Args:
+            surface (:obj: pygame.Surface): Surface to draw the Sprite. It's usually the display.
+            offset (Container: int, int, default=None): Offset in pixels to be taken into account when drawing.
+        """
         if self.visible:
             super().draw(surface, offset=offset)
             for sprite in self.sprites:
@@ -759,10 +763,8 @@ class AnimatedSprite(MultiSprite):
             else:
                 self.add_surface(surfaces[path], None)
 
-    def add_surfaces(self): #TODO update documentation
-        """Check if a surface is loaded already, and adds it to the attribute lists.
-        Args:
-            surface (str||:obj: pygame.Surface): Surface to add, or path to the image to load."""
+    def add_surfaces(self):
+        """Gets the surfaces from the param list 'initial_surfaces', and adds them to the animated sprite."""
         #CHECKING the type
         for image in self.params['initial_surfaces']:
             if isinstance(image, str):  #It's a path
@@ -795,7 +797,7 @@ class AnimatedSprite(MultiSprite):
             self.hover_surfaces.append(hover_surface)
         self.masks.append(pygame.mask.from_surface(surface))
 
-    def set_size(self, size, update_rects=True): #TODO CHANGE THIS TO USE LOAD_SURFACES
+    def set_size(self, size, update_rects=True):
         """Changes the size of all the surfaces that this Sprite contains (except the original ones).
         Args:
             size(:tuple: int, int): New size of the surfaces."""

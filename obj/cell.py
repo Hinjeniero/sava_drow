@@ -122,6 +122,8 @@ class Cell(Circle):
         self.fitnesses_sprites = {} #Garbage collector, do your job!
 
     def set_fitness_value(self, fitness_value):
+        """Sets/Updates the current fitness to the score of this cell in whatever situation the board is in.
+        If the text that matches the score is found, it is shown and thats it. Otherwise, it must be rendered and added."""
         self.current_fitness = fitness_value
         try:
             self.fitnesses_sprites[fitness_value]
@@ -133,14 +135,12 @@ class Cell(Circle):
             value_sprite = MultiSprite('value', (0, 0), (int(self.rect.width*1.2), self.rect.height//2), self.rect.size, texture=PATHS.BROWN_SLIDER, keep_aspect_ratio=False)
             self.add_sprite(value_sprite, add_to_sprite_list=False)   #We only do this to add the absolute position and that shit
             value_sprite.add_text_sprite('fuckinvalue', round(fitness_value, 4))
-            #value_sprite.set_center(self.center)
             self.fitnesses_sprites[fitness_value] = (overlay, value_sprite)
         self.overlay = self.fitnesses_sprites[fitness_value][0]
 
-    def parse_text(self, text): #TODO CONVERT NUYMEBRS TO LETTERS AND ALL THAT SHIT
-        pass
-
     def add_border(self, image_path):
+        """Adds a circumference (Based on the input image) to the image of this cell. This is used to symbolize a different type of cell.
+        Usually used for promotion cells (With a golden border)."""
         border = Circle('border'+str(self.index), (0, 0), self.rect.size, self.rect.size, texture=image_path)
         self.add_sprite(border)
 
@@ -151,6 +151,8 @@ class Cell(Circle):
             self.chars.add(character)
 
     def set_hover(self, hover):
+        """Sets the hover state of this sprite. If there are characters inside the cell, their 
+        hover state is affected as well."""
         super().set_hover(hover)
         if self.chars.sprite and self.chars.sprite.active:
             self.chars.sprite.set_hover(hover)
@@ -171,12 +173,16 @@ class Cell(Circle):
         return self.index
 
     def get_char(self):
+        """Returns the char that is currently on the cell if it has one, and False if the cell is empty."""
         return self.has_char()
 
     def has_char(self):
+        """Returns the char that is currently on the cell if it has one, and False if the cell is empty."""
         return self.chars.sprite if self.chars.sprite else False
 
     def open_access(self, who_asking):
+        """Returns True if this cell is accesible for the characters of the input player asking.
+        False otherwise."""
         return False if (self.has_ally(who_asking) or (self.has_enemy(who_asking) and not self.chars.sprite.can_die))\
         else True
 
@@ -203,12 +209,16 @@ class Cell(Circle):
         return False
 
     def is_empty(self):
+        """Returns True if there aren't any characters on the cell, being effectively Empty. False otherwise."""
         return True if not self.chars.sprite else False
 
     def empty_cell(self):
+        """Empties the cell by kicking the characters of this cell chars structure. 
+        If those characters reference hasn't been added to another sprite group, their instances are lost and deleted."""
         self.chars.empty()
 
     def kill_char(self):
+        """Kicks the character that is in this cell, and returns it."""
         sprite = self.chars.sprite
         self.chars.empty()
         return sprite
@@ -243,14 +253,17 @@ class Cell(Circle):
         return hash(self.pos)
 
 class QuadrantCell(object):
+    """QuadrantCell class. Contains a cell object, and additional attributes
+    that makes the classification in different quadrants possible."""
     def __init__(self, cell):
+        """QuadrantCell constructor."""
         self.cell = cell
-        self.center_level = 0
-        self.border_level = 0
-        self.bifurcation  = False
+        self.center_level = 0       #Level of deepening as a center. The highest level of center is just on the perfect center of the quadrant.
+        self.border_level = 0       #Level of 
+        self.bifurcation  = False   #Flag that checks if this cell is over an interpath.
 
-    def cell_to_str(self):
-        return 'border_level: '+str(self.border_level)
+    def __str__(self):
+        return 'border_level: '+str(self.border_level)+", center_level: "+str(self.center_level)
 
 class Quadrant(object):
     """Quadrant class. Takes care of the organization of the Cells themselves.
@@ -288,6 +301,8 @@ class Quadrant(object):
 
     @staticmethod
     def generate(self, level_size, interpath_freq, *cells):
+        """Generate method, called in the constructor. Classifies the cells following the 
+        spacial position of it in the quadrant itself."""
         for cell in cells:
             self.cells.append(QuadrantCell(cell))
         self.index, self.lvl = self.get_intervals(level_size, *self.cells)
@@ -309,6 +324,8 @@ class Quadrant(object):
 
     @staticmethod
     def delete_overlapping_cells(*quadrants):
+        """Static method, from the input quadrants, delete the cells that are found to belong to more than 
+        one of them. Useful when overlapping cells can cause problems by trying to drop characters on them at the start."""
         for quadrant in quadrants:
             for cell in quadrant.cells:
                 overlaps = False
@@ -323,12 +340,15 @@ class Quadrant(object):
                     quadrant.delete_cells(cell)
 
     def max_border_lvl(self):
+        """Returns the highest level of 'border' that a cell has between the cell hold by this quadrant."""
         return max(x for x in self.borders.keys())
 
     def max_center_lvl(self):
+        """Returns the highest level of 'center' that a cell has between the cell hold by this quadrant."""
         return max(x for x in self.centers.keys())
 
     def print_state(self):
+        """Prints the current state of this quadrant."""
         LOG.log('debug', 'Quadrant id: ', self.id, ', with the intervals: lvl ', self.lvl, ', index', self.index,\
                         '\nAll cells: ',\
                         tuple(str(cell.cell.pos)+', center_level: '+str(cell.center_level)+\
@@ -338,6 +358,7 @@ class Quadrant(object):
                         '---------------------------------')
 
     def parse_level(self, border_level=None, center_level=None):
+        """Gets the center/border level."""
         if center_level:
             center_levels = (min(x for x in self.centers.keys()), max(x for x in self.centers.keys()))
             level = center_levels[0] if center_level < center_levels[0]\
@@ -391,6 +412,8 @@ class Quadrant(object):
         return cell.cell
 
     def delete_cells(self, *cells):
+        """Delete the cells inside the quadrant cells, and afterwards the quadrant cell themselves.
+        After classifying and passing the starting state of the board, they are uselessly occupying memory."""
         for cell in cells:
             self.cells.remove(cell)
             self.borders[cell.border_level].remove(cell)
@@ -411,6 +434,7 @@ class Quadrant(object):
 
 
     def sort_cells_but_good(self, level_size, *cells):
+        """Sorts all the input cells and separates them in center or border."""
         while True:
             for cell in cells:
                 cell.border_level += 1

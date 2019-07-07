@@ -1,14 +1,33 @@
+
+"""--------------------------------------------
+help_dialogs module. With all the methods and texts to add the matching
+hover dialogs to the elements that need them.
+    HelpDialogs
+--------------------------------------------"""
+
+__all__ = ['HelpDialogs']
+__version__ = '1.0'
+__author__ = 'David Flaity Pardo'
+
 from obj.utilities.decorators import run_async
 from obj.utilities.utility_box import UtilityBox
 from settings import PATHS, STRINGS
 from strings import CONFIG_MENU_DIALOGS, GRAPHIC_MENU_DIALOGS, CHARACTERS_DIALOGS, BOARD_DIALOGS
+
 class HelpDialogs(object):
+    """HelpDialogs class. Container of static methods to create and add hover dialogs to elements."""
+
     @staticmethod
     def get_dialog_kwargs(resolution):
+        """Returns the default keyword arguments for the dialogs."""
+        '''dialog_text, animated=False, dialog_texture=None, dialog_size=None, text_color=WHITE, dialog_lines=1, text_outline=1,\
+                    text_outline_color=BLACK, text_shadow_dir=(0.0, 0.0), text_font=FONT, **dialog_kwargs'''
         return {'dialog_size': (resolution[0]//3, resolution[0]//2), 'dialog_texture': PATHS.DARK_BRICK}
 
     @staticmethod
     def add_help_dialogs(menu_id, elements, resolution):
+        """Method that adds the matching hover dialog for each input element, depending on the menu id.
+        Relies on auxiliar methods."""
         if 'graphic' in menu_id.lower() or 'video' in menu_id.lower():
             for elem in elements:
                 HelpDialogs.add_graphic_menu_dialog(elem, resolution)
@@ -22,8 +41,7 @@ class HelpDialogs(object):
     @staticmethod
     @run_async
     def add_graphic_menu_dialog(element, resolution):
-        '''dialog_text, animated=False, dialog_texture=None, dialog_size=None, text_color=WHITE, dialog_lines=1, text_outline=1,\
-                    text_outline_color=BLACK, text_shadow_dir=(0.0, 0.0), text_font=FONT, **dialog_kwargs'''
+        """Adds the hover dialogs to the elements of the graphic menu. The dialog depends on the id of the input element."""
         kwargs = HelpDialogs.get_dialog_kwargs(resolution)
         if 'resolution' in element.id:
             element.add_hover_dialog(GRAPHIC_MENU_DIALOGS.RESOLUTION_DIALOG, dialog_lines=UtilityBox.line_number(GRAPHIC_MENU_DIALOGS.RESOLUTION_DIALOG), **kwargs)
@@ -39,8 +57,7 @@ class HelpDialogs(object):
     @staticmethod
     @run_async
     def add_config_menu_dialog(element, resolution):
-        '''dialog_text, animated=False, dialog_texture=None, dialog_size=None, text_color=WHITE, dialog_lines=1, text_outline=1,\
-                    text_outline_color=BLACK, text_shadow_dir=(0.0, 0.0), text_font=FONT, **dialog_kwargs'''
+        """Adds the hover dialogs to the elements of the config menu. The dialog depends on the id of the input element."""
         kwargs = HelpDialogs.get_dialog_kwargs(resolution)
         if 'cell' in element.id and 'texture' in element.id:
             element.add_hover_dialog(CONFIG_MENU_DIALOGS.CELL_TEXTURE_DIALOG, dialog_lines=UtilityBox.line_number(CONFIG_MENU_DIALOGS.CELL_TEXTURE_DIALOG), **kwargs)
@@ -73,12 +90,14 @@ class HelpDialogs(object):
     @staticmethod
     @run_async
     def add_characters_dialogs(characters, resolution):
+        """Adds the hover dialogs to the input characters."""
         for char in characters:
             HelpDialogs.add_character_dialog(char, resolution)                                                                            
 
     @staticmethod
     @run_async
     def add_character_dialog(char, resolution):
+        """Adds the hover dialog to a character. The dialog depends on the id of the input character."""
         kwargs = HelpDialogs.get_dialog_kwargs(resolution)
         char_type = char.get_type().lower()
         if 'pawn' in char_type:
@@ -97,6 +116,7 @@ class HelpDialogs(object):
     @staticmethod
     @run_async
     def add_board_dialog(element, resolution):
+        """Adds the hover dialogs to the elements of the main board. The dialog depends on the id of the input element."""
         kwargs = HelpDialogs.get_dialog_kwargs(resolution)
         if 'fitness' in element.id:
             element.add_hover_dialog(BOARD_DIALOGS.FITNESS_BUTTON, dialog_lines=UtilityBox.line_number(BOARD_DIALOGS.FITNESS_BUTTON), **kwargs)

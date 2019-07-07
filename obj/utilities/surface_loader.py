@@ -1,14 +1,28 @@
+"""--------------------------------------------
+surface_loader module. In here is all the logic related to the transformation
+of surfaces and the related information of type pygame.Surface.
+Have the following classes:
+    ResizedSurface
+    SurfaceLoader
+--------------------------------------------"""
+
+__all__ = ['ResizedSurface', 'SurfaceLoader']
+__version__ = '1.0'
+__author__ = 'David Flaity Pardo'
+
+#Python libraries
 import pygame
+from wrapt import synchronized
+#Selfmade libraries
+from settings import EXTENSIONS
 from obj.utilities.synch_dict import Dictionary
 from obj.utilities.utility_box import UtilityBox
 from obj.utilities.decorators import time_it
 from obj.utilities.logger import Logger as LOG
 from obj.utilities.resizer import Resizer
 #from memory_profiler import profile
-from settings import EXTENSIONS
-from wrapt import synchronized
 
-#Decorator
+"""This one is a decorator."""
 def no_size_limit(function):
     """Times the input function and prints the result on screen. 
     The time library is needed.
@@ -26,9 +40,17 @@ def no_size_limit(function):
     return wrapper
 
 class ResizedSurface(object):
-    """Loader of the resized/modified images/surfaces"""
-    RESIZED_SURFACES_LOADED = Dictionary()
+    """ResizedSurface class, with two parts:
+    The first one, an object that holds a surface that has been resized, and various attributes
+    that describe the way in what the resizing was done.
+    
+    The second one, container of static methods to load modified surfaces, with a LUT as well to not repeat the same
+    data over and over.
+    The key in said LUT is the hash that comes out of all the resizing attributes and the image path.
+    """
+    RESIZED_SURFACES_LOADED = Dictionary()  #LUT of images, saved in their resized state.
     def __init__(self, path, intended_size, resize_mode, smooth_resize, keep_aspect_ratio=True):
+        """ResizedSurface constructor."""
         self.path = path
         self.intended_size = intended_size
         self.resize_mode = resize_mode
@@ -37,6 +59,7 @@ class ResizedSurface(object):
         self.surface = None
 
     def set_surface(self, surface):
+        """Sets a new surface to this instance."""
         self.surface = surface
 
     def __str__(self):
@@ -48,7 +71,7 @@ class ResizedSurface(object):
 
     @staticmethod
     def load_surfaces(folder, intended_size, resize_mode, resize_smooth, keep_aspect_ratio, *keywords, strict=False):
-        """To load from a folder. Can use keywords"""
+        """Loads all the images in a folder, resizes them, and returns a dictionary that contains them. Can use keywords"""
         if len(keywords) is 0 or None in keywords:
             paths = UtilityBox.get_all_files(folder, *EXTENSIONS.IMAGE_FORMATS)
         else:
@@ -59,7 +82,7 @@ class ResizedSurface(object):
 
     @staticmethod
     def get_surfaces(intended_size, resize_mode, resize_smooth, keep_aspect_ratio, *paths):
-        """Gerts all the surfaces from the paths"""
+        """Gets all the surfaces from the parameter paths."""
         surfaces = {}
         for path in paths:
             surfaces[path] = ResizedSurface.get_surface(path, intended_size, resize_mode,\
@@ -68,6 +91,8 @@ class ResizedSurface(object):
 
     @staticmethod
     def get_surface(path, intended_size, resize_mode='fit', resize_smooth=True, keep_aspect_ratio=True):
+        """loads the image with the input path, resizes and returns it.L
+        If it has been loaded before with the same resizing parameters, it is simply fetched from the LUT"""
         surface = ResizedSurface(path, intended_size, resize_mode, resize_smooth, keep_aspect_ratio=keep_aspect_ratio)
         hash_key = hash(surface)
         if hash_key in ResizedSurface.RESIZED_SURFACES_LOADED.keys():
@@ -94,34 +119,40 @@ class ResizedSurface(object):
 
     @staticmethod
     def add_surface(ResizedSurface):
+        """Adds an item to the LUT."""
         ResizedSurface.RESIZED_SURFACES_LOADED.add_item(hash(ResizedSurface), ResizedSurface)
 
     @staticmethod
     def clear_lut():
+        """Clears the LUT."""
         ResizedSurface.RESIZED_SURFACES_LOADED.clear()
 
 class SurfaceLoader(object):
     """Loader of the original unresized/unmodified images/surfaces"""
-    SURFACES_LOADED = Dictionary()
-    MAX_SIZE = 256
-    MAX_SIZE_ENABLED = True
-    MAX_SIZE_DISABLE_COUNT = 0
+    SURFACES_LOADED = Dictionary()  #LUT of images, saved in their original state.
+    MAX_SIZE = 256  #Max size per axis that will be imposed when the flag max size is enabled.
+    MAX_SIZE_ENABLED = True #Max size flag.
+    MAX_SIZE_DISABLE_COUNT = 0  #Counter of methods that deactivated the flag. 
 
     @synchronized
     @staticmethod
     def disable_max_size():
+        """Disables the size limit when loading and saving images in the LUT."""
         SurfaceLoader.MAX_SIZE_DISABLE_COUNT += 1
         SurfaceLoader.MAX_SIZE_ENABLED = False
 
     @synchronized
     @staticmethod
     def enable_max_size():
+        """Enables the size limit when loading and saving images in the LUT.
+        Saves memory allocated."""
         SurfaceLoader.MAX_SIZE_DISABLE_COUNT -= 1
         if SurfaceLoader.MAX_SIZE_DISABLE_COUNT is 0:
             SurfaceLoader.MAX_SIZE_ENABLED = True
 
     @staticmethod
     def change_max_size(value):
+        """Changes the size limit when loading and saving images in the LUT."""
         SurfaceLoader.MAX_SIZE = value
 
     @staticmethod
@@ -159,6 +190,7 @@ class SurfaceLoader(object):
 
     @staticmethod
     def get_surfaces(*image_paths):
+        """Gets all the surfaces from the parameter paths."""
         surfaces = {}
         for image_path in image_paths:
             surfaces[image_path] = SurfaceLoader.get_surface(image_path)
@@ -166,7 +198,8 @@ class SurfaceLoader(object):
 
     @staticmethod
     def get_surface(image_path):
-        """Image_path can be an id too"""
+        """Loads the image with the input path, resizes and returns it.
+        If the image has been loaded before, it is simply fetched from the LUT"""
         if image_path in SurfaceLoader.SURFACES_LOADED.keys():
             return SurfaceLoader.SURFACES_LOADED.get_item(image_path)
         else:
@@ -189,4 +222,6 @@ class SurfaceLoader(object):
     @staticmethod
     @synchronized
     def load_image(image_path):
+        """Loads directly an image from a path, without checking LUTS or anything else.
+        Converts to alpha before returning it."""
         return pygame.image.load(image_path).convert_alpha()

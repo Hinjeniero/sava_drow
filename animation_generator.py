@@ -156,7 +156,7 @@ class AnimationGenerator(object):
         background = ScriptedSprite('layered_sprite', (0, 0), resolution, resolution, fps_modes[0], fps_modes,\
                                     sprite_folder=folder, keywords=(background_keyword,), resize_mode='fill', resize_smooth=False)
         background.add_movement((0, 0), (0, 0), 1)
-        animation.add_sprite(background, 0, 1, 0) #TODO this generic method to have the sprite still, convert to a method                           
+        animation.add_sprite(background, 0, 1, 0)
 
     @staticmethod
     @no_size_limit

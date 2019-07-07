@@ -1,6 +1,14 @@
+"""--------------------------------------------
+pygame_test module.
+Have the following classes:
+    Resizer
+--------------------------------------------"""
+
 import pygame, time
 
 class PygameSuite:
+    """Class that builds a suite of pygame, that you can add elements to to check how they look.
+    Unused in the later stages of development."""
     def __init__(self, resolution=(1280, 720), background=(0,0,0), fps=60, mouse=True):
         self.background = background
         self.fps = fps

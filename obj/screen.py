@@ -4,23 +4,26 @@ Have the following classes, inheriting represented by tabs:
     Screen
         ↑LoadingScreen
 --------------------------------------------"""
+
 __all__ = ['Screen', 'LoadingScreen']
 __version__ = '1.0'
 __author__ = 'David Flaity Pardo'
-from os import listdir
-from os.path import isfile, join, dirname
+
+#Python libraries
 import pygame
 import time
-from obj.utilities.utility_box import UtilityBox
-from obj.ui_element import TextSprite
+from os import listdir
+from os.path import isfile, join, dirname
+#Selfmade libraries
+from settings import PATHS, STATES, EXTENSIONS, SOUND_PARAMS, INIT_PARAMS
+from animation_generator import AnimationGenerator
 from obj.sprite import Sprite, AnimatedSprite
+from obj.ui_element import TextSprite
+from obj.utilities.utility_box import UtilityBox
 from obj.utilities.exceptions import BadSpriteException, BadStateException
 from obj.utilities.logger import Logger as LOG
 from obj.utilities.decorators import run_async
 from obj.utilities.synch_dict import Dictionary
-from settings import PATHS, STATES, EXTENSIONS, SOUND_PARAMS, INIT_PARAMS
-
-from animation_generator import AnimationGenerator
 
 class Screen(object):
     """Screen class. Controls an entire 'screen' (like a desktop).
@@ -92,6 +95,8 @@ class Screen(object):
 
     @staticmethod
     def generate(self):
+        """Generate method, called af the end of the constructor. 
+        Creates the background, the sound channels, and loads the music files"""
         UtilityBox.join_dicts(self.params, Screen.__default_config.copy())
         #GRAPHICS
         if self.params['animated_background']:
@@ -117,17 +122,19 @@ class Screen(object):
                 Screen.SOUND_CHANNELS.append(UtilityBox.get_sound_channel())
 
     def add_dialogs(self, *dialogs):
+        """Adds the input dialogs to this screen. They are callable after this method ends."""
         for dialog in dialogs:
             dialog.set_visible(False)
             self.dialogs.add(dialog)
 
     def add_animation(self, animation):
-        """Sets the animatino and linlks it with a specific staet"""
+        """Sets the animation and links it with a specific state"""
         if not any(animation.id in contained_anim.id for contained_anim in self.animations):
             self.animations.append(animation) 
             self.animation = animation
 
     def play_animation(self, animation_id):
+        """Starts playing the animation that matches with the input id."""
         for animation in self.animations:
             if animation.id in self.animations:
                 self.animation = animation
@@ -136,19 +143,23 @@ class Screen(object):
         return False
 
     def update_fps(self, fps):
+        """Changes the frames per second of this screen."""
         for animation in self.animations:
             animation.set_fps(fps)
 
     def set_state(self, state):
+        """Sets a state in this screen. If the input state is not recognized, an exception is raised."""
         state = state.lower()
         if state not in STATES.SCREEN:
             raise BadStateException('The state '+state+' doesn`t exist in '+self.id)
         self.state = state
 
     def has_music(self):
+        """Returns true if a music channel is detected in this screen, false otherwise."""
         return True if self.music_chan else False
 
     def play_music(self):
+        """Starts playing the background music of this screen."""
         if len(self.songs) is not 0 and not self.playing:
             if self.music_chan.get_busy():
                 self.music_chan.unpause()
@@ -158,11 +169,14 @@ class Screen(object):
             self.playing = True
 
     def pause_music(self):
+        """Pauses the playing of the background music in this screen."""
         if self.playing:
             self.music_chan.pause()
             self.playing = False
 
     def set_volume(self, volume, sound=False, music=True):
+        """Changes the current volume for the sound, music, or both in this screen, depending on
+        the flags in the parameters."""
         if sound:
             self.sound_vol = volume
         if music and self.music_chan:
@@ -170,7 +184,8 @@ class Screen(object):
 
     @run_async
     def hijack_music(self, song_path):
-        """For easter eggs"""
+        """Swaps the current background music with the input file.
+        Used for easter egg. The input file doesn't need to have been added before."""
         if self.music_chan:
             self.music_chan.stop() 
             song = pygame.mixer.Sound(file=song_path)
@@ -180,13 +195,15 @@ class Screen(object):
 
     @run_async
     def hijack_sound(self, sound_path):
-        """For easter eggs, substitutes everything except secret sounds"""
+        """Substitutes everything except the secret sounds with the input sound file.
+        Used for easter eggs."""
         sound = pygame.mixer.Sound(file=sound_path)
         for key in Screen.SOUNDS.keys():
             if 'secret' not in key:
                 Screen.SOUNDS.add_item(key, sound)
 
     def set_song(self, song_path):
+        """Changes the current background music. The input song must have been added before calling this method."""
         index = 0
         if self.params['songs_paths']:
             for song in self.params['songs_paths']:
@@ -201,6 +218,7 @@ class Screen(object):
             LOG.log('debug', 'Didn`t find ', song_path,' in ', self.id)
 
     def play_sound(self, sound_id):
+        """Plays the sound that matches with the input id."""
         for sound in Screen.SOUNDS.keys():
             if sound_id in sound or sound in sound_id:
                 channel = None
@@ -210,7 +228,6 @@ class Screen(object):
                         channel.play(Screen.SOUNDS.get_item(sound))
                         return True
         return False
-
 
     def event_handler(self, event, keys_pressed, mouse_buttons_pressed, mouse_movement=False, mouse_pos=(0, 0)):
         """Handles any pygame event. This allows for user interaction with the object.
@@ -231,8 +248,6 @@ class Screen(object):
     def keyboard_handler(self, keys_pressed, event):
         """Handles any pygame keyboard related event. This allows for user interaction with the object.
         HANDLES ONLY INTERACTION WITH THE DIALOG AND THE SCROLLBAR.
-        Posibilities:
-        TODO
         Args:
             keys_pressed (:dict: pygame.keys):  Dict in which the keys are keys and the items booleans.
                                                 Said booleans will be True if that specific key was pressed.
@@ -268,8 +283,6 @@ class Screen(object):
         """Handles any mouse related pygame event. This allows for user interaction with the object.
         TAKES CARE ONLY OF CONTACT WITH DIALOGS AND THE SCROLL BAR. 
         Sets in hit_sprite the collided sprite in every mouse movement (This includes also normal sprites)
-        Posibilities:
-        TODO
         Args:
             event (:obj: pygame.event): Event received from the pygame queue.
             mouse_buttons (:list: booleans):    List with 3 positions regarding the 3 normal buttons on a mouse.
@@ -307,6 +320,7 @@ class Screen(object):
         return (self.dialog and self.dialog.elements.has(self.hit_sprite))
 
     def send_to_active_sprite(self, *payload, **kw_payload):
+        """Sends the input parameters of this method to the current active sprite. (If it's possible)."""
         if self.hit_sprite:
             self.hit_sprite.hitbox_action(*payload, **kw_payload)
 
@@ -321,6 +335,7 @@ class Screen(object):
             self.hit_sprite.set_active(True)
 
     def clear_active_sprite(self):
+        """Empties the current active sprite."""
         if self.hit_sprite != None:   
             self.hit_sprite.set_hover(False)
             self.hit_sprite.set_active(False)
@@ -419,6 +434,8 @@ class Screen(object):
         LOG.log('error', 'The resizing of the screen ', self.id, ' took ', time.time()-start, ' seconds.')
 
     def set_scroll(self, value):
+        """Sets a new scroll value in the screen. Higher scroll values will make possible to see elements that are lower
+        than the current bottom of the screen."""
         if self.scroll_sprite:
             self.scroll_sprite.set_value(value)
             if value <= 0:
@@ -451,11 +468,13 @@ class Screen(object):
             self.sprites.add(sprite)
 
     def delete_sprites(self, *keywords):
+        """Delete from this screen the sprites whose id contains all the input keywords."""
         for sprite in self.sprites:
             if all(kw.lower() in sprite.id.lower() for kw in keywords):
                 self.sprites.remove(sprite)
 
     def enable_sprite(self, *keywords, state=True):
+        """Gets the sprite whose id has more matches with the input keywords, and sets its enabled state to the parameter flag."""
         sprite = None
         count = 0
         sprites = self.sprites.sprites()
@@ -470,10 +489,13 @@ class Screen(object):
         return False
 
     def enable_all_sprites(self, state=True):
+        """Enable all the sprites in this screen."""
         for sprite in self.sprites:
             sprite.set_enabled(state)
 
     def enable_sprites(self, state=True, *keywords):
+        """Gets the sprites whose ids contains all the input keywords, and sets their enabled state to the parameter flag."""
+        sprite = None
         for sprite in self.sprites:
             #get_id() returns the command of the element
             if all(kw.lower() in sprite.get_id().lower() for kw in keywords)\
@@ -552,6 +574,8 @@ class LoadingScreen(Screen):
         self.add_animation(AnimationGenerator.explosions_bottom(self.resolution, *INIT_PARAMS.ALL_FPS))
 
     def generate_static_rotating_load_sprite(self):
+        """Gets an input sprite, duplicates it with different rotations, and creates a sprite whose animation
+        is the input image turning."""
         load_surfaces = self.generate_load_sprite(self.params['loading_sprite_path'])
         loading_sprite = AnimatedSprite(self.id+'_loading_sprite', load_surfaces[0].rect.topleft,\
                                         load_surfaces[0].rect.size, self.resolution, initial_surfaces=load_surfaces,\

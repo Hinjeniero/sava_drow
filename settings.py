@@ -32,7 +32,7 @@ class PARAMS:
     HUMAN_PLAYERS = (2, 3, 4, 0, 1)
     AI_PLAYERS = (0, 1, 2, 3, 4)          #ALl possible ammounts of computer controlled players in a game. If we want 4, choose 4 playeres and computer vs computer.
     CPU_TIMEOUTS = (10, 30, 1, 2, 5)
-    ANIMATION_TIME = 25     #TODO Being honest, I dont remember what this was for. Will have to come back later.
+    ANIMATION_TIME = 25
     NUM_THREADS = 32    #Max number of concurrent active threads when drawing threads from the threading pool (Normal run_async decorator).
 
 class CHARACTERS:

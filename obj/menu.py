@@ -96,8 +96,6 @@ class Menu (Screen):
 
     def keyboard_handler(self, keys_pressed, event):
         """Handles any pygame keyboard related event. This allows for user interaction with the object.
-        Posibilities:
-        TODO
         Args:
             keys_pressed (:dict: pygame.keys):  Dict in which the keys are keys and the items booleans.
                                                 Said booleans will be True if that specific key was pressed.
@@ -138,8 +136,6 @@ class Menu (Screen):
 
     def mouse_handler(self, event, mouse_buttons, mouse_movement, mouse_position):
         """Handles any mouse related pygame event. This allows for user interaction with the object.
-        Posibilities:
-        TODO
         Args:
             event (:obj: pygame.event): Event received from the pygame queue.
             mouse_buttons (:list: booleans):    List with 3 positions regarding the 3 normal buttons on a mouse.
@@ -180,10 +176,12 @@ class Menu (Screen):
             self.set_hit_sprite(self.sprites.sprites()[self.active_sprite_index])
 
     def show_dialog(self, id_):
+        """Makes the Screen's Dialog visible. (If it exists)."""
         super().show_dialog(id_)
         self.clear_active_sprite()
 
     def hide_dialog(self):
+        """Makes the Screen's Dialog invisible. (If it exists)."""
         super().hide_dialog()
         self.clear_active_sprite()             
 

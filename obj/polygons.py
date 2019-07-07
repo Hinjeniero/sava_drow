@@ -43,7 +43,8 @@ class Polygon(MultiSprite):
     """
     euclidean_distances = UtilityBox.EUCLIDEAN_DISTANCES #LUT to store the euclidean distances. Useful in the circles hitbox checking
     
-    def __init__(self, _id, position, size, canvas_size, **params):            
+    def __init__(self, _id, position, size, canvas_size, **params):
+        """Polygon constructor."""            
         super().__init__(_id, position, size, canvas_size, **params)
 
     def collidepoint(self, point):
@@ -67,20 +68,41 @@ class Polygon(MultiSprite):
             raise TypeError("CollidePoint must receive a pygame.Rect or a tuple containing the point coordinates.")
 
 class Circle(Polygon):
-    '''TODO'''
+    """Circle class, inherits from polygon.
+    Adds a radius and center attributes. Also has collision methods based on euclidean distances."""
+
     def __init__(self, id_, position, size, canvas_size, active_color=RED, **params):
+        """Circle constructor.
+        Args:
+            id_ (str):  Identifier of the Sprite.
+            position (:tuple: int,int): Position of the Sprite in the screen. In pixels.
+            size (:tuple: int,int):     Size of the Sprite in the screen. In pixels.
+            canvas_size (:tuple: int,int):  Size of the display. In pixels.
+            active_color (tuple->(int, int, int, int), default=RED):    Default color of the overlay when this element is active.    
+            params (:dict:):  Dict of keywords and values as parameters to create the self.image attribute.
+                                    Variety going from fill_color and use_gradient to text_only."""
         params['shape'] = 'circle'
         super().__init__(id_, position, size, canvas_size, **params)
         self.radius = min(x for x in size)//2
         self.center = self.rect.center
         self.overlay = Sprite.generate_overlay(self.image, active_color)
     
-    def set_size(self, size, update_rects):
+    def set_size(self, size, update_rects=True):
+        """Changes the size of the Circle. Updates the radius and center attributes.
+        Args:
+            update_rects (boolean, default:True):   Flag. If its true, the real rect attributes will be updated after the input position.
+            size (:obj: pygame.Rect||:tuple: int,int):  New size of the Sprite. In pixels.
+        """
         super().set_size(size, update_rects)
         self.radius = min(x for x in size)//2
         self.center = self.rect.center
     
     def set_position(self, position, update_rects=True):
+        """Changes the position of the Sprite. Updates rect and real_rect.
+        Args:
+            position (:obj: pygame.Rect||:tuple: int,int): New position of the Sprite. In pixels.
+            update_rects (boolean, default:True):   Flag. If its true, the real rect attributes will be updated after the input position.
+        """
         super().set_position(position, update_rects=update_rects)
         self.center = self.rect.center
 
@@ -112,18 +134,36 @@ class Circle(Polygon):
         except IndexError:  #The distance was too big anyway, no collision.
             return False
 
-    def collidepoint(self, point):
-        pass
-
 class Circumference(Circle):
-    '''TODO'''
+    """Circumference class, inherits from Circle.
+    Draws only the border of a Circle as an image."""
+
     def __init__(self, id_, position, size, canvas_size, active_color=RED, **params):
+        """Circumference constructor.
+        Args:
+            id_ (str):  Identifier of the Sprite.
+            position (:tuple: int,int): Position of the Sprite in the screen. In pixels.
+            size (:tuple: int,int):     Size of the Sprite in the screen. In pixels.
+            canvas_size (:tuple: int,int):  Size of the display. In pixels.
+            active_color (tuple->(int, int, int, int), default=RED):    Default color of the overlay when this element is active.    
+            params (:dict:):  Dict of keywords and values as parameters to create the self.image attribute.
+                                    Variety going from fill_color and use_gradient to text_only."""
         params['transparent'] = True
         params['border'] = True
         super().__init__(id_, position, size, canvas_size, active_color=active_color, **params)
         self.width = UtilityBox.get_circumference_width(self.image)
 
 class Rectangle(Polygon):
+    """Rectangle class, inherits from Polygon."""
+
     def __init__(self, _id, position, size, canvas_size, **params):
+        """Rectangle constructor.
+        Args:
+            id_ (str):  Identifier of the Sprite.
+            position (:tuple: int,int): Position of the Sprite in the screen. In pixels.
+            size (:tuple: int,int):     Size of the Sprite in the screen. In pixels.
+            canvas_size (:tuple: int,int):  Size of the display. In pixels.
+            params (:dict:):  Dict of keywords and values as parameters to create the self.image attribute.
+                                    Variety going from fill_color and use_gradient to text_only."""
         params['shape'] = 'rectangle'
         super().__init__(_id, position, size, canvas_size, **params)

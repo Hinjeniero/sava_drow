@@ -95,6 +95,7 @@ class Path(object):
         enemy (boolean):True if there are enemies in this Path. (Depends on which player asks).
     """
     def __init__(self, grid_pos, ally, enemy, access, real_index):
+        """Path constructor."""
         self.pos    = grid_pos
         self.index  = real_index
         self.ally   = ally
@@ -117,6 +118,7 @@ class Path(object):
         return self.pos[1]
 
     def update_accessibility(self, current_char_in_here):
+        """Checks if the cell that generated this path is still accessible."""
         if self.ally or (self.enemy and not current_char_in_here.can_die):
             self.access = False
         else:
@@ -133,9 +135,11 @@ class Path(object):
         return self.ally
 
     def accessible(self):
+        """Returns True if the cell that generated this path is accesible"""
         return self.access
 
     def copy(self):
+        """Returns a deep copy of this instance."""
         return Path(self.pos, self.ally, self.enemy, self.access, self.index)
 
     def __str__(self):
@@ -172,7 +176,6 @@ class Path(object):
             (:dict: key=cell.index, item=:list:tuple):  A dict in which for every cell(Key), contains all the possible
                                                         destinies in a list of tuples (Those tuples are the complete paths).
         """
-        #print("RESTRICIONS DIST IS "+str(restrictions.dist))  TODO delete
         destinations    = {}
         length          = len(graph[0]) #Want to know how many indexes the map has
         if restrictions.dist is 1:          #No need to check much, only if the immediate path exists
@@ -186,12 +189,9 @@ class Path(object):
                     if x is y or distances[x][y] < 0:   continue    #Same cell or not direct path, next iteration
                     if Path.check_restrictions(x, y, restrictions, distances, level_size):
                         Path.add_path(x, y, graph, level_size, destinations)
-            
         else:   #For complex linked paths, we need a submethod
             for x in range(0, length):
                 destinations[x] = Path.generate_paths(graph, x, restrictions)
-        '''for key, item in destinations.items():
-            LOG.log("debug", key, " -> ", item, '\n\n')'''
         return destinations
 
     @staticmethod
@@ -313,13 +313,11 @@ class Path(object):
         return solutions
 
 class PathAppraiser(object):
-    @staticmethod
-    @time_it
-    def rate_path(start_pos, possible_destinies, current_map, character): #TODO CHEEEEECK THE CURRENT MAP SO ITS NOT MODIFIIIIIED
-        pass
+    """PathAppraiser class. Holds all the static methods related to path evaluation.
+    Used to get the fitness value of each movement."""
 
-    @staticmethod
     #@time_it
+    @staticmethod
     def rate_movements_lite(start_pos, possible_destinies, paths_graph, current_map, all_board_cells, level_size):
         """Returns a tuple with indexes of the destinies, and a fitness going from 0 to 1. Faster method than the complete one by avoiding the bait ratio and the danger multiplier.
         Also uses a less complete danger detection (But way faster)"""
@@ -340,10 +338,14 @@ class PathAppraiser(object):
             fitnesses[index] = max(min(fitness, 1), 0)  #Has to be between 0 and 1
         return fitnesses
 
-    @staticmethod
     #@time_it
+    @staticmethod
     def rate_movements(start_pos, possible_destinies, paths_graph, distances, current_map, all_board_cells, level_size):
-        """Returns a tuple with indexes of the destinies, and a fitness going from 0 to 1."""
+        """Rates all the movements with the source as the start_pos, and the destination as one of the possible_destinies.
+        Each evaluation is composed by the reduction of danger (less likely to be captured in the destionation), 
+        the capturing value (Enemy captured in the destination and its value), and bait value (Baiting an enemy onto the destination,
+        so an ally can finish him off later).
+        Returns a dict, containing tuple with indexes of the movements, and a fitness going from 0 to 1."""
         fitnesses = {}
         all_cells = {cell.get_real_index(): cell.get_char() for cell in all_board_cells if cell.has_char()} if isinstance(all_board_cells, list) else all_board_cells
         character = all_cells[start_pos]
@@ -369,6 +371,8 @@ class PathAppraiser(object):
 
     @staticmethod
     def calculate_fitness(cell_index, danger_multiplier, start_danger, destiny_danger, bait_score, kill_score, print_complete=False):
+        """Makes the final operation to get a fitness value. The inputs include the danger reduction score, the capture score (kill score), and the bait score.
+        The print_complete flag allows the method to print out the process in detail."""
         if print_complete:
             LOG.log('info', '---------------INDEX CELL RESULTS ', cell_index, '-------------')
             LOG.log('info', 'Danger multiplier ', danger_multiplier)
@@ -382,6 +386,8 @@ class PathAppraiser(object):
     
     @staticmethod
     def calculate_fitness_lite(cell_index, start_danger, destiny_danger, kill_score, print_complete=False):
+        """METHOD TO USE WITH THE LITE MODE. Makes the final operation to get a fitness value. The inputs include the danger reduction score and the capture score (kill score).
+        The print_complete flag allows the method to print out the process in detail."""
         if print_complete:
             LOG.log('info', '---------------INDEX CELL RESULTS ', cell_index, '-------------')
             LOG.log('info', 'Start pos danger ', start_danger," vs destiny danger: ", destiny_danger)
@@ -393,6 +399,7 @@ class PathAppraiser(object):
 
     @staticmethod
     def invert_map(self, current_map):
+        """In the path objects of current_map with a char in them, the ally and enemy attributes are reversed."""
         for path_obj in current_map.values():
             if path_obj.has_ally():
                 path_obj.enemy = True
@@ -403,7 +410,7 @@ class PathAppraiser(object):
 
     @staticmethod
     def generate_player_map(current_map, all_cells, player):
-        """This code is redundant, but oh well"""
+        """Changes the input current map, so it matches the input player."""
         map_for_player = {}
         for index in current_map.keys():
             if index in all_cells:
@@ -418,12 +425,15 @@ class PathAppraiser(object):
 
     @staticmethod
     def get_kill_value(destiny_char, my_char):
+        """Returns the capture/kill value of a movement."""
         if (destiny_char.owner_uuid != my_char.owner_uuid):
             return 1*math.sqrt(destiny_char.value/my_char.value)
         return 0 
 
     @staticmethod
     def get_danger_multiplier(my_char, all_cells):
+        """Returns the danger multiplier of a char. This depends heavily in the number of chars
+        of the same type, and in his essential attribute."""
         ratio = 1
         my_type_of_char = 0
         essential_pieces = 0 
@@ -438,7 +448,8 @@ class PathAppraiser(object):
 
     @staticmethod
     def get_danger_in_position(cell_index, my_char, graph, distances, current_map, all_cells, level_size):
-        """From 0 to 1. 0 worst case, 1 no danger whatsoever"""
+        """Returns the danger value of a char in a specific position.
+        From 0 to 1. 0 worst case, 1 no danger whatsoever"""
         my_player = my_char.owner_uuid
         danger_value = 1
         enemies_ready = 0
@@ -456,7 +467,8 @@ class PathAppraiser(object):
 
     @staticmethod
     def get_danger_in_position_lite(cell_index, player, graph, current_map, all_cells, level_size):
-        """From 0 to 1. 0 worst case, 1 no danger whatsoever. Faster method that just checks characters with a direct way of contact."""
+        """Returns the danger value of a char in a specific position.
+        From 0 to 1. 0 worst case, 1 no danger whatsoever. Faster method that just checks characters with a direct way of contact."""
         danger_value = 1
         enemies_ready = 0
         start_of_my_circumference = (cell_index//level_size)*level_size
@@ -480,6 +492,7 @@ class PathAppraiser(object):
 
     @staticmethod
     def get_bait_value(my_char, destination, graph, distances, current_map, all_cells, level_size):
+        """Returns the bait value of a char in a specific destination."""
         bait_value = 1
         vengeful_allies = 0
         baited_enemy_values = []

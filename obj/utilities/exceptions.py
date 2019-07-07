@@ -1,5 +1,12 @@
+"""--------------------------------------------
+Exception module. Contains all the custom exceptions of the project.
+    IpGetter
+--------------------------------------------"""
+
 __all__ = ["ScreenNotFoundException", "NoScreensException", "EmptyCommandException", "InvalidGameElementException",
             "BadUIElementInitException", "InvalidUIElementException", "InvalidCommandValueException"]
+__version__ = '1.0'
+__author__ = 'David Flaity Pardo'
 
 class ScreenNotFoundException(Exception):
     pass

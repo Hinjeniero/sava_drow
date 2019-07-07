@@ -5,8 +5,9 @@ They aren't necessarily related to one common scope.
 Have the following classes:
     Resizer
 --------------------------------------------"""
+
 __all__ = ['UtilityBox']
-__version__ = '0.1'
+__version__ = '1.0'
 __author__ = 'David Flaity Pardo'
 
 #Python libraries
@@ -25,11 +26,11 @@ from wrapt import synchronized
 #External libraries
 from external.PAdLib import draw as Drawing
 #Selfmade libraries
+from settings import PATHS, STRINGS
 from obj.utilities.colors import WHITE, RED, BLACK
 from obj.utilities.decorators import time_it
 from obj.utilities.resizer import Resizer
 from obj.utilities.logger import Logger as LOG
-from settings import PATHS, STRINGS
 
 @time_it
 def euclidean_generator(size=300): #100 will be plenty in our case
@@ -48,15 +49,11 @@ def euclidean_generator(size=300): #100 will be plenty in our case
             euclidean = math.sqrt(x*x + y*y)
             matrix[x][y] = euclidean
             matrix[y][x] = euclidean
-    #yes = [2]  #Test of access times
+    #Test of access times, examples below
     #timeit.timeit('"-".join(math.sqrt(240*240 + 255*255))', number=1)
     #print(timeit.timeit(lambda: math.sqrt(240*240 + 255*255), number=1))
     #print(timeit.timeit(lambda: yes[0], number=1))
     return matrix
-
-def test():
-    euclidean = math.sqrt(240*240 + 255*255)
-    return euclidean
 
 def generate_mouse_sprite(size=(2, 2)):
     """Generates a decoy sprite with a very small size, to simulate collisions with the mouse itself.
@@ -193,7 +190,6 @@ class UtilityBox (object):
         Returns:
             (:list:):   List with all the transformed sprites.
         """
-        #TODO implement difference between sprite and surface, to make it a valid method for both
         LOG.log('INFO', 'Rotating sprite ', name)
         sprites         = [sprite] 
         orig_surface    = sprite.image
@@ -276,11 +272,8 @@ class UtilityBox (object):
         if len(points)>1:   Drawing.bezier(surface, color, point_list, steps, width)
 
     @staticmethod
-    def round_borders(surface):
-        pass
-
-    @staticmethod
     def get_all_files(root_folder, *extensions):
+        """Returns all the files from the input folder, that end in some of the input extensions."""
         result = []
         files = [root_folder+'\\'+f for f in listdir(root_folder) if isfile(join(root_folder, f))]
         for file in files:
@@ -290,6 +283,8 @@ class UtilityBox (object):
 
     @staticmethod
     def get_filtered_files(root_folder, extensions, keywords, strict=False):
+        """Returns all the files from the input folder, that end in some of the input extensions,
+        and have any or all of the keywords in their path. (Any or all, depending on the strict flag)."""
         result = []
         unfiltered_files = UtilityBox.get_all_files(root_folder, *extensions)
         for file_path in unfiltered_files:
@@ -322,7 +317,10 @@ class UtilityBox (object):
 
     @staticmethod
     def rainbow_gradient_generator(gradient, ammount_elements, transparency=255):
-        """To generate the desired colors."""
+        """Generator of colors that phase through the input gradient, changing gradually.
+        Args:
+            gradient(tuple->tuple, tuple->(int, int, int, int): Gradient.
+            ammount_elements (int): Number of colors. Higher ammount will yield smoother change in color."""
         transparency = (transparency,)  #Converting to tuple to join in the yields
         start, end = gradient[0], gradient[1]
         step = tuple((end_-start_)//ammount_elements for end_, start_ in zip(end, start))
@@ -334,7 +332,11 @@ class UtilityBox (object):
 
     @staticmethod
     def looped_rainbow_gradient_generator(gradient, ammount_elements_per_loop, transparency=255):
-        """To generate the desired colors."""
+        """Generator of colors that phase through the input gradient, changing gradually.
+        The difference is that this generator never ends. It goes in an infinite loop.
+        Args:
+            gradient(tuple->tuple, tuple->(int, int, int, int): Gradient.
+            ammount_elements_per_loop (int): Number of colors. Higher ammount will yield smoother change in color."""
         while True:
             loop_generator = UtilityBox.rainbow_gradient_generator(gradient, ammount_elements_per_loop, transparency)
             for _ in range(0, ammount_elements_per_loop):
@@ -343,6 +345,8 @@ class UtilityBox (object):
 
     @staticmethod
     def convert_to_colorkey_alpha(surf, colorkey=pygame.color.Color("magenta")):
+        """Converts the input surface to one with transparency, by creating a new surface, filling it with the 
+        input colorkey, drawing the surface, and setting the colorkey to the first filling color."""
         newsurf = pygame.Surface(surf.get_size())
         newsurf.fill(colorkey)
         newsurf.blit(surf, (0, 0))
@@ -351,7 +355,9 @@ class UtilityBox (object):
 
     @staticmethod
     def get_alike_colorkey(color, difference=3):
-        """A difference of 1 is nto noticed by colorkey, and 2 is weird."""
+        """Returns a color that differs from the input one in almost nothing, but enough to use one
+        as a colorkey for transparency, and the other one to draw and fill.
+        A difference of 1 is not noticed by colorkey, and 2 is weird. That the why of the default of 3."""
         colorkey = []
         for channel in color:
             if channel < difference:
@@ -362,6 +368,7 @@ class UtilityBox (object):
 
     @staticmethod
     def get_circumference_width(circumference_surf):
+        """Returns the diameter of a surface."""
         mask = pygame.mask.from_surface(circumference_surf)
         x = circumference_surf.get_width()//2
         counter = 0
@@ -394,6 +401,8 @@ class UtilityBox (object):
 
     @staticmethod
     def do_request(url, method='GET', params={}, data={}, headers={}, timeout=10.0, sleep_between_petitions=0, return_success_only=False, json_response=True):
+        """Does an http request following the input arguments.
+        Returns a response, a JSON, or False."""
         url = 'http://'+url if url[0] != 'h' else url
         LOG.log('INFO', 'Trying to connect to ', url)
         start = time.time()
@@ -416,6 +425,7 @@ class UtilityBox (object):
 
     @staticmethod
     def normalize_values(*values, start=0, end=255):
+        """Normalize the input values to a number between 0 and 1, based on the start and end arguments."""
         results = []
         for value in values:
             results.append((value-min(start, end))/(max(start, end)-min(start, end)))

@@ -1,22 +1,28 @@
 """--------------------------------------------
-decorators module. Contains all the decorators used in this workspace.
-Also added a pool-manager of threads
+decorators module. Contains all the decorators used in this project.
+Also added a pool-manager of threads.
+Also holds the pooling of threads.
 --------------------------------------------"""
 
 __all__ = ['time_it', 'run_async']
-__version__ = '0.3'
+__version__ = '1.0'
 __author__ = 'David Flaity Pardo'
-import threading
-from settings import PARAMS
-from wrapt import synchronized
 
-THREAD_POOL = []
-THREAD_BUSY = {}
-TASK_POOL = []
-TASK_POOL_EMPTY = threading.Condition()
-END = False
+#Python libraries
+import threading
+from wrapt import synchronized
+#Selfmade libraries
+from settings import PARAMS
+
+#GLOBAL VARIABLES THAT CONTROL THE POOL OF THREADS.
+THREAD_POOL = []    #Pool of threads
+THREAD_BUSY = {}    #Busy threads, the keys are the threads names.
+TASK_POOL = []      #Queue of tasks
+TASK_POOL_EMPTY = threading.Condition() #Lock of the queue of tasks
+END = False         #End flag
 
 def END_ALL_THREADS():
+    """Append an END message, that makes the loops waiting for tasks end."""
     for _ in range(0, PARAMS.NUM_THREADS):
         TASK_POOL.append('END')
     TASK_POOL_EMPTY.acquire()
@@ -24,6 +30,8 @@ def END_ALL_THREADS():
     TASK_POOL_EMPTY.release()
 
 def active_thread():
+    """Method that assigns tasks to idle threads in an infinite NOT busy loop.
+    When the END flag is changes to True, it returns and ends."""
     while True:
         TASK_POOL_EMPTY.acquire()
         while len(TASK_POOL)==0:
@@ -34,6 +42,7 @@ def active_thread():
             return
         method_with_event(data[0], data[1], data[2], data[3])
 
+"""Loop that creates and starts the threads."""
 for i in range(0, PARAMS.NUM_THREADS):
     thread_name = "subthread_"+str(i)
     THREAD_POOL.append(threading.Thread(name=thread_name, target=active_thread))
@@ -41,14 +50,13 @@ for i in range(0, PARAMS.NUM_THREADS):
     THREAD_POOL[i].start()
 
 def method_with_event(end_event, function, args, kwargs):
-    #print("START OF "+function.__name__)
+    """Executes a method with the input arguments. The end_event input parameter will signal the ending of the execution.""" 
     if threading.current_thread() is not threading.main_thread():   
         THREAD_BUSY[threading.currentThread().getName()] = True
     function(*args, **kwargs)
     end_event.set()
     if threading.current_thread() is not threading.main_thread():
         THREAD_BUSY[threading.currentThread().getName()] = False
-    #print("END OF "+function.__name__)
 
 def run_async(function):
     """Executes the function in a separate thread to avoid locking the main thread.

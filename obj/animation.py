@@ -26,7 +26,7 @@ class ScriptedSprite(AnimatedSprite):
         starting_position(:tuple: int, int):    Initial position of the sprite. Will return to it
                                                 when it ends moving around.
         frames(:dict: list...): List of all the positions in each frame (following the current fps rate).
-                                Is calculated beforehand. Each key is the fps rate. #TODO complete this attribute.
+                                Is calculated beforehand. Each key is the fps rate.
         index(int): Current position(frame) that the sprite is in.    
         fps(int):   Frames per second of the animation.
         fps_modes(:tuple: int...):  The different frames per second refresh rates
@@ -147,7 +147,7 @@ class ScriptedSprite(AnimatedSprite):
 
     def set_refresh_rate(self, fps):
         """Updates the refresh rate and the number of frames of the movements of this sprite. Also fix the frame index if the sprite was active.
-        An higher fps will end in a smoother movement, with the counter of a heavier method. #TODO find some better way to describe this shit.
+        An higher fps will end in a smoother movement, with the counter of a heavier method.
         Args:
             fps(int):   Frames per second to set as refresh rate."""
         draws_per_second = self.fps/self.next_frame_time

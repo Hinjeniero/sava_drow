@@ -180,7 +180,7 @@ def create_game_menu(result, animated_background=None, animations=True):
     elements, threads = [], []
     element_generator = generate_ui_elements(elements, threads, button_size, USEREVENTS.MAINMENU_USEREVENT, resize_mode='fill', texture=PATHS.DARK_LONG_BUTTON)
     element_generator.send(None)    #Starting generator
-    #Starts generating #TODO THIS SHIT
+    #Starts generating
     if firstTime:
         element_generator.send(('button_start_tutorial', "start_tutorial_go_main_board", next(positions), {'text': "Start tutorial"}))
     element_generator.send(('button_start_normal_local_game', "start_go_main_board", next(positions), {'text': "Start local game"}))

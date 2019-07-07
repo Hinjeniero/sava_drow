@@ -1,5 +1,10 @@
+"""--------------------------------------------
+Colors module. Contains global variables that act as shortcuts
+to the most used colors. 
+--------------------------------------------"""
+
 import pygame
-__version__ = '0.1'
+__version__ = '1.0'
 __author__ = 'David Flaity Pardo'
 
 #Global names assigned to pygame default colors. This is actually For the sake of code.

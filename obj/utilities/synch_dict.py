@@ -1,10 +1,11 @@
 """--------------------------------------------
 synch_dict module. Contains a thread-safe implementation of a python dictionary.
 Have the following classes:
-    Resizer
+    Dictionary
 --------------------------------------------"""
+
 __all__ = ['Dictionary']
-__version__ = '0.1'
+__version__ = '1.0'
 __author__ = 'David Flaity Pardo'
 
 #Python libraries
@@ -67,6 +68,7 @@ class Dictionary:
         self.is_empty = True if len(self.dict) is 1 else False
         return self.dict.pop(key)
 
+    """The following methods have the same behaviour as the dict basic type ones."""
     @synchronized
     def keys(self):
         return self.dict.keys()

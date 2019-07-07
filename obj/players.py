@@ -100,6 +100,7 @@ class Player(object):
 
     
     def generate_infoboard(self, resolution):
+        """Generates the infoboard of this player."""
         infoboard = InfoBoard(self.name+'_infoboard', 0, (0, 0), (0.15*resolution[0], resolution[1]),\
                             resolution, texture=PATHS.INFOBOARD, keep_aspect_ratio = False, cols=6)
         cols = infoboard.get_cols()
@@ -112,7 +113,8 @@ class Player(object):
 
     @no_size_limit
     def generate_avatar(self, avatar_folder):
-        avatars_paths = UtilityBox.get_all_files(avatar_folder, *EXTENSIONS.IMAGE_FORMATS)      #TODO CREATE SPRITE
+        """Generates the avatar of this player, by picking randomly one from the input folder."""
+        avatars_paths = UtilityBox.get_all_files(avatar_folder, *EXTENSIONS.IMAGE_FORMATS)
         surface = ResizedSurface.get_surface(random.choice(avatars_paths), self.infoboard.get_element_size(self.infoboard.get_cols(), 0.8))#, _['resize_mode'], _['resize_smooth'], _['keep_aspect_ratio'])
         self.avatar = Sprite('avatar_'+str(self.uuid), (0, 0), surface.get_size(), self.infoboard.rect.size, surface=surface)
         self.infoboard.add_and_adjust_sprites((self.avatar, self.infoboard.get_cols()))
@@ -185,13 +187,15 @@ class Player(object):
             char.set_canvas_size(resolution)
 
     def revive_char(self, dead_char, sacrifice):
+        """Brings back a character to the game, in exchange from another one of this player.
+        If any of them are not found, it raises an exception."""
         if dead_char in self.fallen and self.characters.has(sacrifice):
             self.characters.add(dead_char)
             self.characters.remove(sacrifice)
             self.fallen.append(sacrifice)
             self.fallen.remove(dead_char)
         else:
-            raise SwapFailedException("Either the revived char or the killed orc weren't found in this player")
+            raise SwapFailedException("Either the revived char or the sacrifice weren't found in this player")
 
     def has_char(self, char):
         """Checks if a character exists/is contained in this player.
@@ -253,18 +257,18 @@ class Player(object):
             subclass = max(classes, key=lambda key: classes[key])
             return (subclass, classes[subclass])
 
-    def most_used_character(self):#TODO same shit as below
+    def most_used_character(self):
         """Returns ths player character with the most movements.
         Returns:
-            ()"""
+            (String): ID and movements of the most used char."""
         if len(self.characters) > 0:
             char = max(self.characters, key=lambda char: char.movements)
             return char.id+" - "+str(char.movements)
 
-    def best_character(self):   #TODO Return name or something
+    def best_character(self):
         """Returns this player characther with the most kills.
         Returns:
-            ()"""
+            (String): ID and kills of the char with most captures/kills."""
         if len(self.characters) > 0:
             char = max(self.characters, key=lambda char: char.kills)
             return char.id+" - "+str(char.kills)
@@ -362,18 +366,26 @@ class Character(AnimatedSprite):
 
     @staticmethod
     def generate(self, aliases):
+        """Generate method, executed in the constructor."""
         self.aliases.update(aliases)
         self.state = self.aliases['idle']
         self.update_info_sprites()
 
     def draw_overlay(self, surface, offset=None):
-        pass    #We dont want overlays being drawn in normal animated sprites     
+        """We dont want overlays being drawn like in normal animated sprites  """
+        pass   
 
     def set_size(self, size, update_rects=True):
+        """Changes the size of the Sprite. Updates rect and real_rect, and changes image and mask to match the size.
+        Args:
+            update_rects (boolean, default:True):   Flag. If its true, the real rect attributes will be updated after the input position.
+            size (:obj: pygame.Rect||:tuple: int,int):  New size of the Sprite. In pixels.
+        """
         super().set_size(size, update_rects=update_rects)
         self.update_info_sprites()
 
     def update_info_sprites(self):
+        """Updates the info sprites of this character about kills/captures and movements (The ones that hover over his head)."""
         self.kill_sprite = TextSprite('kills', (0, 0), self.rect.size, self.resolution,\
                                     'K:'+str(self.kills))
         self.movm_sprite = TextSprite('movements', (0, 0), self.rect.size, self.resolution,\
@@ -381,20 +393,29 @@ class Character(AnimatedSprite):
         self.update_info_positions()
 
     def update_info_positions(self):
+        """Updates the info sprites positions of this character."""
         self.kill_sprite.set_position((self.rect.x, self.rect.y-self.kill_sprite.rect.height))
         self.movm_sprite.set_position((self.rect.x+self.kill_sprite.rect.width, self.rect.y-self.movm_sprite.rect.height))
 
     def get_type(self):
-        """This to overload."""
+        """Returns a string containing the type of the character.
+        Method to be overriden."""
         return 'character'
 
     def draw(self, surface, offset=None):
+        """Draws the sprite over a surface. Draws the overlay too if use_overlay is True.
+        Also shows the info sprites if hover is True.
+        Args:
+            surface (:obj: pygame.Surface): Surface to draw the Sprite. It's usually the display.
+            offset (Container: int, int, default=None): Offset in pixels to be taken into account when drawing.
+        """
         super().draw(surface, offset=offset)
         if self.hover:
             self.kill_sprite.draw(surface, offset=offset)
             self.movm_sprite.draw(surface, offset=offset)
 
     def set_help_dialog_state(self, state):
+        """Shows or hides the hover dialog, depending on the input parameter."""
         if self.hover_dialog:
             if not state:   self.hide_help_dialog()
             elif state:     self.show_help_dialog()
@@ -428,24 +449,23 @@ class Character(AnimatedSprite):
             self.set_paths(graph, distances, movement_restriction, level_size)
             result = Movements.get_movements(hash(movement_restriction))
         paths = []
-        #print("RSEULTS INDEX ")
-        #print(result[index])
         for path in result[index]:
             if current_map[path[-1]].accessible() and not current_map[path[-1]].has_ally():
                 paths.append(path)
-        #print("AFTER CHECKING FOR ALLIES ")
-        #print(paths)
         return paths
     
     def set_cell(self, cell):
+        """Sets a cell as this character position."""
         self.set_center(cell.center)
         self.current_pos = cell.get_real_index()
         self.update_info_positions()
 
     def promote(self):
+        """Promotes this character, changing the essential flag to True"""
         self.essential = True
 
     def demote(self):
+        """Demotes this character, changing the essential flag to False"""
         self.essential = False
 
     @time_it
@@ -456,7 +476,6 @@ class Character(AnimatedSprite):
             distances (:obj: numpy:int):    Graph of distances between cells connected (without changing direction).
             level_size (int):  Number of cell in one circumference.
             movement_restriction (:obj: Restriction):   The movement restriction to which to set the possible destinies."""
-        print(self.id)
         Movements.set_movements(graph, distances, movement_restriction, level_size)
 
     def get_master(self):
@@ -494,8 +513,7 @@ class Character(AnimatedSprite):
 
     def hitbox_action(self, command, value=-1):
         """Action performed when the character is interacted with.
-        Unused rn.
-        Args: etc."""
+        empty method right now."""
         #if  "mouse" in command and "sec" in command:        self.dec_index()
         #elif "mouse" in command and "first" in command:     self.inc_index()
         pass
@@ -576,6 +594,7 @@ class Character(AnimatedSprite):
 
     @staticmethod
     def get_constructor_by_key(key):
+        """Returns the constructor method callback/direction of a subtype of character that matches the string input key."""
         return Pawn if 'pawn' in key else Wizard if 'wizard' in key\
         else Warrior if 'warrior' in key else Priestess if 'priestess' in key\
         else MatronMother if 'matron' in key else HolyChampion if 'champ' in key\
@@ -583,6 +602,7 @@ class Character(AnimatedSprite):
     
     @staticmethod
     def get_sprite_folder_by_key(key):
+        """Returns the default sprite folderF of a subtype of character that matches the string input key."""
         return Pawn.DEFAULT_PATH if 'pawn' in key else Wizard.DEFAULT_PATH if 'wizard' in key\
         else Warrior.DEFAULT_PATH if 'warrior' in key else Priestess.DEFAULT_PATH if 'priestess' in key\
         else MatronMother.DEFAULT_PATH if 'matron' in key else HolyChampion.DEFAULT_PATH if 'champ' in key\
@@ -665,7 +685,7 @@ class Warrior(Character):
         return super().get_paths(graph, distances, current_map, index, level_size, Warrior.RESTRICTIONS)
     
     def get_type(self):
-        """This to overload."""
+        """Returns a string containing the type of the character."""
         return 'warrior'
 
 class Wizard(Character):
@@ -715,7 +735,7 @@ class Wizard(Character):
         return super().get_paths(graph, distances, current_map, index, level_size, Wizard.RESTRICTIONS)
 
     def get_type(self):
-        """This to overload."""
+        """Returns a string containing the type of the character."""
         return 'wizard'
 
 class Priestess(Character):
@@ -770,13 +790,11 @@ class Priestess(Character):
         results = []
         for path in unfiltered_paths:
             if not any(current_map[path[i]].has_ally() or current_map[path[i]].has_enemy() for i in range(1, len(path)-1)):
-                results.append(path)
-        #print("AFTER CHECKING FOR allies and enemies in the middle of the path ")
-        #print(results)
+                results.append(path)-
         return results
 
     def get_type(self):
-        """This to overload."""
+        """Returns a string containing the type of the character."""
         return 'priestess'
 
 class Pawn(Character):
@@ -852,6 +870,7 @@ class Pawn(Character):
         return results
 
     def get_enemies_distances(self, current_map, path):
+        """Returns the enemies distances in a current map. Useful to check if a movement decreases any of those distances to an enemy."""
         #If the destiny has an enemy and there is no ally in the middle. Those don't need to be checked again
         enemies = {}
         if current_map[path[-1]].has_enemy(): #Checking if in the end of this path tehre is an enemy
@@ -860,7 +879,7 @@ class Pawn(Character):
         return enemies
 
     def get_type(self):
-        """This to overload."""
+        """Returns a string containing the type of the character."""
         return 'pawn'
 
 class MatronMother(Character):
@@ -915,7 +934,7 @@ class MatronMother(Character):
         return super().get_paths(graph, distances, current_map, index, level_size, MatronMother.RESTRICTIONS)
 
     def get_type(self):
-        """This to overload."""
+        """Returns a string containing the type of the character."""
         return 'matron_mother'
 
 class HolyChampion(Character):
@@ -979,5 +998,5 @@ class HolyChampion(Character):
         return results
 
     def get_type(self):
-        """This to overload."""
+        """Returns a string containing the type of the character."""
         return 'holy_champion'

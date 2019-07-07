@@ -99,12 +99,16 @@ class Logger:
 
     @staticmethod
     def error_traceback():
+        """Shows the traceback of the last error."""
         Logger.log('ERROR', traceback.format_exc())
 
-    '''def save(self, *messages):
+    @staticmethod
+    def save(*messages):
+        """Saves the input messages to the local folder storage."""
+        data = Parser.parse_texts(*messages[1:])
         hour = time.strftime("_%H_%M_%S")
         today = time.strftime("_%d_%m_%Y")
-        title = Parser.parse_text(_title)
+        title = Parser.parse_text(messages[0])
 
         file = open("./logs/"+threading.currentThread().getName()+today+".log",'a+')
         file.write("\n=="+title+hour+"==\n")
@@ -119,9 +123,10 @@ class Logger:
         file.write("=====================================\n")
         file.close()
 
-
-    def save_exception(self, exc):
-        self.LOG.error("Error - %s", str(exc))
+    @staticmethod
+    def save_exception(exc):
+        """Saves an exception to the local folder storage."""
+        LOG.error("Error - %s", str(exc))
         hour = time.strftime("_%H_%M_%S")
         today = time.strftime("_%d_%m_%Y")
         data = (str(exc)+traceback.format_exc())
@@ -130,4 +135,4 @@ class Logger:
         file.write("\n=="+hour+"==\n")
         file.write(Parser.parse_text(data))
         file.write("=====================================\n")
-        file.close()'''
+        file.close()

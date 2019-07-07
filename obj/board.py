@@ -971,8 +971,6 @@ class Board(Screen):
 
     def keyboard_handler(self, keys_pressed, event):
         """Handles any pygame keyboard related event. This allows for user interaction with the object.
-        Posibilities:
-        TODO
         Args:
             keys_pressed (:dict: pygame.keys):  Dict in which the keys are keys and the items booleans.
                                                 Said booleans will be True if that specific key was pressed.
@@ -986,8 +984,6 @@ class Board(Screen):
     #Does all the shit related to the mouse hovering an option
     def mouse_handler(self, event, mouse_buttons, mouse_movement, mouse_position):
         """Handles any mouse related pygame event. This allows for user interaction with the object.
-        Posibilities:
-        TODO
         Args:
             event (:obj: pygame.event): Event received from the pygame queue.
             mouse_buttons (List->boolean): List with 3 positions regarding the 3 normal buttons on a mouse.
@@ -1007,7 +1003,7 @@ class Board(Screen):
             self.play_sound('key')
             #Help dialogs showing
             if mouse_buttons[1] and self.help_button.sprite.enabled:
-                #First lets check if there is any dialog left
+                #First lets check if there is any dialog left TODO
                 # element = next((char for char in self.characters if char.dialog_active), None)
                 # new_element = None
                 # if not element:
@@ -1112,6 +1108,7 @@ class Board(Screen):
             new_char(:Obj:Character):   Character that has been freed again and placed on the cell of the original one.
         Method that executes after a character swap is done."""
         self.show_promotion = False
+        self.play_effect('explosion')
 
     def pickup_character(self, get_dests=True):
         """Picks up a character. Adds it to the drag char Group, and check in the LUT table

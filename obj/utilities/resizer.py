@@ -4,8 +4,9 @@ of surfaces and the related information of type pygame.Surface.
 Have the following classes:
     Resizer
 --------------------------------------------"""
+
 __all__ = ['Resizer']
-__version__ = '0.2'
+__version__ = '1.0'
 __author__ = 'David Flaity Pardo'
 
 #Python libraries

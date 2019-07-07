@@ -1,3 +1,13 @@
+"""--------------------------------------------
+counter module. Contains classes that work as a layer over the pygame.Sprite.sprite class.
+Have the following classes, inheriting represented by tabs:
+    Counter
+--------------------------------------------"""
+
+__all__ = ['CounterSprite']
+__version__ = '1.0'
+__author__ = 'David Flaity Pardo'
+
 import time
 import pygame
 import numpy
@@ -8,10 +18,15 @@ from obj.utilities.colors import BLACK, WHITE
 from obj.utilities.resizer import Resizer
 from obj.utilities.exceptions import TooManySurfaces
 
-MAX_SURFACES_FOR_NORMAL_COUNTER = 1000
+#Max number of rendered texts before switching to rendering then in real time instead of pre-execution.
+MAX_SURFACES_FOR_NORMAL_COUNTER = 1000  
 class CounterSprite(AnimatedSprite):
-    """A 'kind' of animated sprite, but not really."""
+    """CounterSprite class. Inherits from AnimatedSprite.
+    A 'kind' of animated sprite, but not really. Simulates a decreasing counter by rendering the texts that should
+    have a counter following the constructor arguments, and switching between them."""
+
     def __init__(self, id_, position, size, canvas_size, time_interval, max_second_count, **text_params):
+        """Counter constructor."""
         self.count_interval = time_interval
         self.top_timer = max_second_count
         self.last_change = 0
@@ -21,7 +36,8 @@ class CounterSprite(AnimatedSprite):
     
     def generate_surfaces(self, size, max_count, count_interval, text_font = FONT,text_color =WHITE,\
                         text_outline =1, text_outline_color=BLACK, text_shadow_dir=(0.0, 0.0), text_lines=1, **xtra_params):
-        """Done this way since we want to have the sprites created in advance, unless they are too much."""
+        """Called in the constructor.
+        Done this way since we want to have the sprites created in advance, unless they are too much and done in real time."""
         surfaces = []
         interval = count_interval
         round_to = 0
@@ -51,62 +67,35 @@ class CounterSprite(AnimatedSprite):
         return False
     
     def update(self):
+        """Called after each drawing. Checks if its time to change the current sprite."""
         if self.check_counter():
             self.animation_frame()
             self.image = self.current_sprite()
 
     def draw_overlay(self, surface, offset=None):
-        """no need for an overlay in a counter"""
+        """no need for an overlay in a counter, so we override the superclass with an empty method."""
         pass
 
     def start_counter(self):
+        """Starts/restarts the counter itself, and updates the start time."""
         self.animation_index = 0
         self.image = self.surfaces[self.animation_index]
         self.last_change = time.time()
 
     def set_canvas_size(self, canvas_size):
+        """Set a new resolution for the container element (Can be the screen itself). 
+        Updates self.real_rect and self.resolution.
+        Args:
+            canvas_size (Tuple-> int,int): Resolution to set.
+        """
         super().set_canvas_size(canvas_size)
         self.surfaces = self.generate_surfaces(self.rect.size, **self.text_params)
 
     def set_enabled(self, state):
+        """Sets the enabled attribute. If enabled is False, the element will be deactivated.
+        In this case, also extends to the visible attribute.
+        Args:
+            state (boolean): The value to set.
+        """
         super().set_enabled(state)
         super().set_visible(state)
-
-# class InstantCounterSprite(Sprite):
-#    """A 'kind' of animated sprite, but not really. DO NOT CREATE THE SURFACES IN ADVANCE"""
-#     def __init__(self, id_, position, size, canvas_size, time_interval, max_second_count, **text_params):
-#         CounterSprite.generate(self)
-#         self.count_interval = time_interval
-#         self.last_change = 0
-#         super().__init__(id_, position, size, canvas_size)
-    
-#     def generate(size):
-#         """Done this way since we want to have the sprites created in advance, unless they are too much."""
-        
-#         return surfaces
-
-#     def check_counter(self):
-#         """Returns true if its time to update the counter sprite, false otherwise"""
-#         time_now = time.time()
-#         if time_now-self.last_change > self.count_interval:
-#             self.last_change = time_now
-#             return True
-#         return False
-    
-#     def update(self):
-#         if self.check_counter():
-#             self.animation_frame()
-
-#     def draw(self):
-#         super().draw()
-#         self.check_counter()
-
-#     def draw_overlay(self, surface, offset=None):
-#         """no need for an overlay in a counter"""
-#         pass
-
-#     def animation_frame(self):
-#         """no need for this neither in a counter"""
-#         pass
-
-#     def set_canvas_size(self):

@@ -1,9 +1,7 @@
 #### TODO CURRENT:
-- [ ] Clean prints.
+- [ ]
 #### TODO WHENEVER:
-- [ ] Effect when chars colliding with each other.
 - [ ] Bar of taunts below, the cursor turns into whatever and sends the position to the rest of the clients.
-- [ ] Add some animations and shit to promotion of a char, like stars or particles or something
 - [ ] Change the tutorial following a step-process. Altho its pretty good for now. 
 
 #### DONE LATEST:
@@ -58,3 +56,6 @@
 - [X] Internal documentation.
 - [X] Add more choices in IA settings, like time timeout and stuff
 - [X] Parse text to have decents numbers and letters instead of shitty indexes
+- [X] Clean prints.
+- [X] Effect when chars colliding with each other.
+- [X] Add some animations and shit to promotion of a char, like stars or particles or something

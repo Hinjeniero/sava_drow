@@ -18,6 +18,8 @@ import random
 import threading
 import time
 from pygame.locals import *
+#external libraries
+from external.PAdLib import draw as drawing
 #Selfmade libraries
 from settings import MESSAGES, USEREVENTS, PATHS
 from obj.screen import Screen, LoadingScreen
@@ -40,6 +42,7 @@ from obj.utilities.logger import Logger as LOG
 from obj.utilities.logger import Parser
 from obj.utilities.surface_loader import ResizedSurface, no_size_limit
 #numpy.set_printoptions(threshold=numpy.nan)
+
 class Board(Screen):
     """Board class. Inherits from Screen.
     Have all the methods and attributes to make the execution of a turn-based board game possible.
@@ -104,6 +107,7 @@ class Board(Screen):
                         'center_cell'           : False,
                         'path_color'            : WHITE,
                         'path_width'            : 8,
+                        'char_proportion'       : 1.4,
                         'loading_screen_text'   : "",
                         'cell_texture'          : None,
                         'cell_border'           : None,
@@ -236,7 +240,7 @@ class Board(Screen):
         """Generates the overlay console (Gray half transparent with white messages)."""
         start = time.time()
         self.overlay_console = ScrollingText('updates', self.event_id, self.resolution, transparency=180)
-        LOG.log('info', 'The console have been generated in ', (time.time()-start)*1000, 'ms')
+        LOG.log('debug', 'The console has been generated in ', (time.time()-start)*1000, 'ms')
 
     def generate_events(self):
         """Generate all the possible events emitted by the board."""
@@ -323,7 +327,7 @@ class Board(Screen):
         dice_screen.image = dice_screen.image.convert()
         dice_screen.image.set_alpha(transparency)
         self.add_dialogs(dice_screen)
-        LOG.log('info', 'The console have been generated in ', (time.time()-start)*1000, 'ms')
+        LOG.log('debug', 'The dice screen has been generated in ', (time.time()-start)*1000, 'ms')
 
     @run_async
     def add_dices_to_screen(self, player_list):
@@ -423,7 +427,6 @@ class Board(Screen):
                 try:                quadrants[quadrant].append(cell)
                 except KeyError:    quadrants[quadrant] = [cell]
         for quadrant_number, quadrant_cells in quadrants.items():
-            #LOG.log('debug', quadrant_number, ": ", quadrant_cells)
             self.quadrants[quadrant_number] = Quadrant(quadrant_number, self.params['circles_per_lvl'],\
                                                         self.params['inter_path_frequency'], *quadrant_cells)
         if not self.params['quadrants_overlap']:
@@ -536,7 +539,7 @@ class Board(Screen):
     @run_async
     def generate_effects(self):
         """Creates the particle effects that show when a character either moves or captures another one"""
-        explosion_effect = OnceAnimatedSprite('explosion_effect', (0, 0), tuple(x*0.15 for x in self.resolution), self.resolution,\
+        explosion_effect = OnceAnimatedSprite('explosion_effect', (0, 0), tuple(x*0.20 for x in self.resolution), self.resolution,\
                                             sprite_folder=PATHS.FIRE_RING, animation_delay=2)   #Position will change later anyway
         selection_effect = OnceAnimatedSprite('selection_effect', (0, 0), tuple(x*0.15 for x in self.resolution), self.resolution,\
                                             sprite_folder=PATHS.GOLDEN_RING, animation_delay=2)   #Position will change later anyway
@@ -639,7 +642,7 @@ class Board(Screen):
                         elif text_sprite.text != str(value):
                             text_sprite.set_text(value)
                 self.scoreboard_flag = False
-                LOG.log('info', 'The scoreboard has been successfully updated.')
+                LOG.log('debug', 'The scoreboard has been successfully updated.')
             except NotEnoughSpaceException: #Lets clear it and try again
                 self.scoreboard.clear()
                 self.scoreboard_flag = False
@@ -657,7 +660,7 @@ class Board(Screen):
                 char.use_overlay = False
                 self.promotion_table.add_sprite_to_elements(1, char, resize_sprite=False)   #It takes too much time if we wait for the resizing
         self.promotion_flag.set()
-        LOG.log('info', 'The promotion table has been successfully updated.')
+        LOG.log('debug', 'The promotion table has been successfully updated.')
 
     def adjust_cells(self):
         """Adjust the position of the cells to eliminate the offset that they show after generation."""
@@ -811,7 +814,7 @@ class Board(Screen):
             self.current_player.turn -= 1  #To make the next player turn be the self.players[0]
             #End of that gibberish
             self.started = True
-            LOG.log('Info', 'Generating the board and all of its players took ', time.time()-self.start_timestamp," seconds.")
+            LOG.log('info', 'Generating the board and all of its players took ', time.time()-self.start_timestamp," seconds.")
             self.start_timestamp = time.time()
             self.next_player_turn()
 
@@ -867,7 +870,7 @@ class Board(Screen):
                     if character.rank < rank:
                         current_level -= 1
                         rank = character.rank
-                    character.set_size(self.cells.sprites()[0].rect.size)
+                    character.set_size(tuple(x*self.params['char_proportion'] for x in self.cells.sprites()[0].rect.size))
                     cell = self.quadrants[player.order].get_cell(border_level=current_level, random_cell=self.params['random_filling'])
                     cell.add_char(character)
                     character.set_cell(cell)
@@ -916,6 +919,10 @@ class Board(Screen):
         if effect:
             effect.rect.center = center_position
             effect.set_enabled(True)
+    
+    def get_effect(self, id_):
+        """Return an effect if the id input matches, or None otherwise"""
+        return next((sprite for sprite in self.effects if id_.lower() in sprite.id.lower() or sprite.id.lower() in id_.lower()), None)
 
     def draw(self, surface):
         """Draws the board and all of its elements on the surface.
@@ -933,8 +940,11 @@ class Board(Screen):
             super().draw(surface)   #Draws background and sprites
             if self.params['show_last_mov_line'] and self.last_real_movm:
                 start_pos, end_pos = self.get_cell_by_real_index(self.last_real_movm[0]).rect.center, self.get_cell_by_real_index(self.last_real_movm[1]).rect.center
+                # direction = (1 if start_pos[0]<end_pos[0] else -1, 1 if start_pos[1]<end_pos[1] else -1)
+                # start_pos = tuple(original + (self.cells.sprites()[0].radius)*direction for original, direction in zip(start_pos, direction))
                 pygame.draw.lines(surface, BLACK, False, (start_pos, end_pos), (self.resolution[0]//300)+2)
                 pygame.draw.lines(surface, WHITE, False, (start_pos, end_pos), self.resolution[0]//300)
+
             for char in self.characters:
                 char.draw(surface)
             if self.current_player:
@@ -1050,8 +1060,13 @@ class Board(Screen):
 
             if not self.ai_turn:
                 #Checking if Im holding a sprite
-                if self.drag_char.sprite:   
+                if self.drag_char.sprite:
                     self.drag_char.sprite.rect.center = mouse_position
+                    if self.get_effect('selection_effect'):
+                        if not self.get_effect('selection_effect').enabled:
+                            self.play_effect('selection_effect', mouse_position)
+                        else:
+                            self.get_effect('selection_effect').rect.center = mouse_position
                 
                 #Checking collision with cells (Using this instead of hit_sprite because the hit method is different)
                 collided_cell = pygame.sprite.spritecollideany(mouse_sprite, self.cells, collided=pygame.sprite.collide_circle)
@@ -1094,7 +1109,7 @@ class Board(Screen):
             cell.add_char(new_char)
             player = next(player for player in self.players if player.uuid == original_char.owner_uuid)
             player.revive_char(new_char, original_char)
-            new_char.set_size(cell.rect.size)
+            new_char.set_size(tuple(x*self.params['char_proportion'] for x in cell.rect.size))
             new_char.set_cell(cell)
             new_char.set_hover(False)
             self.characters.remove(original_char)
@@ -1108,13 +1123,13 @@ class Board(Screen):
             new_char(:Obj:Character):   Character that has been freed again and placed on the cell of the original one.
         Method that executes after a character swap is done."""
         self.show_promotion = False
-        self.play_effect('explosion')
+        self.play_effect('explosion', new_char.rect.center)
 
     def pickup_character(self, get_dests=True):
         """Picks up a character. Adds it to the drag char Group, and check in the LUT table
         the movements that are possible taking into account the character restrictions.
         Then it draws an overlay on the possible destinations."""
-        LOG.log('INFO', 'Selected ', self.active_char.sprite.id)
+        LOG.log('debug', 'Selected ', self.active_char.sprite.id)
         self.drag_char.add(self.active_char.sprite)
         self.drag_char.sprite.set_selected(True)
         self.last_cell.add(self.active_cell.sprite)
@@ -1162,7 +1177,7 @@ class Board(Screen):
         """Drops a character. Deletes it from the drag char Group, and checks if the place in which
         has been dropped is a possible destination. If it is, it drops the character in that cell.
         Otherwise, the character will be returned to the last Cell it was in."""
-        LOG.log('INFO', 'Dropped ', self.drag_char.sprite.id)
+        LOG.log('debug', 'Dropped ', self.drag_char.sprite.id)
         self.hide_fitnesses(self.last_cell.sprite.get_real_index())
         moved = False
         self.drag_char.sprite.set_selected(False)
@@ -1375,7 +1390,7 @@ class Board(Screen):
             restricted_movements = self.last_real_movm
         movement = self.current_player.get_movement(self.__hash__(), self.current_map, self.cells, self.current_player.uuid, [player.uuid for player in self.players],\
                                                     chars_allowed=char_that_must_move, restricted_movements=restricted_movements)
-        LOG.log('info', "Movement chosen was ", movement)
+        LOG.log('debug', "Movement chosen was ", movement)
         character = self.get_cell_by_real_index(movement[0]).get_char()
         self.drag_char.add(character)
         self.last_cell.add(self.get_cell_by_real_index(movement[0]))
@@ -1464,7 +1479,6 @@ class Board(Screen):
             char = self.active_cell.sprite.has_char()
             if char and char.active:
                 self.active_char.add(char)
-            #LOG.log('debug', 'New cell active: ', self.active_cell.sprite.pos)
         else:
             if self.drag_char.sprite:
                 self.drag_char.sprite.set_hover(False)

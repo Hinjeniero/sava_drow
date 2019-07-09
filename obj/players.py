@@ -29,6 +29,7 @@ from obj.ui_element import InfoBoard
 from obj.paths import Restriction, Movements
 from obj.utilities.exceptions import BadCharacterInitException, StateNotFoundException, SwapFailedException
 from obj.utilities.resizer import Resizer
+from obj.utilities.colors import COLOR_CHOOSER
 from obj.utilities.logger import Logger as LOG
 from obj.utilities.decorators import run_async, time_it
 from obj.utilities.utility_box import UtilityBox
@@ -92,7 +93,7 @@ class Player(object):
                                         Ammount of each type of char, name of their actions, and their folder paths.
             """
         if not empty:
-            self.characters = Character.factory(self.name, self.uuid, sprite_size, canvas_size, **character_params)
+            self.characters = Character.factory(self.name, self.uuid, self.order, sprite_size, canvas_size, **character_params)
         else:
             self.characters = pygame.sprite.OrderedUpdates()
         self.generate_infoboard(canvas_size)
@@ -343,6 +344,9 @@ class Character(AnimatedSprite):
             **aliases (:dict:): How each standarized action will be named in the loaded images.
         """
         params['hover_surfaces'] = True
+        params['border'] = True
+        border_proportion = 25
+        params['border_width'] = min(x for x in size.size)//border_proportion if isinstance(size, pygame.rect.Rect) else min(x for x in size)//border_proportion
         super().__init__(id_, position, size, canvas_size, sprite_folder=sprites_path, **params)
         self.uuid       = obj_uuid if obj_uuid else uuid.uuid1().int
         self.aliases    = CHARACTERS.DEFAULT_ALIASES.copy()
@@ -560,7 +564,7 @@ class Character(AnimatedSprite):
                 json_params[character] = {'path': img_paths[character], 'number': ammounts[character]}
 
     @staticmethod
-    def factory(player_name, player_uuid, sprite_size, canvas_size, **character_settings):
+    def factory(player_name, player_uuid, player_order, sprite_size, canvas_size, **character_settings):
         """Produces all the characters of a player. Even with this name, it doesn't follow the factory pattern.
         First of all, parses the input settings to avoid errors. After that, loads each character of each subtype
         in a separate thread, with the already parsed and corrected settings. When all the threads are finished, returns
@@ -579,13 +583,19 @@ class Character(AnimatedSprite):
         Character.parse_json_char_params(character_settings)
         characters  = []
         threads     = []
+        #Border of the characters
+        char_border_color = COLOR_CHOOSER[4]
+        try:
+            char_border_color = COLOR_CHOOSER[player_order]
+        except KeyError:
+            pass
         for key in character_settings.keys():
             #Character.generate_char()
             char_init = Character.get_constructor_by_key(key)
             #Actual loading
-            threads.append(Character.__char_loader(char_init, characters, character_settings[key]['ammount'],\
-                            player_uuid, player_name+'_'+key, (0, 0), sprite_size, canvas_size, character_settings[key]['path']))
-                            #player_uuid,      id_,         position,    size,      canvas_size, sprites_path
+            threads.append(Character.__char_loader(char_init, characters, character_settings[key]['ammount'], player_uuid,\
+                                                    player_name+'_'+key, (0, 0), sprite_size, canvas_size, character_settings[key]['path'],\
+                                                    border_color = char_border_color))
         for end_event in threads:   
             end_event.wait()        #Threading.join
         LOG.log('INFO', "----Factory, done making ", player_name, " characters----")
@@ -790,7 +800,7 @@ class Priestess(Character):
         results = []
         for path in unfiltered_paths:
             if not any(current_map[path[i]].has_ally() or current_map[path[i]].has_enemy() for i in range(1, len(path)-1)):
-                results.append(path)-
+                results.append(path)
         return results
 
     def get_type(self):

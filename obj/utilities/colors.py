@@ -17,3 +17,11 @@ BLUE                = pygame.Color("blue")
 DARKGRAY            = pygame.Color("darkgray")
 LIGHTGRAY           = pygame.Color("lightgray")
 TRANSPARENT_GRAY    = (128, 128, 128, 128)
+
+CLEAR_RED           = (255, 55, 55, 0)
+CLEAR_BLUE          = (55, 55, 255, 0)
+CLEAR_GREEN         = (55, 255, 55, 0)
+CLEAR_YELLOW        = (255, 255, 55, 0)
+CLEAR_PINK          = (255, 55, 255, 0)
+
+COLOR_CHOOSER = {0: CLEAR_RED, 1: CLEAR_GREEN, 2: CLEAR_BLUE, 3: CLEAR_YELLOW, 4: CLEAR_PINK}

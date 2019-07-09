@@ -678,7 +678,7 @@ class AnimatedSprite(MultiSprite):
         next_frame_time (int):  Number of times that draw is called before changing surface to the next one.
         animation_index (int):  Current index in the surfaces and mask lists.
     """
-    __default_config = {'hover_ratio'   : 1.5,
+    __default_config = {'hover_ratio'   : 1.75,
                         'boomerang_loop': False,
                         'initial_surfaces': (),
                         'hover_surfaces': False,
@@ -688,7 +688,10 @@ class AnimatedSprite(MultiSprite):
                         'resize_mode'   :'fit', 
                         'resize_smooth' :True,
                         'keep_aspect_ratio': True,
-                        'keywords_strict' : False   
+                        'keywords_strict' : False,
+                        'border': False,
+                        'border_color': RED,
+                        'border_width': 2
     }
     def __init__(self, id_, position, size, canvas_size, **params):
         """Constructor of AnimatedSprite. 
@@ -764,7 +767,7 @@ class AnimatedSprite(MultiSprite):
                 self.add_surface(surfaces[path], None)
 
     def add_surfaces(self):
-        """Gets the surfaces from the param list 'initial_surfaces', and adds them to the animated sprite."""
+        """Gets, resizes the surfaces from the param list 'initial_surfaces', and adds them to the animated sprite."""
         #CHECKING the type
         for image in self.params['initial_surfaces']:
             if isinstance(image, str):  #It's a path
@@ -788,10 +791,15 @@ class AnimatedSprite(MultiSprite):
                 self.add_surface(surface, hover_surface)
                 
     def add_surface(self, surface, hover_surface):
-        """Resizes a surface to a size, and adds it to the non-original surfaces lists.
+        """Adds the input surfaces it to the non-original surfaces lists.
         Args:
-            surface (:obj: pygame.Surface): Surface to resize and add.
-            size (:tuple: int, int):    Size to resize the surface to."""
+            surface (:obj: pygame.Surface): Surface to add.
+            hover_surface (:obj: pygame.Surface):   Hover Surface to add."""
+        #Checking the border parameter
+        if self.params['border']:
+            surface = UtilityBox.draw_border(surface, self.params['border_color'], self.params['border_width'])
+            if hover_surface:
+                hover_surface = UtilityBox.draw_border(hover_surface, self.params['border_color'], self.params['border_width'])
         self.surfaces.append(surface)
         if hover_surface:
             self.hover_surfaces.append(hover_surface)

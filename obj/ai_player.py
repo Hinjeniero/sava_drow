@@ -142,6 +142,12 @@ class ComputerPlayer(Player):
         fitnesses = self.generate_fitnesses(all_cells, my_player, self.graph, self.distances, current_map, self.circum_size)
         #Filtering the fitnesses for the first three modes
         fitnesses = [fitness for fitness in fitnesses if fitness[0] not in restricted_movements and (not allowed_movements or fitness[0] in allowed_movements)]
+        #Checking if the winning move is withing immediate grasp
+        winning_move = ComputerPlayer.is_winning_move(all_cells, fitnesses, my_player)
+        if winning_move:    
+            LOG.log('Info', 'Detected immediate winning move! Choosing ', winning_move)
+            return winning_move
+        #If not, normal ia then.
         if 'random' in self.ai_mode:
             if 'half' in self.ai_mode:
                 return self.generate_random_movement(fitnesses, somewhat_random=True)
@@ -149,22 +155,26 @@ class ComputerPlayer(Player):
         if 'fitness' in self.ai_mode:
             return self.generate_random_movement(fitnesses)
         #The other methods need the all_cells structure  
-        if 'alpha' in self.ai_mode and 'monte' in self.ai_mode: #This is the one to compare algorithms
-            if self.order//2 == 0:  #Order can only go from 0 to 3. players 0 and 1 get alpha beta
+        try:
+            if 'alpha' in self.ai_mode and 'monte' in self.ai_mode: #This is the one to compare algorithms
+                if self.order//2 == 0:  #Order can only go from 0 to 3. players 0 and 1 get alpha beta
+                    return self.generate_alpha_beta(max_nodes, all_cells, current_map, my_player, all_players, allowed_movs=allowed_movements,\
+                                        restricted_movs=restricted_movements)
+                else:                   #And players 2 and 3 montecarlo
+                    return MonteCarloSearch.monte_carlo_tree_search(self.graph, self.distances, self.circum_size, board_hash, all_cells, current_map, my_player, all_players,\
+                                                                    self.round_timeout, allowed_movs=allowed_movements, restricted_movs=restricted_movements)
+            if 'alpha' in self.ai_mode:
+                if 'order' in self.ai_mode:
+                    return self.generate_alpha_beta(max_nodes, all_cells, current_map, my_player, all_players, allowed_movs=allowed_movements,\
+                                                    restricted_movs=restricted_movements, ordering=True)    
                 return self.generate_alpha_beta(max_nodes, all_cells, current_map, my_player, all_players, allowed_movs=allowed_movements,\
-                                    restricted_movs=restricted_movements)
-            else:                   #And players 2 and 3 montecarlo
+                                                    restricted_movs=restricted_movements)
+            if 'monte' in self.ai_mode:
                 return MonteCarloSearch.monte_carlo_tree_search(self.graph, self.distances, self.circum_size, board_hash, all_cells, current_map, my_player, all_players,\
                                                                 self.round_timeout, allowed_movs=allowed_movements, restricted_movs=restricted_movements)
-        if 'alpha' in self.ai_mode:
-            if 'order' in self.ai_mode:
-                return self.generate_alpha_beta(max_nodes, all_cells, current_map, my_player, all_players, allowed_movs=allowed_movements,\
-                                                restricted_movs=restricted_movements, ordering=True)    
-            return self.generate_alpha_beta(max_nodes, all_cells, current_map, my_player, all_players, allowed_movs=allowed_movements,\
-                                                restricted_movs=restricted_movements)
-        if 'monte' in self.ai_mode:
-            return MonteCarloSearch.monte_carlo_tree_search(self.graph, self.distances, self.circum_size, board_hash, all_cells, current_map, my_player, all_players,\
-                                                            self.round_timeout, allowed_movs=allowed_movements, restricted_movs=restricted_movements)
+        except Exception:
+            LOG.error_traceback()
+            return self.generate_random_movement(fitnesses, somewhat_random=True)
             
     def generate_random_movement(self, fitnesses, totally_random=False, somewhat_random=False, allowed_movements=(), restricted_movements=()):
         """Algorithm to return a next movement based in randomness and the score at which are rated the different possible moves.
@@ -426,6 +436,18 @@ class ComputerPlayer(Player):
             current_map[cell_index].update_accessibility(char)
 
     @staticmethod
+    def is_winning_move(all_cells, fitnesses, my_player):
+        """Checks if there is only another essential piece left, and if that piece is within the reach
+        of the players possible movements in this turn. Returns the movement if it's possible, and None otherwise."""
+        essential_pieces_left = sum(1 for char in all_cells.values() if char.essential and char.owner_uuid != my_player)
+        if essential_pieces_left == 1:
+            enemy_essential_piece_index = next(key for key, char in all_cells.items() if char.essential and char.owner_uuid != my_player)
+            #FORMAT of fitnesses: [(movements, score), ...] -- [((23, 22), 0.4332432), ((0, 17), 0.123412)] 
+            for fitness_score in fitnesses:
+                if enemy_essential_piece_index == fitness_score[0][-1]: #FORMAT of each fitness_score: ((23, 22), 0.4332432)
+                    return fitness_score[0] #The movement
+
+    @staticmethod
     def at_end_game(all_cells):
         """Checks if the board game has reached and end. Does this by checking all the essential pieces left, and checking if they belong to more
         than one player. (If there are only essential pieces from a player left)
@@ -521,7 +543,7 @@ class Node(object):
                 current_map[dest_index].access = False  
                 #CREATES THE CHILDREN
                 self.children.append(Node(self, self.paths_graph, self.distances, self.circum_size, self.board_hash, all_cells_node, current_map, (source_index, dest_index)))    #God knows how much this will occupy in memory...
-            self.map_state = None   #Have no more need for this data after expanding and getting all the possible movements from this board.
+            #self.map_state = None   #Have no more need for this data after expanding and getting all the possible movements from this board. Provoke an attributeerror in the line 629 of rollout_policy
     
     def get_uct_value(self, exploration_const=1):
         """Calculates the (upper confidence bound applied to trees) value of this node.

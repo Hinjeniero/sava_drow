@@ -417,7 +417,7 @@ if __name__ == "__main__":
     except:
         pass
     arguments = tuple(arg[1:].lower() for arg in sys.argv if arg[0]=='-')
-    # print("All arguments are: "+str(sys.argv))
+    print("All arguments are: "+str(sys.argv))
     print("Recognized arguments: "+str(arguments))
     test = True if any('test' in arg for arg in arguments) else False
     low = True if any('low' in arg for arg in arguments) else False

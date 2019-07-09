@@ -433,4 +433,24 @@ class UtilityBox (object):
                 results[-1] = 1-results[-1]
         if len(values) == 1:
             return results[0]
-        return tuple(results) 
+        return tuple(results)
+
+    @staticmethod
+    def draw_border(surface, border_color, border_width):
+        """Draws a border of the desired color on the input surface. Returns the surface with the border drawn."""
+        border = pygame.transform.smoothscale(surface.copy(), (surface.get_width()+border_width, surface.get_height()+border_width))
+        border.fill(border_color, special_flags=pygame.BLEND_ADD)
+        colorkey = UtilityBox.get_alike_colorkey(border_color)
+        surface_with_border = UtilityBox.convert_to_colorkey_alpha(border, colorkey=colorkey)
+        surface_with_border.blit(surface, (border_width//2, border_width//2))
+        return surface_with_border
+
+    @staticmethod
+    def generate_border(surface, border_color, border_width):
+        """Generates and returns a surface a little bigger than the original, filled with only pixels of the desired color following
+        the original shape."""
+        border = pygame.transform.smoothscale(surface.copy(), (surface.get_width()+border_width, surface.get_height()+border_width))
+        border.fill(border_color, special_flags=pygame.BLEND_ADD)
+        colorkey = UtilityBox.get_alike_colorkey(border_color)
+        border = UtilityBox.convert_to_colorkey_alpha(border, colorkey=colorkey)
+        return border

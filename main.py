@@ -239,7 +239,7 @@ def create_online_menu(result, animated_background=None, animations=True):
     for element in elements:
         if 'player' in element.id or 'CPU' in element.id:
             element.event_id = USEREVENTS.CONFIG_USEREVENT
-            if not 'player' in element.id:
+            if 'CPU' in element.id:
                 element.set_enabled(False)
     #Create Menu
     start_menu = Menu('online_menu', USEREVENTS.MAINMENU_USEREVENT, INIT_PARAMS.INITIAL_RESOLUTION, *elements, animated_background=animated_background, background_path=PATHS.DEFAULT_BG,\
@@ -432,6 +432,8 @@ if __name__ == "__main__":
         INIT_PARAMS.RESOLUTIONS = tuple(res if res != new_initial_resolution and res != INIT_PARAMS.INITIAL_RESOLUTION else INIT_PARAMS.INITIAL_RESOLUTION if res == new_initial_resolution\
                                         else new_initial_resolution for res in INIT_PARAMS.RESOLUTIONS) #Swapping places of the resolutions
         INIT_PARAMS.INITIAL_RESOLUTION = new_initial_resolution
+    if any('debug' in arg for arg in arguments):
+        LOG.change_level('debug')
     animations = False if any('no_anim' in arg for arg in arguments) else True
     game = pre_start(test=test, animations=animations) 
     game.start('main', 'menu')

@@ -15,8 +15,9 @@ __author__ = 'David Flaity Pardo'
 #     pass
 import socket
 import json
-from obj.utilities.utility_box import UtilityBox
 from settings import NETWORK
+from obj.utilities.logger import Logger as LOG
+from obj.utilities.utility_box import UtilityBox
 from obj.utilities.exceptions import ServiceNotAvailableException
 
 PUBLIC_IP_URL = 'http://jsonip.com'
@@ -27,11 +28,11 @@ class IpGetter(object):
     @staticmethod
     def get_public_ip(raise_exception=False):
         """Gets and returns the public ip of the local computer."""
-        public_ip = None
+        public_ip = NETWORK.LOCAL_IP
         try:
             public_ip = UtilityBox.do_request(PUBLIC_IP_URL)['ip']
-        except NameError:
-            pass
+        except (NameError, TypeError):  #Bad request
+            LOG.log('info', 'The request for a public ip has failed')
             if raise_exception:
                 raise ServiceNotAvailableException("Unable to get public IP from "+PUBLIC_IP_URL)
         return public_ip

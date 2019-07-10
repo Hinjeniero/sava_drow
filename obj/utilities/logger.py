@@ -68,6 +68,16 @@ class Parser:
 
 class Logger:
     """Logger class. Has the static methods that write the log history of the workspace."""
+    
+    def change_level(level):
+        """Changes the minimum priority level of the shown messages."""
+        if 'debug' in level:         LOG.setLevel(logging.DEBUG)
+        elif 'info' in level:        LOG.setLevel(logging.INFO)
+        elif 'warning' in level:     LOG.setLevel(logging.WARNING)
+        elif 'error' in level:       LOG.setLevel(logging.ERROR)
+        elif 'critical' in level:    LOG.setLevel(logging.CRITICAL)
+        Logger.log('info', 'This logger changed the messages priority level to ', level)
+    
     @staticmethod
     def log(priority, *messages):
         """Concatenates all the input messages and sends them to the configured handlers of LOG.

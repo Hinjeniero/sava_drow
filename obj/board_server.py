@@ -10,13 +10,14 @@ __version__ = '1.0'
 __author__ = 'David Flaity Pardo'
 
 #Python full fledged libraries
+import pygame
 import threading
 import uuid
 import time
 #External libraries
 from external.Mastermind import *
 #Selfmade libraries
-from settings import NETWORK
+from settings import NETWORK, USEREVENTS
 from obj.utilities.ip_parser import IpGetter
 from obj.utilities.utility_box import UtilityBox
 from obj.utilities.decorators import run_async_not_pooled
@@ -68,6 +69,7 @@ class Server(MastermindServerTCP):
         self.hold_lock = threading.Lock()
         self.on_hold_empty= threading.Event()
         self.on_hold_resp = []
+        self.on_hold_named = Dictionary(exceptions=True)
         self.clients = Dictionary()   #Connections objects (Includes host)
         self.data = Dictionary(exceptions=True)
         self.players_data = Dictionary(exceptions=True)
@@ -92,8 +94,13 @@ class Server(MastermindServerTCP):
         Args:
             id_ (:obj: any):Identificator of the client. It's his uuid.
             conn_client(:obj: any): Connection object that will be used to communicate with the client. This is kept alive by him, too."""
-        if id_ in self.clients.values():
+        if id_ in self.clients.keys():
             self.clients.update_item(id_, conn_client)
+            LOG.log('info', 'The client ', id_, ' reconnected!')
+            #TODO If this was a reconnection
+            #TODO Send ALL the info (ask the host for current situation), with the current board state
+            #TODO Send your current player
+            #TODO Send who IS the current player
             return {"success": True, "msg": "The client "+str(id_)+" connection object was updated successfully."}
         elif len(self.clients.values()) < self.total_players:
             self.clients.add_item(id_, conn_client)
@@ -134,7 +141,10 @@ class Server(MastermindServerTCP):
     def register_server(self):
         """Sends this server information to the endpoint holding all the public servers.
         Raises an exception if the endpoint cant be reached."""
-        register_server_endpoint = IpGetter.get_servers_table_dir()+NETWORK.TABLE_SERVERS_ADD_ENDPOINT
+        try:
+            register_server_endpoint = IpGetter.get_servers_table_dir()+NETWORK.TABLE_SERVERS_ADD_ENDPOINT
+        except ServiceNotAvailableException:
+            raise ServiceNotAvailableException('The public service with the data of serverss is unreachable.')
         json_petition = {'uuid': self.uuid, 'ip': self.public_ip, 'local_ip': self.private_ip, 'port': str(NETWORK.SERVER_PORT), 'players': 1,\
                         'total_players': self.total_players, 'alias': NETWORK.SERVER_ALIAS, 'timestamp': time.time()}
         response = UtilityBox.do_request(register_server_endpoint, method='POST', data=json_petition, return_success_only=True)
@@ -199,8 +209,18 @@ class Server(MastermindServerTCP):
     def hold_petition(self, conn_obj, data):
         """Adds the petition to the on hold queue, since it couldn't be satisfied in the moment."""
         self.hold_lock.acquire()
-        self.on_hold_resp.append((conn_obj, data))
-        self.on_hold_empty.set()
+        desired_data = next((key for key in data.keys() if 'data' in key), None)
+        if desired_data:
+            try:
+                clients_waiting_this_data = self.on_hold_named.get_item(desired_data)
+                if conn_obj not in clients_waiting_this_data:
+                    clients_waiting_this_data.append(conn_obj)
+            except KeyError:
+                self.on_hold_named.add_item(desired_data, [conn_obj])
+        else:
+            self.on_hold_resp.append((conn_obj, data))
+        if len(self.on_hold_resp) is not 0:
+            self.on_hold_empty.set()
         self.hold_lock.release()
 
     @run_async_not_pooled
@@ -221,7 +241,8 @@ class Server(MastermindServerTCP):
                 self.hold_lock.release()
                 self.callback_client_handle(*petition)  #This to unpack the tuple of conn,data
         except:
-            pass    #The server disconnected, byebye
+            LOG.log('info', 'Exception in the petition worker, the server must have disconnected')    #The server disconnected, byebye
+            LOG.error_traceback()
     
     def callback_client_handle(self, connection_object, data):
         """Handles the petitions of the clients, be requests or sending of data. Uses JSON forms.
@@ -243,7 +264,7 @@ class Server(MastermindServerTCP):
                         reply = {"success": False, "error": "There is already an host."}
                 reply = self.add_client(data["id"], connection_object)
             elif "start_dice" in data:
-                LOG.log('error', 'Client ', data['id'], ' rolled a ', data['start_dice'])
+                LOG.log('info', 'Client ', data['id'], ' rolled a ', data['start_dice'])
                 self.add_to_barrier(connection_object, data)
             elif "params" in data:
                 if connection_object is self.host:
@@ -254,7 +275,8 @@ class Server(MastermindServerTCP):
                 self.players_ready += 1
                 if self.players_ready >= self.total_players:
                     self.broadcast_data(self.clients.values(), {"start": True})
-                    self.delete_server()
+                    if not self.private_server:
+                        self.delete_server()
             elif "players" in data: #At start
                 reply = {"players": self.total_players}
             elif "players_data" in data:
@@ -262,17 +284,29 @@ class Server(MastermindServerTCP):
                     for player in data["players_data"]:
                         self.add_player(player)
                     self.all_players_received.set()
+                    #Sends this to the clients that were waiting
+                    clients_waiting_for_players_data = self.on_hold_named.get_item("players_data")
+                    reply = {"players_data": self.players_data.values_list()}
+                    self.broadcast_data(clients_waiting_for_players_data, reply)
+
                 else:
                     if len(self.players_data.keys()) < self.total_players:
                         raise KeyError
+                    LOG.log('info', 'Sending players data to client')
                     reply = {"players_data": self.players_data.values_list()}
             elif "characters_data" in data:
                 if connection_object == self.host:
                     for character in data["characters_data"]:
                         self.add_char(character)
+                    #Sends this to the clients that were waiting
+                    clients_waiting_for_chars_data = self.on_hold_named.get_item("players_data")
+                    reply = {"characters_data": self.chars_data.values_list()}
+                    self.broadcast_data(clients_waiting_for_chars_data, reply)
+
                 else:
                     if len(self.chars_data.keys()) < self.total_chars:
                         raise KeyError
+                    LOG.log('info', 'Sending characters data to client')
                     reply = {"characters_data": self.chars_data.values_list()}
             elif "keepalive" in data or "keep_alive" in data or "keep-alive" in data or "update" in data:
                 pass
@@ -283,30 +317,43 @@ class Server(MastermindServerTCP):
                 #elif "move_character" in data or "drop_character" in data or "end_turn" in data or "admin" in data or "swap" in data:
                 #or "dice_value" in data or "turncoat" in data or "lock_characters" in data
         except (KeyError, IndexError):    #Can't attend this petition right now, most likely due to lack of data.
-            # print("EXCEPT DATA; CHECK IT "+str(data))
+            LOG.log('info', 'The request ', data, ' cant be achievable right now, holding this petition')
             self.hold_petition(connection_object, data)
         if not reply:
             reply = {"success": True}
         self.callback_client_send(connection_object, reply)
 
-    @run_async_not_pooled
-    def start(self, ip, port):
+    def initiate(self, ip, port):
         """SubThread that starts the server and listens for clients in the parameters specified.
         The server will listen on the tandem ip_address:port.
         Args:
             ip(str):    IP address of the server. Uses 0.0.0.0 usually.
             port(int):  Port that the server will bind to. It will listen on this one."""
         self.private_ip = IpGetter.get_local_ip(raise_exception=True)
-        self.public_ip = IpGetter.get_public_ip(raise_exception=True)
-        self.connect(ip, port) #This connect is way more like a bind to the socket.
-        LOG.log('error', 'Deploying server in the public ip ', self.public_ip, ':', NETWORK.SERVER_PORT)
         try:
-            if not self.private_server:
-                self.register_server()
+            self.public_ip = IpGetter.get_public_ip(raise_exception=True)
+        except ServiceNotAvailableException:
+            pygame.event.post(pygame.event.Event(USEREVENTS.BOARD_USEREVENT, command='no_internet'))
+            self.public_ip = NETWORK.LOCAL_IP
+        try:
+            self.connect(ip, port) #This connect is way more like a bind to the socket.
+            LOG.log('info', 'Deploying server in the public ip ', self.public_ip, ':', NETWORK.SERVER_PORT)
+        except MastermindErrorSocket:
+            pygame.event.post(pygame.event.Event(USEREVENTS.BOARD_USEREVENT, command='server_already_exists'))
+            return
+        if not self.private_server:
+            self.register_server()
+        self.start()
+
+    @run_async_not_pooled
+    def start(self):
+        """SubThread that starts the server and listens for clients in the parameters specified.
+        The server will listen on the tandem ip_address:port."""
+        try:
             self.petition_worker()
             self.accepting_allow_wait_forever()
         except:                 #Only way to break is with an exception
-            pass
+            LOG.log('info', 'Exiting from the server!')
         self.hold_petition(-1, {'end': True})
         self.accepting_disallow()
         self.disconnect_clients()

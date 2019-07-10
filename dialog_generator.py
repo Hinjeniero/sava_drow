@@ -12,6 +12,7 @@ from strings import MONOSPACED_FONT
 from settings import USEREVENTS, PATHS
 from obj.ui_element import Dialog, UIElement, SelectableTable
 from obj.utilities.colors import WHITE
+from obj.utilities.surface_loader import no_size_limit
 
 class DialogGenerator(object):
     """DialogGenerator class. Contains static method to create some prefabbed dialogs that are used 
@@ -75,6 +76,7 @@ class DialogGenerator(object):
         return table
 
     @staticmethod
+    @no_size_limit
     def generate_popups(resolution, *ids_texts, text_size=0.95, text_color=WHITE):
         """Creates popups. This method is designed to produce a lot of popups in one call.
         Args:
@@ -90,7 +92,7 @@ class DialogGenerator(object):
         position = tuple(0.5-x/2 for x in size)
         popups = []
         for id_text in ids_texts:
-            popups.append(UIElement.factory(id_text[0], None, 0, position, size, resolution, texture=PATHS.LONG_POPUP, keep_aspect_ratio=False,\
+            popups.append(UIElement.factory(id_text[0], None, 0, position, size, resolution, texture=PATHS.BROWN_SLIDER, keep_aspect_ratio=False,\
                                             text=id_text[1], text_proportion=text_size, text_color=text_color, rows=1))
         return popups
 

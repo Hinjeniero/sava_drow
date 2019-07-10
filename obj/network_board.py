@@ -28,9 +28,10 @@ from obj.ui_element import ScrollingText
 from obj.board import Board
 from obj.dice import Dice
 from obj.players import Character
+from obj.utilities.colors import COLOR_CHOOSER
 from obj.utilities.utility_box import UtilityBox
 from obj.utilities.ip_parser import IpGetter
-from obj.utilities.decorators import run_async_not_pooled
+from obj.utilities.decorators import run_async_not_pooled, run_async
 from obj.utilities.logger import Logger as LOG
 from obj.utilities.exceptions import ServiceNotAvailableException
 
@@ -75,6 +76,8 @@ class NetworkBoard(Board):
                                 max_levels, path_color, path_width.
         """
         params['loading_screen_text'] = ''
+        if server:
+            server.initiate(NETWORK.SERVER_IP, NETWORK.SERVER_PORT)
         if host:
             super().__init__(id_, event_id, end_event_id, resolution, initial_dice_screen=False, **params)
         else:
@@ -96,6 +99,7 @@ class NetworkBoard(Board):
         self.players_names = {}
         self.flags = {}     #Used only if client and not host.
         self.reconnect = True
+        self.chars_locked = False
         NetworkBoard.generate(self, host, direct_connection)
 
     @staticmethod
@@ -111,7 +115,6 @@ class NetworkBoard(Board):
         self.client = MastermindClientTCP(NETWORK.CLIENT_TIMEOUT_CONNECT, NETWORK.CLIENT_TIMEOUT_RECEIVE)
         try:
             if host:
-                self.server.start(NETWORK.SERVER_IP, NETWORK.SERVER_PORT)
                 self.set_ip_port(NETWORK.LOCAL_LOOPBACK_IP, NETWORK.SERVER_PORT)
             else:
                 self.generate_connect_dialog(direct_connection)
@@ -122,7 +125,7 @@ class NetworkBoard(Board):
             self.start(host)
         except Exception as exc:
             self.exception_handler(exc)
-
+        
     def generate_events(self):
         """Generate all the possible events emitted by the network board, on top of the normal board ones."""
         super().generate_events()
@@ -138,7 +141,6 @@ class NetworkBoard(Board):
         In the second case, a table showing the current running servers will be made.
         Args:
             direct_connection (boolean):    Flag that mark if we are connecting directly (True), or by choosing one of the public options (False)"""
-        #TODO To update this just destroy it and rebuild it or whatever. Take into edxample the update_scoreboard in Board.
         if direct_connection:
             dialog = DialogGenerator.create_input_dialog('ip_port', tuple(x//3 for x in self.resolution), self.resolution,\
                                                         ('ip', 'send_ip', str(NETWORK.LOCAL_LOOPBACK_IP)), ('port', 'send_port', str(NETWORK.SERVER_PORT)))
@@ -238,7 +240,6 @@ class NetworkBoard(Board):
         Also, sends the a random throw of a dice to decide the order of the players.
         Args:
             host (boolean): Flag saying if we are the host or not (Just a lowly client)."""
-        # print("SEND HANDSHAKE")
         self.send_data({"host": host, "id": self.uuid})
         if host:
             self.send_data_async({"params": self.get_board_params()})
@@ -248,6 +249,7 @@ class NetworkBoard(Board):
             self.request_data_async("players")          #To get the number of players
             self.request_data_async("players_data")     #To get the data of the players
             self.request_data_async("characters_data")  #To get the data of the characters
+            self.LOG_ON_SCREEN('Sent the request, waiting for players and characters')
         dice = random.randint(1, 6)
         self.send_data_async({"start_dice": dice, "id": self.uuid})    #Sending dice result for the player assignments
         self.LOG_ON_SCREEN("rolled a "+str(dice))
@@ -258,9 +260,7 @@ class NetworkBoard(Board):
             self.client_lock.acquire()
             self.LOG_ON_SCREEN('Connecting to '+str(self.ip)+' in port '+str(self.port))
             self.client.disconnect()    #Just in case
-            print("IP "+str(self.ip)+" PORT "+str(self.port))
             self.client.connect(self.ip, self.port)
-            print("---------------------")
             self.connected.set()
             self.client_lock.release()
             LOG.log('info', 'Client ', self.uuid, ' connected to the server in the address ',\
@@ -319,9 +319,11 @@ class NetworkBoard(Board):
             for i in range (0, 4, 4//response["players"]):
                 self.create_player("null", i, None, empty=True)  #The name will be overwritten later on
         elif "players_data" in response and not self.server:
-            self.LOG_ON_SCREEN('received the players data, updating players...')
+            LOG.log('debug', "RECEIVED PLAYERS DATA")
+            self.LOG_ON_SCREEN('Received the players data, waiting for the environment...')
             self.flags["board_done"].wait()
             self.flags["players_ammount_done"].wait()
+            self.LOG_ON_SCREEN("Updating the players")
             for received_player in response["players_data"]:
                 for player in self.players: #Once per player
                     if received_player["order"] is player.order:
@@ -330,29 +332,18 @@ class NetworkBoard(Board):
                         break
             self.flags["players_data_done"].set()
         elif "characters_data" in response and not self.server:
+            LOG.log('debug', "RECEIVED CHARACTERS DATA")
+            self.LOG_ON_SCREEN("Received characters, waiting for the players to be updated...")
             self.flags["board_done"].wait()
             self.flags["players_ammount_done"].wait()
             self.flags["players_data_done"].wait()
+            self.LOG_ON_SCREEN("Adding characters")
+            #Adding asynch the characters
+            events = []
             for character in response['characters_data']:
-                char = None
-                for player in self.players:
-                    if character['player'] == player.uuid:
-                        size = self.cells.sprites()[0].rect.size
-                        constructor = Character.get_constructor_by_key(character['type'])
-                        sprite_folder = Character.get_sprite_folder_by_key(character['type'])
-                        # print("name "+player.name+", uuid "+str(player.uuid)+", charid "+str(character['id']))
-                        char = constructor(player.uuid, character['id'], (0, 0), size,\
-                                            self.resolution, sprite_folder, obj_uuid=character['uuid'])
-                        if player.uuid == self.my_player:
-                            char.set_active(True)
-                        player.characters.add(char)
-                if char:
-                    cell = self.get_cell_by_real_index(character['cell'])
-                    cell.add_char(char)
-                    char.set_cell(cell)
-                    self.characters.add(char)
-                    if cell.promotion:
-                        cell.owner = char.owner_uuid
+                events.append(self.add_character(character))
+            for char_event in events: char_event.wait()
+            #When the chars are done
             for player in self.players:
                 player.update()
             self.send_ready()
@@ -366,8 +357,7 @@ class NetworkBoard(Board):
                 self.update_map()
                 self.post_event('my_turn')  #This makes the popup saying that is my turn, show.
                 self.my_turn = True
-        elif "player_id" in response:   #TODO THIS IS POORLY DONE, THE ID SENT IS THE BOARD ONE!!!
-            print("PLAYER ID IS "+str(response['player_id'])+"-----------------------------------------------")
+        elif "player_id" in response:
             self.my_player = response['player_id']
             LOG.log('info', 'My player is ', self.my_player)
         elif "success" in response: #This one needs no action
@@ -379,7 +369,7 @@ class NetworkBoard(Board):
             char = next(char for char in self.characters if char.uuid == response['move_character'])
             center = tuple(x*y for x,y in zip(self.resolution, response['center']))
             char.set_center(center)
-            self.players_names[char.owner_uuid].set_center(center)
+            self.players_names[response['player']].set_center(center)
         elif "drop_character" in response:
             dest_cell = self.get_cell_by_real_index(response['cell'])
             char = next(char for char in self.characters if char.uuid == response['drop_character'])
@@ -404,9 +394,7 @@ class NetworkBoard(Board):
                 pass
         elif "end_turn" in response:    #Next turn with the player that should play it
             self.thinking_sprite.sprite.set_visible(False)
-            print("HERE WE GO")
             self.change_turn.wait()
-            print("ODONE GOING")
             self.next_player_turn()
             self.change_turn.clear()
             self.activate_my_characters()   #Just in case they have been frozen earlier
@@ -423,7 +411,9 @@ class NetworkBoard(Board):
             self.dice.sprite.add_throw(response['player'])
         elif "turncoat" in response:    #All characters will be locked down in this turn.
             #They will all be paused only in our screen (Only graphically), the actions of the user client will still reach here.
+            LOG.log('info', 'The enemy player managed to activate the turncoat mode! Your characters will be locked this turn.')
             self.post_event('turncoat')
+            self.chars_locked = True
             my_player = next(player.uuid == self.my_player for player in self.players)
             my_player.pause_characters()
         elif "cpu_player" in response:  #Its the cpu player turn in host
@@ -436,7 +426,40 @@ class NetworkBoard(Board):
             self.post_event('pause_game')   #TODO for now, a disconenction will issue a game lost msg.
             #TODO BLOCK MOVEMENTS! And how to make the player updated to the last information??
         else:
-            LOG.log('info', 'Unexpected response: ', response)
+            LOG.log('info', 'Unexpected response: ', response.keys()[0])
+
+    @run_async
+    def add_character(self, character):
+        """Create and adds the input character to the matching empty player. 
+        Only called if this is a non host client."""
+        # for character in response['characters_data']:
+        char = None
+        for player in self.players:
+            if character['player'] == player.uuid:
+                size = tuple(int(x*self.params['char_proportion']) for x in self.cells.sprites()[0].rect.size)
+                constructor = Character.get_constructor_by_key(character['type'])
+                sprite_folder = Character.get_sprite_folder_by_key(character['type'])
+                #Border
+                char_border_color = COLOR_CHOOSER[4]
+                try:
+                    char_border_color = COLOR_CHOOSER[player.order]
+                except KeyError:
+                    pass
+                char_border_width = min(x for x in size)//25
+                #End of this
+                LOG.log('info', "player ", player.name," with uuid ", player.uuid, ", adding character ", character['id'])
+                char = constructor(player.uuid, character['id'], (0, 0), size,\
+                                    self.resolution, sprite_folder, obj_uuid=character['uuid'],  border_color=char_border_color, border_width=char_border_width)
+                if player.uuid == self.my_player:
+                    char.set_active(True)
+                player.characters.add(char)
+        if char:
+            cell = self.get_cell_by_real_index(character['cell'])
+            cell.add_char(char)
+            char.set_cell(cell)
+            self.characters.add(char)
+            if cell.promotion:
+                cell.owner = char.owner_uuid
 
     def shuffle(self):
         """Method that shuffles the dice. It overloads the superclass method because we 
@@ -447,6 +470,7 @@ class NetworkBoard(Board):
     def activate_my_characters(self):
         """Called each turn. Sets the characters that belong to the player of this client to active=True.
         This is done so we can move them around, even if it's not our turn. We still cannot change them of cell if its not, of course."""
+        self.chars_locked = False
         if self.my_player:
             for char in self.characters:
                 char.set_state('idle')
@@ -580,17 +604,19 @@ class NetworkBoard(Board):
             if mouse_movement:
                 if self.drag_char:
                     center = tuple(x/y for x,y in zip(self.drag_char.sprite.rect.center, self.resolution))
-                    self.send_data_async({"move_character":self.drag_char.sprite.uuid, "center": center})
+                    self.send_data_async({"move_character":self.drag_char.sprite.uuid, "center": center, "player": self.my_player})
                 else:
+                    # print("SENDING THIS "+str(self.my_player))
                     self.send_data_async({"mouse_position": self.my_player, "center": mouse_position})
 
     def pickup_character(self):
         """Picks up a character, and get the possible destinies if it is our turn. More info in this case in superclass method.
         Otherwise only allows to wiggling around."""
-        if self.my_turn:
-            super().pickup_character()
-        else:
-            super().pickup_character(get_dests=False)
+        if not self.chars_locked: 
+            if self.my_turn:
+                super().pickup_character()
+            else:
+                super().pickup_character(get_dests=False)
 
     def after_swap(self, orig_char, new_char):
         """Sends the necessary information to notify the other clients of the swap of characters.
@@ -602,6 +628,11 @@ class NetworkBoard(Board):
         if orig_char.owner_uuid == self.my_player and new_char.owner_uuid == self.my_player\
         or self.server and not self.current_player.human:    #If this was a local swap and not a received one in response_handler from another player
             self.send_data_async({"swap": True, "original": orig_char.uuid, "new": new_char.uuid})
+
+    def add_players(self, *players):
+        """Adding the players. Call the super method and shows a message on screen.""" 
+        self.LOG_ON_SCREEN("Adding players...")
+        super().add_players
 
     def update_character(self, char):
         """"Notifies the rest of the players if a character has been updated locally.
@@ -625,7 +656,7 @@ class NetworkBoard(Board):
             self.drag_char.empty()
             character.set_center(self.last_cell.sprite.center)
             center = tuple(x/y for x,y in zip(character.rect.center, self.resolution))
-            self.send_data_async({"move_character": character.uuid, "center": center})
+            self.send_data_async({"move_character": character.uuid, "center": center, "player": self.my_player})
 
     def next_player_turn(self):
         """Makes the actions needed to advance a turn, and notifies the server if my_turn is True."""
@@ -633,6 +664,7 @@ class NetworkBoard(Board):
         if self.my_turn or (not self.current_player.human and self.server):
             self.my_turn = False    #If the second condition, this doesn't really matter
             self.send_data_async({"end_turn": True})
+            self.post_event('enemy_turn')
         else:
             if self.current_player.uuid == self.my_player:
                 self.my_turn = True
@@ -696,13 +728,18 @@ class NetworkBoard(Board):
         super().destroy()
         try:
             self.send_data_async({"disconnect": True, "client": self.uuid})
-        except Exception:
+        except:
             pass
         self.reconnect = False
         self.client.disconnect()
         for flag in self.flags.keys():
             self.flags[flag].set()  #Let those threads crash
         if self.server:
+            if not self.server.private_server:
+                try:
+                    self.server.delete_server()
+                except:
+                    pass
             self.server.accepting_disallow()
             self.server.disconnect_clients()
             self.server.disconnect()

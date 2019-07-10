@@ -870,7 +870,7 @@ class Board(Screen):
                     if character.rank < rank:
                         current_level -= 1
                         rank = character.rank
-                    character.set_size(tuple(x*self.params['char_proportion'] for x in self.cells.sprites()[0].rect.size))
+                    character.set_size(tuple(int(x*self.params['char_proportion'] )for x in self.cells.sprites()[0].rect.size))
                     cell = self.quadrants[player.order].get_cell(border_level=current_level, random_cell=self.params['random_filling'])
                     cell.add_char(character)
                     character.set_cell(cell)
@@ -1114,7 +1114,7 @@ class Board(Screen):
             new_char.set_hover(False)
             self.characters.remove(original_char)
             self.characters.add(new_char)
-            LOG.log('info', 'Character ', original_char.id, ' upgraded to ', new_char.id)
+            LOG.log('info', 'Character ', original_char.id, ' switched to ', new_char.id)
             self.after_swap(original_char, new_char)
 
     def after_swap(self, orig_char, new_char):
@@ -1133,14 +1133,14 @@ class Board(Screen):
         self.drag_char.add(self.active_char.sprite)
         self.drag_char.sprite.set_selected(True)
         self.last_cell.add(self.active_cell.sprite)
-        if get_dests:
-            destinations = self.drag_char.sprite.get_paths(self.enabled_paths, self.distances, self.current_map,\
+        if get_dests and self.last_cell.sprite.get_real_index() not in self.locked_cells:
+            movements = self.drag_char.sprite.get_paths(self.enabled_paths, self.distances, self.current_map,\
                                                             self.active_cell.sprite.index, self.params['circles_per_lvl'])
             if self.fitness_button.sprite.enabled:  #If we want them to show
-                self.generate_fitnesses(self.active_cell.sprite.get_real_index(), destinations)
-            for cell_index in destinations:
-                if cell_index not in self.locked_cells:
-                    self.possible_dests.add(self.get_cell_by_real_index(cell_index[-1]))
+                self.generate_fitnesses(self.active_cell.sprite.get_real_index(), movements)
+            for movement in movements:
+                if movement[-1] not in self.locked_cells:
+                    self.possible_dests.add(self.get_cell_by_real_index(movement[-1]))
             for dest in self.possible_dests:
                 dest.set_active(True)
 
@@ -1246,13 +1246,15 @@ class Board(Screen):
 
     def activate_turncoat_mode(self):
         """Allows the current player to choose any of the characters on the board to play, as long as it is not an enemy matron mother."""
-        #block the cells with matrons and... the last one of the turncoat. The last one ppersists for the next turn. dunno how to do the later
+        #block the cells with matrons and... the last one of the turncoat. The last one persists for the next turn. dunno how to do the later
+        self.post_event('turncoat')
         for cell in self.cells:
             if cell.has_char() and 'mother' in cell.get_char().get_type():
                 self.locked_cells.append(cell.get_real_index())
         for char in self.characters:
-            char.set_active(True)
-            char.set_state('idle')
+            if not 'mother' in char.get_type():
+                char.set_active(True)
+                char.set_state('idle')
         for path in self.current_map:
             if path.ally:   #Not to worry, those changes will be cleared in the next player turn
                 path.ally = False
@@ -1272,7 +1274,10 @@ class Board(Screen):
         if not active_cell.is_empty():
             self.kill_character(active_cell, self.drag_char.sprite) #Killing char if there is one 
         active_cell.add_char(character)
-        self.current_player.register_movement(character)
+        try:
+            self.current_player.register_movement(character)
+        except AttributeError:  #Turncoat mode
+            character.movements += 1
         self.update_cells(self.last_cell.sprite, active_cell)
         self.last_movement = (self.last_cell.sprite.text_pos, active_cell.text_pos)
         self.last_real_movm = (self.last_cell.sprite.index, active_cell.index)
@@ -1337,7 +1342,7 @@ class Board(Screen):
             use_stop_state(boolean):    Flag, if it is true the characters of the old current player are paused.
         """
         self.current_player.turn += 1
-        del self.locked_cells[:]    #Clearing it just in caseç
+        del self.locked_cells[:]    #Clearing it just in case
         old_index = self.player_index
         while True:
             self.player_index += 1
@@ -1428,7 +1433,11 @@ class Board(Screen):
             if player.has_char(corpse):
                 player.remove_char(corpse)
                 self.check_player(player)
-        self.current_player.add_kill(corpse, killer)
+        try:
+            self.current_player.add_kill(corpse, killer)
+        except AttributeError:  #AttributeError: \'NoneType\' object has no attribute \'kills\', that's because we are in turncoat mode
+            LOG.log('Info', 'Nice turncoat capture by ', killer.id, '! He didnt even see it coming!')
+            killer.kills -= 1
         LOG.log('debug', 'The character ', corpse.id,' was killed!')
         self.play_sound('oof')
 

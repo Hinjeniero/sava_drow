@@ -47,7 +47,7 @@ class Dictionary:
         Args:
             key (any):  Key to set in the dictionary.
             item (any): Item to associate to key set in the dictionary."""
-        self.dict[key]= item
+        self.dict[key] = item
         self.is_empty = False
 
     @synchronized

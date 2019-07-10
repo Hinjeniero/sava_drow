@@ -595,9 +595,12 @@ def clean():
 	memory_limit *= MEMORY_REDUCTION_FACTOR
 	keys = sorted(_surf_cache, key=_surf_tick_usage.get)
 	for key in keys:
-		w, h = _surf_cache[key].get_size()
-		del _surf_cache[key]
-		del _surf_tick_usage[key]
-		_surf_size_total -= 4 * w * h
-		if _surf_size_total < memory_limit:
-			break
+		try:
+			w, h = _surf_cache[key].get_size()
+			del _surf_cache[key]
+			del _surf_tick_usage[key]
+			_surf_size_total -= 4 * w * h
+			if _surf_size_total < memory_limit:
+				break
+		except:
+			pass

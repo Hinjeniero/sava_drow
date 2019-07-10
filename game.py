@@ -32,7 +32,7 @@ from obj.utilities.decorators import END_ALL_THREADS
 from board_generator import BoardGenerator
 from obj.utilities.exceptions import  NoScreensException, InvalidGameElementException, GameEndException,\
                         EmptyCommandException, ScreenNotFoundException, TooManyCharactersException, TooManyPlayersException,\
-                        ZeroPlayersException, NotEnoughHumansException
+                        ZeroPlayersException, NotEnoughHumansException, ServiceNotAvailableException
 from obj.utilities.surface_loader import ResizedSurface
 from settings import PATHS, USEREVENTS, SCREEN_FLAGS, INIT_PARAMS, PARAMS
 from animation_generator import AnimationGenerator
@@ -344,8 +344,14 @@ class Game(object):
         """Board events and NetworkBoard events method. 
             command (String):   Specific command that the event holds, describes the action to trigger.
             value (Any, default=None):  Sometimes an action will require a value. This one fills that necessity."""
-        if 'turn' in command:
-            self.show_popup('turn')
+        if 'turncoat' in command:
+            self.show_popup('turncoat')
+        elif 'my' in command and 'turn' in command:
+            self.show_popup('my_turn')
+        elif 'cpu' in command and 'turn' in command:
+            self.show_popup('cpu_turn')
+        elif 'turn' in command:
+            self.show_popup('next_turn')
         elif 'shuf' in command: #The current player shuffled the dice
             self.get_screen('main', 'board').assign_current_dice(event.id)
         elif 'bad' in command and 'dice' in command:
@@ -365,8 +371,6 @@ class Game(object):
             self.show_popup(command)
         elif 'pause_game' in command:
             self.show_popup('player_disconnect')
-        elif 'turncoat' in command:
-            self.show_popup('turncoat')
         elif 'server' in command and 'table' in command and 'unreach' in command:
             self.show_popup('servers_table_off')
             self.current_screen.destroy()
@@ -374,6 +378,12 @@ class Game(object):
         elif 'hide' in command and 'dialog' in command:
             self.show_popup('dice_turns')
             self.__add_timed_execution(value, self.call_screens_method, 'board', Screen.hide_dialog)
+        elif 'internet' in command:
+            self.show_popup('no_internet', show_time=30)
+        elif 'server' in command and 'exists' in command:
+            self.show_popup('server_already_exists', show_time=30)
+            self.current_screen.destroy()
+            self.__add_timed_execution(3, self.restart_main_menu)
 
     def graphic_handler(self, command, value):
         """Graphic options related method. Those events will come to here.
@@ -512,7 +522,7 @@ class Game(object):
                         ('turncoat_on', 'Turncoat mode activated! Current player can control any char in this turn.'),\
                         ('servers_table_off', 'The table of public servers can`t be reached, check the service'),\
                         ('connection_error', 'There was a connection error, check the console for details.'),\
-                        ('player_disconnected', 'One of the players disconnected, the game will pause now.'),\
+                        ('player_disconnected', 'One of the players disconnected, restart the game.'),\
                         ('enemy_admin_on', 'Other player activated the admin mode! Be careful!'),\
                         ('enemy_admin_off', 'The admin mode was deactivated in another board.'),\
                         ('too_many_players', 'The number of cpu and human players surpass the total'),
@@ -520,7 +530,11 @@ class Game(object):
                         ('alone_players', 'The board being generated only has one player in it'),\
                         ('not_enough_players', 'You can`t start an online game with less than 2 human players. Create a local one instead.'),\
                         ('dice_turns', 'Your turns will be ordered following the value that you got in the dice throw'),\
-                        ('bad_dice_value', 'Someone threw the dice but got his turn revoked!')))
+                        ('bad_dice_value', 'Someone threw the dice but got his turn revoked!'),\
+                        ('public_service_not_available', 'The service that holds the public servers is unreachable'),\
+                        ('starting_board_loading', 'The board loading has started...'),\
+                        ('no_internet', 'You are disconnected from the network, the resources will be reachable only locally'),\
+                        ('server_already_exists', 'The socket is busy, you already have a server running locally')))
 
     def add_popups(self, *popups):
         """Add the input popups to the game.
@@ -531,7 +545,7 @@ class Game(object):
             popup.set_visible(False)
             self.popups.add(popup)
 
-    def show_popup(self, id_, show_time=3):
+    def show_popup(self, id_, show_time=3, automatic_dismiss=True):
         """Makes visible and active the popup that matches with the input id. If it's not found, a warning is shown in console.
         Args:
             id_ (String):   Id or substring of that id to search for in the popup list."""
@@ -539,7 +553,8 @@ class Game(object):
             if id_ in popup.id or popup.id in id_:
                 popup.set_visible(True)
                 popup.set_active(True)
-                self.__add_timed_execution(show_time, self.hide_popups)
+                if automatic_dismiss:
+                    self.__add_timed_execution(show_time, self.hide_popups)
                 return
         LOG.log('warning', 'Popup ', id_,'not found')
         self.show_popup('default')
@@ -724,6 +739,10 @@ class Game(object):
         Enables all disabled buttons. If there are too many characters to fit in the new board, you will be 
         thrown back to the main menu with an exception."""
         try:
+            #Showing the starting dialog
+            self.show_popup('starting_board_loading', automatic_dismiss=False)
+            self.draw()
+            self.hide_popups()
             if self.get_screen('board'):
                 for i in range(0, len(self.screens)):
                     if 'board' in self.screens[i].id:
@@ -732,6 +751,7 @@ class Game(object):
                         if old_board.music_chan:
                             self.screens[i].set_volume(old_board.music_chan.get_volume())
                         self.screens[i].sound_vol = old_board.sound_vol
+                        old_board.destroy()
                         break
             else:
                 self.screens.append(self.board_generator.generate_board(self.resolution))
@@ -747,11 +767,23 @@ class Game(object):
         except NotEnoughHumansException:
             self.show_popup('not_enough_players')
             return False
+        except ServiceNotAvailableException:
+            self.show_popup('public_service_not_available', show_time=30)
+            return False
         #self.get_screen('params', 'menu', 'config').enable_all_sprites(False)
         self.get_screen('music', 'menu', 'sound').enable_all_sprites(True)
         self.get_screen('main', 'menu').enable_all_sprites(True)
         self.started = True 
         return True
+
+    def draw(self):
+        """Draws the entire application in the screen. Also updates the display to show the changes."""
+        self.current_screen.draw(self.display)
+        if self.fps_text:
+            self.display.blit(self.fps_text, tuple(int(x*0.02) for x in self.resolution))
+        for popup in self.popups:
+            popup.draw(self.display)
+        pygame.display.update()
 
     def start(self, *first_screen_keywords):
         """Starts the game instance. Perform checks and start all the methods needed. 
@@ -776,13 +808,8 @@ class Game(object):
                     if len(self.todo) > 0:
                         timed_exec = self.todo.pop(0)                   #One execution per frame
                         timed_exec[0](*timed_exec[1], **timed_exec[2])  #Executing the method
-                    self.current_screen.draw(self.display)
                     end = self.event_handler(pygame.event.get())
-                    if self.fps_text:
-                        self.display.blit(self.fps_text, tuple(int(x*0.02) for x in self.resolution))
-                    for popup in self.popups:
-                        popup.draw(self.display)
-                    pygame.display.update()
+                    self.draw()
                 except GameEndException:
                     end = True
         except Exception:

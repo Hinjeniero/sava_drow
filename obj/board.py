@@ -246,7 +246,7 @@ class Board(Screen):
         """Generate all the possible events emitted by the board."""
         self.events['win'] = pygame.event.Event(self.end_event_id, command='win')
         self.events['lose'] = pygame.event.Event(self.end_event_id, command='lose')
-        self.events['bad_dice'] = pygame.event.Event(self.end_event_id, command='bad_dice')
+        self.events['bad_dice'] = pygame.event.Event(self.event_id, command='bad_dice')
         self.events['my_turn'] = pygame.event.Event(self.event_id, command='my_turn')
         self.events['cpu_turn'] = pygame.event.Event(self.event_id, command='cpu_turn')
         self.events['next_turn'] = pygame.event.Event(self.event_id, command='next_turn')

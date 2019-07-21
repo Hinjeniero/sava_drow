@@ -109,12 +109,11 @@ class Dice(AnimatedSprite):
     def get_random_value(self):
         """Returns a random value.
         The chances of each value vary after each player and his statistics."""
-        # weights = Dice.WEIGHTS.copy()
-        # x = math.log10(self.turns/(self.throws[self.current_player]*3))
-        # weights[-1] += math.tanh(x)
-        # weights[-1] = max(0.3, weights[-1])
-        # return random.choices(Dice.VALUES, weights)[0]
-        return 6
+        weights = Dice.WEIGHTS.copy()
+        x = math.log10(self.turns/(self.throws[self.current_player]*3))
+        weights[-1] += math.tanh(x)
+        weights[-1] = max(0.3, weights[-1])
+        return random.choices(Dice.VALUES, weights)[0]
 
     def throw(self):
         """Executes a throw of the dices. This yield a random value by the means of an event, and changes

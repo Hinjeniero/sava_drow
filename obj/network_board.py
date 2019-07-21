@@ -404,7 +404,7 @@ class NetworkBoard(Board):
             self.swapper.send(original_char)
             self.swapper.send(next(char for char in player.fallen if char.uuid == response['new']))
         elif "dice_value" in response:  #The dice in this board will be updated
-            LOG.log('info', 'the player ', response['dice_value'], ' threw the dice and got an ', response['dice_value'])
+            LOG.log('info', 'the player ', response['player'], ' threw the dice and got an ', response['dice_value'])
             if int(response['dice_value']) != Dice.GOLD_VALUE:
                 self.post_event('bad_dice')
                 self.change_turn.set()
@@ -423,10 +423,9 @@ class NetworkBoard(Board):
             event_id_string = 'admin_on' if response["admin"] else 'admin_off'
             self.post_event(event_id_string)
         elif "pause" in response:   #This will usually happen when another client disconnects.
-            self.post_event('pause_game')   #TODO for now, a disconenction will issue a game lost msg.
-            #TODO BLOCK MOVEMENTS! And how to make the player updated to the last information??
+            self.post_event('pause_game')
         else:
-            LOG.log('info', 'Unexpected response: ', response.keys()[0])
+            LOG.log('info', 'Unexpected response: ', list(response.keys())[0])
 
     @run_async
     def add_character(self, character):
@@ -606,7 +605,6 @@ class NetworkBoard(Board):
                     center = tuple(x/y for x,y in zip(self.drag_char.sprite.rect.center, self.resolution))
                     self.send_data_async({"move_character":self.drag_char.sprite.uuid, "center": center, "player": self.my_player})
                 else:
-                    # print("SENDING THIS "+str(self.my_player))
                     self.send_data_async({"mouse_position": self.my_player, "center": mouse_position})
 
     def pickup_character(self):

@@ -71,10 +71,7 @@ def run_async(function):
         (Threading.thread):  Thread that is executing the function."""
     def wrapper(*args, **kwargs):
         end_event = threading.Event()
-        #print("ADDED FUNCTION "+function.__name__)
-        #print(THREAD_BUSY.values())
         if all(busy for busy in THREAD_BUSY.values()):
-            #print("ALL THREADS BUSY!, executing "+function.__name__)
             method_with_event(end_event, function, args, kwargs)
         else:
             TASK_POOL_EMPTY.acquire()

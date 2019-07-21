@@ -1,0 +1,2 @@
+scp -i .\sava_server.pem -r node ubuntu@savadrow.servegame.com:~
+ssh -i .\sava_server.pem ubuntu@savadrow.servegame.com

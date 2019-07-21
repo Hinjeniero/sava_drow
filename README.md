@@ -21,3 +21,5 @@ Should be executing in amazon aws vps
 
 The node modules and dependencies are not included in a git pull here! THey should be installed executing the command > npm install
 
+### BIG AND MISC PROJECT FILES
+https://drive.google.com/open?id=13C5pL1NR5t6yHhG_X-sqFQiQC6v_n3tQ

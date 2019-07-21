@@ -321,11 +321,10 @@ class PathAppraiser(object):
     def rate_movements_lite(start_pos, possible_destinies, paths_graph, current_map, all_board_cells, level_size):
         """Returns a tuple with indexes of the destinies, and a fitness going from 0 to 1. Faster method than the complete one by avoiding the bait ratio and the danger multiplier.
         Also uses a less complete danger detection (But way faster)"""
-        #print("LITE FACTOR, CHECKIN HOW LONGS IT TAKES to get fitnesses FOR "+str(len(possible_destinies)))
         fitnesses = {}
         all_cells = {cell.get_real_index(): cell.get_char() for cell in all_board_cells if cell.has_char()} if isinstance(all_board_cells, list) else all_board_cells 
         character = all_cells[start_pos]
-        #Algorihtm starts
+        #Algorithm starts
         start_danger = PathAppraiser.get_danger_in_position_lite(start_pos, character.owner_uuid, paths_graph, current_map, all_cells, level_size)#*danger_multiplier
         destinies_danger = {}
         kill_values = {}
@@ -334,7 +333,6 @@ class PathAppraiser(object):
             kill_values[index] = PathAppraiser.get_kill_value(destiny_char, character) if destiny_char else 0
             destinies_danger[index] = PathAppraiser.get_danger_in_position_lite(index, character.owner_uuid, paths_graph, current_map, all_cells, level_size)
             fitness = PathAppraiser.calculate_fitness_lite(index, start_danger, destinies_danger[index], kill_values[index], print_complete=False)
-            #print("fitness for "+str(index)+" is "+str(fitness))
             fitnesses[index] = max(min(fitness, 1), 0)  #Has to be between 0 and 1
         return fitnesses
 

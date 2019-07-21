@@ -636,7 +636,7 @@ class MonteCarloSearch(object):
         return node.board_evaluation(all_players[my_player_index])
     
     @staticmethod
-    def rollout_policy(node, player_uuid, policy='random'): #TODO THIS RANDOM SHOULD DESTROY MOVEMENTS ALREADY DONE
+    def rollout_policy(node, player_uuid, policy='random'):
         """This method choose the next step in the simulation, according to the configured policy.
         Args:
             player_uuid (int):  uuid of the player that holds the turn. The resulting possible movements will be generated

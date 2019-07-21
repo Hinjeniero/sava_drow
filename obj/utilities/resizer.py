@@ -66,7 +66,7 @@ class Resizer (object):
         return Resizer.max_font_size_limited(text, size, font_size, font_type=font_type)
 
     @staticmethod 
-    def resize(element, new_size, mode='fit', smooth=True, keep_aspect_ratio=True): #TODO UPDATE DOCUMENTATION
+    def resize(element, new_size, mode='fit', smooth=True, keep_aspect_ratio=True):
         """Resizes a surface to the closest size achievable to the input
         without changing the original object aspect ratio relation.
         This way the modified object looks way more natural than just a stretched wretch.
@@ -74,6 +74,9 @@ class Resizer (object):
         Args:
             element (:obj: pygame.Surface||pygame.sprite.Sprite):   Element to resize.
             new_size (:tuple: int, int):    New desired size for the input element.
+            mode (String, default=fit): Mode of adjusting the image to a given rect.
+            smooth (boolean, default=True): Type of resizing, smooth applies blur to borders.
+            keep_aspect_ratio (boolean, default=True):  Keeps the width height aspect ratio or not. A flag.
         Returns:
             (:tuple: int, int):   A tuple with the resultant size.
         """
@@ -82,7 +85,6 @@ class Resizer (object):
             if isinstance(element, pygame.Surface):         old_size = element.get_size()
             elif isinstance(element, pygame.sprite.Sprite): old_size = element.rect.size
             else:                                           
-                print(element)
                 raise BadResizerParamException("Can't resize element of type "+str(type(element)))
             #Getting the ratio
             if 'fit' in mode.lower():                       ratio = min([new/old for new, old in zip(new_size, old_size)])

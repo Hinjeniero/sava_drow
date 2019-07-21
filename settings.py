@@ -75,7 +75,7 @@ class CHARACTERS:
 class SOUND_PARAMS:
     """Parameters of the sound of the game."""
     SOUND_CHANNELS_AMMOUNT = 8  #Maximum simultaneous sound channels
-    INIT_VOLUME = 0.01          #Initial sound volume. Go with caution, it can be VERY loud.
+    INIT_VOLUME = 0.15          #Initial sound volume. Go with caution, it can be VERY loud.
 
 #---Miscellaneous
 class SCREEN_FLAGS:
